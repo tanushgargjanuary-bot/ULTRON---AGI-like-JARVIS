@@ -1533,6 +1533,105 @@ def claim_self_update(c: Claim) -> None:
          "with uncommitted changes it refuses to pull rather than discarding them")
 
 
+def claim_process_watch(c: Claim) -> None:
+    """It watches background programs, never touches them, and never cuts in."""
+    source_path = ROOT / "core" / "process_watch.py"
+    if not source_path.exists():
+        return c.absent("the watcher", "core/process_watch.py is not in the tree")
+    source = source_path.read_text(encoding="utf-8")
+    code = "\n".join(line for line in source.splitlines()
+                     if not line.lstrip().startswith("#"))
+    for word in (".terminate(", ".kill(", ".suspend(", ".resume(", ".send_signal(",
+                 "os.kill", "signal.pthread", ".wait("):
+        if word in code:
+            return c.bad("it only watches", f"process_watch.py can call {word}")
+    c.ok("it only watches", "the module has no call that can end, pause or signal a process")
+
+    try:
+        from core.process_watch import SpeechGate, Supervisor, Watcher
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("the watcher", f"{type(exc).__name__}: {exc}")
+
+    class _Proc:
+        def __init__(self, pid, name, created):
+            self.info = {"pid": pid, "name": name, "create_time": created,
+                         "cmdline": [], "status": "running"}
+
+    class _Lib:
+        def __init__(self, *procs):
+            self.procs = list(procs)
+
+        def process_iter(self, attrs=None):
+            return list(self.procs)
+
+    import time as _time
+
+    lib = _Lib(_Proc(4242, "Antigravity Helper", _time.time() - 90))
+    watcher = Watcher(library=lib)
+    watcher.watch("antigravity", label="Antigravity")
+    if watcher.poll():
+        return c.bad("a finish is reported once", "it reported a finish before one happened")
+    if not [p for p in watcher.live() if p.pid == 4242]:
+        return c.bad("it sees the job", "the running process was not visible")
+    c.ok("it sees the job", "a running Antigravity process is visible and quiet")
+
+    lib.procs = []
+    first = watcher.poll()
+    if len(first) != 1:
+        return c.bad("a finish is reported once", f"the finish came back as {first}")
+    if watcher.poll():
+        return c.bad("a finish is reported once", "the same finish was reported twice")
+    c.ok("a finish is reported once", f"one sentence: {first[0].sentence()}")
+
+    clock = [0.0]
+    gate = SpeechGate(quiet_for=1.0, clock=lambda: clock[0])
+    said = []
+    gate.hold(first[0].sentence())
+    if gate.ready(busy=True):
+        return c.bad("it does not cut in", "it spoke while the owner was talking")
+    clock[0] = 0.5
+    if gate.ready(busy=False):
+        return c.bad("it does not cut in", "it spoke during a pause for breath")
+    clock[0] = 2.0
+    if not gate.ready(busy=False):
+        return c.bad("it does not cut in", "the held sentence never arrived")
+    c.ok("it does not cut in",
+         "held while the owner speaks, delivered once the room is quiet")
+
+    logged, spoken = [], []
+    lib2 = _Lib(_Proc(5150, "antigravity", _time.time() - 30))
+    watcher2 = Watcher(library=lib2)
+    watcher2.watch("antigravity", label="Antigravity")
+    clock2 = [0.0]
+    supervisor = Supervisor(watcher2, gate=SpeechGate(quiet_for=1.0, clock=lambda: clock2[0]),
+                            say=spoken.append, log=logged.append)
+    supervisor.tick(busy=True)
+    lib2.procs = []
+    supervisor.tick(busy=True)
+    if not logged or spoken:
+        return c.bad("the record does not wait", f"logged={logged} spoken={spoken}")
+    # Silence starts at the first poll after the owner stops, so the sentence
+    # arrives on the poll after the quiet stretch — never on the instant itself.
+    clock2[0] = 3.0
+    if supervisor.tick(busy=False):
+        return c.bad("the record does not wait",
+                     "it spoke on the first poll after the owner stopped")
+    clock2[0] = 4.5
+    supervisor.tick(busy=False)
+    if not spoken:
+        return c.bad("the record does not wait", "the sentence never reached the voice")
+    c.ok("the record does not wait",
+         "the log line is written at once; the spoken line waits for silence")
+
+    main_source = (ROOT / "main.py").read_text(encoding="utf-8", errors="replace")
+    for needle in ("async def _process_watch_loop",
+                   "asyncio.create_task(self._process_watch_loop())",
+                   "def _owner_is_talking", "ULTRON_WATCH"):
+        if needle not in main_source:
+            return c.absent("wired into the application", f"main.py lacks {needle!r}")
+    c.ok("wired into the application", "the loop starts with the app and reads the owner's state")
+
+
 CLAIMS = [
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
@@ -1574,6 +1673,9 @@ CLAIMS = [
      "it extends itself", claim_self_extension),
     ("reminders", "It decides when to interrupt you, and when to stay quiet.",
      "the reminder queue", claim_reminders),
+    ("procwatch", "It supervises background programs without touching them, "
+     "and reports a finish when you stop talking.",
+     "background supervision, read-only", claim_process_watch),
     ("shipping", "It can ship its own work, and a secret stops the ship.",
      "every change reaches GitHub, carefully", claim_shipping),
     ("self_update", "It updates itself from the remote, and undoes a bad version.",

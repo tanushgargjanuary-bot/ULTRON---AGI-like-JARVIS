@@ -1212,6 +1212,62 @@ class JarvisLive:
                 pass
         self.ui.write_log("SYS: Interrupted — listening...")
 
+    async def _process_watch_loop(self) -> None:
+        """Tell the owner when a background program finishes, without cutting in.
+
+        The rule, in the owner's words: report the finish, but if the owner is
+        talking to Ultron, say it when the talking stops. So this loop has two
+        channels — the activity log, written the moment the program ends, and the
+        voice, held until the room is quiet.
+
+        It watches and only watches. `core/process_watch.py` cannot signal,
+        suspend or kill anything, and a test reads its text to keep it that way.
+
+        The watched names come from ULTRON_WATCH (comma separated), defaulting to
+        one name: the agent the owner asked about. Two seconds per poll, one pass
+        over the process table, and nothing is kept that is not watched.
+        """
+        import os
+        from core.process_watch import Supervisor, Watcher, WATCHED_BY_DEFAULT
+
+        try:
+            patterns = tuple(part.strip() for part in
+                             os.environ.get("ULTRON_WATCH", "").split(",") if part.strip())
+            patterns = patterns or WATCHED_BY_DEFAULT
+            watcher = Watcher()
+            for pattern in patterns:
+                watcher.watch(pattern, label=pattern)
+            supervisor = Supervisor(watcher, say=self.speak, log=self.ui.write_log)
+            self.ui.write_log("Watching: " + ", ".join(patterns))
+        except Exception as exc:
+            print(f"[Watch] not started: {exc}")
+            return
+
+        while True:
+            try:
+                supervisor.tick(busy=self._owner_is_talking())
+            except Exception as exc:
+                # A watcher that dies on one bad read is a watcher that stops
+                # telling the owner anything, so a fault is reported once and
+                # the poll continues.
+                print(f"[Watch] skipped this poll: {exc}")
+            await asyncio.sleep(2.0)
+
+    def _owner_is_talking(self) -> bool:
+        """True while Ultron is speaking or the microphone hears the owner.
+
+        `ui.speaking` is set by the voice pipeline; the level comes from the same
+        meter that drives the HUD, so no second audio device is opened. Both
+        are read, because a person who starts talking during Ultron's sentence is
+        still talking.
+        """
+        try:
+            if getattr(self.ui, "speaking", False):
+                return True
+        except Exception:
+            pass
+        return float(getattr(self, "_mic_level", 0.0) or 0.0) > 0.02
+
     def speak(self, text: str):
         if not self._loop or not self.session:
             return
@@ -1756,6 +1812,7 @@ class JarvisLive:
                 # failure here must never disturb the mic.
                 try:
                     self.ui.set_audio_level(_pcm_level(indata))
+                    self._mic_level = _pcm_level(indata)
                 except Exception:
                     pass
 
@@ -2097,6 +2154,7 @@ class JarvisLive:
                     else:
                         lvl = _pcm_level(pcm)
                         self.ui.set_audio_level(lvl)
+                        self._mic_level = lvl
                         self._out_level = lvl
                         self._echo.note_output(pcm, RECEIVE_SAMPLE_RATE, lvl)
                 except Exception:
@@ -2614,6 +2672,7 @@ class JarvisLive:
             asyncio.create_task(self._process_dashboard_commands())
             # The daily digest: a log line at the configured hour, nothing more.
             asyncio.create_task(self._digest_loop())
+            asyncio.create_task(self._process_watch_loop())
         except Exception as e:
             print(f"[Dashboard] Disabled: {e}")
             self._dashboard = None
