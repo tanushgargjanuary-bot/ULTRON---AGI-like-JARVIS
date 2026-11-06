@@ -1,3 +1,48 @@
+=== 2026-11-06 · build 1.2.29 · the folder has a ceiling, and the ceiling is checked ===
+
+The owner sent a screenshot of the workspace panel: 375 MB across 6,711 files, and
+6,352 files not saved. His instruction was one line. "We should never overgo over
+100MBs. And compress the folders and code in someway."
+
+What happened, plainly. One session installed the whole dependency set inside the
+project folder instead of a temporary folder, and pip's cache came with it. That is
+375 MB of packages, not 375 MB of code. The save after the next message kept what
+fitted and dropped the rest without a word. Nothing in the project was wrong. The
+habit was.
+
+What is here now:
+
+  scripts/workspace_budget.py   measures the folder, prints the eight biggest ones,
+                                deletes the caches with --clean, exits 1 over budget
+  tests/test_workspace_budget.py nine tests: the measurement, the cache finder, the
+                                over-budget sentence, and a ratchet on this project
+  docs/SPACE.md                 the rule, the two lines that keep it, what is counted
+  scripts/verify.py             runs the budget check FIRST, before the suite
+
+Three decisions:
+
+1. The ceiling is 100 MB and 5,000 files, not the platform's 128 MB and 10,000. A
+   limit set exactly at the edge is a limit that is discovered by crossing it, and
+   the crossing is silent.
+
+2. Generated folders are reported but not counted. A `.venv` is 600 MB and it belongs
+   to whoever installed it. A check that fails on the owner's machine for a reason he
+   cannot fix is a check that gets switched off inside a week.
+
+3. Compression must not delete content. So the only file removed was
+   `sidecar/bin/watchd-linux`, which this repository builds from Go source in one
+   command. `watchd-windows.exe` stayed: the owner has no Go toolchain, so it is the
+   payload and not litter. The logs, the handoff and the verification record stayed:
+   history is not overhead, and deleting a record to make a number smaller is the
+   wrong trade.
+
+Measured: the project is 8.9 MB across 337 files, from 15 MB. The remaining 2.1 MB of
+history and 2.1 MB of Windows helper are both deliberate, so the code itself is 4.7 MB
+of text. That is what it is. It is kept small by not adding weight, not by squeezing
+what is already written.
+
+1473 tests, all passing.
+
 === 2026-11-06 · build 1.2.28 · the prompt is readable, and editable on instruction ===
 
 The owner asked for two things: that the system prompt be visible to them, and that

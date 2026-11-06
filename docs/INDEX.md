@@ -25,6 +25,7 @@ Every document in the repository, one line each, and who it is for.
 
 | Document | What it holds |
 |---|---|
+| [`docs/SPACE.md`](SPACE.md) | how big the folder may get, what is counted, and why a save once lost 6,352 files |
 | [`HANDOFF.md`](../HANDOFF.md) | the build log by phase: what each pass fixed, what it cost, what is left |
 | [`log.txt`](../log.txt) | the same, as plain append-only text, newest last |
 | [`verification-results.txt`](../verification-results.txt) | the last full `scripts/verify.py` output |

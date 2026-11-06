@@ -97,6 +97,11 @@ a small built-in fallback — instead of crashing.
 - Settings and keys live in `config/api_keys.json` through
   `memory/config_manager.py`; never write that file directly.
 - Keep to the libraries already in `requirements.txt`.
+- **The workspace stays under 100 MB and 5,000 files, and the number is checked.**
+  Install packages with `--target` to a temporary folder and set `PIP_CACHE_DIR`
+  outside the project. The save after a message keeps about 128 MB and silently drops
+  the rest: this already cost us 6,352 files once. `python scripts/workspace_budget.py`
+  reports it, `scripts/verify.py` fails on it, and `docs/SPACE.md` explains it.
 
 ## Read these first, in this order
 
