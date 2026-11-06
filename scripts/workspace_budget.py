@@ -41,7 +41,10 @@ LIMIT_FILES = 5_000
 # counting it would make the number meaningless. It is reported on its own line, so
 # the size stays visible without the check being switched off inside a week.
 GENERATED = ("__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache",
-             ".hypothesis", "node_modules", ".venv", ".venv.old", "build", "dist")
+             ".hypothesis", "node_modules", ".venv", ".venv.old", "build", "dist",
+             # Tool caches, for when --root points at a home folder rather than the
+             # project. npx alone keeps a hundred megabytes here and recreates it.
+             ".npm", ".cache", ".local", ".arena", ".playwright-cli")
 
 
 def _size(path: Path) -> int | None:
