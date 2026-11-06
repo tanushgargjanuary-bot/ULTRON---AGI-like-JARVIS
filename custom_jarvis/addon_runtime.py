@@ -40,6 +40,10 @@ INSPECTION_TOOLS = frozenset(
         "search_text",
         "measure_code",
         "decide",
+        # Shipping has two halves. Looking is a read; publishing and
+        # updating are not, so those two stay out of this set and ask.
+        "ship_status",
+        "check_update",
     }
 )
 PATH_ARGUMENTS = {

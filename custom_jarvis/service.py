@@ -20,6 +20,7 @@ from custom_jarvis.metacog import Ledger
 from custom_jarvis.metacog_tools import register_metacog_tools
 from custom_jarvis import skillpacks
 from custom_jarvis.pack_tools import register_pack_tools
+from custom_jarvis.ship_tools import register_ship_tools
 from custom_jarvis.autonomy_governor import AutonomyGovernor
 from custom_jarvis.brain import JarvisBrain
 from custom_jarvis.evidence import BackupManager
@@ -89,6 +90,9 @@ class CustomService:
             data_dir = state_dir()
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        # The repository this code lives in. Shipping and self-updating both need
+        # it, and neither should guess: it is the parent of this package.
+        self.repo_dir = Path(__file__).resolve().parents[1]
         self.store = KnowledgeStore(self.data_dir / "knowledge.sqlite3")
         self.backups = BackupManager(self.data_dir / "backups")
         raw = ToolRegistry()
@@ -122,8 +126,11 @@ class CustomService:
         self.packs_dir = self.data_dir
         self.pack_errors = {}
         known = [row.get("name", "") for row in raw.list_tools()]
-        register_pack_tools(raw, self.packs_dir, known)
+        register_pack_tools(raw, self.packs_dir, known, on_change=self._note_change)
         self.pack_errors = skillpacks.load(self.packs_dir, known)["errors"]
+        # Shipping: the tools that publish this repository and update it from it.
+        # Both ask for approval; neither is in the read-only set.
+        register_ship_tools(raw, self.repo_dir, self.data_dir / "ship_pending.json")
         self.control = AddonRegistry(raw, self._approve_tool, self.store, self.backups)
         self.breaker = RepairCircuitBreaker()
         self.repairs = TrackedRepairs(self.data_dir / "repairs", self.breaker)
@@ -179,6 +186,60 @@ class CustomService:
             "Custom MARK operation",
             metadata=result.metadata,
         )
+
+    def _ship_auto_enabled(self) -> bool:
+        """Has the owner pre-authorised publishing self-evolutions?
+
+        Off unless `ship_auto` is true in config. The owner asked for every
+        change to reach GitHub; publishing is still public, so it is a named
+        grant he switches on, never a default this code chooses for him.
+        """
+        try:
+            from memory.config_manager import load_api_keys
+            value = load_api_keys().get("ship_auto", False)
+        except Exception:                                      # noqa: BLE001
+            return False
+        return value is True or str(value).strip().lower() in ("1", "true", "yes", "on")
+
+    def _auto_ship(self, reason: str) -> dict:
+        """Ship one self-evolution, in the background, and never raise."""
+        from custom_jarvis.ship import Shipper, token_from_environment
+
+        def run() -> None:
+            try:
+                shipper = Shipper(self.repo_dir, token_from_environment(),
+                                  log_path=self.data_dir / "ship_log.json")
+                shipper.ship(f"{reason}", why=reason)
+            except Exception:                                  # noqa: BLE001
+                pass                                           # the ship log has the truth
+
+        threading.Thread(target=run, name="ultron-ship", daemon=True).start()
+        return {"started": True, "reason": reason}
+
+    def _note_change(self, reason: str) -> None:
+        """Record a self-evolution that is waiting to be shipped.
+
+        The owner asked for every change, however small, to reach GitHub. It must
+        not reach GitHub silently, though: a push is public. So the change is
+        recorded here and `ship_status` reports it, and an approval ships it.
+        """
+        import json as _json
+        path = self.data_dir / "ship_pending.json"
+        try:
+            rows = _json.loads(path.read_text(encoding="utf-8"))
+            rows = rows if isinstance(rows, list) else []
+        except (OSError, ValueError):
+            rows = []
+        auto = self._ship_auto_enabled()
+        rows.append({"at": __import__("time").strftime("%Y-%m-%d %H:%M:%S"),
+                     "reason": str(reason)[:200],
+                     "status": "shipping" if auto else "waiting"})
+        try:
+            path.write_text(_json.dumps(rows[-50:], indent=1), encoding="utf-8")
+        except OSError:
+            pass
+        if auto:
+            self._auto_ship(str(reason)[:200])
 
     def _approve_tool(self, name, arguments):
         return self.approve(name, arguments)

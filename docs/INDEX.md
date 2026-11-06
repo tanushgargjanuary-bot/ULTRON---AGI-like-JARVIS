@@ -42,6 +42,15 @@ Every document in the repository, one line each, and who it is for.
 | [`docs/LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | should this be rewritten in another language — no, with numbers |
 | [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
 
+## Shipping and updating
+
+| Document | What it answers |
+|---|---|
+| `custom_jarvis/ship.py` | the order: scan, guard, syntax, gate, commit, push — and the sentence each refusal returns |
+| `custom_jarvis/selfupdate.py` | how a pull is verified, why a bad version is reset, and when a restart is asked for |
+| `custom_jarvis/ship_tools.py` | the four tools a person reaches: two to look, two to act |
+| gate claims `shipping`, `self_update` | the whole chain against a real bare remote, with no mocks |
+
 ## Scripts that produce a document or a verdict
 
 | Script | Produces |

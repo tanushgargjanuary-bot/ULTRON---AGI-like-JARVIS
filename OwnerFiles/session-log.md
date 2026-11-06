@@ -32,3 +32,23 @@ and both are named in `log.txt`.
 dead code, claims in documents that the code cannot support), then GitHub writes
 with approval, then a packaged Windows installer.
 
+## 2026-11-06 — session 17 (build 1.2.17)
+
+**Asked for.** Ship the work to GitHub, carefully, and make Ultron update itself
+from GitHub afterwards without losing the session.
+
+**Built.** `ship.py` (the six-stage ship, a secret scanner that tells a key from a
+fixture, a fast-forward-only push, a ship log), `selfupdate.py` (dirty refuse,
+verify, revert, restart marker), `ship_tools.py` (four tools, two of them
+read-only), and `ship_auto` — off unless the owner writes it, because a push is
+public.
+
+**Two defects the build found in itself.** `git status --porcelain` was sliced at
+a fixed offset, so the first line lost a character and `app.py` became `pp.py`;
+the syntax check then guarded a file that does not exist. And the restart marker
+was written into the repository, which made the tree dirty and would have stopped
+the next update. Both fixed, both tested, both in `log.txt`.
+
+**Blocked, and not by code.** The token carries Contents: Read but not Read and
+write, so GitHub answers 403 on every write while the repository reports
+`push: true`. The owner must edit the token. Nothing was stored in this tree.

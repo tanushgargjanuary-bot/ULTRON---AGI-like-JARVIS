@@ -1324,3 +1324,16 @@ reason. Repositories bought in from a trending list as new tools: that is
 two confirmations. The order agreed with the owner is unchanged: this, then the
 deep scan, then GitHub writes, then the push.
 
+## 6y. Shipping itself, and updating from GitHub (2026-11-06, build 1.2.17)
+
+**What exists now.** Three modules and four tools. `custom_jarvis/ship.py` (`Shipper`): `scan()` for assignment-shaped secrets and token shapes, `guards()` asserting the config and memory files are still ignored AND untracked, `check_syntax()` on the changed files, `commit()` with `Why:` / `Evidence:` / files in the message, `push()` fast-forward only, and a `ship_log.json` of the last 100 attempts. `custom_jarvis/selfupdate.py` (`Updater`): `check()`, `apply()` (dirty refuse → fetch → `pull --ff-only` → optional verify → `reset --hard` back on failure → reload hooks), and `restart_marker()`. `custom_jarvis/ship_tools.py`: `ship_status`, `ship_now`, `check_update`, `apply_update` — the two readers are in `AddonRegistry.READ_ONLY`, the two actors are not, so publishing and pulling ask.
+
+**The order is the safety story.** scan → guard → syntax → optional gate → commit → push. Every stage returns `{ok, stage, note, files}`; the first refusal names itself, so "it did not ship" is never a mystery. The gate claim `shipping` proves all seven steps against a real bare remote in a temp folder, and `self_update` proves the revert.
+
+**Two defects this build found in itself, both worth remembering.**
+1. `changed()` sliced `git status --porcelain` at a fixed offset. `git()` returns stripped output, so the first line lost its leading space and `app.py` became `pp.py`: the syntax check guarded a file that does not exist, and a broken module shipped. It is parsed by a pattern that accepts either shape now.
+2. The restart marker was written into the repository. Untracked file → dirty tree → the NEXT update refuses. It lives in the state folder now, and `.gitignore` names it.
+
+**Still open, and honestly blocked.** The push does not work yet, and the cause is not the code: the fine-grained token has `Contents: Read`, not `Contents: Read and write`, so `PUT /contents` answers 403 "Resource not accessible by personal access token" while the repository reports `push: true`. The owner must edit the token (Repository access: this repository; Permissions → Contents: Read and write). Do not store the token in the tree; use it in one command and revoke it when done. `config/api_keys.json` gains `github_token` for the app to use, and it is ignored.
+
+**What the next person should not do.** Do not make the push automatic by default. Do not add a force path "just for recovery". Do not call a reload an update — imported modules keep their old code, so the honest contract is: files updated, data reloaded, restart asked for only when `.py` changed.

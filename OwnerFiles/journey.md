@@ -85,3 +85,10 @@ three successes "100%". A tool that was never confined. A surface counted as
 passing because it was never asked. The fixes differ; the failure does not. If
 you are the next assistant, read a change twice with that question in mind: what
 does this make the program say, and what proves it?
+
+8. **1.2.17: it can hand its own work back.** Shipping and self-updating are the
+   same discipline in two directions: check before you publish, check after you
+   pull, and put it back if it does not hold. The interesting part is not the git
+   commands. It is the ordering — the secret scan runs before the commit exists,
+   so the leak is never in history, and the verify runs before the restart, so the
+   version on disk is always one that starts.

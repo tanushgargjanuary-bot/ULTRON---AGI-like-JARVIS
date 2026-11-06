@@ -35,7 +35,7 @@ from typing import Any, Callable
 TIMEOUT = 6.0                 # seconds a request may take
 BODY_LIMIT = 2_000_000        # bytes of JSON we are willing to parse
 CACHE_LIMIT = 400             # entries kept on disk
-USER_AGENT = "Ultron/1.2.16 (+https://github.com/FatihMakes/Mark-LVI)"
+USER_AGENT = "Ultron/1.2.17 (+https://github.com/FatihMakes/Mark-LVI)"
 
 # A note, not an exception: the caller is a language model reading a sentence.
 NO_NETWORK = "I have no network connection, so I cannot reach that platform."

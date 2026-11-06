@@ -26,7 +26,8 @@ def _json(data: Any) -> str:
 
 
 def register_pack_tools(registry: ToolRegistry, directory: Path | str,
-                        tool_names: Optional[List[str]] = None) -> None:
+                        tool_names: Optional[List[str]] = None,
+                        on_change=None) -> None:
     """Register the three pack tools against a state directory."""
     root = Path(directory)
     names = list(tool_names or [])
@@ -57,6 +58,8 @@ def register_pack_tools(registry: ToolRegistry, directory: Path | str,
         if not result["ok"]:
             return ToolResult(False, output=result["note"], error=result["note"],
                               data=result)
+        if on_change is not None:
+            on_change(f"added skill pack '{result['id']}'")   # queued for shipping
         return ToolResult(True, output=result["note"], data=result)
 
     @register(
@@ -71,6 +74,8 @@ def register_pack_tools(registry: ToolRegistry, directory: Path | str,
         if not result["ok"]:
             return ToolResult(False, output=result["note"], error=result["note"],
                               data=result)
+        if on_change is not None:
+            on_change(f"removed skill pack '{id}'")
         return ToolResult(True, output=result["note"], data=result)
 
     @register(

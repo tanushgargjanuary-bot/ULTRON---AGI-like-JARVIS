@@ -1297,6 +1297,205 @@ def claim_reminders(c: Claim) -> None:
     c.ok("a watch list", "a watched repository is turned into cards, then removed again")
 
 
+def _git_lab(prefix: str):
+    """A bare origin and a working copy, made fresh, so git is proven for real."""
+    import subprocess
+    import tempfile
+
+    base = Path(tempfile.mkdtemp(prefix=prefix))
+    origin, work = base / "origin.git", base / "work"
+    flags = ["-c", "user.name=Gate", "-c", "user.email=gate@localhost",
+             "-c", "protocol.file.allow=always"]
+
+    def git(cwd, *args):
+        return subprocess.run(["git", *flags, *args], cwd=str(cwd), capture_output=True,
+                              text=True, timeout=60)
+
+    subprocess.run(["git", "init", "--bare", "--initial-branch=main", str(origin)],
+                   check=True, capture_output=True)
+    work.mkdir()
+    git(work, "init", "-q", "--initial-branch=main")
+    (work / ".gitignore").write_text(
+        "config/api_keys.json\nconfig/api_keys.json.*\nmemory/long_term.json\n")
+    (work / "app.py").write_text("print('one')\n")
+    git(work, "add", "-A")
+    git(work, "commit", "-qm", "first")
+    git(work, "remote", "add", "origin", str(origin))
+    git(work, "push", "-qu", "-u", "origin", "main")
+    return base, origin, work, git
+
+
+def claim_shipping(c: Claim) -> None:
+    """Every change can be shipped, and a secret stops the ship."""
+    import shutil
+
+    if shutil.which("git") is None:
+        return c.skip("git", "git is not on PATH here, so a push cannot be proven")
+    try:
+        from custom_jarvis.ship import find_secret
+        from custom_jarvis.ship import Shipper
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the shipper", f"{type(exc).__name__}: {exc}")
+    c.ok("the shipper", "custom_jarvis/ship.py imports")
+
+    base, origin, work, git = _git_lab("gate-ship-")
+    shipper = Shipper(work, token="local-test-token", log_path=base / "ship.json")
+
+    (work / "leak.py").write_text('api_key = "Qz8vLmT4rXn2Pw9Ks3Dd"\n')  # gitleaks:allow — a fixture, not a key
+    blocked = shipper.ship("this must not ship")
+    if blocked["ok"] or blocked["stage"] != "scan":
+        return c.bad("a secret stops the ship",
+                     f"a file with a key in it was handled as {blocked.get('stage')}")
+    commits = [line for line in git(origin, "log", "--oneline", "main").stdout.splitlines()
+               if line.strip()]
+    if len(commits) != 1:
+        return c.bad("a secret stops the ship",
+                     f"the remote has {len(commits)} commits; the leak was committed")
+    c.ok("a secret stops the ship",
+         "an assignment-shaped key in one file stopped the run before the commit")
+
+    if not find_secret('x = "github_pat_11BZQ7XK2MvT9LpR4WnC8JdY6HsA3GfE5UoI1Kq7YmZ"'):  # gitleaks:allow — a fixture, not a key
+        return c.bad("a token shape is caught", "a GitHub-token-shaped string was missed")
+    if find_secret('api_key = "abcd1234efgh5678"') or find_secret('SECRET = "AIza-THIS-IS-A-FIXTURE"'):
+        return c.bad("a token shape is caught", "a placeholder was reported as a secret")
+    c.ok("a token shape is caught",
+         "a token-shaped string always stops the ship; four placeholder shapes never do")
+
+    marked, unmarked = "Qz8v" + "LmT4rXn2Pw9Ks3Dd", "Xk2m" + "Q8vLpT4rXn2Pw9Ks"
+    # Assembled from parts so this file does not itself contain the key shape it
+    # plants in the lab; a scanner that exempts its own source has a hole in it.
+    (work / "leak.py").write_text(
+        'api_key = "' + marked + '"  # gitleaks:allow\n'
+        'api_key = "' + unmarked + '"\n')
+    mixed = shipper.scan()
+    if mixed["clean"] or mixed["hits"][0]["lines"] != [2]:
+        return c.bad("the exemption is one line", f"a marked fixture line exempted {mixed['hits']}")
+    if mixed["allowed"] != 1:
+        return c.bad("the exemption is one line", f"the allowed count is {mixed['allowed']}")
+    c.ok("the exemption is one line",
+         "a fixture marked gitleaks:allow is skipped and counted; the unmarked key beside it stops the ship")
+
+    (work / "leak.py").unlink()
+    (work / "app.py").write_text("print('two')\n")
+    shipped = shipper.ship("print two", why="the gate needs a real ship")
+    if not shipped["ok"]:
+        return c.bad("a real push", f"the ship failed: {shipped.get('note')}")
+    remote_log = git(origin, "log", "--oneline", "main").stdout
+    if "print two" not in remote_log:
+        return c.bad("a real push", f"the commit is not on the remote: {remote_log!r}")
+    body = git(origin, "log", "-1", "--format=%B", "main").stdout
+    for piece in ("Why:", "Evidence:", "Secret scan"):
+        if piece not in body:
+            return c.bad("a real push", f"the commit message has no {piece}")
+    c.ok("a real push",
+         "committed and pushed to a real remote, with the evidence in the message")
+
+    other = base / "other"
+    git(base, "clone", "-q", str(origin), str(other))
+    (other / "app.py").write_text("print('from elsewhere')\n")
+    git(other, "commit", "-qam", "elsewhere")
+    git(other, "push", "-q", "origin", "main")
+    (work / "app.py").write_text("print('from here')\n")
+    diverged = shipper.ship("local work on top of a moved remote")
+    if diverged["ok"] or diverged["stage"] != "push" or "will not force" not in diverged["note"]:
+        return c.bad("never a force-push", f"a divergence was handled as {diverged}")
+    c.ok("never a force-push",
+         "the remote moved, so the ship stopped and said why instead of forcing")
+
+    (work / "later.py").write_text("# a later change\n")
+    no_token = Shipper(work, token="").ship("no token at all")
+    if no_token["ok"] or "no GitHub token" not in no_token["note"]:
+        return c.bad("a sentence when it cannot", f"a token-less ship returned {no_token}")
+    c.ok("a sentence when it cannot",
+         "with no token it says what is missing instead of failing in git")
+
+    if not (base / "ship.json").exists():
+        return c.bad("a record", "nothing was written to the ship log")
+    c.ok("a record", "each attempt is kept in a ship log beside the state")
+
+
+def claim_self_update(c: Claim) -> None:
+    """It updates from the remote, and it puts a bad version back."""
+    import shutil
+
+    if shutil.which("git") is None:
+        return c.skip("git", "git is not on PATH here, so an update cannot be proven")
+    try:
+        from custom_jarvis.selfupdate import Updater
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the updater", f"{type(exc).__name__}: {exc}")
+    c.ok("the updater", "custom_jarvis/selfupdate.py imports")
+
+    base, origin, work, git = _git_lab("gate-update-")
+
+    def publish(name, text):
+        other = base / "publisher"
+        if not other.exists():
+            git(base, "clone", "-q", str(origin), str(other))
+        else:
+            git(other, "pull", "-q", "--ff-only")
+        (other / name).write_text(text)
+        git(other, "add", "-A")
+        git(other, "commit", "-qm", f"publish {name}")
+        git(other, "push", "-q", "origin", "main")
+
+    # The marker lives beside the lab, not in the tree: a file in the tree would
+    # make it dirty and block the next update.
+    updater = Updater(work, token="local-test-token", marker=base / "restart.json")
+    quiet = updater.check()
+    if not quiet["ok"] or quiet["behind"] != 0:
+        return c.bad("a check", f"an up-to-date copy reported {quiet}")
+    c.ok("a check", "an up-to-date copy says so, and applies nothing")
+
+    publish("notes.md", "a new note\n")
+    data_only = updater.apply()
+    if not data_only["ok"] or data_only["restart_required"]:
+        return c.bad("data reloads live", f"a notes-only update returned {data_only}")
+    c.ok("data reloads live",
+         "a documentation change is taken with no restart, because it is read on demand")
+
+    publish("app.py", "print('two')\n")
+    code_change = updater.apply()
+    if not code_change["ok"] or not code_change["restart_required"]:
+        return c.bad("code waits for a restart", f"a code update returned {code_change}")
+    marker = updater.restart_marker()
+    if marker.get("files") != ["app.py"]:
+        return c.bad("code waits for a restart", f"the marker says {marker}")
+    if "restart is required" not in code_change["note"]:
+        return c.bad("code waits for a restart", "the answer did not mention the restart")
+    c.ok("code waits for a restart",
+         "a changed module is on disk, the marker names it, and the answer says why")
+
+    before = git(work, "rev-parse", "HEAD").stdout.strip()
+    publish("broken.py", "def broken(:\n")
+
+    def verify():
+        for path in work.rglob("*.py"):
+            try:
+                compile(path.read_text(), str(path), "exec")
+            except SyntaxError as error:
+                return {"ok": False, "note": f"{path.name}: {error.msg}"}
+        return {"ok": True}
+
+    reverted = updater.apply(verify=verify)
+    after = git(work, "rev-parse", "HEAD").stdout.strip()
+    if reverted["ok"] or reverted["stage"] != "verify" or after != before:
+        return c.bad("a bad version is put back",
+                     f"the update returned {reverted} and HEAD {before[:7]}->{after[:7]}")
+    if (work / "broken.py").exists():
+        return c.bad("a bad version is put back", "the broken file is still in the tree")
+    c.ok("a bad version is put back",
+         "a version that does not parse was reverted to the commit before it")
+
+    (work / "app.py").write_text("print('uncommitted')\n")
+    publish("notes.md", "another note\n")
+    dirty = updater.apply()
+    if dirty["ok"] or dirty["stage"] != "dirty":
+        return c.bad("your work is not overwritten", f"a dirty tree was handled as {dirty}")
+    c.ok("your work is not overwritten",
+         "with uncommitted changes it refuses to pull rather than discarding them")
+
+
 CLAIMS = [
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
@@ -1338,6 +1537,10 @@ CLAIMS = [
      "it extends itself", claim_self_extension),
     ("reminders", "It decides when to interrupt you, and when to stay quiet.",
      "the reminder queue", claim_reminders),
+    ("shipping", "It can ship its own work, and a secret stops the ship.",
+     "every change reaches GitHub, carefully", claim_shipping),
+    ("self_update", "It updates itself from the remote, and undoes a bad version.",
+     "it acts from GitHub, not from a folder", claim_self_update),
 ]
 
 

@@ -61,6 +61,9 @@ Every arrow is a file you can open. Nothing happens "inside the model".
 | A skill Ultron writes cannot write | `custom_jarvis/skillpacks.py` allow-list, gate claim `self_extension` |
 | A token never leaves one header | `core/github.py`, `tests/test_web_platforms.py`, gate claim `github` |
 | Interruption is earned, not scheduled | `custom_jarvis/schedule.py`, gate claim `reminders` |
+| A secret never reaches a commit | `custom_jarvis/ship.py:scan`, gate claim `shipping` |
+| A push is fast-forward only, never forced | `custom_jarvis/ship.py:push`, gate claim `shipping` |
+| A version that does not parse is put back | `custom_jarvis/selfupdate.py:apply`, gate claim `self_update` |
 | Nothing flashes a console window | gate claim `console`, `tests/test_*` |
 | Every module has a docstring and a test | `python scripts/map.py` (exit 1 on a new gap) |
 
@@ -75,7 +78,10 @@ Every arrow is a file you can open. Nothing happens "inside the model".
 | `<state>/web_cache.json` | ETags and bodies for the four platforms | 400 entries |
 | `<state>/github_watch.json` | the repositories and languages being watched | 10 + 5 |
 | `memory/long_term.json` | what the **user** approved | approval-gated |
-| `config/api_keys.json` | keys and tokens, including `github_token` | never logged |
+| `<state>/ship_log.json` | the last 100 shipping attempts, with the stage that refused | 100 |
+| `<state>/ship_pending.json` | self-evolutions waiting to be shipped | 50 |
+| `<state>/restart-required.json` | written only when a pull changed a `.py` file | one file |
+| `config/api_keys.json` | keys and tokens, including `github_token` and `ship_auto` | never logged |
 
 ## The three rules that survive every refactor
 
