@@ -1,0 +1,32 @@
+# Ultron — how git should treat this tree.
+#
+# This project has been bitten by line endings more than once: several modules
+# are CRLF, several are LF, and a patch tool that reads bytes has to ask which.
+# Recording the answer here stops git from rewriting one into the other on
+# Windows and also stops a diff from showing a whole file as changed because of
+# an invisible carriage return.
+#
+# The rule: Python and Markdown are LF everywhere. Windows launchers are CRLF,
+# because cmd.exe and PowerShell read them and a lone LF in a .bat file is a
+# broken file on some Windows versions.
+
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Real binaries. Never diffed, never converted.
+*.png binary
+*.jpg binary
+*.ico binary
+*.gif binary
+*.webm binary
+*.mp4 binary
+*.zip binary
