@@ -413,3 +413,115 @@ def register_addon_tools(registry: ToolRegistry) -> None:
             "provider_reachability": "not tested",
         }
         return ToolResult(True, output=json.dumps(data), data=data)
+
+    @register(
+        "search_text",
+        "Search file contents for a literal string or regular expression and return "
+        "path:line hits. Read-only, bounded, and it never runs project code.",
+        {
+            **path_schema,
+            "query": {"type": "string", "description": "Literal text or a regex"},
+            "max_results": {"type": "integer"},
+            "regex": {"type": "boolean", "description": "Treat the query as a regex"},
+        },
+        ["path", "query"],
+    )
+    def search_text(path: str = ".", query: str = "", max_results: int = 60,
+                    regex: bool = False) -> ToolResult:
+        import re as _re
+
+        text = str(query or "")
+        if not text:
+            return ToolResult(False, error="A search needs a query.")
+        root = Path(path).resolve()
+        if not root.is_dir():
+            return ToolResult(False, error=f"Not a directory inside the workspace: {root}")
+        try:
+            pattern = _re.compile(text if regex else _re.escape(text))
+        except _re.error as exc:
+            return ToolResult(False, error=f"That pattern does not compile: {exc}")
+
+        limit = max(1, min(int(max_results or 60), 200))
+        skip_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv",
+                     "dist", "build", ".ruff_cache", ".pytest_cache"}
+        hits, scanned, capped = [], 0, False
+        for candidate in sorted(root.rglob("*")):
+            if len(hits) >= limit:
+                capped = True
+                break
+            if not candidate.is_file() or any(part in skip_dirs for part in candidate.parts):
+                continue
+            try:
+                if candidate.stat().st_size > 1_000_000:
+                    continue
+                raw = candidate.read_bytes()
+            except OSError:
+                continue
+            if b"\x00" in raw[:2048]:          # binary
+                continue
+            scanned += 1
+            for number, line in enumerate(
+                    raw.decode("utf-8", "replace").splitlines(), 1):
+                if pattern.search(line):
+                    hits.append({
+                        "file": str(candidate.relative_to(root)),
+                        "line": number,
+                        "text": line.strip()[:200],
+                    })
+                    if len(hits) >= limit:
+                        capped = True
+                        break
+        data = {"query": text, "files_scanned": scanned, "hits": hits,
+                "truncated": capped}
+        summary = (f"{len(hits)} hit(s) in {scanned} file(s)"
+                   + (" — stopped at the limit" if capped else ""))
+        return ToolResult(True, output=json.dumps(data, ensure_ascii=False), data=data,
+                          metadata={"summary": summary})
+
+    @register(
+        "measure_code",
+        "Count files, lines and languages in a folder, biggest files first. The "
+        "answer to \"how big is this project\" without guessing.",
+        {**path_schema, "max_files": {"type": "integer"}},
+        ["path"],
+    )
+    def measure_code(path: str = ".", max_files: int = 4000) -> ToolResult:
+        root = Path(path).resolve()
+        if not root.is_dir():
+            return ToolResult(False, error=f"Not a directory inside the workspace: {root}")
+        limit = max(1, min(int(max_files or 4000), 20000))
+        skip_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv",
+                     "dist", "build", ".ruff_cache", ".pytest_cache"}
+        by_language: dict = {}
+        biggest, scanned, stopped = [], 0, False
+        for candidate in root.rglob("*"):
+            if not candidate.is_file():
+                continue
+            if any(part in skip_dirs for part in candidate.parts):
+                continue
+            if scanned >= limit:
+                stopped = True
+                break
+            try:
+                size = candidate.stat().st_size
+                if size > 4_000_000:
+                    continue
+                lines = sum(1 for _ in candidate.open("rb"))
+            except OSError:
+                continue
+            scanned += 1
+            suffix = candidate.suffix.lower() or "(none)"
+            row = by_language.setdefault(suffix, {"files": 0, "lines": 0})
+            row["files"] += 1
+            row["lines"] += lines
+            biggest.append((lines, str(candidate.relative_to(root))))
+        biggest.sort(reverse=True)
+        data = {
+            "files": scanned,
+            "lines": sum(row["lines"] for row in by_language.values()),
+            "languages": dict(sorted(by_language.items(),
+                                     key=lambda item: item[1]["lines"], reverse=True)[:15]),
+            "biggest": [{"lines": lines, "file": name} for lines, name in biggest[:10]],
+            "truncated": stopped,
+        }
+        return ToolResult(True, output=json.dumps(data, ensure_ascii=False), data=data)

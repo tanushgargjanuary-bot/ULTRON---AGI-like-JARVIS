@@ -76,6 +76,7 @@ enthusiastic report would quietly round up to "works".
 | **tool_catalog** | **PROVEN** (1.2.12) | 45 tools from inline/action/plugin/bridge; every unavailable tool carries its blocker; `tools_status` is declared and handled |
 | **plugins** | **PROVEN** (1.2.12) | 12 plugins load, validate, and each returns a sentence when called with no arguments; the five tool bridges are among them |
 | **tool_tabs** | **PROVEN** (1.2.12) | the TOOLS panel renders nine tabs, the count matches the catalog, and Ctrl+T opens it without a mouse |
+| **metacognition** | **PROVEN** (1.2.14) | eight steps: the ledger imports; 3 of 3 is reported as accuracy 1.0 with a bound of **0.439** and the verdict "not yet evidence"; 40 of 40 earns **0.912**; claims made at 95% and wrong are named as a 90-100% bucket with 0% hit rate (Brier 0.90); a lesson with no rule is **refused**; the rule comes back for a matching task and its use is counted; the proven strategy is passed over once so the untried one gets a fair test; one JSON file, no model, no network |
 | **whatsapp** | **PARTIAL** (1.2.13) | driver exists and refuses a stranger; a real WhatsApp window needs Windows, so the last step is a SKIP, not a pass |
 
 The **daily digest** was `NOT PRESENT` in 1.2.9 and removed from the gate in

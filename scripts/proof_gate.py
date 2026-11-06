@@ -820,6 +820,111 @@ def claim_whatsapp(c: Claim) -> None:
         c.ok("a real WhatsApp window", "the driver can build its adapter here")
 
 
+def claim_metacognition(c: Claim) -> None:
+    """It keeps score on itself, and it will not call a lucky streak evidence."""
+    try:
+        from custom_jarvis.metacog import Ledger
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the ledger", f"{type(exc).__name__}: {exc}")
+    c.ok("the ledger", "custom_jarvis/metacog.py exists and imports")
+
+    import tempfile
+
+    folder = Path(tempfile.mkdtemp(prefix="gate-metacog-"))
+    path = folder / "metacog.json"
+    ledger = Ledger(path)
+
+    # A perfect small record must NOT be reported as a proven one.
+    for _ in range(3):
+        row = ledger.record_prediction("the build passes", 0.9)
+        ledger.resolve_prediction(row["id"], "correct")
+    small = ledger.calibration()
+    if small["accuracy"] != 1.0:
+        return c.bad("a perfect record", f"accuracy was {small['accuracy']}, not 1.0")
+    if small["lower_bound"] >= 0.5 or "not yet evidence" not in small["verdict"]:
+        return c.bad("a perfect record",
+                     f"3 of 3 was sold as {small['lower_bound']:.3f} — "
+                     "a lucky streak became a number")
+    c.ok("a perfect record",
+         f"3 of 3 is accuracy 1.0 but a bound of {small['lower_bound']:.3f}, "
+         f"verdict \u201c{small['verdict']}\u201d")
+
+    # The same perfection, forty times, may be believed.
+    for _ in range(37):
+        row = ledger.record_prediction("the build passes", 0.9)
+        ledger.resolve_prediction(row["id"], "correct")
+    big = ledger.calibration()
+    if not big["lower_bound"] > 0.9 > small["lower_bound"]:
+        return c.bad("forty of forty", f"bound {big['lower_bound']:.3f} vs "
+                                       f"{small['lower_bound']:.3f}")
+    c.ok("forty of forty",
+         f"the same perfect record earns {big['lower_bound']:.3f} once it has "
+         "forty cases behind it")
+
+    # Saying 95% and being wrong must be named, not smoothed away.
+    for _ in range(2):
+        row = ledger.record_prediction("the tests cover this", 0.95, domain="selfcheck")
+        ledger.resolve_prediction(row["id"], "wrong")
+    wrong = ledger.calibration("selfcheck")
+    bucket = next((b for b in wrong["buckets"] if b["range"] == "90-100%"), None)
+    if bucket is None or bucket["was_right"] != 0.0:
+        return c.bad("an overconfident bucket",
+                     f"a 90-100% bucket said right none of the time: {bucket}")
+    c.ok("an overconfident bucket",
+         f"claims made at 95% were right 0% of the time, Brier {wrong['brier']:.2f}")
+
+    # A lesson without a rule is a diary entry.
+    try:
+        ledger.record_lesson("tests crash", "the suite died", "   ")
+    except ValueError:
+        c.ok("a rule is required", "a lesson with no rule was refused")
+    else:
+        return c.bad("a rule is required", "a lesson with no rule was accepted")
+
+    rule = "read the failing test before changing the code"
+    ledger.record_lesson("the suite fails on windows", "patched the caller", rule,
+                         domain="testing")
+    hits = ledger.lessons_for("the suite fails on windows again")
+    if not hits or hits[0]["rule"] != rule:
+        return c.bad("a lesson comes back", f"recall returned {hits[:1]}")
+    c.ok("a lesson comes back",
+         f"the rule was recalled for the next matching task, used {hits[0]['hits']}x")
+
+    # A lucky first strategy must not lock out the alternative.
+    for _ in range(3):
+        ledger.record_attempt("fix failing tests", "rewrite the module", True)
+    choice = ledger.choose_strategy("fix failing tests", ["rewrite the module",
+                                                          "read the error"])
+    if choice["strategy"] != "read the error":
+        return c.bad("an untried strategy is tried",
+                     f"it chose {choice['strategy']} without ever trying the other")
+    c.ok("an untried strategy is tried",
+         "the proven approach was passed over once, so the other one gets a fair test")
+
+    # It is one local file, and the tools reach it through the real registry.
+    if not path.exists():
+        return c.bad("one local file", "nothing was written to disk")
+    written = sorted(p.name for p in folder.iterdir())
+    if written != ["metacog.json"]:
+        return c.bad("one local file", f"the ledger scattered {written}")
+    try:
+        from custom_jarvis.metacog_tools import register_metacog_tools
+        from custom_jarvis.tools import registry as live
+
+        names = lambda: {row["name"] for row in live.list_tools()}
+        before = names()
+        register_metacog_tools(live, ledger)
+        after = names()
+        if len(after - before) < 9:
+            return c.bad("the tools are registered",
+                         f"only {len(after - before)} tools appeared")
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("the tools are registered", f"{type(exc).__name__}: {exc}")
+    c.ok("the tools are registered",
+         f"{len(after - before)} metacognitive tools joined the live registry")
+    c.ok("one local file", f"one JSON file, no model, no network: {written[0]}")
+
+
 CLAIMS = [
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
@@ -851,6 +956,8 @@ CLAIMS = [
      "dashboard tablist", claim_tool_tabs),
     ("whatsapp", "A message is read back before it is called sent.",
      "unverified work must say so", claim_whatsapp),
+    ("metacognition", "It keeps score on itself, and calls a lucky streak a streak.",
+     "meta-cognition / meta-learning", claim_metacognition),
 ]
 
 

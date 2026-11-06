@@ -267,6 +267,151 @@ SKILLS = (
             call("git_inspect", path="@workspace", view="log"),
         ),
     ),
+
+    # ── meta-cognition: knowing what it knows ────────────────────────────────
+    # These read the metacognitive ledger (custom_jarvis/metacog.py). None of them
+    # needs a file, and that is the point: the missing capability in an assistant
+    # is rarely another tool, it is knowing whether the answer it just gave was
+    # earned. Every call here is a read.
+    Skill(
+        "meta_preflight",
+        "Check itself before working",
+        "Calibration, unresolved claims and the lessons that apply before editing code.",
+        (
+            call("self_review", task="edit code in the workspace"),
+            call("calibration_report"),
+            call("recall_lessons", task="edit code change file workspace", limit=5),
+        ),
+    ),
+    Skill(
+        "meta_confidence",
+        "How sure is it, and on what evidence",
+        "The calibration record: accuracy, honest lower bound, and overconfident buckets.",
+        (
+            call("calibration_report"),
+            call("open_predictions", limit=10),
+        ),
+    ),
+    Skill(
+        "meta_lessons_digest",
+        "Recall the rules it learned the hard way",
+        "Rank stored lessons against the three task families it meets most.",
+        (
+            call("recall_lessons", task="tests failing debug", limit=4),
+            call("recall_lessons", task="edit python file change", limit=4),
+            call("recall_lessons", task="run command shell", limit=4),
+        ),
+    ),
+    Skill(
+        "meta_strategy_brief",
+        "Which approach has worked before",
+        "Strategy records for triage and review, chosen on the honest lower bound.",
+        (
+            call(
+                "choose_strategy",
+                task_type="test_failure_triage",
+                options=["read_stack_trace_first", "reproduce_first", "bisect_changes"],
+            ),
+            call(
+                "choose_strategy",
+                task_type="code_review",
+                options=["read_diff_first", "read_tests_first", "run_linter_first"],
+            ),
+        ),
+    ),
+    Skill(
+        "meta_debrief",
+        "What it claimed and never checked",
+        "Unresolved predictions, so a guess is not left standing as a fact.",
+        (
+            call("open_predictions", limit=20),
+            call("calibration_report"),
+            call("self_review"),
+        ),
+    ),
+
+    # ── inspection: questions about the workspace worth a plan ──────────────
+    Skill(
+        "code_size",
+        "How big is this project",
+        "Files, lines and languages, without guessing and without running anything.",
+        (call("measure_code", path="@workspace"),),
+    ),
+    Skill(
+        "biggest_files",
+        "Where the weight is",
+        "Structure plus the largest files, which is where reading pays first.",
+        (
+            call("project_snapshot", path="@workspace"),
+            call("measure_code", path="@workspace"),
+        ),
+    ),
+    Skill(
+        "todo_scan",
+        "Find the loose ends",
+        "Unfinished work markers, by file and line.",
+        (
+            call("search_text", path="@workspace", query="TODO", max_results=60),
+            call("search_text", path="@workspace", query="FIXME", max_results=60),
+        ),
+    ),
+    Skill(
+        "secret_scan",
+        "Look for keys that were left in the code",
+        "Assignment-shaped secrets in text files, by file and line, so a key left in "
+        "the code is found before a push is.",
+        (
+            call(
+                "search_text",
+                path="@workspace",
+                query=r'(?i:api[_-]?key|secret|token|passwd|password)\s*[:=]\s*["\']\S{8,}',
+                regex=True,
+                max_results=40,
+            ),
+        ),
+    ),
+    Skill(
+        "test_gap_scan",
+        "Tests against source, by count",
+        "Test files and total files side by side, so a claim of coverage has a shape.",
+        (
+            call("discover_project_files", pattern="test_*.py",
+                 search_path="@workspace", max_results=200),
+            call("measure_code", path="@workspace"),
+        ),
+    ),
+    Skill(
+        "debug_context",
+        "Everything needed to start a bug",
+        "Structure, worktree diff and the lessons from previous failures.",
+        (
+            call("project_snapshot", path="@workspace"),
+            call("git_inspect", path="@workspace", view="diff"),
+            call("recall_lessons", task="bug failure debugging tests", limit=6),
+        ),
+    ),
+    Skill(
+        "release_checklist",
+        "Before calling it finished",
+        "Worktree state, recent commits, project size and the dependency list.",
+        (
+            call("git_inspect", path="@workspace", view="status"),
+            call("git_inspect", path="@workspace", view="log"),
+            call("measure_code", path="@workspace"),
+            call("discover_project_files", pattern="requirements*.txt",
+                 search_path="@workspace", max_results=10),
+        ),
+    ),
+    Skill(
+        "docs_freshness",
+        "Which documents exist and where they are thin",
+        "Documentation files, their size, and the unanswered markers inside them.",
+        (
+            call("discover_project_files", pattern="*.md",
+                 search_path="@workspace", max_results=60),
+            call("search_text", path="@workspace", query="TODO", max_results=20),
+        ),
+    ),
 )
 SKILL_BY_ID = {skill.identity: skill for skill in SKILLS}
 

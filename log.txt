@@ -1874,3 +1874,50 @@ BUILD 1.2.13.
 SUITE AND GATE
   200 files · 1,145 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
   Proof gate: 7 PROVEN · 13 PARTIAL (whatsapp added) · 0 FAILED · 0 NOT PRESENT.
+
+BUILD 1.2.14.
+  The assistant can now keep score on itself. Meta-cognition and meta-learning,
+  built as arithmetic on a record instead of an instruction in a prompt.
+  1. custom_jarvis/metacog.py — a ledger of claims. Each claim is stored with
+     the confidence it was stated at and later resolved correct / partly / wrong.
+     Reported as accuracy, Brier, and per-bucket calibration ("said 95%, was
+     right 0%"). Confidence is a Wilson lower bound, never a raw ratio: 3 of 3
+     is 0.439 and the verdict says "not yet evidence"; 40 of 40 is 0.912.
+  2. Meta-learning, two stores. Lessons are trigger + mistake + rule, and a
+     lesson with no rule is refused. recall_lessons ranks rules against the
+     task about to start and counts use. Strategies are per task type and
+     choose_strategy prefers an untried option once, so a lucky first guess
+     cannot become policy.
+  3. Nine tools in category metacognition, plus search_text and measure_code.
+     Both readers are now in PATH_ARGUMENTS and INSPECTION_TOOLS.
+  4. Thirteen skills (24 -> 37): meta_preflight, meta_confidence, meta_debrief,
+     meta_lessons_digest, meta_strategy_brief, code_size, biggest_files,
+     todo_scan, secret_scan, test_gap_scan, debug_context, release_checklist,
+     docs_freshness.
+  5. Three defects found by the tests, all fixed here:
+     - secret_scan lost regex=True when its pattern was repaired, so it searched
+       for a literal backslash-s and found nothing. The tool was right; the
+       skill was wrong.
+     - search_text and measure_code were absent from addon_runtime
+       PATH_ARGUMENTS, so prepare_args never confined them: a path outside the
+       workspace was accepted. Added to that table and to the read-only set.
+     - my own test asserted every skill is applicable in a plain folder, when
+       debug_context and release_checklist need .git. Replaced with two honest
+       tests: the ones that need nothing are applicable, and the two that need
+       .git say so in their reason instead of failing at step two.
+  Also: two hardcoded skill counts (len(SKILLS) == 24) were replaced with
+  structural assertions - unique ids, every call resolving to a live tool, the
+  meta_* family present - because a count says nothing about the set it counts.
+  No model call, no network, no embedding: one JSON file beside the state.
+  New proof-gate claim: metacognition, PROVEN with eight steps.
+
+SUITE AND GATE
+  204 files · 1,195 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+  Proof gate: 8 PROVEN (metacognition added) · 13 PARTIAL · 0 FAILED.
+  The PARTIAL set is unchanged: each needs Windows, a microphone, a display or
+  a live provider, and scripts/verify_all.py is what closes them.
+
+NEXT, IF YOU WANT IT
+  docs/SKILLS.md lists eight further meta skills and seven domain skills, with
+  the reason each is worth building. The first is post_mortem: the planner
+  already sees a failing step, and today that knowledge dies with the turn.

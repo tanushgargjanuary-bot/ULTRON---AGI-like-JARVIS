@@ -49,7 +49,7 @@ for it until they say so explicitly.
 
 | Component | Status | Evidence |
 |---|---|---|
-| `custom_jarvis/` engine (24 skills, service, planner, evidence, repair, governance) | Built | `tests/test_self_healing.py`, `test_repair_judgment.py`, `test_autonomy_upgrades.py` |
+| `custom_jarvis/` engine (37 skills, service, planner, evidence, repair, governance, metacognition) | Built | `tests/test_self_healing.py`, `test_repair_judgment.py`, `test_autonomy_upgrades.py` |
 | Human approval gate (`core/custom_gate.py`) | Built | `tests/test_mark_integration.py` |
 | Consent-first insights (`core/insights.py`) | Built | `tests/test_insights.py` (23 tests) |
 | RAM nag suppression | Built | `tests/test_insights.py` + `actions/system_monitor.py` |
@@ -152,7 +152,7 @@ in `custom_jarvis/failure_memory.py`.
 | `actions/system_monitor.py` | RAM meter, alerts; `notify_ram=False`. |
 | `actions/proactive.py` | Background suggestions; no RAM/cleanup nagging. |
 | `plugins/custom_jarvis.py` | Lazy bridge exposing the custom package as one MARK tool (payload_json ≤ 64 KiB). |
-| `custom_jarvis/service.py` | 24 skills, worker, SQLite, budgets, provider bridge, insight operations. |
+| `custom_jarvis/service.py` | 37 skills, worker, SQLite, budgets, provider bridge, insight operations, metacog ledger. |
 | `custom_jarvis/settings.py` | State dirs, `%LOCALAPPDATA%\CustomMarkJarvis` (XDG fallback). |
 | `AGENTS.md` | Hard coding rules for any AI. Read before editing. |
 | `CUSTOM_JARVIS.md` | Detailed manual of the custom layer, migration matrix, gaps. |
@@ -1129,3 +1129,70 @@ proof gate **7 PROVEN / 13 PARTIAL / 0 FAILED / 0 NOT PRESENT**.
 connection is not available in this session, so the push needs the owner's
 credentials; the commit, the ignore rules and the CI job are ready. CC BY-NC 4.0
 allows this publication with attribution and does not allow selling it.
+
+## 6v. Keeping score on itself (2026-11-06, build 1.2.14)
+
+You asked for a lot of skills, with meta-learning and meta-cognition named as the
+priority. The temptation was to add a prompt that says "be honest about what you
+don't know", which is free and does nothing. What was built instead is a record.
+
+**`custom_jarvis/metacog.py`, one JSON file, no model, no network.** A claim is
+stored with the confidence it was stated at, and later resolved `correct`,
+`partly` or `wrong`. Three scores come out: accuracy, Brier, and a per-bucket
+table. The single most important line in the file is that a perfect record is
+**not** reported as reliable: the Wilson lower bound of 3 of 3 is **0.439**, and
+the verdict is "not yet evidence — ask, or go and check". The same perfection,
+forty times, earns **0.912**. That is the whole difference between a metric and
+flattery, and it is the one property the proof gate now checks by name.
+
+**Meta-learning has two stores.** Lessons are trigger + mistake + **rule**, and a
+lesson whose rule is blank is refused — otherwise the store fills with diary
+entries. `recall_lessons(task)` ranks rules against the task about to start by
+token overlap and counts how often each rule is used, so rules that keep applying
+rise. Strategies are per task type, and `choose_strategy` prefers an **untried**
+option once before trusting the best record: a strategy that worked once is a
+sample of one, and letting it become policy is how an assistant stops learning.
+
+**Thirteen skills, 24 → 37.** Five meta (`meta_preflight`, `meta_confidence`,
+`meta_debrief`, `meta_lessons_digest`, `meta_strategy_brief`) and eight inspection
+skills that each replace a guess with a measurement (`code_size`,
+`biggest_files`, `todo_scan`, `secret_scan`, `test_gap_scan`, `debug_context`,
+`release_checklist`, `docs_freshness`). `docs/SKILLS.md` is the reasoning behind
+the set: what a skill is allowed to be, the next eight meta skills and seven
+domain skills in value order, and the four things that must never become a skill
+(anything that generates and runs code, anything that changes its own
+permissions, anything that records personal memory without approval, and any
+"skill" that is a single tool call under another name).
+
+**Three defects found while testing it, all fixed here.**
+
+1. `secret_scan` **lost `regex=True`** when its pattern was repaired in the same
+   session, so it searched for a literal backslash-`s` and found nothing. The
+   tool was right; the skill was wrong. A test that only asserted "the skill
+   runs" would have passed.
+2. `search_text` and `measure_code` were **not in `addon_runtime.PATH_ARGUMENTS`**,
+   so `prepare_args` never confined them and a path outside the workspace was
+   accepted. The confinement test caught it. Both are now in that table and in
+   the read-only `INSPECTION_TOOLS` set.
+3. **My own test was wrong**: it asserted that every skill is applicable in a
+   plain folder, when `debug_context` and `release_checklist` genuinely need
+   `.git`. Replaced with two honest tests — the ones that need nothing are
+   applicable, and the two that need `.git` say so in their reason.
+
+Two hardcoded counts (`len(SKILLS) == 24`) were replaced earlier in the same
+pass with structural assertions: unique ids, every `calls` entry resolving to a
+live tool, the `meta_*` family present. A count says nothing about the set it
+counts, and the next skill would have broken the test without saying anything
+true.
+
+Gate: 204 files · **1,195 tests** (6 skipped) · 99 self-checks · `verify.py`
+exit 0 · proof gate **8 PROVEN / 13 PARTIAL / 0 FAILED** — the new claim is
+`metacognition`, proven in eight steps. The thirteen PARTIAL claims are the same
+ones as 1.2.13: each needs Windows, a microphone, a display or a live provider.
+
+**Where the next gain is.** `post_mortem`: the planner already sees the failing
+step of a plan, and today that knowledge dies with the turn. Recording it as a
+draft lesson — with the owner's approval, since it writes — is the cheapest real
+improvement in the meta-learning family, and it is one hook rather than a
+subsystem.
+

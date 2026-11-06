@@ -147,8 +147,16 @@ class ServiceTests(unittest.TestCase):
     def tool(self, name, **args):
         return self.service.perform("tool", {"name": name, "arguments": args})
 
-    def test_all_24_skills_preserved(self):
-        self.assertEqual(len(self.service.perform("list_skills", {})), 24)
+    def test_every_skill_is_listed_and_applicable_in_a_workspace(self):
+        skills = self.service.perform("list_skills", {})
+        self.assertGreaterEqual(len(skills), 24)
+        ids = [row["id"] for row in skills]
+        self.assertEqual(len(ids), len(set(ids)))
+        for row in skills:
+            self.assertTrue(row["title"], row["id"])
+            self.assertIn("applicable", row)
+        # The meta-cognitive family is reachable through the real plugin path.
+        self.assertTrue(any(row["id"].startswith("meta_") for row in skills))
 
     def test_read_only_operation_needs_no_write_approval(self):
         self.assertTrue(self.tool("read_file", path="note.txt")["success"])
@@ -230,7 +238,7 @@ class ServiceTests(unittest.TestCase):
         # Wait by acquiring the job mutex, not by spawning another task.
         self.assertTrue(self.service.busy.acquire(timeout=5))
         self.service.busy.release()
-        self.assertEqual(len(self.service.last_result), 24)
+        self.assertEqual(len(self.service.last_result), len(self.service.perform("list_skills", {})))
         player.show_content.assert_called()
 
     def test_repair_test_does_not_promote_and_rollback_is_tracked(self):

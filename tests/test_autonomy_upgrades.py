@@ -50,6 +50,30 @@ STRIP = 'def adapt(args):\n    return dict(args, path=args["path"].strip())\n'
 CASES = [ContractCase({"path": " note.txt"}, {"path": "note.txt"})]
 
 
+def registry_names() -> set:
+    """Every tool name the app's registry actually holds."""
+    from custom_jarvis.addon_tools import register_addon_tools
+    from custom_jarvis.metacog import Ledger
+    from custom_jarvis.metacog_tools import register_metacog_tools
+    from custom_jarvis.tools import ToolRegistry
+
+    from custom_jarvis.tools import registry as source_registry
+
+    raw = ToolRegistry()
+    # The same seeding the service does, so a skill cannot call a tool that exists
+    # only in a test.
+    for name in ("read_file", "write_file", "list_dir", "execute_command",
+                 "run_shell", "get_active_window", "take_screenshot"):
+        definition = source_registry.get(name)
+        if definition is not None:
+            raw.register(name=name, description=definition.description,
+                         category=definition.category,
+                         parameters=definition.parameters)(definition.handler)
+    register_addon_tools(raw)
+    register_metacog_tools(raw, Ledger(":memory:-test.json"))
+    return {row["name"] for row in raw.list_tools()}
+
+
 class OfflineProvider:
     def __init__(self, answer=None):
         self.calls = 0
@@ -540,7 +564,19 @@ class AutonomyUpgradeTests(unittest.TestCase):
             "git", "Git", "inspect", (("git_inspect", {}),), required_markers=(".git",)
         )
         self.assertFalse(judge_skill_applicability(skill, self.root)["applicable"])
-        self.assertEqual(len(SKILLS), 24)
+        # A count alone said nothing about the set it counted. These hold for 24
+        # skills or 240: unique ids, every skill does something, every referenced
+        # tool exists, and the meta-cognitive family is present.
+        self.assertGreaterEqual(len(SKILLS), 24)
+        identities = [s.identity for s in SKILLS]
+        self.assertEqual(len(identities), len(set(identities)), "duplicate skill id")
+        for entry in SKILLS:
+            self.assertTrue(entry.calls, f"{entry.identity} has no steps")
+            self.assertTrue(entry.title and entry.purpose, entry.identity)
+            for tool_name, _args in entry.calls:
+                self.assertIn(tool_name, registry_names(), f"{entry.identity} calls {tool_name}")
+        self.assertTrue(any(i.startswith("meta_") for i in identities),
+                        "no meta-cognitive skill")
 
     def test_compile_approved_structured_procedure(self):
         row = {

@@ -5,7 +5,7 @@ import json
 PLUGIN = {
     "name": "custom_jarvis",
     "description": (
-        "Custom JARVIS extensions: workspace-confined inspected file tools, 24 reviewed skills, "
+        "Custom JARVIS extensions: workspace-confined inspect and search tools, reviewed skills, "
         "goal verification, backups and transaction rollback, local failure fingerprints, "
         "bounded argument-adapter repair with shadow tests and canaries, procedure memory "
         "and checkpoint resume. MARK remains the voice/provider/UI host. "

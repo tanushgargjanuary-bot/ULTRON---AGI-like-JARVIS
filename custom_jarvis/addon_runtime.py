@@ -34,6 +34,11 @@ INSPECTION_TOOLS = frozenset(
         "preview_file_change",
         "inspect_accessibility",
         "vision_capability_status",
+        # The two workspace readers added with the meta-cognitive skills.
+        # They read file contents, so they are read-only; they take a path,
+        # so they belong in the confinement table below.
+        "search_text",
+        "measure_code",
     }
 )
 PATH_ARGUMENTS = {
@@ -48,6 +53,8 @@ PATH_ARGUMENTS = {
         "inspect_json",
         "verify_file",
         "preview_file_change",
+        "search_text",
+        "measure_code",
     )
 }
 PATH_ARGUMENTS["find_files"] = "search_path"

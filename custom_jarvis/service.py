@@ -16,6 +16,8 @@ from pathlib import Path
 from core import policy
 from custom_jarvis.addon_runtime import AddonRegistry
 from custom_jarvis.addon_tools import register_addon_tools
+from custom_jarvis.metacog import Ledger
+from custom_jarvis.metacog_tools import register_metacog_tools
 from custom_jarvis.autonomy_governor import AutonomyGovernor
 from custom_jarvis.brain import JarvisBrain
 from custom_jarvis.evidence import BackupManager
@@ -111,6 +113,11 @@ class CustomService:
                 parameters=definition.parameters,
             )(definition.handler)
         register_addon_tools(raw)
+        # Meta-cognition lives beside the knowledge store: same data directory,
+        # same "bounded and local" rule, its own file because it is a record of
+        # the assistant's judgement rather than of the workspace.
+        self.metacog = Ledger(self.data_dir / "metacog.json")
+        register_metacog_tools(raw, self.metacog)
         self.control = AddonRegistry(raw, self._approve_tool, self.store, self.backups)
         self.breaker = RepairCircuitBreaker()
         self.repairs = TrackedRepairs(self.data_dir / "repairs", self.breaker)
