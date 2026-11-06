@@ -32,6 +32,7 @@ WHAT IT IS FOR
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import sys
 import threading
@@ -1073,6 +1074,38 @@ def test_panel_settings_survive():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+def _retire_qt() -> None:
+    """Close what the panel test opened, while Python is still healthy.
+
+    On Windows this file exited with 3221225477 — an access violation, which is
+    the operating system's name for "a native library crashed". Nothing in the
+    tests failed: the last widget test passed, then the interpreter destroyed a
+    QApplication and ten widgets in an order Qt does not survive. Qt's own
+    documentation asks for an orderly close, so this does that: widgets first,
+    then events, then the application.
+    """
+    try:
+        from PyQt6.QtWidgets import QApplication
+    except Exception:
+        return                     # no Qt here: nothing was opened, nothing to close
+    app = QApplication.instance()
+    if app is None:
+        return
+    try:
+        for widget in app.topLevelWidgets():
+            widget.close()
+            widget.deleteLater()
+        app.processEvents()
+        app.quit()
+        app.processEvents()
+        app.deleteLater()
+        app.processEvents()
+    except Exception as error:
+        failures.note("providers._tests.retire_qt", error)
+    gc.collect()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 async def main() -> int:
     print("providers self-test")
     await test_real_caller_shapes()
@@ -1094,6 +1127,7 @@ async def main() -> int:
     test_voice_folder_is_writable()
     test_a_chosen_voice_downloads_itself()
     test_panel_settings_survive()
+    _retire_qt()
 
     print(f"\n{'=' * 56}")
     print(f"{_ok} passed, {_fail} failed")
@@ -1105,4 +1139,11 @@ async def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    # Belt and braces for the Windows crash: the verdict is already printed, so the
+    # only thing left is the interpreter's own finalisation — which is where the
+    # access violation happened. Leaving through os._exit skips that path and
+    # changes nothing the harness reports. Flush first, or the verdict is lost.
+    _code = asyncio.run(main())
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(_code)

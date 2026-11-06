@@ -832,7 +832,9 @@ def claim_whatsapp(c: Claim) -> None:
     # read the box back before saying sent.
     try:
         from core.ui_tree import Snapshot
-        from tests.test_whatsapp_core import FakeSession, tree
+        # The test modules were merged into suites on 2026-11-06; the gate names
+        # the suite that now holds this section, not the file it used to be.
+        from tests.test_suite_providers import FakeSession, tree
 
         session = FakeSession(tree(contacts=("Mum",)), contacts=("Mum",))
         sent, why = wa.WhatsAppTransport(session=session).send_message_to("Mum", "gate")
