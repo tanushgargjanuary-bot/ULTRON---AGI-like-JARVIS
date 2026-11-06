@@ -48,6 +48,7 @@ agnostic, which matters here: the microphone runs at 16 kHz and playback at
 """
 
 from __future__ import annotations
+from core import failures
 
 import time
 
@@ -188,8 +189,8 @@ class EchoGuard:
             cutoff = t - _HISTORY_S
             if len(self._hist) > 8:
                 self._hist = [h for h in self._hist if h[0] >= cutoff]
-        except Exception:
-            pass          # never let bookkeeping disturb playback
+        except Exception as error:
+            failures.note("echo.note_output", error)
 
     def is_user_speech(self, pcm, sr: int, level: float,
                        when: float | None = None) -> bool:

@@ -16,6 +16,7 @@ openwakeword ships small ONNX models (a few MB each) and runs comfortably on a
 CPU. The pretrained wake phrase used here is "Hey Jarvis".
 """
 from __future__ import annotations
+from core import failures
 
 import queue
 import subprocess
@@ -154,8 +155,8 @@ class WakeWordDetector:
         # unblock the thread if it's waiting on the queue
         try:
             self._queue.put_nowait(None)
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("wake_word.stop", error)
         self._model = None
         self._ready = False
 
@@ -174,8 +175,8 @@ class WakeWordDetector:
             self._queue.put_nowait(data)
         except queue.Full:
             pass
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("wake_word.feed", error)
 
     def _loop(self) -> None:
         import numpy as np
@@ -207,5 +208,5 @@ class WakeWordDetector:
         try:
             while True:
                 self._queue.get_nowait()
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("wake_word._drain", error)

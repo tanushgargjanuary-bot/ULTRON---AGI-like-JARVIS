@@ -28,6 +28,7 @@ reports `scope == "window"` and the Qt shortcut carries it.
 """
 
 from __future__ import annotations
+from core import failures
 
 import platform
 import threading
@@ -142,8 +143,8 @@ class PushToTalk:
         self._held = held
         try:
             self._on_change(held)
-        except Exception:
-            pass          # a listener fault must never kill the watcher
+        except Exception as error:
+            failures.note("hotkey._set_held", error)
 
     def _poll_loop(self) -> None:
         import ctypes

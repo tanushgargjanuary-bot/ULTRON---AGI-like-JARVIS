@@ -27,6 +27,7 @@ WHAT IS VERIFIED, AND WHAT IS NOT
 """
 
 from __future__ import annotations
+from core import failures
 
 import importlib.util
 import platform
@@ -152,7 +153,8 @@ def _actions_for(control: Any) -> tuple[str, ...]:
         try:
             if getter() is not None:
                 found.append(action)
-        except Exception:  # noqa: BLE001, S112
+        except Exception as error:  # noqa: BLE001, S112
+            failures.note("ui_windows._actions_for", error)
             continue
     if not found:
         return ()
@@ -219,15 +221,16 @@ class WindowsAdapter:
                 # A window that cannot be queried is a window that is not this
                 # one; try the next. Anything else would abort the search over a
                 # single unresponsive process.
-                except Exception:  # noqa: BLE001, S112
+                except Exception as error:  # noqa: BLE001, S112
+                    failures.note("ui_windows._window", error)
                     continue
             raise RuntimeError(f"no window matches '{app}'")
         try:
             window = uia.GetForegroundControl()
             if window is not None:
                 return window
-        except Exception:  # noqa: BLE001, S110
-            pass
+        except Exception as error:  # noqa: BLE001, S110
+            failures.note("ui_windows._window", error)
         raise RuntimeError("no foreground window")
 
     def foreground(self) -> dict:

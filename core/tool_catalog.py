@@ -22,6 +22,7 @@ plugins are read through their loader so a broken file cannot crash the panel.
 """
 
 from __future__ import annotations
+from core import failures
 
 import ast
 from dataclasses import dataclass
@@ -199,13 +200,14 @@ def build(include_bridges: bool = True) -> list[Entry]:
     for source in (_inline_entries(), _action_entries(), _plugin_entries()):
         try:
             entries.extend(source)
-        except Exception:                                      # noqa: BLE001
+        except Exception as error:                                      # noqa: BLE001
+            failures.note("tool_catalog.build", error)
             continue
     if include_bridges:
         try:
             entries.extend(_bridge_entries())
-        except Exception:                                      # noqa: BLE001
-            pass
+        except Exception as error:                                      # noqa: BLE001
+            failures.note("tool_catalog.build", error)
 
     seen: set[str] = set()
     unique: list[Entry] = []

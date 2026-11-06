@@ -24,6 +24,7 @@ collisions are logged and the offending file is skipped — they NEVER raise out
 of discover_actions() and never abort the scan of the remaining files.
 """
 from __future__ import annotations
+from core import failures
 
 import importlib.util
 import inspect
@@ -178,8 +179,8 @@ class ActionRegistry:
             if sys.stderr is not None:
                 try:
                     print(_safe_traceback(), file=sys.stderr)
-                except Exception:
-                    pass
+                except Exception as error:
+                    failures.note("action_loader.run", error)
             return f"Tool '{name}' failed: {e}"
 
 
@@ -357,8 +358,8 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
             if sys.stderr is not None:
                 try:
                     print(_safe_traceback(), file=sys.stderr)
-                except Exception:
-                    pass
+                except Exception as error:
+                    failures.note("action_loader.discover_actions", error)
 
         all_records.append(rec)
         if rec.valid:

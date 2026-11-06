@@ -51,6 +51,7 @@ NO LANGUAGE DETECTION HERE EITHER
     has been synthesised.
 """
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import os
@@ -142,8 +143,8 @@ def prefetch(on_ready=None) -> None:
         if on_ready:
             try:
                 on_ready()
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("tts_system.prefetch", error)
 
     threading.Thread(target=work, daemon=True).start()
 

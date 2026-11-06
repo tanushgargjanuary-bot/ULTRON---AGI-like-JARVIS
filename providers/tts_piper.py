@@ -40,6 +40,7 @@ IT FOLLOWS THE LANGUAGE BEING SPOKEN, WITHOUT GUESSING AT IT
     of a sentence would be a worse failure than answering in the wrong voice.
 """
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import json
@@ -74,8 +75,8 @@ def _voice_dir() -> Path:
         probe.write_text("", encoding="utf-8")
         probe.unlink()
         return here
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("tts_piper._voice_dir", error)
 
     import os
     import platform
@@ -92,8 +93,8 @@ def _voice_dir() -> Path:
     fallback = root / "MarkAssistant" / "piper-voices"
     try:
         fallback.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("tts_piper._voice_dir", error)
     return fallback
 
 
@@ -163,8 +164,8 @@ def prefetch(on_ready=None) -> None:
         if on_ready:
             try:
                 on_ready()
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("tts_piper.prefetch", error)
 
     threading.Thread(target=work, daemon=True).start()
 

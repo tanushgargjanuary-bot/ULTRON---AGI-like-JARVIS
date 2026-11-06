@@ -20,6 +20,7 @@ says this in its own result so the model cannot present it as an official list.
 """
 
 from __future__ import annotations
+from core import failures
 
 import datetime as _dt
 import os
@@ -38,8 +39,8 @@ def token() -> str:
         value = load_api_keys().get("github_token")
         if isinstance(value, str) and value.strip():
             return value.strip()
-    except Exception:                                          # noqa: BLE001
-        pass
+    except Exception as error:                                          # noqa: BLE001
+        failures.note("github.token", error)
     return (os.environ.get("GITHUB_TOKEN", "") or "").strip()
 
 

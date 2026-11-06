@@ -42,6 +42,7 @@ WHAT IS NOT HERE
 """
 
 from __future__ import annotations
+from core import failures
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -270,7 +271,8 @@ def candidates(adapters: Iterable[object]) -> list[object]:
             continue
         try:
             caps = adapter.capabilities()
-        except Exception:  # noqa: BLE001, S112
+        except Exception as error:  # noqa: BLE001, S112
+            failures.note("ui_ladder.candidates", error)
             continue
         if caps:
             usable.append(adapter)

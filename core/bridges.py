@@ -32,6 +32,7 @@ first.
 """
 
 from __future__ import annotations
+from core import failures
 
 import json
 import os
@@ -81,8 +82,8 @@ def _setting(key: str, default: str = "") -> str:
         value = load_api_keys().get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("bridges._setting", error)
     return (os.environ.get(key.upper(), "") or default).strip()
 
 

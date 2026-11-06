@@ -30,6 +30,7 @@ WHAT THIS IS NOT
 """
 
 from __future__ import annotations
+from core import failures
 
 import re
 import time
@@ -408,5 +409,5 @@ def _announce_snapshot(adapter: Adapter, snapshot_id: str) -> None:
     if callable(setter):
         try:
             setter(snapshot_id)
-        except Exception:  # noqa: BLE001, S110
-            pass
+        except Exception as error:  # noqa: BLE001, S110
+            failures.note("ui_action._announce_snapshot", error)

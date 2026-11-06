@@ -34,6 +34,7 @@ WHAT BELONGS HERE AND WHAT DOES NOT
 """
 
 from __future__ import annotations
+from core import failures
 
 import threading
 import time
@@ -75,8 +76,8 @@ def _log(msg: str) -> None:
     if _log_cb:
         try:
             _log_cb(msg)
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("confirm._log", error)
 
 
 def request(key: str, title: str, detail: str, run: Callable[[], str]) -> str:
@@ -126,8 +127,8 @@ def resolve(accepted: bool) -> None:
     if _hide_cb:
         try:
             _hide_cb()
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("confirm.resolve", error)
 
     if p is None:
         return

@@ -45,6 +45,7 @@ THE ASSISTANT IS NEVER A TARGET
     refuse rather than guess.
 """
 from __future__ import annotations
+from core import failures
 
 import os
 import platform
@@ -263,9 +264,10 @@ def own_exes(chain: Optional[set[int]] = None) -> set[str]:
             exe = psutil.Process(pid).exe()
             if exe:
                 found.add(os.path.normcase(exe))
-        except Exception:
+        except Exception as error:
             # A permission error, or a process that exited between the two
             # calls. Either way it is one fewer path to compare against.
+            failures.note("appidentity.own_exes", error)
             continue
     _OWN_EXES = found
     return _OWN_EXES
@@ -355,7 +357,8 @@ def own_pids() -> set[int]:
                     exe = proc.info.get("exe")
                     if exe and os.path.normcase(exe) in our_exes:
                         pids.add(proc.info["pid"])
-                except Exception:
+                except Exception as error:
+                    failures.note("appidentity.own_pids", error)
                     continue
         except Exception as exc:
             print(f"[appidentity] sibling scan failed: {exc}")
@@ -553,9 +556,10 @@ def running(spoken: str, include_self: bool = False) -> list[Match]:
                 continue
             out.append(Match(pid=pid, name=name, score=best,
                              is_self=is_self, titles=titles))
-        except Exception:
+        except Exception as error:
             # A process that exited between listing and reading is normal and
             # is not worth a line in the log.
+            failures.note("appidentity.running", error)
             continue
 
     out.sort(key=lambda m: (-m.score, m.pid))
@@ -871,8 +875,8 @@ def focus(match: "Match") -> bool:
             return True
     except FileNotFoundError:
         pass
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("appidentity.focus", error)
 
     for title in (match.titles or [match.label]):
         if not title:
@@ -884,6 +888,7 @@ def focus(match: "Match") -> bool:
                 return True
         except FileNotFoundError:
             return False        # not installed; no point trying other titles
-        except Exception:
+        except Exception as error:
+            failures.note("appidentity.focus", error)
             continue
     return False

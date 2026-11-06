@@ -24,6 +24,7 @@ WHY THIS IS CACHED
 """
 
 from __future__ import annotations
+from core import failures
 
 import threading
 import time
@@ -235,8 +236,8 @@ def _usable(idx: int, kind: str) -> bool:
         if st is not None:
             try:
                 st.stop(); st.close()
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("audio_devices._usable", error)
 
 # Aliases for "the default device" and internal routing endpoints. Matched
 # case-insensitively as substrings against the device name.
@@ -483,8 +484,8 @@ def measure_input(name: str, seconds: float = 3.0, on_level=None) -> dict:
             if on_level is not None:
                 try:
                     on_level(min(1.0, block / 12000.0))
-                except Exception:
-                    pass
+                except Exception as error:
+                    failures.note("audio_devices.measure_input", error)
 
         stream = sd.RawInputStream(samplerate=rate, channels=1, dtype="int16",
                                    blocksize=int(rate / 20), device=idx,
@@ -596,20 +597,23 @@ def _endpoint_for(name: str):
             try:
                 if str(getattr(dev, "state", "")) != "AudioDeviceState.Active":
                     continue
-            except Exception:
+            except Exception as error:
+                failures.note("audio_devices._endpoint_for", error)
                 continue
             try:
                 # Reading this property activates a COM interface and raises
                 # for devices that are unplugged or disabled — normal, and not
                 # worth a line in the log for each one.
                 endpoint = dev.EndpointVolume
-            except Exception:
+            except Exception as error:
+                failures.note("audio_devices._endpoint_for", error)
                 continue
             if endpoint is None:
                 continue
             try:
                 friendly = _fold(getattr(dev, "FriendlyName", "") or "")
-            except Exception:
+            except Exception as error:
+                failures.note("audio_devices._endpoint_for", error)
                 continue
             if not friendly:
                 continue

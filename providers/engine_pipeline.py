@@ -41,6 +41,7 @@ NO LANGUAGE LOGIC ANYWHERE IN THIS FILE
     and the transcript is passed through without being inspected.
 """
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import json
@@ -1131,8 +1132,8 @@ def _console(text: str) -> None:
         try:
             enc = getattr(sys.stdout, "encoding", None) or "ascii"
             print(text.encode(enc, "replace").decode(enc, "replace"))
-        except Exception:
-            pass                # a message is never worth an exception
+        except Exception as error:
+            failures.note("engine_pipeline._console", error)
 
 
 def _name_of(provider) -> str:

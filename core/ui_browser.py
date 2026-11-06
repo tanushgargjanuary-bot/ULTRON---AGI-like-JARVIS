@@ -36,6 +36,7 @@ WHAT IS VERIFIED
 """
 
 from __future__ import annotations
+from core import failures
 
 from typing import Any
 
@@ -299,8 +300,8 @@ class BrowserAdapter:
     def clear_refs(self) -> None:
         try:
             self.page.evaluate(CLEAR_JS)
-        except Exception:  # noqa: BLE001, S110
-            pass
+        except Exception as error:  # noqa: BLE001, S110
+            failures.note("ui_browser.clear_refs", error)
 
 
 def _prune_to(node: Node, ref: str) -> Node | None:

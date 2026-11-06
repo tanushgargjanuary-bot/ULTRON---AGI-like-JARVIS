@@ -16,6 +16,7 @@ Supports two backends — selected via  "llm_provider"  in config/api_keys.json:
         Note: tool-calling support depends on the model; use a model that
         supports function/tool calls (e.g. Qwen2.5, Llama-3.1, Mistral).
 """
+from core import failures
 import json
 import re
 import subprocess
@@ -312,8 +313,8 @@ def call_llm(
                     "content":    (msg.get("content") or "").strip(),
                     "tool_calls": msg.get("tool_calls") or [],
                 }
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("llm_client.call_llm", error)
         raise RuntimeError(
             f"Cannot connect to Ollama at {url}. "
             "Make sure Ollama is installed and run: ollama serve"
@@ -359,8 +360,8 @@ def call_llm_text(
                 resp = requests.post(endpoint, json=payload, timeout=timeout)
                 resp.raise_for_status()
                 return (resp.json().get("message", {}).get("content") or "").strip()
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("llm_client.call_llm_text", error)
         raise RuntimeError(
             f"Cannot connect to Ollama at {url}. "
             "Make sure Ollama is installed and run: ollama serve"
@@ -459,8 +460,8 @@ def _stream_openai(
                 args = frag["function"]["arguments"]
                 try:
                     args = json.loads(args)
-                except Exception:
-                    pass   # leave as raw string; _execute_tool handles it
+                except Exception as error:
+                    failures.note("llm_client._stream_openai", error)
                 tool_calls.append({
                     "id":       frag["id"],
                     "function": {"name": frag["function"]["name"], "arguments": args},

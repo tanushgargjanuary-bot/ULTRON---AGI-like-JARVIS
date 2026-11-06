@@ -63,6 +63,7 @@ THE LADDER, MEASURED
     request per WhatsApp language for the lifetime of the install.
 """
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import json
@@ -487,8 +488,8 @@ async def _live_turn(parts: list, system: str, key: str, timeout_s: float) -> st
     finally:
         try:
             await cm.__aexit__(None, None, None)
-        except Exception:
-            pass
+        except Exception as error:
+            failures.note("gemini._live_turn", error)
 
 
 def _live_call(contents, config, timeout_ms: int, key: str):

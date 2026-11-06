@@ -28,6 +28,7 @@ WHAT IS DELIBERATELY NOT HERE
     every other one.
 """
 from __future__ import annotations
+from core import failures
 
 import json
 import re
@@ -548,9 +549,10 @@ class OpenAICompatLLM:
                     try:
                         delta = ((json.loads(payload).get("choices") or [{}])[0]
                                  .get("delta") or {})
-                    except Exception:
+                    except Exception as error:
                         # One malformed frame must not end the answer. Servers
                         # do emit keepalives and comments that are not JSON.
+                        failures.note("llm_openai.chat", error)
                         continue
                     if delta.get("content"):
                         yield {"text": delta["content"]}
@@ -650,8 +652,8 @@ class OpenAICompatLLM:
             try:
                 save({"vision": "1" if seen else "",
                       "vision_model": self.model})
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("llm_openai.ensure_vision_known", error)
         return seen
 
     def probe(self, check_vision: bool = True) -> tuple[bool, str]:
@@ -726,8 +728,8 @@ def _terse(text: str, limit: int = 160) -> str:
                 text = str(err.get("message") or err)
             else:
                 text = str(err)
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("llm_openai._terse", error)
     return text[:limit] + ("..." if len(text) > limit else "")
 
 

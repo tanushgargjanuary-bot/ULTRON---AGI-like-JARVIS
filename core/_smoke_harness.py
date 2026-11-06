@@ -17,6 +17,7 @@ core.gemini is replaced with stubs that answer "nothing came back", which is
 also the case every plugin must survive.
 """
 from __future__ import annotations
+from core import failures
 
 import importlib
 import importlib.util
@@ -66,8 +67,8 @@ def _trace(kind: str, text: str) -> None:
     try:
         sys.stderr.write(f"@@{kind}@@ {text}\n")
         sys.stderr.flush()
-    except Exception:
-        pass
+    except Exception as error:
+        failures.note("_smoke_harness._trace", error)
 
 
 def _stub_models() -> None:

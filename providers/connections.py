@@ -30,6 +30,7 @@ instantly and one that begins with a handshake.
 """
 
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import atexit
@@ -142,8 +143,8 @@ def close_all() -> int:
             try:
                 client.close()
                 closed += 1
-            except Exception:
-                pass
+            except Exception as error:
+                failures.note("connections.close_all", error)
         _SYNC.clear()
         closed += len(_ASYNC)
         _ASYNC.clear()
