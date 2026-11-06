@@ -113,3 +113,47 @@ class ClaimTableTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StoreSnapshotTests(unittest.TestCase):
+    """The digest claim compares the memory folder before and after a build.
+
+    It used to count bytecode. On a clean clone the first run writes
+    `memory/__pycache__/*.pyc`, so the claim failed on a program that had done
+    nothing — a false accusation, which is the one failure mode a proof gate must
+    not have. These tests pin the rule: bytecode and editor droppings are not the
+    user's memory, everything else is.
+    """
+
+    def setUp(self):
+        import tempfile
+        self.root = Path(tempfile.mkdtemp(prefix="store-state-"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.root, ignore_errors=True))
+        (self.root / "long_term.json").write_text('{"a": 1}', encoding="utf-8")
+        self.gate = _load_gate()
+
+    def test_bytecode_appearing_is_not_a_change(self):
+        before = self.gate._store_state(self.root)
+        cache = self.root / "__pycache__"
+        cache.mkdir()
+        (cache / "memory_manager.cpython-312.pyc").write_bytes(b"\x00\x00")
+        self.assertEqual(self.gate._store_state(self.root), before)
+
+    def test_a_real_file_changing_is_a_change(self):
+        before = self.gate._store_state(self.root)
+        (self.root / "long_term.json").write_text('{"a": 2, "b": 3}', encoding="utf-8")
+        self.assertNotEqual(self.gate._store_state(self.root), before)
+
+    def test_a_new_fact_is_a_change(self):
+        before = self.gate._store_state(self.root)
+        (self.root / "reminders.json").write_text("[]", encoding="utf-8")
+        self.assertNotEqual(self.gate._store_state(self.root), before)
+
+
+def _load_gate():
+    """Import scripts/proof_gate.py by path, the way the gate tests already do."""
+    path = Path(__file__).resolve().parents[1] / "scripts" / "proof_gate.py"
+    spec = importlib.util.spec_from_file_location("proof_gate_for_tests", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

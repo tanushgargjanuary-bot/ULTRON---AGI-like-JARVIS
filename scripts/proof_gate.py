@@ -614,6 +614,36 @@ def claim_console(c: Claim) -> None:
         c.bad("hidden subprocesses", f"{type(exc).__name__}: {exc}")
 
 
+_BYTECODE = ("__pycache__", ".pyc", ".pyo")
+
+
+def _store_state(root: Path) -> dict:
+    """What the memory store looks like, ignoring bytecode.
+
+    The digest claim snapshots the store, builds the report, and snapshots again:
+    if the two differ, the report touched something and it is not inert. The
+    first version of that check counted every file under `memory/`, including
+    `memory/__pycache__/*.pyc` — and on a clean clone the first run imports a
+    memory module lazily and writes bytecode, so the check failed on a program
+    that had done nothing wrong. The gate was right about the rule and wrong
+    about the evidence: a .pyc is not the user's memory.
+
+    Bytecode and editor droppings are therefore outside the snapshot, and the
+    verdict is the same on a fresh clone as on the tenth run.
+    """
+    state = {}
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part in _BYTECODE for part in path.parts) or path.suffix in _BYTECODE:
+            continue
+        if path.name.endswith((".tmp", ".swp")):
+            continue
+        stat = path.stat()
+        state[path] = (stat.st_mtime_ns, stat.st_size)
+    return state
+
+
 def claim_digest(c: Claim) -> None:
     """The daily digest exists, and it activates nothing — driven, not read."""
     try:
@@ -629,8 +659,7 @@ def claim_digest(c: Claim) -> None:
         return c.bad("report", "the report has no header")
     c.ok("report", f"{len(text.splitlines())} lines, {len(text)} chars")
 
-    before = {p: (p.stat().st_mtime_ns, p.stat().st_size)
-              for p in (ROOT / "memory").rglob("*") if p.is_file()}
+    before = _store_state(ROOT / "memory")
     try:
         import socket as socket_mod
         import subprocess as sp_mod
@@ -644,8 +673,7 @@ def claim_digest(c: Claim) -> None:
         return c.bad("activates nothing", f"the digest tried to {exc}")
     except Exception as exc:
         return c.bad("report on the real store", f"{type(exc).__name__}: {exc}")
-    after = {p: (p.stat().st_mtime_ns, p.stat().st_size)
-             for p in (ROOT / "memory").rglob("*") if p.is_file()}
+    after = _store_state(ROOT / "memory")
     if before != after:
         return c.bad("activates nothing", "the memory folder changed while it built")
     c.ok("activates nothing", "no network, no process, no file touched")
