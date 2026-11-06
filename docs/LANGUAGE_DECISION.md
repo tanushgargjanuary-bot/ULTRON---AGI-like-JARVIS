@@ -1,5 +1,53 @@
 # Should Ultron be rewritten in another language?
 
+## Update, 2026-11-06 — asked again, with fresh measurements
+
+The owner asked a second time whether to start rewriting in a faster language. The
+answer is the same, and it is stronger now, because the slow paths have been
+timed instead of estimated.
+
+| Hot path | Measured cost | Share of real time |
+| --- | --- | --- |
+| Audio frame classification (30 ms frame) | 39.5 µs per frame | **0.13 %** of the audio |
+| Turn reply, in process (no network) | ~8 ms | negligible |
+| Tool catalog build | 25 ms | once, on demand |
+| HUD repaint | 30 Hz active, 20 Hz idle, none when hidden | throttled by design |
+| Model answer (cloud) | 0.6–4 s | **almost all of the wait** |
+| Speech recognition | 0.3–1.5 s | the rest of the wait |
+
+**The waiting is the network and the recogniser. Both are already outside Python.**
+A rewrite in Rust, C++ or Go would leave those two numbers exactly where they are,
+so the owner would wait just as long, in a language that has no provider ecosystem,
+after a year of work and the loss of 1,308 tests.
+
+### What a faster language would actually buy
+
+| Gain | Worth it? |
+| --- | --- |
+| Smaller download than Python + PyQt6 | Partly — solved by packaging, not by rewriting (see the installer plan) |
+| No Python requirement on the owner's PC | Solved by PyInstaller one-folder, which is already the plan |
+| Faster start-up | Measurable, and solvable with a splash screen and lazy imports |
+| Faster drawing | The HUD is 30 Hz and CPU-light; the GPU is idle |
+| Memory | 55 MB peak. Not a problem on any machine that runs Windows 11. |
+
+### The narrow plan, if a real hot leaf ever appears
+
+1. **Profile, do not guess.** `python -m cProfile` on a full turn, or `py-spy` on a
+   running app. The measurement goes in this file.
+2. **Rewrite that one function** in Rust as a loadable module (`maturin`), behind the
+   same Python interface, with the same tests. Nothing else changes.
+3. **Add a compiled sidecar only if a whole step is hot** — a small binary the app
+   starts once and talks to over a pipe.
+4. **Never rewrite the shell.** The shell is where every safety invariant lives:
+   path confinement, risk tiers, approval gates, and the evidence engine. Rewriting
+   it means rewriting and re-proving all of it, and the proof gate is the slowest
+   thing in this repository to earn back.
+
+`scripts/bench_algorithms.py` is the instrument. If it ever shows a Python function
+above 5 % of a turn, that function is the candidate. Today nothing is.
+
+
+
 Asked on 2026-11-06. This is the answer with numbers, and the one case where a
 rewrite is worth it.
 
