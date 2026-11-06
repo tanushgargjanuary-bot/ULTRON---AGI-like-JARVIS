@@ -115,7 +115,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**227 Python files. 82,825 lines. 1,319 tests.** Proof gate: `14 PROVEN / 13 PARTIAL / 0 FAILED` on Linux, `18 PROVEN / 9 PARTIAL / 0 FAILED` on the Windows runner.
+**227 Python files. 82,897 lines. 1,322 tests.** Proof gate, this build, Linux: **13 PROVEN / 14 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
