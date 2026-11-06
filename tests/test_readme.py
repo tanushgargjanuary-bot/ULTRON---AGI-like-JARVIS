@@ -17,6 +17,7 @@ What is asserted:
 from __future__ import annotations
 
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -32,10 +33,27 @@ class PathsOnTheFrontPage(unittest.TestCase):
     def setUp(self):
         self.text = readme_text()
 
+    def _is_runtime_file(self, name: str) -> bool:
+        """True when the repository deliberately does not ship this path.
+
+        The page documents files the app creates on first run — the key file and
+        the long-term memory store. Those are gitignored on purpose, so a fresh
+        checkout must NOT contain them, and a test that demands they exist fails on
+        every clean machine while passing on the author's. Git already knows the
+        difference, so ask it rather than keeping a second list to go stale.
+        """
+        try:
+            done = subprocess.run(["git", "check-ignore", "-q", name], cwd=ROOT,
+                                  capture_output=True, timeout=10)
+            return done.returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return False
+
     def test_every_backticked_file_path_exists(self):
         pattern = re.compile(r"`([\w./-]+\.(?:py|md|json|txt|yml|bat|ps1|gif|so|c))`")
         missing = sorted({hit for hit in pattern.findall(self.text)
-                          if "/" in hit and not (ROOT / hit).exists()})
+                          if "/" in hit and not (ROOT / hit).exists()
+                          and not self._is_runtime_file(hit)})
         self.assertEqual(missing, [], f"the readme names files that do not exist: {missing}")
 
     def test_every_relative_link_points_at_something(self):

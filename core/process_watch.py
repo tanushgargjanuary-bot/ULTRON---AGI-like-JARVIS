@@ -191,11 +191,18 @@ class Watcher:
         A process can also exit between the listing and the read of its details.
         That is a race, not a fault; `_proc` returns None and the loop moves on.
         """
-        try:
-            return list(self._lib.process_iter([
-                "pid", "name", "create_time", "cmdline", "status"]))
-        except Exception:
-            return None
+        for attempt in range(2):
+            try:
+                return list(self._lib.process_iter([
+                    "pid", "name", "create_time", "cmdline", "status"]))
+            except Exception:
+                if attempt:
+                    return None
+                # One retry, because the first sweep after a process is spawned can
+                # lose a race with the operating system's own table. Retrying costs
+                # twenty milliseconds once; not retrying costs a false "it finished".
+                time.sleep(0.02)
+        return None
 
     def _proc(self, item) -> Proc | None:
         try:
