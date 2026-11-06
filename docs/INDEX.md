@@ -25,6 +25,8 @@ Every document in the repository, one line each, and who it is for.
 
 | Document | What it holds |
 |---|---|
+| [`docs/CURRICULUM.md`](CURRICULUM.md) | the eight AKTU subjects it holds, where each syllabus came from, and the reading at three levels |
+| [`docs/SELF-CHANGE.md`](SELF-CHANGE.md) | the five stages of changing its own source, the rehearsal copy, and the referee that is off limits |
 | [`docs/PHILOSOPHY.md`](PHILOSOPHY.md) | the seven minds Ultron blends, their methods, and why a voice can never add a permission |
 | [`docs/SPACE.md`](SPACE.md) | how big the folder may get, what is counted, and why a save once lost 6,352 files |
 | [`HANDOFF.md`](../HANDOFF.md) | the build log by phase: what each pass fixed, what it cost, what is left |

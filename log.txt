@@ -1,3 +1,62 @@
+=== 2026-11-06 · build 1.2.31 · the syllabus, and the right to change itself ===
+
+Two requests in one message, and they had nothing to do with each other.
+
+THE SYLLABUS. The owner uploaded his AKTU PDF — B.Tech CSE (AI & ML), NEP-2020,
+session 2024-25 — and asked for AI, DBMS and DAA to be hard-coded inside Ultron,
+and for AIML, DL, DBMS, DS, DAA, DSTL, COA to be there from basics to advanced.
+Also fast. It is 8 subjects, 40 units, 284 topics, 42 reading links:
+
+  curriculum/aktu_aiml.json  the data: units, topics, three levels of reading
+  core/curriculum.py         resolving a spoken name, order, next, progress
+  actions/curriculum.py      the tool: subjects, show, units, topics, plan, next,
+                             resources, done, progress, search, reset, check
+  docs/CURRICULUM.md         the page the owner reads
+  tests/test_curriculum.py   35 tests
+
+Four subjects come from his PDF and say so in every answer. DS, DSTL and COA are
+earlier-year courses that his PDF does not contain, so their outlines come from the
+AKTU published outline. DL is a standard curriculum, named as such, because the
+field moves faster than a syllabus. Every one of the 42 links was opened on
+2026-11-06; three that failed were replaced rather than kept, and the file records
+the date it was checked. The topics are a data file, not a Python literal: a fact
+about his university belongs in a file he can correct.
+
+SELF-MODIFICATION. He asked whether Ultron should be able to change itself natively,
+and then said to implement the plan: A, B and C.
+
+  core/self_change.py        the five stages, the referee list, the ledger, marker
+  actions/self_change.py     propose, rehearse, confirm, apply, revert, pending,
+                             show, history, rules
+  docs/SELF-CHANGE.md        the page the owner reads
+  tests/test_self_change.py  37 tests against a fake four-file project
+
+A, the pipeline: propose writes a diff and nothing else; rehearse runs the change in
+a temporary COPY of the tree, so a broken draft costs a folder and never the body;
+confirm twice in two different places; apply writes atomically and keeps the bytes it
+replaced; revert restores them exactly.
+
+B, the body itself: this is a source patch, not an argument adapter. A real file, a
+real diff, a real test run, and the old bytes kept.
+
+C, the last metre: a .py change is on disk but not running, and the answer says so in
+the same sentence as "applied". The marker is written and the restart line is given.
+Python cannot swap a method in a live object; a session survives the restart because
+its state is in files. That is the honest version, and the alternative would be a
+claim that is false.
+
+Three refusals, in code rather than in a guideline: the referee (core/policy.py,
+core/confirm.py, core/self_change.py, scripts/proof_gate.py, config/api_keys.json)
+cannot be edited at all; a path outside the project is refused; a change that has not
+passed a rehearsal is not written. A system that can rewrite its own referee has no
+referee — that is the exact failure the films we borrow from are about.
+
+Proof gate: two new claims, `curriculum` and `self_modify`, both PROVEN.
+
+Also: the third copy of the temporary-config test fixture was replaced by one shared
+module (tests/tempconfig.py). The debt ratchet found the duplicate body, and it was
+right — three copies is how a test suite starts to drift.
+
 === 2026-11-06 · build 1.2.30 · a philosophy, borrowed from the stories ===
 
 The owner asked for a philosophy inside Ultron, drawn from fictional robots and

@@ -530,6 +530,91 @@ def claim_philosophy(c: Claim) -> None:
     c.ok("tool", "reachable by voice, and it states the ceiling itself")
 
 
+def claim_curriculum(c: Claim) -> None:
+    """It carries the owner's syllabus, and says where every line came from."""
+    try:
+        from core import curriculum
+        from actions import curriculum as tool
+    except Exception as exc:
+        return c.absent("the syllabus", f"{type(exc).__name__}: {exc}")
+    issues = curriculum.problems()
+    if issues:
+        return c.bad("the shelf", "; ".join(issues[:3]))
+    c.ok("the shelf", f"{len(curriculum.subjects())} subjects, "
+                      f"{curriculum.as_facts()['topics']} topics, no structural fault")
+    wanted = {"DBMS", "AI", "DAA", "DS", "AIML", "DL", "DSTL", "COA"}
+    held = {row["short"] for row in curriculum.subjects()}
+    if not wanted <= held:
+        return c.bad("his subjects", f"missing: {', '.join(sorted(wanted - held))}")
+    c.ok("his subjects", "the eight he named are all here")
+    dbms = " ".join(curriculum.plan("dbms"))
+    if "BCNF" not in dbms or "Lossless join decomposition" not in dbms:
+        return c.bad("his words", "the DBMS topics are not the ones in his PDF")
+    c.ok("his words", "the DBMS plan still carries the phrases from his PDF")
+    unchecked = [item["url"] for row in curriculum.subjects()
+                 for item in row["ladder"] if not item["url"].startswith("http")]
+    if unchecked:
+        return c.bad("the reading", f"not a link: {unchecked[0]}")
+    c.ok("the reading", f"{curriculum.as_facts()['resources']} links, each opened "
+                        f"and recorded on {curriculum.as_facts()['checked'][:10]}")
+    answer = tool.curriculum_tool({"action": "show", "subject": "dbms"})
+    if "BCS501" not in answer or "PDF" not in answer:
+        return c.bad("the tool", "the tool does not name the course or the source")
+    c.ok("the tool", "reachable by voice, and it names the course code and its source")
+
+
+def claim_self_modify(c: Claim) -> None:
+    """It changes its own source in five stages, and cannot touch the referee."""
+    import tempfile
+
+    from core import self_change
+    base = Path(tempfile.mkdtemp(prefix="gate-selfchange-"))
+    project = base / "project"
+    (project / "core").mkdir(parents=True)
+    (project / "app.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (project / "core" / "policy.py").write_text("GATE = True\n", encoding="utf-8")
+    self_change.set_root(project)
+    self_change.set_store(base / "store")
+    try:
+        refused = False
+        try:
+            self_change.propose("core/policy.py", "open the gate", new_text="GATE = False\n")
+        except ValueError:
+            refused = True
+        if not refused:
+            return c.bad("the referee", "it proposed a change to the approval policy")
+        c.ok("the referee", "a change to the approval policy is refused at the door")
+        proposal = self_change.propose("app.py", "a gate test",
+                                       find="VALUE = 1", replace="VALUE = 2")
+        if (project / "app.py").read_text(encoding="utf-8") != "VALUE = 1\n":
+            return c.bad("a proposal", "staging a change wrote the file")
+        c.ok("a proposal", "staged without writing anything")
+        rehearsal = self_change.rehearse(proposal["id"])
+        if not rehearsal["ok"]:
+            return c.bad("the rehearsal", rehearsal["tail"][-200:])
+        c.ok("the rehearsal", "run in a copy of the tree, and it passed there")
+        self_change.confirm(proposal["id"], "voice")
+        try:
+            self_change.apply(proposal["id"])
+            return c.bad("two confirmations", "one confirmation applied the change")
+        except ValueError:
+            c.ok("two confirmations", "one confirmation is not enough")
+        self_change.confirm(proposal["id"], "panel")
+        self_change.apply(proposal["id"])
+        if (project / "app.py").read_text(encoding="utf-8") != "VALUE = 2\n":
+            return c.bad("the apply", "the change was confirmed twice and not written")
+        c.ok("the apply", "written after two confirmations from two places")
+        self_change.revert(proposal["id"])
+        if (project / "app.py").read_text(encoding="utf-8") != "VALUE = 1\n":
+            return c.bad("the revert", "the old bytes were not restored")
+        c.ok("the revert", "the exact bytes from before came back")
+    finally:
+        self_change.set_root(None)
+        self_change.set_store(None)
+        import shutil
+        shutil.rmtree(base, ignore_errors=True)
+
+
 def claim_provider_switch(c: Claim) -> None:
     """You can switch provider without editing a file."""
     try:
@@ -1762,6 +1847,10 @@ CLAIMS = [
     ("persona", "It is Ultron, and it knows it.", "named, robotic persona", claim_persona),
     ("philosophy", "Its philosophy is a blend you choose, and no voice may widen it.",
      "a philosophy, with bounds", claim_philosophy),
+    ("curriculum", "It carries your syllabus, and says where every line came from.",
+     "the whole course, inside it", claim_curriculum),
+    ("self_modify", "It changes its own code in five stages, and the referee is safe.",
+     "self-modification, gated", claim_self_modify),
     ("provider_switch", "You can switch provider without editing a file.",
      "no hardcoded provider", claim_provider_switch),
     ("budgets", "The performance numbers hold.", "zero performance issues", claim_budgets),

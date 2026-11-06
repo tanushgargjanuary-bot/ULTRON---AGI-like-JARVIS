@@ -97,6 +97,16 @@ a small built-in fallback — instead of crashing.
 - Settings and keys live in `config/api_keys.json` through
   `memory/config_manager.py`; never write that file directly.
 - Keep to the libraries already in `requirements.txt`.
+- **A change to its own source goes through `core/self_change.py`, in five stages, or
+  it does not go.** Propose, rehearse in a copy, two confirmations from two channels,
+  apply, revert. Never write `core/policy.py`, `core/confirm.py`, `core/self_change.py`,
+  `scripts/proof_gate.py` or the settings file — those are the referee. Never add a
+  shortcut around a rehearsal, and never say a `.py` change is running before the
+  process has restarted.
+- **Syllabus topics live in `curriculum/*.json`, not in Python.** A university fact
+  belongs in a file the owner can read and correct. Every subject says where its
+  syllabus came from, and a reading link is written down only after it has been
+  opened.
 - **A mind in `core/philosophy.py` is text, and it states its bound.** Every voice
   arrives with a maxim, a stance and a limit it may never cross; the limit is rendered
   into the instruction with the maxim. Never give a voice a code path, never let one

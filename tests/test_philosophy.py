@@ -28,22 +28,10 @@ from core import philosophy
 from memory import config_manager as cm
 
 
-class WithATemporaryConfig(unittest.TestCase):
-    def setUp(self):
-        self._temp = tempfile.TemporaryDirectory()
-        folder = Path(self._temp.name)
-        self._saved = (cm.CONFIG_DIR, cm.CONFIG_FILE)
-        cm.CONFIG_DIR = folder
-        cm.CONFIG_FILE = folder / "api_keys.json"
-
-    def tearDown(self):
-        cm.CONFIG_DIR, cm.CONFIG_FILE = self._saved
-        self._temp.cleanup()
-
-    def stored(self) -> dict:
-        if not cm.CONFIG_FILE.exists():
-            return {}
-        return json.loads(cm.CONFIG_FILE.read_text(encoding="utf-8"))
+try:                                       # discovered from the tests folder
+    from tempconfig import WithATemporaryConfig
+except ImportError:                        # imported as tests.test_philosophy
+    from tests.tempconfig import WithATemporaryConfig
 
 
 class TheCast(unittest.TestCase):
@@ -111,12 +99,10 @@ class TheBlend(WithATemporaryConfig):
         self.assertEqual(notes, [])
         self.assertEqual(set(chosen), {"stark", "data"})
         self.assertEqual(philosophy.blend(), chosen)
-        self.assertIn("philosophy", self.stored())
+        self.assertIn("philosophy", self.read_settings())
 
     def test_a_damaged_setting_falls_back_to_the_shipped_mind(self):
-        cm.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        cm.CONFIG_FILE.write_text(json.dumps({"philosophy": "not an object"}),
-                                  encoding="utf-8")
+        self.write_settings({"philosophy": "not an object"})
         self.assertEqual(philosophy.blend(), philosophy.DEFAULT_BLEND)
 
     def test_reset_returns_the_shipped_mind(self):

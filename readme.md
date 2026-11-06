@@ -47,6 +47,25 @@ You talk. It answers. It does the work.
 
 The text that shapes how Ultron behaves is one file you own: `core/prompt.txt`. Ask *"show me your system prompt"* and it reads it back. Tell it *"keep your answers to two sentences from now on"* and it **stages** the change — then applies it only after you confirm twice, in two different places. Every version it replaces is kept, and going back is one instruction. **It cannot edit its own permissions:** approvals, file limits and tool tiers live in code, not in that file. Details: **[docs/PROMPT.md](docs/PROMPT.md)**.
 
+## Your syllabus, inside it
+
+**8 subjects. 40 units. 284 topics. 42 reading links.** Four of them — DBMS, AI, DAA and Machine Learning — are taken from the AKTU PDF you supplied, unit by unit, in your university's words. DS, DSTL and COA are added from the AKTU outline; Deep Learning is added because the field moves faster than any syllabus.
+
+| You say | You get |
+|---|---|
+| *"What subjects do you know?"* | all eight, with unit and topic counts |
+| *"Show me the DBMS syllabus."* | five units, the topics in each, and the source of that syllabus |
+| *"Where do I start in DAA?"* | the first topic you have not marked done |
+| *"What should I read for deep learning, advanced?"* | the advanced reading, with links |
+
+The reading runs from basics to advanced for every subject — MIT OCW, CMU 15-445, CS229, CS231n, *d2l.ai*, the Red Book, MIT 6.854. **All 42 links were opened on 2026-11-06** and three that failed were replaced. Details: **[docs/CURRICULUM.md](docs/CURRICULUM.md)**.
+
+## It changes its own code now
+
+Five stages, and no other door: **propose → rehearse → confirm → apply → revert**. A change is tried in a *copy* of the project first, so a broken draft costs a temporary folder and never the program. Two confirmations, from two different places. The bytes it replaced are always kept, so "put that back" is true.
+
+**The referee is off limits:** the files that decide what needs approval, or record what happened, cannot be edited at all. A system that can rewrite its own referee has none. Details: **[docs/SELF-CHANGE.md](docs/SELF-CHANGE.md)**.
+
 ## A mind with a cast
 
 Ultron thinks in a **blend of fictional minds** — the butler's judgement, the engineer's proof, the scientist's doubt, the adversary's red team. Seven of them ship:
@@ -140,7 +159,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**228 Python files. 89,209 lines. 1,513 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux: **17 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**235 Python files. 91,049 lines. 1,585 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **18 PROVEN / 14 PARTIAL / 0 FAILED**. It also says why each one is open — `audio or display 5, Windows 4, keys 3, hardware 1, packages 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -200,6 +219,8 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | the six layers, one turn end to end, where a change belongs |
 | [docs/PROMPT.md](docs/PROMPT.md) | your system prompt: read it, change it, go back — and why a change needs two confirmations |
+| [docs/CURRICULUM.md](docs/CURRICULUM.md) | the eight AKTU subjects inside it, unit by unit, with the reading ladder |
+| [docs/SELF-CHANGE.md](docs/SELF-CHANGE.md) | how it changes its own code: five stages, a rehearsal copy, and the referee it may not touch |
 | [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) | the seven minds, how to blend them by voice, and the three rules that hold them |
 | [docs/SPACE.md](docs/SPACE.md) | the folder stays under 100 MB: why it matters, and the two lines that keep it there |
 | [docs/INDEX.md](docs/INDEX.md) | every document, one line each |

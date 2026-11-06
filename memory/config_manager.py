@@ -390,6 +390,17 @@ def save_philosophy(value: dict) -> None:
     _save_flag("philosophy", value if isinstance(value, dict) else {})
 
 
+def get_curriculum_progress() -> dict:
+    """Which syllabus topics the owner has marked done, and nothing else."""
+    value = load_api_keys().get("curriculum")
+    return value if isinstance(value, dict) else {}
+
+
+def save_curriculum_progress(value: dict) -> None:
+    """Store the progress list through the same atomic write as every setting."""
+    _save_flag("curriculum", value if isinstance(value, dict) else {})
+
+
 def get_brief_enabled() -> bool:
     return load_api_keys().get("morning_brief_enabled", True)
 

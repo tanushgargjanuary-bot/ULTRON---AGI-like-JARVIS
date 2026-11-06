@@ -1,0 +1,906 @@
+{
+ "board": "Dr. A.P.J. Abdul Kalam Technical University (AKTU), Lucknow",
+ "programme": "B.Tech CSE (Artificial Intelligence and Machine Learning), NEP-2020, effective 2024-25",
+ "note": "Four subjects (DBMS, AI, DAA, AIML) come from the syllabus PDF the owner supplied. DS, DSTL and COA are second and third year AKTU courses that are not in that PDF, so their unit outlines come from the AKTU published outline, and DL is a standard curriculum because the university lists it as an elective. Every topic is a topic, not a summary: the model teaches it, the resource ladder is where the reading is.",
+ "subjects": [
+  {
+   "code": "BCS501",
+   "name": "Database Management System",
+   "short": "DBMS",
+   "aliases": [
+    "dbms",
+    "database",
+    "databases",
+    "sql"
+   ],
+   "syllabus": "AKTU B.Tech CSE (AI & ML) syllabus, NEP-2020, session 2024-25 (the PDF the owner supplied)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction and the entity-relationship model",
+     "topics": [
+      "Database system vs file system",
+      "Database system concept and architecture",
+      "Data model, schema and instances",
+      "Data independence",
+      "Database languages and interfaces: DDL, DML",
+      "Overall database structure",
+      "ER model concepts and notation",
+      "Mapping constraints and keys: super, candidate, primary",
+      "Generalisation and aggregation",
+      "Reduction of an ER diagram to tables",
+      "Extended ER model and higher-degree relationships"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Relational model and SQL",
+     "topics": [
+      "Relational data model concepts",
+      "Integrity constraints: entity, referential, key, domain",
+      "Relational algebra",
+      "Relational calculus: tuple and domain",
+      "SQL characteristics, data types and literals",
+      "Types of SQL commands and operators",
+      "Tables, views and indexes",
+      "Queries and sub-queries",
+      "Aggregate functions",
+      "Insert, update and delete",
+      "Joins, unions, intersection, minus",
+      "Cursors, triggers, procedures in SQL and PL/SQL"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Database design and normalisation",
+     "topics": [
+      "Functional dependencies",
+      "First, second and third normal forms",
+      "BCNF",
+      "Inclusion dependence",
+      "Lossless join decomposition",
+      "Normalisation using FD, MVD and join dependencies",
+      "Alternative approaches to database design"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Transaction processing",
+     "topics": [
+      "Transaction system",
+      "Testing of serialisability",
+      "Serialisability of schedules",
+      "Conflict and view serialisable schedules",
+      "Recoverability",
+      "Recovery from transaction failures",
+      "Log-based recovery",
+      "Checkpoints",
+      "Deadlock handling",
+      "Distributed data storage and concurrency control",
+      "Distributed directory systems"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Concurrency control techniques",
+     "topics": [
+      "Locking techniques for concurrency control",
+      "Time-stamping protocols",
+      "Validation-based protocol",
+      "Multiple granularity",
+      "Multi-version schemes",
+      "Recovery with concurrent transactions",
+      "Case study: Oracle"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "SQLBolt — interactive SQL, from SELECT to joins",
+     "url": "https://sqlbolt.com/",
+     "kind": "practice"
+    },
+    {
+     "level": "basics",
+     "title": "Database System Concepts (Silberschatz, Korth, Sudarshan) — book site",
+     "url": "https://www.db-book.com/",
+     "kind": "book"
+    },
+    {
+     "level": "intermediate",
+     "title": "CMU 15-445/645 Database Systems — the reference course",
+     "url": "https://15445.courses.cs.cmu.edu/",
+     "kind": "course"
+    },
+    {
+     "level": "intermediate",
+     "title": "PostgreSQL Exercises — 100+ real queries, graded",
+     "url": "https://pgexercises.com/",
+     "kind": "practice"
+    },
+    {
+     "level": "advanced",
+     "title": "Readings in Database Systems, 5th edition (the Red Book)",
+     "url": "http://www.redbook.io/",
+     "kind": "papers"
+    },
+    {
+     "level": "advanced",
+     "title": "Use The Index, Luke — indexing and query performance",
+     "url": "https://use-the-index-luke.com/",
+     "kind": "reference"
+    }
+   ]
+  },
+  {
+   "code": "BCAI501",
+   "name": "Artificial Intelligence",
+   "short": "AI",
+   "aliases": [
+    "ai",
+    "artificial intelligence",
+    "intelligent agents"
+   ],
+   "syllabus": "AKTU B.Tech CSE (AI & ML) syllabus, NEP-2020, session 2024-25 (the PDF the owner supplied)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction to artificial intelligence",
+     "topics": [
+      "Definition and future of AI",
+      "Characteristics of intelligent agents",
+      "Typical intelligent agents",
+      "Problem-solving approach to AI problems"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Problem solving methods",
+     "topics": [
+      "Uninformed search strategies",
+      "Informed search and heuristics",
+      "Local search algorithms and optimisation problems",
+      "Searching with partial observations",
+      "Constraint satisfaction problems",
+      "Constraint propagation",
+      "Backtracking search",
+      "Game playing",
+      "Optimal decisions in games",
+      "Alpha-beta pruning",
+      "Stochastic games"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Knowledge representation",
+     "topics": [
+      "First-order predicate logic",
+      "Prolog programming",
+      "Unification",
+      "Forward chaining and backward chaining",
+      "Resolution",
+      "Ontological engineering",
+      "Categories, objects and events",
+      "Mental events and mental objects",
+      "Reasoning systems for categories",
+      "Reasoning with default information"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Software agents",
+     "topics": [
+      "Architecture for intelligent agents",
+      "Agent communication",
+      "Negotiation and bargaining",
+      "Applications of software agents"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Classification, clustering and pattern recognition",
+     "topics": [
+      "Techniques used for classification",
+      "Techniques used for clustering",
+      "Basics of pattern recognition",
+      "Steps required for pattern recognition"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "AIMA — Artificial Intelligence: A Modern Approach, book site and code",
+     "url": "https://aima.cs.berkeley.edu/",
+     "kind": "book"
+    },
+    {
+     "level": "basics",
+     "title": "Artificial Intelligence: Foundations of Computational Agents (free book)",
+     "url": "https://artint.info/2e/html/ArtInt2e.html",
+     "kind": "book"
+    },
+    {
+     "level": "intermediate",
+     "title": "MIT 6.034 Artificial Intelligence (OCW, full lectures)",
+     "url": "https://ocw.mit.edu/courses/6-034-artificial-intelligence-fall-2010/",
+     "kind": "course"
+    },
+    {
+     "level": "intermediate",
+     "title": "Stanford CS221 — AI: Principles and Techniques",
+     "url": "https://stanford-cs221.github.io/",
+     "kind": "course"
+    },
+    {
+     "level": "advanced",
+     "title": "Papers with Code — state of the art, with the papers",
+     "url": "https://paperswithcode.com/",
+     "kind": "papers"
+    },
+    {
+     "level": "advanced",
+     "title": "NPTEL — Indian engineering courses, free video lectures",
+     "url": "https://nptel.ac.in/courses",
+     "kind": "course"
+    }
+   ]
+  },
+  {
+   "code": "BCS503",
+   "name": "Design and Analysis of Algorithm",
+   "short": "DAA",
+   "aliases": [
+    "daa",
+    "algorithms",
+    "algorithm design"
+   ],
+   "syllabus": "AKTU B.Tech CSE (AI & ML) syllabus, NEP-2020, session 2024-25 (the PDF the owner supplied)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction, complexity and sorting",
+     "topics": [
+      "Algorithms and analysing algorithms",
+      "Complexity of algorithms",
+      "Growth of functions",
+      "Performance measurements",
+      "Shell sort, quick sort, merge sort, heap sort",
+      "Comparison of sorting algorithms",
+      "Sorting in linear time"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Advanced data structures",
+     "topics": [
+      "Red-black trees",
+      "B-trees",
+      "Binomial heaps",
+      "Fibonacci heaps",
+      "Tries",
+      "Skip lists"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Divide and conquer, and greedy methods",
+     "topics": [
+      "Divide and conquer on sorting",
+      "Matrix multiplication",
+      "Convex hull",
+      "Searching by divide and conquer",
+      "Optimal reliability allocation",
+      "Knapsack by greedy method",
+      "Minimum spanning trees: Prim and Kruskal",
+      "Single-source shortest paths: Dijkstra and Bellman-Ford"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Dynamic programming, backtracking and branch and bound",
+     "topics": [
+      "Dynamic programming and the knapsack problem",
+      "All-pairs shortest paths: Warshall and Floyd",
+      "Resource allocation",
+      "Backtracking",
+      "Branch and bound",
+      "Travelling salesman problem",
+      "Graph colouring",
+      "n-Queen problem",
+      "Hamiltonian cycles",
+      "Sum of subsets"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Selected topics",
+     "topics": [
+      "Algebraic computation",
+      "Fast Fourier transform",
+      "String matching",
+      "Theory of NP-completeness",
+      "Approximation algorithms",
+      "Randomised algorithms"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "VisuAlgo — algorithms and data structures, animated",
+     "url": "https://visualgo.net/en",
+     "kind": "practice"
+    },
+    {
+     "level": "basics",
+     "title": "MIT 6.006 Introduction to Algorithms (OCW, Spring 2020)",
+     "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
+     "kind": "course"
+    },
+    {
+     "level": "intermediate",
+     "title": "Jeff Erickson — Algorithms, a free complete textbook",
+     "url": "https://jeffe.cs.illinois.edu/teaching/algorithms/",
+     "kind": "book"
+    },
+    {
+     "level": "intermediate",
+     "title": "MIT 6.046J Design and Analysis of Algorithms",
+     "url": "https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/",
+     "kind": "course"
+    },
+    {
+     "level": "advanced",
+     "title": "cp-algorithms — every competitive algorithm, implemented",
+     "url": "https://cp-algorithms.com/",
+     "kind": "reference"
+    },
+    {
+     "level": "advanced",
+     "title": "MIT 6.854J Advanced Algorithms",
+     "url": "https://ocw.mit.edu/courses/6-854j-advanced-algorithms-fall-2008/",
+     "kind": "course"
+    }
+   ]
+  },
+  {
+   "code": "BCS301",
+   "name": "Data Structure",
+   "short": "DS",
+   "aliases": [
+    "ds",
+    "data structures",
+    "data structure"
+   ],
+   "syllabus": "AKTU published unit outline for this course (not in the supplied PDF)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction, arrays and linked lists",
+     "topics": [
+      "Basic terminology and elementary data organisation",
+      "Built-in data types in C",
+      "Algorithm and the efficiency of an algorithm",
+      "Time and space complexity",
+      "Asymptotic notation: Big Oh, Omega, Theta",
+      "Arrays and their representation",
+      "Singly, doubly and circular linked lists",
+      "Polynomial representation and addition"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Stacks, recursion and queues",
+     "topics": [
+      "Stack as an abstract data type",
+      "Stack applications: expression conversion and evaluation",
+      "Recursion and the recursion stack",
+      "Queue, circular queue, deque",
+      "Priority queue",
+      "Applications of queues"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Searching, sorting and hashing",
+     "topics": [
+      "Linear search and binary search",
+      "Bubble, insertion, selection sort",
+      "Merge sort and quick sort",
+      "Heap sort",
+      "Hash functions",
+      "Collision resolution: chaining, open addressing"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Trees and their applications",
+     "topics": [
+      "Terminology, binary tree representation",
+      "Binary tree traversal: inorder, preorder, postorder",
+      "Binary search tree operations",
+      "Threaded binary trees",
+      "AVL tree and rotations",
+      "B-tree and B+ tree operations",
+      "Heaps and heap operations"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Graphs and shortest paths",
+     "topics": [
+      "Graph terminology and representations: adjacency matrix, adjacency list",
+      "Depth-first search and breadth-first search",
+      "Connected components",
+      "Spanning trees and minimum cost spanning trees: Prim and Kruskal",
+      "Shortest path: Dijkstra and Warshall",
+      "Topological sort"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "OpenDSA — interactive data structures textbook with exercises",
+     "url": "https://opendsa-server.cs.vt.edu/",
+     "kind": "practice"
+    },
+    {
+     "level": "basics",
+     "title": "VisuAlgo — animated data structures",
+     "url": "https://visualgo.net/en",
+     "kind": "practice"
+    },
+    {
+     "level": "intermediate",
+     "title": "Princeton Algorithms, 4th edition — booksite with code and tests",
+     "url": "https://algs4.cs.princeton.edu/home/",
+     "kind": "course"
+    },
+    {
+     "level": "intermediate",
+     "title": "Data Structure Visualizations (USFCA) — see every structure run",
+     "url": "https://www.cs.usfca.edu/~galles/visualization/Algorithms.html",
+     "kind": "practice"
+    },
+    {
+     "level": "advanced",
+     "title": "MIT 6.851 Advanced Data Structures",
+     "url": "https://ocw.mit.edu/courses/6-851-advanced-data-structures-spring-2012/",
+     "kind": "course"
+    }
+   ]
+  },
+  {
+   "code": "BCAI601",
+   "name": "Machine Learning Techniques",
+   "short": "AIML",
+   "aliases": [
+    "aiml",
+    "ml",
+    "machine learning"
+   ],
+   "syllabus": "AKTU B.Tech CSE (AI & ML) syllabus, NEP-2020, session 2024-25 (the PDF the owner supplied)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction to machine learning",
+     "topics": [
+      "Learning and types of learning",
+      "Well-defined learning problems",
+      "Designing a learning system",
+      "History of machine learning",
+      "Learning approaches: neural nets, clustering, RL, decision trees, Bayesian nets, SVM, genetic algorithms",
+      "Issues in machine learning",
+      "Data science versus machine learning"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Regression, Bayesian learning and SVM",
+     "topics": [
+      "Linear regression and logistic regression",
+      "Bayes theorem and concept learning",
+      "Bayes optimal classifier",
+      "Naive Bayes classifier",
+      "Bayesian belief networks",
+      "EM algorithm",
+      "Support vector machines and kernels: linear, polynomial, Gaussian",
+      "Hyperplane and decision surface",
+      "Properties and issues of SVM"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Decision trees and instance-based learning",
+     "topics": [
+      "Decision tree learning algorithm",
+      "Inductive bias and inductive inference",
+      "Entropy and information theory",
+      "Information gain",
+      "ID3 algorithm",
+      "Issues in decision tree learning",
+      "k-nearest neighbour",
+      "Locally weighted regression",
+      "Radial basis function networks",
+      "Case-based learning"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Artificial neural networks and deep learning",
+     "topics": [
+      "Perceptron and multilayer perceptron",
+      "Gradient descent and the delta rule",
+      "Derivation of backpropagation",
+      "Generalisation",
+      "Self-organising maps",
+      "Convolutional neural networks: convolution, activation, pooling, fully connected layers",
+      "Training a CNN",
+      "Case studies: diabetic retinopathy, smart speaker, self-driving car"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Reinforcement learning and genetic algorithms",
+     "topics": [
+      "Reinforcement learning and the learning task",
+      "Markov decision process",
+      "Q-learning: function and algorithm",
+      "Deep Q-learning",
+      "Applications of reinforcement learning",
+      "Genetic algorithms: components, reproduction, crossover, mutation",
+      "Genetic programming",
+      "Models of evolution and learning"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "scikit-learn — user guide, the practical reference",
+     "url": "https://scikit-learn.org/stable/user_guide.html",
+     "kind": "reference"
+    },
+    {
+     "level": "basics",
+     "title": "Kaggle Learn — short hands-on machine learning courses",
+     "url": "https://www.kaggle.com/learn",
+     "kind": "practice"
+    },
+    {
+     "level": "intermediate",
+     "title": "Stanford CS229 Machine Learning — notes and lectures",
+     "url": "https://cs229.stanford.edu/",
+     "kind": "course"
+    },
+    {
+     "level": "advanced",
+     "title": "The Elements of Statistical Learning (free, full text)",
+     "url": "https://hastie.su.domains/ElemStatLearn/",
+     "kind": "book"
+    },
+    {
+     "level": "advanced",
+     "title": "Pattern Recognition and Machine Learning (Bishop)",
+     "url": "https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/",
+     "kind": "book"
+    }
+   ]
+  },
+  {
+   "code": "DL",
+   "name": "Deep Learning",
+   "short": "DL",
+   "aliases": [
+    "dl",
+    "deep learning",
+    "neural networks"
+   ],
+   "syllabus": "Standard deep learning curriculum (AKTU elective and industry practice)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "From perceptron to deep networks",
+     "topics": [
+      "Perceptron, activation functions and the universal approximation idea",
+      "Loss functions and gradient descent",
+      "Backpropagation, step by step",
+      "Vanishing and exploding gradients",
+      "Regularisation: dropout, weight decay",
+      "Batch normalisation",
+      "Optimisers: SGD, momentum, Adam"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Convolutional networks",
+     "topics": [
+      "Convolution in 1D and 2D",
+      "Padding, stride and receptive field",
+      "Pooling and global pooling",
+      "Classic architectures: LeNet, AlexNet, VGG, ResNet",
+      "Batch norm and residual connections",
+      "Data augmentation",
+      "Transfer learning"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Sequence models",
+     "topics": [
+      "Recurrent networks and unrolling",
+      "LSTM and GRU cells",
+      "Sequence-to-sequence models",
+      "Attention and the encoder-decoder",
+      "Word embeddings"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Generative and unsupervised deep learning",
+     "topics": [
+      "Autoencoders and denoising",
+      "Variational autoencoders",
+      "Generative adversarial networks",
+      "Self-supervised learning"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Transformers and deployment",
+     "topics": [
+      "Self-attention and multi-head attention",
+      "Positional encoding",
+      "The transformer block",
+      "Pre-training and fine-tuning",
+      "Large language models: scaling, tokenisation, prompting",
+      "Quantisation and on-device inference",
+      "Evaluation and failure modes"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "Dive into Deep Learning — free interactive book (d2l.ai)",
+     "url": "https://d2l.ai/",
+     "kind": "book"
+    },
+    {
+     "level": "basics",
+     "title": "PyTorch tutorials — learn by running code",
+     "url": "https://pytorch.org/tutorials/",
+     "kind": "practice"
+    },
+    {
+     "level": "intermediate",
+     "title": "Deep Learning (Goodfellow, Bengio, Courville) — free full text",
+     "url": "https://www.deeplearningbook.org/",
+     "kind": "book"
+    },
+    {
+     "level": "intermediate",
+     "title": "Stanford CS231n — Convolutional Neural Networks for Visual Recognition",
+     "url": "https://cs231n.stanford.edu/",
+     "kind": "course"
+    },
+    {
+     "level": "advanced",
+     "title": "Stanford CS224n — Natural Language Processing with Deep Learning",
+     "url": "https://web.stanford.edu/class/cs224n/",
+     "kind": "course"
+    },
+    {
+     "level": "advanced",
+     "title": "Hugging Face Learn — transformers and fine-tuning, hands-on",
+     "url": "https://huggingface.co/learn",
+     "kind": "course"
+    }
+   ]
+  },
+  {
+   "code": "DSTL",
+   "name": "Discrete Structures and Theory of Logic",
+   "short": "DSTL",
+   "aliases": [
+    "dstl",
+    "discrete maths",
+    "discrete mathematics",
+    "logic"
+   ],
+   "syllabus": "AKTU published unit outline for this course (not in the supplied PDF)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Set theory, relations, posets and lattices",
+     "topics": [
+      "Sets and combination of sets",
+      "Relations: definition and operations",
+      "Properties and composition of relations",
+      "Equivalence relations and partitions",
+      "Partial order and Hasse diagrams",
+      "Lattices: bounded, complemented, distributive, modular, complete"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Functions and Boolean algebra",
+     "topics": [
+      "Functions: definition, classification, operations",
+      "Growth of functions",
+      "Boolean algebra: axioms and theorems",
+      "Algebraic manipulation of Boolean expressions",
+      "Simplification of Boolean functions",
+      "Karnaugh maps"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Theory of logic",
+     "topics": [
+      "Propositions, truth tables, tautology, satisfiability, contradiction",
+      "Algebra of propositions",
+      "Theory of inference",
+      "First-order predicate logic and well-formed formulae",
+      "Quantifiers",
+      "Inference theory of predicate logic"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Algebraic structures",
+     "topics": [
+      "Groups and subgroups",
+      "Order of a group, cyclic groups",
+      "Cosets and Lagrange's theorem",
+      "Normal subgroups",
+      "Permutation and symmetric groups",
+      "Group homomorphisms",
+      "Rings and fields: definitions and elementary properties"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Graph theory and combinatorics",
+     "topics": [
+      "Graphs: definition, terminology, representation",
+      "Multigraphs and bipartite graphs",
+      "Planar graphs",
+      "Isomorphism and homeomorphism of graphs",
+      "Euler and Hamiltonian paths",
+      "Graph colouring",
+      "Counting techniques and the pigeonhole principle"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "MIT 6.042J Mathematics for Computer Science (OCW)",
+     "url": "https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2010/",
+     "kind": "course"
+    },
+    {
+     "level": "basics",
+     "title": "Discrete Mathematics: An Open Introduction (free book)",
+     "url": "https://discrete.openmathbooks.org/dmoi4.html",
+     "kind": "book"
+    },
+    {
+     "level": "intermediate",
+     "title": "Khan Academy — discrete mathematics and logic",
+     "url": "https://www.khanacademy.org/math",
+     "kind": "practice"
+    },
+    {
+     "level": "advanced",
+     "title": "MIT 18.310 Principles of Discrete Applied Mathematics",
+     "url": "https://ocw.mit.edu/courses/18-310-principles-of-discrete-applied-mathematics-fall-2013/",
+     "kind": "course"
+    }
+   ]
+  },
+  {
+   "code": "BCS302",
+   "name": "Computer Organization and Architecture",
+   "short": "COA",
+   "aliases": [
+    "coa",
+    "computer organization",
+    "architecture"
+   ],
+   "syllabus": "AKTU published unit outline for this course (not in the supplied PDF)",
+   "units": [
+    {
+     "unit": 1,
+     "title": "Introduction and processor organisation",
+     "topics": [
+      "Functional units of a digital system and their interconnections",
+      "Buses, bus architecture, types of buses, bus arbitration",
+      "Register, bus and memory transfer",
+      "Processor organisation and general register organisation",
+      "Stack organisation",
+      "Addressing modes"
+     ]
+    },
+    {
+     "unit": 2,
+     "title": "Arithmetic and logic unit",
+     "topics": [
+      "Addition and subtraction of signed numbers",
+      "Booth's multiplication algorithm",
+      "Division algorithms",
+      "Floating-point arithmetic and IEEE 754",
+      "ALU design and status flags"
+     ]
+    },
+    {
+     "unit": 3,
+     "title": "Control unit and pipelining",
+     "topics": [
+      "Instruction types, formats and cycles",
+      "Micro-operations and execution of an instruction",
+      "Hardwired control",
+      "Micro-programmed control and sequencing",
+      "Horizontal and vertical microprogramming",
+      "RISC versus CISC",
+      "Pipelining and hazards"
+     ]
+    },
+    {
+     "unit": 4,
+     "title": "Memory organisation",
+     "topics": [
+      "Memory hierarchy",
+      "Cache memory and mapping: direct, associative, set-associative",
+      "Cache replacement and write policies",
+      "Virtual memory and paging",
+      "Associative memory",
+      "Interleaving"
+     ]
+    },
+    {
+     "unit": 5,
+     "title": "Input and output organisation",
+     "topics": [
+      "Peripheral devices, I/O interface, I/O ports",
+      "Interrupts: hardware, types and exceptions",
+      "Programmed I/O, interrupt-initiated I/O, direct memory access",
+      "I/O channels and processors",
+      "Synchronous and asynchronous serial communication"
+     ]
+    }
+   ],
+   "ladder": [
+    {
+     "level": "basics",
+     "title": "nand2tetris — build a computer from a NAND gate",
+     "url": "https://www.nand2tetris.org/",
+     "kind": "course"
+    },
+    {
+     "level": "basics",
+     "title": "MIT 6.004 Computation Structures (OCW)",
+     "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/",
+     "kind": "course"
+    },
+    {
+     "level": "intermediate",
+     "title": "CS:APP — Computer Systems: A Programmer's Perspective, course site",
+     "url": "https://csapp.cs.cmu.edu/",
+     "kind": "book"
+    },
+    {
+     "level": "advanced",
+     "title": "Onur Mutlu — Digital Design and Computer Architecture (ETH Zurich)",
+     "url": "https://safari.ethz.ch/digitaltechnik/spring2020/doku.php",
+     "kind": "course"
+    }
+   ]
+  }
+ ],
+ "checked": "2026-11-06 — every link in this file was opened and returned a page"
+}
