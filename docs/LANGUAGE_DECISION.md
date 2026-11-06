@@ -141,3 +141,49 @@ None of these is true today. The cheapest improvement available now is not a
 language. It is a **Windows CI job** that runs the three verification scripts on
 every change, so that the 1,108 tests stop depending on my memory of how to run
 them.
+
+## Measured again, this build: the four-way test
+
+The argument above used the earlier figures. This build measures the same
+calculation four ways on one 30 ms frame (480 samples, 4000 rounds, median), so
+the claim is a number rather than an opinion. `scripts/bench_hybrid.py`:
+
+| Way | µs per frame | Share of the frame | Speed-up | Agrees with the reference |
+|---|---|---|---|---|
+| pure Python | 53.9 | 0.180 % | 1.0x | yes |
+| numpy | 21.9 | 0.073 % | 2.5x | yes |
+| C through ctypes, copying the samples in | 56.5 | 0.188 % | 1.0x | yes |
+| C, pointer taken from the buffer that already exists | **1.49** | 0.005 % | **36.2x** | yes |
+
+All four agree on the same peak (11817), RMS (6569) and zero crossings (14), so
+the fast one is not fast because it is wrong.
+
+**The third row is the important one.** Handing 480 samples to C costs about as
+much as the arithmetic it replaces: the copy crosses the boundary, allocates, and
+comes back. A rewrite that copies pays for itself twice and saves nothing. The
+fourth row is what "C is 36x faster" actually means - the samples were already in
+a numpy buffer, and C read them where they lay.
+
+`native/frame.c` is 60 lines, built with one command
+(`gcc -O2 -shared -fPIC native/frame.c -o native/libframe.so`), integer square
+root, no libm. It is the worked example for the rule below, not a hot path: at
+0.005 % of one frame it cannot be felt. It exists so the next leaf that IS hot
+has a template to copy.
+
+### The rule this leaves behind
+
+1. Keep the Python shell. Every safety invariant - path confinement, risk tiers,
+   approvals, evidence - lives in it, and re-proving them in a new language is
+   the slowest work in this repository.
+2. Measure before moving anything. `cProfile`, `py-spy`, or a script like
+   `bench_hybrid.py` with a median and a repeated round, never a single stopwatch.
+3. Move one leaf at a time, behind the same interface, with the same tests. numpy
+   first, because it is already installed and needs no toolchain.
+4. Prefer a path where the data does not have to be copied. A compiled leaf beats
+   Python only when the buffer is already where the leaf can reach it.
+5. Add a compiled sidecar only when a whole step is hot, never for a leaf that is
+   0.1 % of a turn.
+
+**What the wait actually is, still:** the model answer (0.6-4 s) and speech
+recognition (0.3-1.5 s). Both happen outside Python. No rewrite of this
+repository moves either one.
