@@ -41,6 +41,7 @@ Every document in the repository, one line each, and who it is for.
 | [`docs/TOOL_SUGGESTIONS.md`](TOOL_SUGGESTIONS.md) | which tools were considered, which shipped, and which were refused with a reason |
 | [`docs/LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | should this be rewritten in another language — no, with numbers |
 | [`docs/SIDECAR.md`](SIDECAR.md) | anyone building or auditing the Go component | why one part is Go, what it measures, and the rule that it only watches |
+| [`docs/PERFORMANCE.md`](PERFORMANCE.md) | the owner, and anyone asking “why is this not faster” | every measured stage of a turn, a launch and an audio frame, and what would actually move them |
 | [`docs/LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | the owner, and anyone tempted by a rewrite | all 46 candidate languages, filtered: seven keepers, four laters, and the reason each of the rest lost |
 | [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
 

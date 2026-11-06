@@ -118,7 +118,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**232 Python files. 84,541 lines. 1,364 tests.** Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**234 Python files. 84,895 lines. 1,370 tests.** Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -147,7 +147,7 @@ tests/                no network, no hardware, no mocks where a real thing fits
 
 Read the last two rows together. **C is 36× faster only when the samples are already where C can reach them.** Copying them across the boundary costs more than the arithmetic, which is why "rewrite it in C" is not automatically a win.
 
-**What the wait actually is:** the model answer (0.6–4 s) and speech recognition (0.3–1.5 s). Both are outside Python already. A rewrite of the shell would move neither.
+**What the wait actually is:** the model answer (0.6–4 s) and speech recognition (0.3–1.5 s). Both are outside Python already. Measured with `scripts/profile_turn.py`, the entire Python half of an exchange — policy for every tool, tool description, prompt assembly, memory read — is **0.165 ms**, or 0.004 % of a turn. A rewrite of the shell would move that number, and only that number.
 
 **The hybrid this project would use, in order:** keep the Python shell; profile with `cProfile` or `py-spy`; move a *measured* hot leaf into a small C or Rust module behind the same interface, with the same tests (`native/frame.c` is the worked example, built by `gcc` in one line); add a compiled sidecar only if a whole step is hot. The shell stays Python because the shell is where every safety invariant lives — path confinement, risk tiers, approval gates — and re-proving those in a new language is the slowest work in the repository.
 
@@ -165,6 +165,7 @@ python scripts\proof_gate.py    # the claims, step by step, with verdicts
 python scripts\verify_all.py    # the same questions on YOUR machine
 python scripts\bench_hybrid.py  # the table above, on your hardware
 python scripts\bench_startup.py # what a launch costs, layer by layer
+python scripts\profile_turn.py   # the Python half of a turn, stage by stage
 ```
 
 A `SKIP` is never counted as a pass and never as a failure. CI runs all three on `ubuntu-latest` and `windows-latest`: [`.github/workflows/verify.yml`](.github/workflows/verify.yml).
@@ -180,6 +181,7 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | [DECISIONS.md](DECISIONS.md) | every choice, with the file that enforces it |
 | [docs/LANGUAGE_MATRIX.md](docs/LANGUAGE_MATRIX.md) | 46 languages filtered to seven keepers, and the best language per section |
 | [docs/SIDECAR.md](docs/SIDECAR.md) | the one Go component: why it exists, what it measures, what it may never do |
+| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | every measured stage: 0.165 ms of Python per turn, 244 ms of launch, 1.5 µs of C |
 | [HANDOFF.md](HANDOFF.md) | where the work stopped and what is next |
 | [log.txt](log.txt) | the build log, mistakes included |
 | [OwnerFiles/](OwnerFiles) | the owner's session log and journey, published on purpose |

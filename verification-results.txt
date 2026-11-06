@@ -1,18 +1,18 @@
-Syntax parsed 232 Python files.
+Syntax parsed 234 Python files.
 
 === Custom and ported regression suite ===
-.......................................................[2026-11-06 10:06:01,263] [JarvisPlanner] INFO: Goal received: "write new.txt"
-[2026-11-06 10:06:01,263] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:01,263] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:01,263] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
-[2026-11-06 10:06:01,263] [JarvisPlanner] INFO:   [1] read (Tool: read_file)
-[2026-11-06 10:06:01,263] [JarvisPlanner] INFO:   [2] write (Tool: write_file)
-[2026-11-06 10:06:01,264] [JarvisPlanner] INFO: 
+.......................................................[2026-11-06 10:12:49,576] [JarvisPlanner] INFO: Goal received: "write new.txt"
+[2026-11-06 10:12:49,576] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:12:49,576] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:12:49,577] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
+[2026-11-06 10:12:49,577] [JarvisPlanner] INFO:   [1] read (Tool: read_file)
+[2026-11-06 10:12:49,577] [JarvisPlanner] INFO:   [2] write (Tool: write_file)
+[2026-11-06 10:12:49,577] [JarvisPlanner] INFO: 
 --- [Step 2/2] (Attempt 1): write ---
-[2026-11-06 10:06:01,264] [JarvisPlanner] INFO: Invoking tool: 'write_file' with args: {'path': 'new.txt', 'content': 'hello'}
-[2026-11-06 10:06:01,265] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
-[2026-11-06 10:06:01,265] [JarvisPlanner] INFO:     Output: Successfully written to '/tmp/tmpct5zc67d/A/new.txt' (5 characters).
-[2026-11-06 10:06:01,265] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 1/2. Overall goal completion has not been independently verified.
+[2026-11-06 10:12:49,577] [JarvisPlanner] INFO: Invoking tool: 'write_file' with args: {'path': 'new.txt', 'content': 'hello'}
+[2026-11-06 10:12:49,578] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 10:12:49,578] [JarvisPlanner] INFO:     Output: Successfully written to '/tmp/tmp4940fimm/A/new.txt' (5 characters).
+[2026-11-06 10:12:49,578] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 1/2. Overall goal completion has not been independently verified.
 .................................................................[Video] playback unavailable (libpulse.so.0: cannot open shared object file: No such file or directory) — the HUD will not show video.
 [open_app] 'browser' resolved to 'C:\\Apps\\msedge.exe' (default handler)
 .This launcher supports Python 3.11 to 3.13; this environment is 3.14.
@@ -23,26 +23,26 @@ Delete the .venv folder, install 64-bit Python 3.12, run run.bat again.
 .
 Skipping the browser engines (ULTRON_SKIP_BROWSERS is set).
 Browser automation stays off until: /usr/local/bin/python3 -m playwright install chromium firefox
-..............................................................................................................[2026-11-06 10:06:04,019] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:04,023] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: Goal received: "How sure is it, and on what evidence"
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO:   [1] How sure is it, and on what evidence: calibration_report (Tool: calibration_report)
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO:   [2] How sure is it, and on what evidence: open_predictions (Tool: open_predictions)
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: 
+..............................................................................................................[2026-11-06 10:12:52,296] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:12:52,300] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: Goal received: "How sure is it, and on what evidence"
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO:   [1] How sure is it, and on what evidence: calibration_report (Tool: calibration_report)
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO:   [2] How sure is it, and on what evidence: open_predictions (Tool: open_predictions)
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: 
 --- [Step 1/2] (Attempt 1): How sure is it, and on what evidence: calibration_report ---
-[2026-11-06 10:06:04,024] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO: 
+[2026-11-06 10:12:52,301] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO: 
 --- [Step 2/2] (Attempt 1): How sure is it, and on what evidence: open_predictions ---
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 10}
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO:     Output: []
-[2026-11-06 10:06:04,025] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:04,028] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 10}
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO:     Output: []
+[2026-11-06 10:12:52,302] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
+.[2026-11-06 10:12:52,304] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
 ........................................................Traceback (most recent call last):
   File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
     spec.loader.exec_module(module)
@@ -68,9 +68,9 @@ Traceback (most recent call last):
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'list' object has no attribute 'strip'
 
-..................................................................................................................................................................................[2026-11-06 10:06:05,159] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:05,161] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:05,164] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+..................................................................................................................................................................................[2026-11-06 10:12:53,079] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:12:53,081] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:12:53,083] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
 ............................sssss........................Traceback (most recent call last):
   File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
     spec.loader.exec_module(module)
@@ -101,15 +101,15 @@ ImportError: browser_control needs playwright, which is not installed. Run: pip 
 [Dashboard] ufw: port 8001 allowed.
 STOPPED: not a folder: /definitely/not/here
 Pass the install folder, for example: --path "D:\Downloads\mark-custom-jarvis"
-scanning: /tmp/tmpklequ7to/mark-custom-jarvis
+scanning: /tmp/tmprfu1_enq/mark-custom-jarvis
 files: 7   cache=2  code=2  config=1  data=1  doc=1
 
 data-like files:
   [config ] config/api_keys.json  (157 B)
   [data   ] memory/long_term.json  (69 B)
-❌ Cannot use the config folder /tmp/tmp4n_v_gr_/config-is-a-file: [Errno 17] File exists: '/tmp/tmp4n_v_gr_/config-is-a-file'
-❌ Cannot use the config folder /tmp/tmp4n_v_gr_/config-is-a-file: [Errno 17] File exists: '/tmp/tmp4n_v_gr_/config-is-a-file'
-❌ Could not save settings to /tmp/tmp_jzc_nl0/api_keys.json: [Errno 13] Permission denied: '/tmp/tmp_jzc_nl0/api_keys.json.tmp'
+❌ Cannot use the config folder /tmp/tmpoh9up07t/config-is-a-file: [Errno 17] File exists: '/tmp/tmpoh9up07t/config-is-a-file'
+❌ Cannot use the config folder /tmp/tmpoh9up07t/config-is-a-file: [Errno 17] File exists: '/tmp/tmpoh9up07t/config-is-a-file'
+❌ Could not save settings to /tmp/tmp6jmr8hrf/api_keys.json: [Errno 13] Permission denied: '/tmp/tmp6jmr8hrf/api_keys.json.tmp'
 [Memory] ⚠️ Load error: Unterminated string starting at: line 1 column 18 (char 17)
 [Memory] ⚠️ Load error: Unterminated string starting at: line 1 column 18 (char 17)
 [Memory] 💾 Saved: ['notes']
@@ -314,7 +314,7 @@ data-like files:
 [YouTube] ▶️  Action: play  Params: {}
 [YouTube] ▶️  Action: ['not', 'a', 'string']  Params: {'action': ['not', 'a', 'string']}
 [YouTube] ▶️  Action: play  Params: {'action': 'play', 'volume': 'loud', 'seconds': 'soon'}
-STOPPED: not a folder: /tmp/tmprhri_uki/nope
+STOPPED: not a folder: /tmp/tmpfj3_09xs/nope
 [Pipeline] -- turn ----------------------------------------------------
 [Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
 [Pipeline]   --------------------------------------------------------------------
@@ -399,7 +399,7 @@ ImportError: browser_control needs playwright, which is not installed. Run: pip 
     )
 ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
 
-.[2026-11-06 10:06:10,782] [httpx] INFO: HTTP Request: POST http://127.0.0.1:34603/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
+.[2026-11-06 10:12:58,380] [httpx] INFO: HTTP Request: POST http://127.0.0.1:43155/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
 Traceback (most recent call last):
   File "/home/user/mark-jarvis/providers/engine_pipeline.py", line 558, in _generate
     async for ev in self._llm.chat(self._messages(), self._tools):
@@ -408,166 +408,166 @@ Traceback (most recent call last):
   File "/home/user/mark-jarvis/providers/llm_openai.py", line 540, in chat
     raise RuntimeError(f"{r.status_code} {detail}")
 RuntimeError: 500 internal
-.[2026-11-06 10:06:10,795] [httpx] INFO: HTTP Request: POST http://127.0.0.1:34603/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:11,007] [httpx] INFO: HTTP Request: POST http://127.0.0.1:34603/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:11,019] [httpx] INFO: HTTP Request: POST http://127.0.0.1:34603/v1/chat/completions "HTTP/1.1 200 OK"
-[2026-11-06 10:06:11,030] [httpx] INFO: HTTP Request: POST http://127.0.0.1:34603/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:11,539] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37245/v1/chat/completions "HTTP/1.1 401 Unauthorized"
-[2026-11-06 10:06:11,548] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37245/v1/chat/completions "HTTP/1.1 401 Unauthorized"
-.[2026-11-06 10:06:11,557] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37245/v1/chat/completions "HTTP/1.1 404 Not Found"
-.[2026-11-06 10:06:11,566] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37245/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
-.[2026-11-06 10:06:11,587] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37245/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
-..[2026-11-06 10:06:12,098] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,112] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,121] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,131] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,142] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,151] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33853/v1/chat/completions "HTTP/1.1 200 OK"
-.[2026-11-06 10:06:12,662] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41727/v1/chat/completions "HTTP/1.1 400 Bad Request"
-.[2026-11-06 10:06:12,670] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41727/v1/chat/completions "HTTP/1.1 200 OK"
-..[2026-11-06 10:06:12,685] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41727/v1/chat/completions "HTTP/1.1 400 Bad Request"
-..........[2026-11-06 10:06:13,306] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,312] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,318] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,326] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,329] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,334] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:13,336] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,339] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:13,340] [JarvisPlanner] INFO: Goal received: "Orient in workspace"
-[2026-11-06 10:06:13,340] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:13,340] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-.[2026-11-06 10:06:13,343] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,347] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,354] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,358] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,364] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,368] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,373] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:13,374] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:13,377] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-........................................[2026-11-06 10:06:14,590] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,595] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,599] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,604] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,607] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,610] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,613] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: Goal received: "How sure is it, and on what evidence"
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO:   [1] How sure is it, and on what evidence: calibration_report (Tool: calibration_report)
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO:   [2] How sure is it, and on what evidence: open_predictions (Tool: open_predictions)
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: 
+.[2026-11-06 10:12:58,389] [httpx] INFO: HTTP Request: POST http://127.0.0.1:43155/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:58,598] [httpx] INFO: HTTP Request: POST http://127.0.0.1:43155/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:58,606] [httpx] INFO: HTTP Request: POST http://127.0.0.1:43155/v1/chat/completions "HTTP/1.1 200 OK"
+[2026-11-06 10:12:58,613] [httpx] INFO: HTTP Request: POST http://127.0.0.1:43155/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,124] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35399/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-06 10:12:59,136] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35399/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+.[2026-11-06 10:12:59,147] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35399/v1/chat/completions "HTTP/1.1 404 Not Found"
+.[2026-11-06 10:12:59,158] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35399/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+.[2026-11-06 10:12:59,184] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35399/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
+..[2026-11-06 10:12:59,694] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,703] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,713] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,725] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,739] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:12:59,750] [httpx] INFO: HTTP Request: POST http://127.0.0.1:44845/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 10:13:00,278] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37757/v1/chat/completions "HTTP/1.1 400 Bad Request"
+.[2026-11-06 10:13:00,284] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37757/v1/chat/completions "HTTP/1.1 200 OK"
+..[2026-11-06 10:13:00,294] [httpx] INFO: HTTP Request: POST http://127.0.0.1:37757/v1/chat/completions "HTTP/1.1 400 Bad Request"
+..........[2026-11-06 10:13:00,892] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,895] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,898] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,901] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,903] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,906] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:00,908] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,910] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:00,911] [JarvisPlanner] INFO: Goal received: "Orient in workspace"
+[2026-11-06 10:13:00,911] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:00,911] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+.[2026-11-06 10:13:00,915] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,920] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,929] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,933] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,937] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,940] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,944] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:00,946] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:00,948] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+........................................[2026-11-06 10:13:01,982] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:01,986] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:01,989] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:01,993] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:01,997] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,001] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,003] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: Goal received: "How sure is it, and on what evidence"
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO:   [1] How sure is it, and on what evidence: calibration_report (Tool: calibration_report)
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO:   [2] How sure is it, and on what evidence: open_predictions (Tool: open_predictions)
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: 
 --- [Step 1/2] (Attempt 1): How sure is it, and on what evidence: calibration_report ---
-[2026-11-06 10:06:14,613] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,004] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO: 
 --- [Step 2/2] (Attempt 1): How sure is it, and on what evidence: open_predictions ---
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 10}
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO:     Output: []
-[2026-11-06 10:06:14,614] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:14,617] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:14,617] [JarvisPlanner] INFO: Goal received: "What it claimed and never checked"
-[2026-11-06 10:06:14,617] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:14,617] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: Formulated execution plan with 3 action step(s):
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO:   [1] What it claimed and never checked: open_predictions (Tool: open_predictions)
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO:   [2] What it claimed and never checked: calibration_report (Tool: calibration_report)
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO:   [3] What it claimed and never checked: self_review (Tool: self_review)
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 10}
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO:     Output: []
+[2026-11-06 10:13:02,005] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
+.[2026-11-06 10:13:02,008] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: Goal received: "What it claimed and never checked"
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: Formulated execution plan with 3 action step(s):
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO:   [1] What it claimed and never checked: open_predictions (Tool: open_predictions)
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO:   [2] What it claimed and never checked: calibration_report (Tool: calibration_report)
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO:   [3] What it claimed and never checked: self_review (Tool: self_review)
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: 
 --- [Step 1/3] (Attempt 1): What it claimed and never checked: open_predictions ---
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 20}
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO:     Output: []
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,008] [JarvisPlanner] INFO: Invoking tool: 'open_predictions' with args: {'limit': 20}
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO:     Output: []
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: 
 --- [Step 2/3] (Attempt 1): What it claimed and never checked: calibration_report ---
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: Invoking tool: 'calibration_report' with args: {}
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO:     Output: {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: 
 --- [Step 3/3] (Attempt 1): What it claimed and never checked: self_review ---
-[2026-11-06 10:06:14,618] [JarvisPlanner] INFO: Invoking tool: 'self_review' with args: {}
-[2026-11-06 10:06:14,619] [JarvisPlanner] INFO: [+] Step 3 succeeded in 0.0s.
-[2026-11-06 10:06:14,619] [JarvisPlanner] INFO:     Output: {"calibration": {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}, "lessons": ...
-[2026-11-06 10:06:14,619] [JarvisPlanner] INFO: [+] Tool plan reached its end after 3 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/3. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:14,622] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,625] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:14,625] [JarvisPlanner] INFO: Goal received: "How big is this project"
-[2026-11-06 10:06:14,625] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:14,625] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:14,625] [JarvisPlanner] INFO: Formulated execution plan with 1 action step(s):
-[2026-11-06 10:06:14,626] [JarvisPlanner] INFO:   [1] How big is this project: measure_code (Tool: measure_code)
-[2026-11-06 10:06:14,626] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,009] [JarvisPlanner] INFO: Invoking tool: 'self_review' with args: {}
+[2026-11-06 10:13:02,010] [JarvisPlanner] INFO: [+] Step 3 succeeded in 0.0s.
+[2026-11-06 10:13:02,010] [JarvisPlanner] INFO:     Output: {"calibration": {"domain": "all", "n": 0, "reliability": null, "lower_bound": null, "brier": null, "verdict": "no resolved predictions yet — nothing to be confident about", "buckets": []}, "lessons": ...
+[2026-11-06 10:13:02,010] [JarvisPlanner] INFO: [+] Tool plan reached its end after 3 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/3. Overall goal completion has not been independently verified.
+.[2026-11-06 10:13:02,012] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,015] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: Goal received: "How big is this project"
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: Formulated execution plan with 1 action step(s):
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO:   [1] How big is this project: measure_code (Tool: measure_code)
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: 
 --- [Step 1/1] (Attempt 1): How big is this project: measure_code ---
-[2026-11-06 10:06:14,626] [JarvisPlanner] INFO: Invoking tool: 'measure_code' with args: {'path': '/tmp/tmpyejo4qi2/ws'}
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpyejo4qi2/ws/notes.md'>
+[2026-11-06 10:13:02,016] [JarvisPlanner] INFO: Invoking tool: 'measure_code' with args: {'path': '/tmp/tmpist97c5t/ws'}
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpist97c5t/ws/notes.md'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpyejo4qi2/ws/config.py'>
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpist97c5t/ws/config.py'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpyejo4qi2/ws/app.py'>
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpist97c5t/ws/app.py'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-[2026-11-06 10:06:14,628] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.002s.
-[2026-11-06 10:06:14,628] [JarvisPlanner] INFO:     Output: {"files": 3, "lines": 8, "languages": {".py": {"files": 2, "lines": 6}, ".md": {"files": 1, "lines": 2}}, "biggest": [{"lines": 4, "file": "app.py"}, {"lines": 2, "file": "notes.md"}, {"lines": 2, "fi...
-[2026-11-06 10:06:14,628] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/1. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:14,630] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,633] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:14,633] [JarvisPlanner] INFO: Goal received: "Look for keys that were left in the code"
-[2026-11-06 10:06:14,633] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:14,633] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:14,634] [JarvisPlanner] INFO: Formulated execution plan with 1 action step(s):
-[2026-11-06 10:06:14,634] [JarvisPlanner] INFO:   [1] Look for keys that were left in the code: search_text (Tool: search_text)
-[2026-11-06 10:06:14,634] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,019] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.002s.
+[2026-11-06 10:13:02,019] [JarvisPlanner] INFO:     Output: {"files": 3, "lines": 8, "languages": {".py": {"files": 2, "lines": 6}, ".md": {"files": 1, "lines": 2}}, "biggest": [{"lines": 4, "file": "app.py"}, {"lines": 2, "file": "notes.md"}, {"lines": 2, "fi...
+[2026-11-06 10:13:02,019] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/1. Overall goal completion has not been independently verified.
+.[2026-11-06 10:13:02,021] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,023] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: Goal received: "Look for keys that were left in the code"
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: Formulated execution plan with 1 action step(s):
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO:   [1] Look for keys that were left in the code: search_text (Tool: search_text)
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: 
 --- [Step 1/1] (Attempt 1): Look for keys that were left in the code: search_text ---
-[2026-11-06 10:06:14,634] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmp6dlbv_l5/ws', 'query': '(?i:api[_-]?key|secret|token|passwd|password)\\s*[:=]\\s*["\\\']\\S{8,}', 'regex': True, 'max_results': 40}
-[2026-11-06 10:06:14,635] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
-[2026-11-06 10:06:14,635] [JarvisPlanner] INFO:     Output: {"query": "(?i:api[_-]?key|secret|token|passwd|password)\\s*[:=]\\s*[\"\\']\\S{8,}", "files_scanned": 3, "hits": [{"file": "config.py", "line": 1, "text": "API_KEY = \"abcd1234efgh5678\""}], "truncate...
-[2026-11-06 10:06:14,635] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/1. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:14,638] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,641] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: Goal received: "Find the loose ends"
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO:   [1] Find the loose ends: search_text (Tool: search_text)
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO:   [2] Find the loose ends: search_text (Tool: search_text)
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,024] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmpsa26vl7d/ws', 'query': '(?i:api[_-]?key|secret|token|passwd|password)\\s*[:=]\\s*["\\\']\\S{8,}', 'regex': True, 'max_results': 40}
+[2026-11-06 10:13:02,025] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
+[2026-11-06 10:13:02,025] [JarvisPlanner] INFO:     Output: {"query": "(?i:api[_-]?key|secret|token|passwd|password)\\s*[:=]\\s*[\"\\']\\S{8,}", "files_scanned": 3, "hits": [{"file": "config.py", "line": 1, "text": "API_KEY = \"abcd1234efgh5678\""}], "truncate...
+[2026-11-06 10:13:02,025] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/1. Overall goal completion has not been independently verified.
+.[2026-11-06 10:13:02,027] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,030] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 10:13:02,030] [JarvisPlanner] INFO: Goal received: "Find the loose ends"
+[2026-11-06 10:13:02,030] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 10:13:02,030] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO:   [1] Find the loose ends: search_text (Tool: search_text)
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO:   [2] Find the loose ends: search_text (Tool: search_text)
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: 
 --- [Step 1/2] (Attempt 1): Find the loose ends: search_text ---
-[2026-11-06 10:06:14,641] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmpief6cd31/ws', 'query': 'TODO', 'max_results': 60}
-[2026-11-06 10:06:14,642] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
-[2026-11-06 10:06:14,642] [JarvisPlanner] INFO:     Output: {"query": "TODO", "files_scanned": 3, "hits": [{"file": "app.py", "line": 2, "text": "# TODO: remove the debug print"}], "truncated": false}
-[2026-11-06 10:06:14,642] [JarvisPlanner] INFO: 
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmpkf2zne6z/ws', 'query': 'TODO', 'max_results': 60}
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: [+] Step 1 succeeded in 0.0s.
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO:     Output: {"query": "TODO", "files_scanned": 3, "hits": [{"file": "app.py", "line": 2, "text": "# TODO: remove the debug print"}], "truncated": false}
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: 
 --- [Step 2/2] (Attempt 1): Find the loose ends: search_text ---
-[2026-11-06 10:06:14,642] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmpief6cd31/ws', 'query': 'FIXME', 'max_results': 60}
-[2026-11-06 10:06:14,643] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
-[2026-11-06 10:06:14,643] [JarvisPlanner] INFO:     Output: {"query": "FIXME", "files_scanned": 3, "hits": [], "truncated": false}
-[2026-11-06 10:06:14,643] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
-.[2026-11-06 10:06:14,646] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,649] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,651] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,654] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpuxllmdo2/ws/notes.md'>
+[2026-11-06 10:13:02,031] [JarvisPlanner] INFO: Invoking tool: 'search_text' with args: {'path': '/tmp/tmpkf2zne6z/ws', 'query': 'FIXME', 'max_results': 60}
+[2026-11-06 10:13:02,032] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 10:13:02,032] [JarvisPlanner] INFO:     Output: {"query": "FIXME", "files_scanned": 3, "hits": [], "truncated": false}
+[2026-11-06 10:13:02,032] [JarvisPlanner] INFO: [+] Tool plan reached its end after 2 attempt(s) (0.0s), Sir. Verified tool postconditions: 0/2. Overall goal completion has not been independently verified.
+.[2026-11-06 10:13:02,035] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,037] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,039] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,042] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpg4sce744/ws/notes.md'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpuxllmdo2/ws/config.py'>
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpg4sce744/ws/config.py'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpuxllmdo2/ws/app.py'>
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpg4sce744/ws/app.py'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-.[2026-11-06 10:06:14,657] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpeu2_3rf9/ws/notes.md'>
+.[2026-11-06 10:13:02,045] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+/home/user/mark-jarvis/custom_jarvis/addon_tools.py:509: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmph3ueuocv/ws/notes.md'>
   lines = sum(1 for _ in candidate.open("rb"))
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-.[2026-11-06 10:06:14,660] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,664] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:14,667] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,048] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,051] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:02,054] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
 ................
 [Pipeline] -- turn ----------------------------------------------------
 [Pipeline]   think     0.00s                                  0 chars  |  FakeLLM
@@ -579,9 +579,9 @@ ResourceWarning: Enable tracemalloc to get the object allocation traceback
 [Pipeline]   total     0.00s
 [Pipeline] -- turn ----------------------------------------------------
 [Pipeline]   think     0.00s                                  first word 0.00s  |  19 chars  |  FakeLLM
-[Pipeline]   tools     0.62s  #                               open_app
+[Pipeline]   tools     0.43s                                  open_app
 [Pipeline]   --------------------------------------------------------------------
-[Pipeline]   total     0.62s
+[Pipeline]   total     0.43s
 [Pipeline] -- turn ----------------------------------------------------
 [Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
 [Pipeline]   tools     0.00s                                  open_app
@@ -595,7 +595,7 @@ ResourceWarning: Enable tracemalloc to get the object allocation traceback
 [Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
 [Pipeline]   --------------------------------------------------------------------
 [Pipeline]   total     0.00s
-[Pipeline] the language model failed at http://127.0.0.1:34603/v1: RuntimeError: 500 internal
+[Pipeline] the language model failed at http://127.0.0.1:43155/v1: RuntimeError: 500 internal
 [Pipeline] -- turn ----------------------------------------------------
 [Pipeline]   think     0.21s                                  first word 0.16s  |  19 chars  |  slow
 [Pipeline]   --------------------------------------------------------------------
@@ -605,99 +605,107 @@ ResourceWarning: Enable tracemalloc to get the object allocation traceback
 [Pipeline]   --------------------------------------------------------------------
 [Pipeline]   total     0.01s
 [Pipeline] -- turn ----------------------------------------------------
-[Pipeline]   think     0.02s                                  first word 0.01s  |  19 chars  |  tools
+[Pipeline]   think     0.01s                                  first word 0.01s  |  19 chars  |  tools
 [Pipeline]   tools     0.00s                                  open_app
 [Pipeline]   --------------------------------------------------------------------
-[Pipeline]   total     0.02s
-STOPPED: /tmp/tmpdflv37sw/empty does not look like a previous install (no main.py, config or memory)
-from: /tmp/tmpnpbpqfoz/old
-to:   /tmp/tmpnpbpqfoz/new
+[Pipeline]   total     0.01s
+STOPPED: /tmp/tmphp5eexi0/empty does not look like a previous install (no main.py, config or memory)
+from: /tmp/tmpdzv2ud5k/old
+to:   /tmp/tmpdzv2ud5k/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpnpbpqfoz/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpnpbpqfoz/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpdzv2ud5k/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpdzv2ud5k/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmpiz5acz8s/old
-to:   /tmp/tmpiz5acz8s/new
+from: /tmp/tmpo2sjx4rq/old
+to:   /tmp/tmpo2sjx4rq/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpiz5acz8s/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpiz5acz8s/new/memory/long_term.json, 1 entries
-COPIED (previous kept as workspace.json.bak-20261106-100614) workspace.json -> /tmp/tmpiz5acz8s/state/workspace.json, 1 entries
-COPIED (previous kept as approved-insights.json.bak-20261106-100614) approved-insights.json -> /tmp/tmpiz5acz8s/state/approved-insights.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpo2sjx4rq/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpo2sjx4rq/new/memory/long_term.json, 1 entries
+COPIED (previous kept as workspace.json.bak-20261106-101302) workspace.json -> /tmp/tmpo2sjx4rq/state/workspace.json, 1 entries
+COPIED (previous kept as approved-insights.json.bak-20261106-101302) approved-insights.json -> /tmp/tmpo2sjx4rq/state/approved-insights.json, 1 entries
 done. Start Ultron and it will use this data.
 STOPPED: long_term.json is not valid JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
-from: /tmp/tmp0jjw49sa/old
-to:   /tmp/tmp0jjw49sa/new
+from: /tmp/tmph60jrol3/old
+to:   /tmp/tmph60jrol3/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-WOULD COPY (adapted) api_keys.json -> /tmp/tmp0jjw49sa/new/config/api_keys.json
-WOULD COPY long_term.json -> /tmp/tmp0jjw49sa/new/memory/long_term.json
+WOULD COPY (adapted) api_keys.json -> /tmp/tmph60jrol3/new/config/api_keys.json
+WOULD COPY long_term.json -> /tmp/tmph60jrol3/new/memory/long_term.json
 dry run — nothing was written
-from: /tmp/tmp2hp1h8_e/old
-to:   /tmp/tmp2hp1h8_e/new
+from: /tmp/tmpn6smchcv/old
+to:   /tmp/tmpn6smchcv/new
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmp2hp1h8_e/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmp2hp1h8_e/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpn6smchcv/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpn6smchcv/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmp2b6spb4n/old
-to:   /tmp/tmp2b6spb4n/new
+from: /tmp/tmpwcl75a3q/old
+to:   /tmp/tmpwcl75a3q/new
 note: credentials removed: gemini_api_key
 note: keeping the old name: JARVIS
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmp2b6spb4n/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmp2b6spb4n/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpwcl75a3q/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpwcl75a3q/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmpy8952ytz/old
-to:   /tmp/tmpy8952ytz/new
+from: /tmp/tmpd63qo6c7/old
+to:   /tmp/tmpd63qo6c7/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpy8952ytz/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpy8952ytz/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpd63qo6c7/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpd63qo6c7/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmprhxhzv8r/old
-to:   /tmp/tmprhxhzv8r/new
+from: /tmp/tmpk57m5yr6/old
+to:   /tmp/tmpk57m5yr6/new
 note: credentials removed: providers.groq.api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmprhxhzv8r/new/config/api_keys.json, 2 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmprhxhzv8r/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpk57m5yr6/new/config/api_keys.json, 2 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpk57m5yr6/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmpjvv_f69u/old
-to:   /tmp/tmpjvv_f69u/new
+from: /tmp/tmpvvy8klw6/old
+to:   /tmp/tmpvvy8klw6/new
 nothing to migrate — no config, memory or custom state was found
-from: /tmp/tmpu53l6zmt/old
-to:   /tmp/tmpu53l6zmt/new
+from: /tmp/tmpho8cnnrs/old
+to:   /tmp/tmpho8cnnrs/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpu53l6zmt/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpu53l6zmt/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpho8cnnrs/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpho8cnnrs/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
 STOPPED: source and target are the same folder
-from: /tmp/tmpzdu_lg5m/old
-to:   /tmp/tmpzdu_lg5m/new
+from: /tmp/tmp8xu9k34p/old
+to:   /tmp/tmp8xu9k34p/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpzdu_lg5m/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpzdu_lg5m/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmp8xu9k34p/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmp8xu9k34p/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmp04zil_sr/old
-to:   /tmp/tmp04zil_sr/new
+from: /tmp/tmpo3wa9f6u/old
+to:   /tmp/tmpo3wa9f6u/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmp04zil_sr/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmp04zil_sr/new/memory/long_term.json, 1 entries
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpo3wa9f6u/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpo3wa9f6u/new/memory/long_term.json, 1 entries
 done. Start Ultron and it will use this data.
-from: /tmp/tmpjir1zvd_/old
-to:   /tmp/tmpjir1zvd_/new
+from: /tmp/tmpxrz_1w05/old
+to:   /tmp/tmpxrz_1w05/new
 note: credentials removed: gemini_api_key
 note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmpjir1zvd_/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmpjir1zvd_/new/memory/long_term.json, 1 entries
-done. Start Ultron and it will use this data...................[2026-11-06 10:06:14,707] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.............................................................................................................................................................[2026-11-06 10:06:19,175] [custom_jarvis.addon_runtime] WARNING: Repair context unavailable; preserving original failure
-..............................................s................................................................[2026-11-06 10:06:19,390] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-......................................................................................................................[2026-11-06 10:06:20,526] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:20,562] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
-.[2026-11-06 10:06:21,084] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmpxrz_1w05/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmpxrz_1w05/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data...............
+from: /tmp/tmproctk_4g/old
+to:   /tmp/tmproctk_4g/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-101302) api_keys.json -> /tmp/tmproctk_4g/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-101302) long_term.json -> /tmp/tmproctk_4g/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+..........[2026-11-06 10:13:02,126] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.............................................................................................................................................................[2026-11-06 10:13:06,403] [custom_jarvis.addon_runtime] WARNING: Repair context unavailable; preserving original failure
+..............................................s................................................................[2026-11-06 10:13:06,553] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+......................................................................................................................[2026-11-06 10:13:07,452] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:07,479] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 10:13:07,863] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
 ...............................Traceback (most recent call last):
   File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
     spec.loader.exec_module(module)
@@ -800,7 +808,7 @@ ImportError: browser_control needs playwright, which is not installed. Run: pip 
     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/tmp/tmpfkvl4rru/broken.py", line 1, in <module>
+  File "/tmp/tmp7mj43be0/broken.py", line 1, in <module>
     raise ImportError('needs a package that is not installed')
 ImportError: needs a package that is not installed
 
@@ -810,7 +818,7 @@ ImportError: needs a package that is not installed
     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/tmp/tmpg2kqbzcm/broken.py", line 1, in <module>
+  File "/tmp/tmp4mtdjzyg/broken.py", line 1, in <module>
     raise ImportError('needs a package that is not installed')
 ImportError: needs a package that is not installed
 
@@ -822,7 +830,7 @@ Traceback (most recent call last):
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/user/mark-jarvis/core/action_loader.py", line 248, in _call_handler
     return fn(parameters=_clean_parameters(parameters), **kwargs)
-  File "/tmp/tmpfkvl4rru/crasher.py", line 2, in _handler
+  File "/tmp/tmp7mj43be0/crasher.py", line 2, in _handler
 RuntimeError: handler exploded
 
 .Traceback (most recent call last):
@@ -831,7 +839,7 @@ RuntimeError: handler exploded
     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/tmp/tmpea58oc66/broken.py", line 1, in <module>
+  File "/tmp/tmpsbcu0ndg/broken.py", line 1, in <module>
     raise ImportError('needs a package that is not installed')
 ImportError: needs a package that is not installed
 
@@ -841,7 +849,7 @@ ImportError: needs a package that is not installed
     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
   File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/tmp/tmppu3oyw0r/broken.py", line 1, in <module>
+  File "/tmp/tmpdpct2rzd/broken.py", line 1, in <module>
     raise ImportError('needs a package that is not installed')
 ImportError: needs a package that is not installed
 
@@ -931,18 +939,10 @@ ImportError: browser_control needs playwright, which is not installed. Run: pip 
 
 ..............................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Ran 1364 tests in 23.928s
+Ran 1370 tests in 21.794s
 
 OK (skipped=6)
-
-from: /tmp/tmp628rzwm1/old
-to:   /tmp/tmp628rzwm1/new
-note: credentials removed: gemini_api_key
-note: name: JARVIS -> Ultron
-COPIED (previous kept as api_keys.json.bak-20261106-100614) api_keys.json -> /tmp/tmp628rzwm1/new/config/api_keys.json, 5 entries, adapted
-COPIED (previous kept as long_term.json.bak-20261106-100614) long_term.json -> /tmp/tmp628rzwm1/new/memory/long_term.json, 1 entries
-done. Start Ultron and it will use this data.
-<sys>:0: ResourceWarning: unclosed <socket.socket fd=4, family=2, type=1, proto=0, laddr=('127.0.0.1', 42351)>
+<sys>:0: ResourceWarning: unclosed <socket.socket fd=4, family=2, type=1, proto=0, laddr=('127.0.0.1', 45493)>
 
 === MARK upstream provider/UI self-tests ===
 Traceback (most recent call last):
@@ -1064,10 +1064,10 @@ providers self-test
 
 [3] Engine -> httpx -> HTTP -> server
 [Pipeline] -- turn ----------------------------------------------------
-[Pipeline]   think     0.06s                                  first word 0.05s  |  16 chars  |  qwen3:8b
+[Pipeline]   think     0.04s                                  first word 0.03s  |  16 chars  |  qwen3:8b
 [Pipeline]   tools     0.00s                                  open_app, web_search
 [Pipeline]   --------------------------------------------------------------------
-[Pipeline]   total     0.06s
+[Pipeline]   total     0.04s
   PASS  turn completed end to end
   PASS  fragmented, interleaved tool calls reassembled
   PASS  both turns' text arrived
@@ -1121,7 +1121,7 @@ providers self-test
 
 [9] A default install pays nothing
   PASS  providers is never imported
-  PASS  the ladder decision costs 3 us
+  PASS  the ladder decision costs 2 us
 
 [19] It speaks before the tool runs, and again after
 [Pipeline] -- turn ----------------------------------------------------
@@ -1241,7 +1241,7 @@ providers self-test
     "shadow_replay_lifecycle": 100,
     "transaction_rollback_lifecycle": 50
   },
-  "elapsed_seconds": 4.188,
+  "elapsed_seconds": 3.638,
   "live_provider_requests": 0,
   "scope": "Scoped repair judgment, restricted adapters and execution boundaries; not model intelligence or Windows hardware"
 }
@@ -1375,7 +1375,7 @@ edit the module docstring instead and run it again.
 | `platform_support.py` | 175 | core/platform_support.py — what this particular machine can actually let the | — |
 | `platforms.py` | 134 | core/platforms.py — the other technical platforms, read-only and honest. | test_web_platforms |
 | `plugin_loader.py` | 352 | Plugin discovery, validation, collision detection, and dispatch. | test_plugins_bundle, test_policy_new_tools, test_tool_contract |
-| `policy.py` | 465 | core/policy.py — risk tiers that decide whether an action needs a human. | test_bugfix_pass, test_memory_consent, test_policy, test_policy_new_tools, test_reconnect_policy, test_tool_contract |
+| `policy.py` | 465 | core/policy.py — risk tiers that decide whether an action needs a human. | test_bugfix_pass, test_memory_consent, test_performance_budget, test_policy, test_policy_new_tools, test_reconnect_policy, test_tool_contract |
 | `process_watch.py` | 496 | core/process_watch.py — supervising the jobs Ultron did not start. | test_process_watch, test_sidecar |
 | `reconnect_policy.py` | 152 | core/reconnect_policy.py — why the session dropped, and what to do about it. | test_reconnect_policy |
 | `reputation.py` | 202 | core/reputation.py — how much to trust a tool, as a number with an error bar. | test_reputation |
@@ -1406,7 +1406,7 @@ edit the module docstring instead and run it again.
 | `autonomy_governor.py` | 99 | One shared, lock-protected session budget; never authorizes a tool. | test_autonomy_upgrades, test_decision_layers |
 | `brain.py` | 1,359 | Jarvis Brain - LLM reasoning, intent classification, and skill routing. | test_autonomy_upgrades |
 | `compat.py` | 166 | Optional-dependency adapters; importing this module needs only Python. | test_autonomy_upgrades |
-| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_branchbound, test_decision_layers, test_memory_consent, test_policy, test_policy_new_tools, test_repair_judgment, test_tool_contract |
+| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_branchbound, test_decision_layers, test_memory_consent, test_performance_budget, test_policy, test_policy_new_tools, test_repair_judgment, test_tool_contract |
 | `evidence.py` | 172 | Bounded file verification and conflict-aware write backups. | test_autonomy_upgrades, test_evolve_script, test_insights, test_proof_gate, test_repair_judgment, test_reputation |
 | `failure_memory.py` | 146 | Bounded local incident signatures and cooldowns, not an authorization policy. | test_autonomy_upgrades |
 | `goal_verifier.py` | 132 | Deterministic, workspace-confined assertions; never executes project code. | test_autonomy_upgrades |
@@ -1431,7 +1431,7 @@ edit the module docstring instead and run it again.
 | `skillpacks.py` | 218 | custom_jarvis/skillpacks.py — Ultron writes new skills itself, as data. | test_schedule_packs |
 | `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_autonomy_upgrades, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
 | `telemetry.py` | 98 | Notice when Ultron itself gets slower, without a threshold that goes stale. | test_decision_layers |
-| `tools.py` | 1,754 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_metacog_service, test_repair_judgment, test_schedule_packs, test_shipping, test_tool_catalog, test_tool_contract, test_tools_overlay |
+| `tools.py` | 1,754 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_metacog_service, test_performance_budget, test_repair_judgment, test_schedule_packs, test_shipping, test_tool_catalog, test_tool_contract, test_tools_overlay |
 | `vision.py` | 121 | Optional OpenAI-compatible vision transport; disabled until explicitly configured. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_ui_bridge, test_ui_ladder |
 
 ## `plugins/` — 14 modules, 1,299 lines
@@ -1484,8 +1484,8 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_lazyimport, test_live_config, test_reconnect_policy, test_startup_paths, test_verifiers |
-| `base.py` | 341 | The contract every provider signs — and the only thing the rest of the app is | test_autonomy_upgrades, test_collect_install, test_decision_layers, test_inventory_data, test_live_config, test_live_transport, test_mark_integration, test_metacog_service, test_migrate_legacy, test_repair_judgment, test_shipping |
+| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_lazyimport, test_live_config, test_performance_budget, test_reconnect_policy, test_startup_paths, test_verifiers |
+| `base.py` | 341 | The contract every provider signs — and the only thing the rest of the app is | test_autonomy_upgrades, test_collect_install, test_decision_layers, test_inventory_data, test_live_config, test_live_transport, test_mark_integration, test_metacog_service, test_migrate_legacy, test_performance_budget, test_repair_judgment, test_shipping |
 | `engine_pipeline.py` | 1,295 | The second way to hold the conversation: speech in, a model, speech out. | test_audio_features, test_identity_voice, test_live_config, test_live_transport |
 | `llm_openai.py` | 783 | One file, every OpenAI-compatible endpoint — local servers and hosted APIs alike. | test_bugfix_pass, test_edge_cases |
 | `registry.py` | 200 | Discovery and configuration for the providers folder. | test_app_resolver, test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_mark_integration, test_plugins_bundle, test_policy_new_tools, test_repair_judgment, test_schedule_packs, test_tool_contract, test_web_platforms |
@@ -1499,16 +1499,16 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bridges, test_bugfix_pass, test_edge_cases, test_file_safety, test_lazyimport, test_live_config, test_live_transport, test_schedule_packs, test_verifiers |
+| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bridges, test_bugfix_pass, test_edge_cases, test_file_safety, test_lazyimport, test_live_config, test_live_transport, test_performance_budget, test_schedule_packs, test_verifiers |
 
 ## `memory/` — 2 modules, 1,373 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `config_manager.py` | 874 | **no docstring** | test_bugfix_pass, test_digest, test_edge_cases, test_first_run, test_hud_fixes, test_identity_voice, test_mark_integration, test_shipping |
-| `memory_manager.py` | 499 | **no docstring** | test_edge_cases, test_memory_consent, test_proof_gate |
+| `memory_manager.py` | 499 | **no docstring** | test_edge_cases, test_memory_consent, test_performance_budget, test_proof_gate |
 
-## `scripts/` — 22 modules, 6,319 lines
+## `scripts/` — 23 modules, 6,544 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -1525,6 +1525,7 @@ edit the module docstring instead and run it again.
 | `make_banner.py` | 110 | scripts/make_banner.py — draw the animated picture at the top of the readme. | — |
 | `map.py` | 152 | scripts/map.py — write the module map from the code, not from memory. | test_whatsapp_core |
 | `migrate_legacy.py` | 276 | scripts/migrate_legacy.py — carry a previous install's data into Ultron. | test_migrate_legacy |
+| `profile_turn.py` | 225 | scripts/profile_turn.py — where the Python actually goes in one exchange. | test_performance_budget |
 | `proof_gate.py` | 1,840 | PROOF GATE — does the claim hold, end to end, on this machine? | test_proof_gate, test_publishing, test_ui_bridge |
 | `stress_custom.py` | 195 | Reproducible local repair stress checks; no real model/provider calls. | — |
 | `verify.py` | 95 | Offline migration verification; never starts a voice session or contacts a provider. | test_metacog, test_publishing, test_schedule_packs, test_shipping, test_verifiers, test_web_platforms |
@@ -1535,7 +1536,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_verifiers |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_ui_bridge, test_verifiers |
 
-## `tests/` — 61 modules, 15,066 lines
+## `tests/` — 62 modules, 15,195 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -1571,6 +1572,7 @@ edit the module docstring instead and run it again.
 | `test_metacog_service.py` | 213 | tests/test_metacog_service.py — the metacognitive tools and skills, in the app. | test_metacog_service |
 | `test_migrate_legacy.py` | 178 | Offline tests for scripts/migrate_legacy.py. | — |
 | `test_numerics.py` | 107 | tests/test_numerics.py — the incomplete beta, checked against closed forms. | test_numerics |
+| `test_performance_budget.py` | 129 | tests/test_performance_budget.py — the Python half of a turn stays small. | test_performance_budget |
 | `test_plugins_bundle.py` | 262 | Tests for the twelve shipped plugins, run through the real plugin loader. | — |
 | `test_policy.py` | 254 | Offline tests for risk-tiered consent (core/policy.py + core/custom_gate.py). | — |
 | `test_policy_new_tools.py` | 93 | Where the twelve new plugins sit in the risk table. | — |
