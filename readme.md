@@ -117,7 +117,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**229 Python files. 83,850 lines. 1,345 tests.** Proof gate, this build, Linux: **15 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**229 Python files. 83,895 lines. 1,348 tests.** Proof gate, this build, Linux: **15 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -163,6 +163,7 @@ python scripts\verify.py        # the suite, the self-checks, the module map
 python scripts\proof_gate.py    # the claims, step by step, with verdicts
 python scripts\verify_all.py    # the same questions on YOUR machine
 python scripts\bench_hybrid.py  # the table above, on your hardware
+python scripts\bench_startup.py # what a launch costs, layer by layer
 ```
 
 A `SKIP` is never counted as a pass and never as a failure. CI runs all three on `ubuntu-latest` and `windows-latest`: [`.github/workflows/verify.yml`](.github/workflows/verify.yml).

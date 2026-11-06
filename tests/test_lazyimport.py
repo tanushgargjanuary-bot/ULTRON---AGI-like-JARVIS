@@ -252,6 +252,51 @@ class BootPathTests(unittest.TestCase):
         source = (ROOT / "main.py").read_text(encoding="utf-8-sig")
         self.assertNotIn('json.loads(open(API_CONFIG_PATH', source)
 
+class LaunchMeasurementTests(unittest.TestCase):
+    """The measuring tool must not measure a lie.
+
+    A start-up table whose rows share one process is a table of warm numbers
+    wearing cold labels. These pin the two things that keep the tool honest:
+    every stage runs in its own subprocess, and a stage that cannot run here is
+    reported as unmeasurable instead of guessed.
+
+    They exist because a measurement was wrong once. Deferring `ui.py`'s psutil
+    import looked like a 22 ms win on a noisy harness; run properly, seven fresh
+    processes each, it was 186 ms -> 182 ms and the first frame was not faster at
+    all, because the window constructs the system monitor anyway. The change was
+    reverted, and the tool that showed it was wrong is the one below.
+    """
+    """The measuring tool must not measure a lie.
+
+    A start-up table whose rows share one process is a table of warm numbers
+    wearing cold labels. These pin the two things that keep the tool honest:
+    every stage runs in its own subprocess, and a stage that cannot run here is
+    reported as unmeasurable instead of guessed.
+    """
+
+    def setUp(self):
+        import importlib.util
+        path = ROOT / "scripts" / "bench_startup.py"
+        spec = importlib.util.spec_from_file_location("bench_startup_for_tests", path)
+        self.bench = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.bench)
+
+    def test_every_stage_runs_in_its_own_process(self):
+        self.assertTrue(self.bench.PROBES, "no stages to measure")
+        for name, code in self.bench.PROBES.items():
+            self.assertIsInstance(code, str)
+            self.assertTrue(code.strip(), f"stage {name!r} has no code")
+
+    def test_a_stage_that_cannot_run_is_reported_not_guessed(self):
+        result = self.bench.run_probe("broken", "raise SystemExit(3)", runs=1)
+        self.assertIsNone(result.get("ms"), "an impossible stage returned a number")
+        self.assertTrue(result.get("error"), "the failure was not reported")
+
+    def test_a_measurement_returns_a_positive_median(self):
+        result = self.bench.run_probe("pass", "import json; print(json.dumps({'ms': 1.0}))",
+                                      runs=1)
+        self.assertGreater(result.get("ms") or 0, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

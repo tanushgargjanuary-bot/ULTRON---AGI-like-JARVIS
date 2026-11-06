@@ -91,7 +91,7 @@ and Mojo on watch), **33 no** — each with a reason, not a shrug.
 | Speech recognition and synthesis | Python, provider-side | **Python** | The work happens on someone else's GPU. |
 | Local models | llama.cpp / whisper.cpp | **C++ and CUDA, consumed** | These are the fastest thing available on a laptop, already written, already buildable. Writing our own kernel would be slower than these and slower to maintain. |
 | The HUD, avatar, animation | Python + **Qt (C++)** | **Qt**, kept | 60 Hz drawing in a tested Python file. A Rust `wgpu` rewrite becomes right only if the window must hold 120 fps in 3D. |
-| Background supervision | Python + **psutil** | **Python**, with **Go** as the escape hatch | One pass over the process table every two seconds costs about 0.02 ms per process. Trigger for Go: a component that must survive the app crashing. |
+| Background supervision | Python + **psutil** | **Python**, with **Go** as the escape hatch | One pass over the whole process table every two seconds was measured at **3.4 ms** — 0.17 % of the interval — so the watcher costs less than the poll loop that drives it. Trigger for Go: a component that must survive the app crashing. |
 | Memory and state | **SQLite (SQL)** + JSON | **SQLite** | Already transactional, already on every machine, already atomic. |
 | Dashboard | Python server + **JavaScript** | **TypeScript** later | One page, served locally. Types start paying at around 2,000 lines. |
 | Installer and launchers | **PowerShell** + batch + Inno Setup | **PowerShell** + Inno Setup | The owner's platform is Windows; these are its native tools. |
@@ -111,7 +111,11 @@ TypeScript, WebAssembly), or has no use for.
 
 1. **Measure first.** `cProfile`, `py-spy`, or a script like
    `scripts/bench_hybrid.py` with a median over thousands of rounds. Never a
-   single stopwatch, never a feeling.
+   single stopwatch, never a feeling. This rule already paid for itself: deferring
+   `psutil` out of `ui.py` looked like a 22 ms saving on a noisy harness, and
+   measured properly — seven fresh processes each — it was 186 ms to 182 ms, with
+   no faster first frame, because the window builds the system monitor anyway. The
+   change was reverted rather than kept for the story.
 2. **Move one leaf, behind the same interface.** The function keeps its name, its
    arguments and its tests. `native/frame.c` is the worked example: same inputs,
    same outputs, and `bench_hybrid.py` checks that all four implementations agree
