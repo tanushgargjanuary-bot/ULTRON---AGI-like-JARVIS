@@ -81,3 +81,24 @@ recorded in `.gitattributes`. The faster-language question is answered with
 timings, not opinion: the waiting is the network and the recogniser, and both are
 already outside Python. Four separate commits, each with the reason in its
 message.
+
+### 2026-11-06 — the front page had to earn its claims
+
+You said: make sure nothing in the readme is invented. You were right to ask.
+
+**What was wrong.** One link pointed at a folder that is not in this repository.
+The file counts were out of date. A speed table quoted an earlier measurement
+without saying so.
+
+**What stands now.**
+
+| Question | Answer that is true |
+|---|---|
+| Does the page animate? | Yes — a 40-frame GIF committed in the repository, drawn by a script. |
+| Can a reader with ADHD finish it? | One idea per line, the picture first, the long half folded behind one click. |
+| Is a faster language worth it? | Measured: the audio leaf is 0.18 % of a frame. C is 36x faster only when nothing is copied. The wait is the model, not the language. |
+| Can the page lie again? | No. A test fails if it names a file that is absent or a count that is not in the tree. |
+
+**Still owed to you:** revoke the two GitHub tokens you pasted. They are in this
+conversation's history, and a token in a log is a token someone else can use.
+

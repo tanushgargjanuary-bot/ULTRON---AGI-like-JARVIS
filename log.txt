@@ -2206,3 +2206,44 @@ SUITE AND GATE
   224 files · 1,311 tests OK (skipped=6) · verify.py exit 0 · proof gate
   14 PROVEN / 13 PARTIAL / 0 FAILED here, 18 PROVEN / 9 PARTIAL / 0 FAILED on the
   Windows runner.
+
+=== 2026-11-06 · 1.2.19 · the honest front page ===
+
+What changed, and why.
+
+1. readme.md was audited line by line, then rebuilt. Removed: the link to
+   renders/, which is not in this repository (a fabricated path). Corrected: the
+   file and line counts, which were stale. Every number that survives now either
+   comes from the tree or names the command that measures it.
+
+2. The animation the owner asked for is in the readme itself:
+   docs/img/hud-states.gif, drawn by scripts/make_banner.py from the HUD palette.
+   Forty frames, three states, 125 KB. Captioned as an illustration, because it is
+   one and not a screen recording.
+
+3. docs/LANGUAGE_DECISION.md now carries the four-way measurement: 53.9 us pure
+   Python, 21.9 numpy, 56.5 C-with-a-copy, 1.49 C-with-the-pointer-already-there.
+   The third row is the point: C is not automatically faster, because the copy
+   costs what the arithmetic saved.
+
+4. One line ending policy, applied once. 39 modules were CRLF, the rest LF; the
+   previous .gitattributes only recorded that, and git then reported 45 files as
+   changed for no reason. This time the blobs were renormalised in one commit.
+
+5. tests/test_readme.py: the page can no longer name a file that does not exist,
+   quote a count that is not in the tree, or show a picture that is not there.
+
+Mistakes in this round, kept for the next reader:
+
+  * The first .gitattributes recorded line endings and changed nothing. Fixing a
+    symptom by describing it is not fixing it.
+  * The readme test failed on its first run because the page wrote 1,311 and the
+    results file said 1304. Two numbers, both plausible, one of them from an old
+    run. The test now reads the results file.
+  * /tmp was cleared mid-session and PyQt6 vanished, so one suite run collected
+    1222 tests instead of 1319 and reported a setUpClass error. Reinstalled; the
+    suite is green. A missing package is a skip, a missing install is not a bug.
+
+State: 1319 tests OK (skipped=6). Proof gate 14 PROVEN / 13 PARTIAL / 0 FAILED on
+Linux. CI not yet run on these commits.
+
