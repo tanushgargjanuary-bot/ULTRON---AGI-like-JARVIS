@@ -42,6 +42,10 @@ class WithAFolder(unittest.TestCase):
         failures.clear()
 
     def tearDown(self):
+        # Let go of the native-fault file first: on Windows an open handle blocks the
+        # delete, and the temporary folder then fails to clean up — which is how the
+        # Windows runner found this.
+        crash.disarm()
         crash._state["root"] = self._saved
         failures.clear()
         self._temp.cleanup()
@@ -98,14 +102,13 @@ class ARecordIsWritten(WithAFolder):
         crash.compose("just text")
         self.assertFalse(self.folder().exists())
 
-    def test_an_unwritable_folder_returns_nothing_instead_of_raising(self):
+    def test_a_folder_that_cannot_be_made_returns_nothing_instead_of_raising(self):
+        # A path that is a FILE, not a folder: `mkdir` fails on every platform. The
+        # earlier version of this test used chmod, which Windows ignores — so it passed
+        # on Linux and was a false pass on the machine that matters.
         blocked = self.root / "blocked"
-        blocked.mkdir()
-        blocked.chmod(0o500)
-        try:
-            self.assertEqual(crash.report("x", root=blocked), "")
-        finally:
-            blocked.chmod(0o700)
+        blocked.write_text("not a folder", encoding="utf-8")
+        self.assertEqual(crash.report("x", root=blocked), "")
 
     def test_only_the_newest_reports_are_kept(self):
         for index in range(crash.KEEP + 5):
@@ -215,6 +218,33 @@ class TheHooksAreArmed(WithAFolder):
             object = "an object"
         crash._on_unraisable(Fake())
         self.assertEqual(crash.history()[0]["kind"], "RuntimeError")
+
+    def test_disarming_puts_the_hooks_back(self):
+        saved = (sys.excepthook, threading.excepthook, crash._state["installed"])
+        crash._state["installed"] = False
+        try:
+            crash.install(root=self.root)
+            result = crash.disarm()
+            self.assertFalse(crash.is_installed())
+            self.assertIs(sys.excepthook, sys.__excepthook__)
+            self.assertIn("closed", result)
+        finally:
+            sys.excepthook = saved[0]
+            threading.excepthook = saved[1]
+            crash._state["installed"] = saved[2]
+
+    def test_installing_into_a_second_folder_lets_go_of_the_first(self):
+        crash._state["installed"] = False
+        first = self.root / "one"
+        second = self.root / "two"
+        first.mkdir()
+        second.mkdir()
+        try:
+            crash.install(root=first)
+            crash.install(root=second)
+            self.assertEqual(crash.folder(), str(second / "logs"))
+        finally:
+            crash.disarm()
 
     def test_an_exception_reaching_the_top_writes_a_file(self):
         try:

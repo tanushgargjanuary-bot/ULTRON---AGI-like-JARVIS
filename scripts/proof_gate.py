@@ -668,6 +668,7 @@ class _WithGateReports:
 
     def __exit__(self, *_exc):
         import sys as _sys
+        self._crash.disarm()             # an open handle blocks the delete on Windows
         self._crash._state["root"] = self._saved_root
         _sys.excepthook = self._saved_hooks[0]
         self._crash._state["installed"] = self._saved_hooks[1]

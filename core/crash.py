@@ -335,10 +335,14 @@ def install(root: Path | None = None) -> dict:
     than assume it.
     """
     with _lock:
-        if _state["installed"]:
+        wanted_root = Path(root) if root is not None else _state["root"]
+        if _state["installed"] and wanted_root == _state["root"]:
             return {"installed": True, "again": True, "root": str(_state["root"])}
-        if root is not None:
-            _state["root"] = Path(root)
+        if _state["installed"]:
+            # A different folder means a second install: close the first file, or
+            # Windows refuses to delete the folder that still holds the handle.
+            disarm()
+        _state["root"] = wanted_root
         folder = _folder()
         try:
             folder.mkdir(parents=True, exist_ok=True)
@@ -367,6 +371,36 @@ def _arm_faulthandler(folder: Path) -> None:
     except (OSError, ValueError, RuntimeError) as error:
         failures.note("crash.faulthandler", error,
                       detail="native faults will not be recorded")
+
+
+def disarm() -> dict:
+    """Put Python's own hooks back and close the native-fault file.
+
+    Needed by anything that wants the folder afterwards. On Windows an open handle
+    blocks the delete, and a temporary folder that cannot be cleaned up is the kind of
+    mess a crash reporter must not create. The app never calls this: for the life of
+    the process the handle is meant to stay open.
+    """
+    handle = _state.get("fault_file")
+    closed = False
+    try:
+        faulthandler.disable()
+    except (ValueError, RuntimeError) as error:
+        failures.note("crash.disarm", error)
+    if handle is not None:
+        try:
+            handle.close()
+            closed = True
+        except (OSError, ValueError) as error:
+            failures.note("crash.disarm", error, detail="the fault log stayed open")
+    sys.excepthook = sys.__excepthook__
+    if hasattr(threading, "__excepthook__"):
+        threading.excepthook = threading.__excepthook__
+    if hasattr(sys, "__unraisablehook__"):
+        sys.unraisablehook = sys.__unraisablehook__
+    _state["fault_file"] = None
+    _state["installed"] = False
+    return {"closed": closed}
 
 
 def is_installed() -> bool:

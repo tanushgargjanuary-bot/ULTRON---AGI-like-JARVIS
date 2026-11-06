@@ -41,13 +41,18 @@ BUGS FOUND WHILE TESTING, each one by a test rather than by reading:
     by stamp, then copy number, then write time.
   - `claim_crash_record` was 21 branches, past the complexity ceiling. It is three
     functions now, with one context manager shared between them.
+  - and the Windows runner found two more, which is what it is for: the open
+    faulthandler handle stopped a temporary folder being deleted, and a test that used
+    chmod to make a folder unwritable was a false pass there, because Windows ignores
+    chmod. The handle is now released by `disarm()`, and the test blocks the write by
+    pointing at a file instead of a folder — a failure every platform agrees on.
 
-  tests/test_crash.py      37 tests: the record, the redaction, the rotation, the four
+  tests/test_crash.py      39 tests: the record, the redaction, the rotation, the four
                            hooks, the notice, the digest, the traceback, the evidence in
                            a proposal, the tool action, the wiring, the git-ignore.
   proof_gate               new claim `crash_record` — 8 steps, all PROVEN.
 
-State: 1,717 tests OK (skipped=8), 10.3 MB / 510 files. Proof gate 22 PROVEN / 13
+State: 1,719 tests OK (skipped=8), 10.6 MB / 533 files. Proof gate 22 PROVEN / 13
 PARTIAL / 0 FAILED.
 
 === 2026-11-06 · build 1.2.33 · every skill gets a reason to be used ===
