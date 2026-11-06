@@ -7,6 +7,8 @@ import threading
 import uuid
 from dataclasses import dataclass
 
+from custom_jarvis.telemetry import Monitor
+
 
 @dataclass
 class BudgetLimits:
@@ -25,6 +27,9 @@ class AutonomyGovernor:
         self.usage = {"completion_calls": 0, "repair_calls": 0, "wall_seconds": 0.0}
         self.aborts = 0
         self.storage_failed = False
+        # How long a turn takes is measured against this session's own recent
+        # turns, not against a number that was true on another machine once.
+        self.pace = Monitor(label="turn")
         if knowledge:
             self.usage.update(
                 {
@@ -70,6 +75,7 @@ class AutonomyGovernor:
             raise ValueError("Duration must be finite and nonnegative")
         with self.lock:
             self._persist(wall_seconds=seconds)
+            self.pace.observe(seconds)
             self.usage["wall_seconds"] += seconds
             self.aborts = self.aborts + 1 if aborted else 0
 
@@ -84,6 +90,7 @@ class AutonomyGovernor:
                 "remaining_repair_calls": max(
                     0, self.limits.max_repair_calls - self.usage["repair_calls"]
                 ),
+                "pace": self.pace.status(),
                 "paused": self.storage_failed
                 or self.aborts >= self.limits.max_consecutive_aborts
                 or self.usage["wall_seconds"] >= self.limits.max_wall_seconds

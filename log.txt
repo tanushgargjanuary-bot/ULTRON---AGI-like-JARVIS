@@ -1921,3 +1921,41 @@ NEXT, IF YOU WANT IT
   docs/SKILLS.md lists eight further meta skills and seven domain skills, with
   the reason each is worth building. The first is post_mortem: the planner
   already sees a failing step, and today that knowledge dies with the turn.
+
+BUILD 1.2.15.
+  Four algorithms, each wired where a choice is actually made.
+  1. custom_jarvis/decision.py, exposed as the `decide` tool. A candidate is
+     scored chance x value - cost - risk penalty, and the chance comes from the
+     metacog calibration record. The refusal is the point: when every option
+     scores below zero the answer is "do none of these", and a `blocked` option
+     never wins on value alone. A chance of 1.7 is refused, not clamped.
+  2. Strategy choice moved to UCB1 (core/bandit.py, already tested). Aggregate
+     wins/tries are replayed as individual rewards, because that bandit scores
+     per attempt. A 1-of-1 no longer outranks a 12-of-12; it gets explored once
+     and then loses when it fails. The reply says "chosen by UCB1".
+  3. Lesson recall moved from counting shared words to BM25
+     (custom_jarvis/shortlist.py). Inverted document frequency plus a length
+     correction: a word in every lesson ranks nothing, a rare word ranks more,
+     and a long lesson does not win by being long. An unrelated question now
+     returns no advice instead of noise.
+  4. custom_jarvis/telemetry.py: an exponentially weighted mean and a z-score,
+     wired into the governor, so status() reports the pace of this session
+     against itself. Quiet for the first eight turns, because a spread measured
+     over three samples is not a spread.
+  Two defects found while testing, both mine:
+     - the monitor first computed the z-score AFTER updating the mean and
+       spread, so the outlier widened the spread that judged it and a real
+       slowdown hid itself. It now compares against the baseline that was
+       established before the measurement.
+     - a test asserted that 1-of-1 never beats 12-of-12. UCB1 disagrees on
+       purpose: it explores the least-tried option once. The test was rewritten
+       to the true property - explored once, then dropped after failures - and
+       the note now says "more than ten standard deviations" rather than
+       printing a figure of 395.
+  NOT BUILT, deliberately: priority scheduling of reminders. It needs a queue of
+  pending reminders to order, and no such queue exists yet; it arrives with the
+  GitHub trending-repository reminders. Building it now would ship unused code.
+
+SUITE AND GATE
+  208 files · 1,219 tests OK (skipped=6) · 99 self-checks · verify.py exit 0.
+  Proof gate: 9 PROVEN (decisions added) · 13 PARTIAL · 0 FAILED.

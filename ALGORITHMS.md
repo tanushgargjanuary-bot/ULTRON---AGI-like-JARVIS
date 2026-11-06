@@ -15,6 +15,15 @@
 > python -m unittest tests.test_fuzzy tests.test_knapsack tests.test_branchbound tests.test_bandit tests.test_reputation tests.test_audio_features
 > ```
 
+> **Phase 18 (build 1.2.15).** Four more now sit on live paths, chosen for the
+> same reason as before — each replaces a guess: `core/bandit.py`'s UCB1 now
+> drives strategy choice in `custom_jarvis/metacog.py`; `custom_jarvis/shortlist.py`
+> (BM25) ranks lesson recall; `custom_jarvis/decision.py` scores candidate actions
+> as chance x value - cost - risk and is exposed as the `decide` tool; and
+> `custom_jarvis/telemetry.py` (EWMA + z-score) reports the pace of a session in
+> `AutonomyGovernor.status`. Evidence: `tests/test_decision_layers.py`,
+> `python scripts\proof_gate.py --only decisions`.
+
 Written for a B.Tech 3rd-year AKTU student who is being taught these topics right now and wants
 them pointed at a real codebase instead of a lab file. Every row below names the **file and function
 it would replace or extend in this repo**, so it can be read as a work plan and as revision notes.

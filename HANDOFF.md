@@ -1196,3 +1196,58 @@ draft lesson — with the owner's approval, since it writes — is the cheapest 
 improvement in the meta-learning family, and it is one hook rather than a
 subsystem.
 
+## 6w. Four algorithms, and the one that was not built (2026-11-06, build 1.2.15)
+
+You asked for the algorithms whose verdict was "yes". Four shipped, each wired to
+a place where the program actually chooses. The fifth is deliberately absent, and
+the reason is at the end.
+
+**A decision system** — `custom_jarvis/decision.py` and the `decide` tool. A
+candidate is scored `chance x value - cost - risk`. The chance comes from the
+metacog calibration record, which is why that ledger was built first: the
+decision layer needs an honest `p`, and a model's opinion of its own accuracy is
+not one. The rule that earns the word "system" is the **refusal**: when every
+option scores below zero, the answer is "do none of these". An assistant that
+always has a recommendation is performing, not deciding. A `blocked` option never
+wins on value alone, so a force-push at value 9 loses to a pull request at value
+1. A chance of 1.7 raises rather than being clamped — a probability outside 0..1
+is a caller bug, and hiding it would make the arithmetic a rumour.
+
+**UCB1 for strategy choice** — `core/bandit.py` was written and tested in an
+earlier phase and never wired. Now `choose_strategy` replays the aggregate
+wins/tries into it as individual rewards, so a 1-of-1 option is explored once
+instead of being trusted, and the reply says "chosen by UCB1, which pays a bonus
+to the option tried least". One exploration policy in the project instead of
+three.
+
+**BM25 for lesson recall** — `custom_jarvis/shortlist.py`. Counting shared words
+ranked "tests" (in every lesson) as highly as "cors" (in one). Inverted document
+frequency and a length correction fix both, and a lesson with no matching word is
+now left out instead of scored zero, which is what turns recall from noise into
+advice.
+
+**Pace telemetry** — `custom_jarvis/telemetry.py`, wired into `status()`. A fixed
+threshold is wrong twice: it fires for ever on a slow machine and stays silent on
+a fast one that just got slower. The governor keeps an exponentially weighted
+mean and a spread, and reports the last turn as a z-score. The wording is capped
+at "more than ten standard deviations" because a figure of 395 informs nobody.
+
+**Two defects the tests caught, both mine.** The monitor first computed the
+z-score *after* updating the mean and spread — so the outlier widened the spread
+that judged it and a real slowdown hid itself. And a test asserted that 1-of-1
+never beats 12-of-12; UCB1 disagrees on purpose. The test was rewritten to the
+true property (explored once, then dropped after failures) rather than the code
+being bent to the test.
+
+**Not built: priority scheduling of reminders.** It needs a queue of pending
+reminders to order, and no such queue exists yet. It arrives with the GitHub
+trending-repository reminders. Shipping it now would be unused code that looks
+like progress.
+
+Gate: 208 files · **1,219 tests** (6 skipped) · 99 self-checks · `verify.py` exit
+0 · proof gate **9 PROVEN / 13 PARTIAL / 0 FAILED** (new claim: `decisions`).
+
+**Order agreed with the owner:** these algorithms, then the deep scan, then
+native GitHub (with the trending-repository reminders), then the push — the push
+last of all, and with the owner's own credentials.
+

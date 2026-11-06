@@ -166,6 +166,12 @@ new visual language need to be asked for, not assumed.
 | **The ledger records the assistant, not the owner** | Predictions, lessons and strategy attempts are the machine's own reliability, kept in one JSON file beside the state. Personal memory stays behind the approval rule; the two stores are deliberately separate files for that reason. | `custom_jarvis/service.py`, `metacog.json` |
 | **A skill that needs `.git` says so instead of failing mid-run** | `debug_context` and `release_checklist` declare `.git` as a required marker, so `list_skills` reports them as not applicable in a plain folder with the reason attached. The alternative — failing at step two of five — teaches the user nothing. | `custom_jarvis/skills.py`, `tests/test_metacog_service.py` |
 
+| **A decision is arithmetic, and it can refuse** | Score = chance x value - cost - risk. When every option is below zero the answer is "do none of these"; an assistant that always has a recommendation is performing, not deciding. A `blocked` option never wins on value alone. | `custom_jarvis/decision.py`, `tests/test_decision_layers.py` |
+| **The least-tried option gets one fair trial** | UCB1 over the attempt record, not a raw ratio: 1 of 1 is explored once and then loses to 12 of 12. This is the same rule the provider bandit uses, so the project has one exploration policy rather than three. | `custom_jarvis/metacog.py:choose_strategy`, `core/bandit.py` |
+| **Relevance is BM25, not shared words** | A word in every lesson ("tests") ranks nothing; a rare word that appears three times ranks more; a long lesson does not win by being long. An unrelated question returns no advice instead of noise. | `custom_jarvis/shortlist.py`, `metacog.lessons_for` |
+| **Normal is measured, not declared** | A fixed "6 s is slow" alarm is wrong on both kinds of machine. The governor keeps an exponentially weighted mean and flags a turn by z-score, so a slow PC is not nagged and a sudden fivefold slowdown is caught. | `custom_jarvis/telemetry.py`, `AutonomyGovernor.status` |
+| **No algorithm ships before the feature that needs it** | Priority scheduling of reminders is specified and not built, because no queue of reminders exists yet. Unused code is a liability that looks like progress. | this build, `docs/SKILLS.md` |
+
 1. Which provider you actually use day to day — the runtime works with any, and the honest
    default is "whichever key you paste".
 2. Whether the Agentic OS gets a live bridge to Ultron later. Bundle first was the decision;

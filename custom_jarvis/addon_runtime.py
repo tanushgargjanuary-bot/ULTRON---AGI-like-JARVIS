@@ -39,6 +39,7 @@ INSPECTION_TOOLS = frozenset(
         # so they belong in the confinement table below.
         "search_text",
         "measure_code",
+        "decide",
     }
 )
 PATH_ARGUMENTS = {

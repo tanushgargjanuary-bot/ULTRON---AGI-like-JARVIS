@@ -42,7 +42,9 @@ import time
 import uuid
 from pathlib import Path
 
+from core.bandit import UCB1
 from core.numerics import wilson_lower
+from custom_jarvis.shortlist import rank
 
 MAX_PREDICTIONS = 500
 MAX_LESSONS = 300
@@ -250,16 +252,28 @@ class Ledger:
         return row
 
     def lessons_for(self, task: str, limit: int = 5) -> list[dict]:
-        """Rank stored rules against a new task. Overlap, then use, then recency."""
+        """Rank stored rules against a new task: BM25 relevance, then use, then age.
+
+        BM25 rather than a count of shared words, because a word that appears in
+        every lesson ("tests") ranks nothing, and a rare word that appears three
+        times in one lesson ranks more. `shortlist.py` holds the arithmetic.
+        """
         wanted = _tokens(task)
-        scored = []
-        for row in self._data["lessons"]:
-            overlap = len(wanted & _tokens(f"{row.get('trigger', '')} {row.get('rule', '')}"))
-            if overlap == 0 and wanted:
-                continue
-            scored.append((overlap, int(row.get("hits", 0)), row.get("created", 0.0), row))
-        scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
-        chosen = [row for _o, _h, _c, row in scored[: max(1, int(limit))]]
+        rows = self._data["lessons"]
+        if not rows:
+            return []
+        if not wanted:
+            # No task was given, so relevance cannot decide; use and age can.
+            ordered = sorted(rows, key=lambda row: (int(row.get("hits", 0)),
+                                                   row.get("created", 0.0)), reverse=True)
+            chosen = ordered[: max(1, int(limit))]
+        else:
+            documents = [{"id": index,
+                          "text": f"{row.get('trigger', '')} {row.get('rule', '')} "
+                                  f"{row.get('domain', '')}",
+                          "row": row} for index, row in enumerate(rows)]
+            chosen = [item["document"]["row"]
+                      for item in rank(task, documents, limit=max(1, int(limit)))]
         if chosen:
             with self._lock:
                 for row in chosen:
@@ -296,17 +310,28 @@ class Ledger:
         if untried:
             return {"task_type": kind, "strategy": untried[0], "lower_bound": None,
                     "why": "untried — worth one attempt before trusting the rest"}
-        ranked = sorted(
-            names,
-            key=lambda name: (wilson_lower(table[name]["wins"], table[name]["tries"]),
-                              table[name]["wins"]),
-            reverse=True,
-        )
-        best = ranked[0]
+
+        # UCB1: mean + an optimism bonus for the option tried least. It is the
+        # same decision rule the rest of the project uses for provider choice,
+        # and it is the reason a 6-of-6 and a 1-of-6 are not treated as equally
+        # trustworthy. Aggregate counts are replayed as individual rewards,
+        # because the bandit scores per attempt and not per summary.
+        bandit = UCB1(names)
+        for name in names:
+            row = table[name]
+            for _ in range(int(row["wins"])):
+                bandit.update(name, 1.0)
+            for _ in range(int(row["tries"]) - int(row["wins"])):
+                bandit.update(name, 0.0)
+        best = bandit.choose() or names[0]
+        upper = dict(bandit.scores()).get(best, 0.0)
         row = table[best]
         return {"task_type": kind, "strategy": best, "tries": row["tries"], "wins": row["wins"],
                 "lower_bound": round(wilson_lower(row["wins"], row["tries"]), 3),
-                "why": f"{row['wins']}/{row['tries']} and the lower bound is the honest figure"}
+                "ucb": None if upper == float("inf") else round(upper, 3),
+                "why": (f"{row['wins']}/{row['tries']} on record, lower bound "
+                        f"{wilson_lower(row['wins'], row['tries']):.2f}; chosen by UCB1, "
+                        "which pays a bonus to the option tried least")}
 
     # ------------------------------------------------------------------- report
     def self_review(self, task: str = "") -> dict:

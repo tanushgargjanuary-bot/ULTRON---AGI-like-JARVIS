@@ -915,14 +915,124 @@ def claim_metacognition(c: Claim) -> None:
         before = names()
         register_metacog_tools(live, ledger)
         after = names()
-        if len(after - before) < 9:
+        if len(after - before) < 10:
             return c.bad("the tools are registered",
                          f"only {len(after - before)} tools appeared")
     except Exception as exc:                                   # noqa: BLE001
         return c.bad("the tools are registered", f"{type(exc).__name__}: {exc}")
     c.ok("the tools are registered",
-         f"{len(after - before)} metacognitive tools joined the live registry")
+         f"{len(after - before)} metacognitive tools joined the live registry, "
+         "including `decide`")
     c.ok("one local file", f"one JSON file, no model, no network: {written[0]}")
+
+
+def claim_decisions(c: Claim) -> None:
+    """It decides with arithmetic, and it can refuse to decide."""
+    try:
+        from custom_jarvis.decision import choose, score
+        from custom_jarvis.shortlist import rank
+        from custom_jarvis.telemetry import Monitor
+        from core.bandit import UCB1
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the decision layer", f"{type(exc).__name__}: {exc}")
+    c.ok("the decision layer", "decision, shortlist, telemetry and the bandit import")
+
+    # 1. Expected value, and the refusal that makes it a decision system.
+    best = choose([
+        {"name": "guess", "p": 0.6, "value": 1.0},
+        {"name": "read the file first", "p": 0.95, "value": 1.0, "cost": 0.1},
+    ])
+    if best["choice"] != "read the file first":
+        return c.bad("expected value", f"it chose {best['choice']!r}")
+    doomed = choose([{"name": "retry the doomed build", "p": 0.1, "value": 1.0,
+                      "cost": 2.0}])
+    if doomed["choice"] or not doomed["refused"]:
+        return c.bad("a refusal", f"it recommended {doomed['choice']!r} at a loss")
+    blocked = choose([{"name": "force push", "p": 1.0, "value": 9.0, "risk": "blocked"},
+                      {"name": "open a pull request", "p": 0.8, "value": 1.0}])
+    if blocked["choice"] != "open a pull request":
+        return c.bad("a refusal", "a blocked option won on value alone")
+    c.ok("expected value",
+         f"chance x value - cost - risk picked {best['choice']!r} at {best['score']:+.2f}")
+    c.ok("a refusal",
+         "a guaranteed loss and a blocked option are both answered with \u201cdo none "
+         "of these\u201d")
+    for bad in ({"p": 1.7}, {"p": "sure"}, {"p": 0.5, "risk": "reckless"}):
+        try:
+            score(**bad)
+        except ValueError:
+            continue
+        return c.bad("honest arithmetic", f"{bad} was accepted")
+    c.ok("honest arithmetic", "a chance of 1.7 and an unknown risk tier are refused")
+
+    # 2. Ranking: a rare word beats a word in every entry.
+    documents = [{"id": "a", "text": "tests failed on the parser"},
+                 {"id": "b", "text": "tests failed on the network"},
+                 {"id": "c", "text": "tests failed, cors header missing"}]
+    top = rank("the cors tests failed", documents, limit=1)
+    if not top or top[0]["id"] != "c":
+        return c.bad("relevant first", f"BM25 returned {top}")
+    if rank("write a haiku about rain", documents):
+        return c.bad("relevant first", "an unrelated question still returned advice")
+    c.ok("relevant first",
+         "BM25 puts the rare matching word first and returns nothing for an unrelated "
+         "question")
+
+    # 3. The baseline follows the machine: quiet at first, loud on a real jump.
+    monitor = Monitor(minimum=8)
+    early = [monitor.observe(1.0 + (index % 2) * 0.02) for index in range(14)]
+    late = monitor.observe(9.0)
+    if any(row["alert"] for row in early) or not late["alert"]:
+        return c.bad("a moving baseline",
+                     f"early alerts={any(r['alert'] for r in early)}, "
+                     f"late alert={late['alert']}")
+    c.ok("a moving baseline",
+         f"fourteen normal turns stayed quiet, then a 9.0 s turn was flagged: "
+         f"\u201c{late['note']}\u201d")
+
+    # 4. The bandit: explore what is least tried, then settle.
+    bandit = UCB1(["proven", "lucky_once"])
+    for _ in range(12):
+        bandit.update("proven", 1.0)
+    bandit.update("lucky_once", 1.0)
+    if bandit.choose() != "lucky_once":
+        return c.bad("a fair trial", "the rarely tried option was never explored")
+    for _ in range(4):
+        bandit.update("lucky_once", 0.0)
+    if bandit.choose() != "proven":
+        return c.bad("a fair trial",
+                     "a failing option still outranked a proven one after four failures")
+    c.ok("a fair trial",
+         "the 1-in-1 option was explored once, then the 12-in-12 option took over")
+
+    # 5. The layer is reachable as a tool, and it asks nothing.
+    try:
+        import tempfile
+        from custom_jarvis.service import CustomService
+
+        asked = []
+        folder = Path(tempfile.mkdtemp(prefix="gate-decide-"))
+        workspace = folder / "ws"
+        workspace.mkdir()
+        service = CustomService(folder / "state",
+                                approval=lambda kind, *rest: asked.append(kind) or True)
+        service.perform("set_workspace", {"path": str(workspace)})
+        asked.clear()
+        answer = service.perform("tool", {
+            "name": "decide",
+            "arguments": {"options": [
+                {"name": "ask the user", "p": 0.9, "value": 1.0, "cost": 0.1},
+                {"name": "guess", "p": 0.3, "value": 1.0}]}})
+        service.stop() if hasattr(service, "stop") else None
+        if not answer["success"] or "ask the user" not in answer["output"]:
+            return c.bad("a tool, not a lecture", f"decide returned {answer}")
+        if asked:
+            return c.bad("a tool, not a lecture",
+                         f"a read-only decision asked for approval: {asked}")
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("a tool, not a lecture", f"{type(exc).__name__}: {exc}")
+    c.ok("a tool, not a lecture",
+         "the model can call `decide`, and it never asks permission to do arithmetic")
 
 
 CLAIMS = [
@@ -958,6 +1068,8 @@ CLAIMS = [
      "unverified work must say so", claim_whatsapp),
     ("metacognition", "It keeps score on itself, and calls a lucky streak a streak.",
      "meta-cognition / meta-learning", claim_metacognition),
+    ("decisions", "It chooses with arithmetic, and it can say \u201cdo nothing\u201d.",
+     "a decision system, not a mannerism", claim_decisions),
 ]
 
 

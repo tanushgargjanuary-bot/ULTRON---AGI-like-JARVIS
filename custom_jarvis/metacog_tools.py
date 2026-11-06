@@ -4,12 +4,13 @@ The ledger in `custom_jarvis/metacog.py` is the arithmetic. These are the handle
 the assistant actually reaches for, so that "how sure are you, and why" has an
 answer that comes from a record instead of from tone of voice.
 
-Nine tools, three jobs:
+Ten tools, three jobs:
 
     before a claim      record_prediction, open_predictions
     after the fact      resolve_prediction
     before a task       recall_lessons, choose_strategy, self_review
     after a task        record_lesson, record_attempt
+    deciding            decide (rank candidate actions by expected value)
     anytime             calibration_report
 
 All read-only except the three that record, all local, all bounded by the ledger's
@@ -21,6 +22,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
+from custom_jarvis.decision import choose as choose_action
 from custom_jarvis.metacog import Ledger
 from custom_jarvis.tools import ToolRegistry, ToolResult
 
@@ -179,3 +181,35 @@ def register_metacog_tools(registry: ToolRegistry, ledger: Optional[Ledger] = No
     def self_review(task: str = "") -> ToolResult:
         report = ledger.self_review(task)
         return ToolResult(True, output=_json(report), data=report)
+
+    @register(
+        "decide",
+        "Rank the actions you are considering, by expected value: stated chance "
+        "times value, minus cost, minus the risk tier. Returns the best one, or "
+        "an honest refusal when every option is worth less than it costs.",
+        {
+            "options": {
+                "type": "array",
+                "description": "Each option: name, p (0-1), value, cost, risk",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "p": {"type": "number", "description": "chance of success, 0-1"},
+                        "value": {"type": "number"},
+                        "cost": {"type": "number"},
+                        "risk": {"type": "string",
+                                 "description": "routine, guarded, confirm or blocked"},
+                    },
+                    "required": ["name", "p"],
+                },
+            },
+        },
+        ["options"],
+    )
+    def decide(options: List[Dict[str, Any]]) -> ToolResult:
+        try:
+            result = choose_action(options)
+        except (TypeError, ValueError) as error:
+            return ToolResult(False, output="", error=str(error))
+        return ToolResult(True, output=_json(result), data=result)
