@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import re
 import unittest
 from pathlib import Path
 
@@ -80,3 +81,30 @@ class VerifierTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WorkflowArguments(unittest.TestCase):
+    """The CI file and the scripts must agree, or the first push is red.
+
+    Both defects found on the first real CI run were of this shape: the workflow
+    passed a flag the script did not have (`--json` to a script that takes
+    `--report`), and asked a script to write into a folder that does not exist on
+    a fresh clone. Neither could be caught here by running the script.
+    """
+
+    def setUp(self):
+        self.root = Path(__file__).resolve().parents[1]
+        self.workflow = (self.root / ".github" / "workflows" / "verify.yml").read_text(encoding="utf-8")
+
+    def test_every_flag_the_workflow_passes_exists_in_its_script(self):
+        calls = re.findall(r"python scripts/([\w]+\.py)([^\n|]*)", self.workflow)
+        self.assertTrue(calls, "no script call found in the workflow")
+        for script, rest in calls:
+            for flag in re.findall(r"--[a-z][\w-]*", rest):
+                source = (self.root / "scripts" / script).read_text(encoding="utf-8")
+                self.assertIn(f'"{flag}"', source,
+                              f"{script} is called with {flag}, which its parser does not declare")
+
+    def test_the_workflow_runs_the_scripts_that_exist(self):
+        for script in re.findall(r"python scripts/([\w]+\.py)", self.workflow):
+            self.assertTrue((self.root / "scripts" / script).exists(), script)

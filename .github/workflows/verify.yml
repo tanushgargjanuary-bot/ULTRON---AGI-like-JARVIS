@@ -93,7 +93,7 @@ jobs:
       # This is the job that can close the Windows claims: native DPI, a real
       # window, the accessibility tree, no console window flashing.
       - name: Native checks
-        run: python scripts/verify_all.py --json verification/capabilities.json
+        run: python scripts/verify_all.py --report verification/capabilities.json
 
       - name: Suite and self-checks
         run: python scripts/verify.py

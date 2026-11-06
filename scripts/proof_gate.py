@@ -1607,6 +1607,10 @@ def main(argv=None) -> int:
               "target machine to close them.")
 
     if args.json:
+        # The CI job asks for verification/proof-gate.json, and on a fresh clone
+        # that folder does not exist. A report path is a request to write a file;
+        # failing on a missing parent turns a green run red for no reason.
+        Path(args.json).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json).write_text(json.dumps({
             "platform": platform.platform(), "live": args.live,
             "budgets": {"startup_s": args.budget_startup, "ram_mb": args.budget_ram,
