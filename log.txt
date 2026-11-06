@@ -2255,3 +2255,37 @@ Mistakes in this round, kept for the next reader:
 State: 1322 tests OK (skipped=6). Proof gate 13 PROVEN / 14 PARTIAL / 0 FAILED on
 Linux, now measured from a clean clone as well. CI not yet run on these commits.
 
+=== 2026-11-06 · 1.2.20 · background supervision, and the language filter ===
+
+1. core/process_watch.py. The owner asked Ultron to be aware of background jobs
+   and to say when one finishes, but to wait if the owner is talking. Three
+   pieces: a read-only Watcher over the process table, a SpeechGate that holds
+   sentences until the room is quiet, and a Supervisor that writes the log line
+   at once and speaks only when it may.
+
+   Rules inside, each one paid for by finding it the hard way while writing it:
+   identity is pid AND create time, because pids are reused; an unreadable table
+   is "I do not know", never "it finished"; an exit code is reported only for a
+   process we own; and a pause for breath is not a stop.
+
+2. docs/LANGUAGE_MATRIX.md. All 46 languages on the owner's list, filtered to six
+   keepers, two consumed, five for later with a named trigger, and thirty-three
+   refused with a reason. Then the best language per section of Ultron, and the
+   rule for promoting a leaf.
+
+3. readme gains the watching capability in plain English and a link to the matrix.
+
+Mistakes in this round, kept:
+
+  * Writing main.py with a python script, the inserted line lost its indentation
+    because I built the prefix from a string that did not include it. main.py did
+    not parse. Caught by ast.parse before any commit.
+  * A readme replace ran in /home/user instead of the repository, because I wrote
+    readme.md there by habit. Deleted; the real file was untouched.
+  * /tmp was cleared again mid-session and PyQt6 vanished, so one run reported a
+    setUpClass error that looked like a bug in core/avatar.py. It was not.
+
+State: 1345 tests OK (skipped=6). Proof gate 15 PROVEN / 13 PARTIAL / 0 FAILED on
+Linux (28 claims, including the new procwatch claim). CI not yet run on these
+commits.
+

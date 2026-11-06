@@ -102,3 +102,34 @@ without saying so.
 **Still owed to you:** revoke the two GitHub tokens you pasted. They are in this
 conversation's history, and a token in a log is a token someone else can use.
 
+### 2026-11-06 — it watches your background jobs now
+
+**What you asked for.** Ultron should know what is running in the background, and
+tell you when a job finishes. If you are talking to it, it should wait until you
+stop talking.
+
+**What it does now.**
+
+| Situation | What Ultron does |
+|---|---|
+| An agent in Antigravity finishes while you are quiet | One sentence, at once. |
+| It finishes while you are talking to Ultron | The log line appears at once; the voice waits for silence. |
+| Three jobs finish at the same time | One sentence, not three. |
+| You pause for breath | Still waiting. A pause is not a stop. |
+| The process list cannot be read | Nothing is announced. It says "I do not know", not "it finished". |
+| Ultron did not start the process | It says "finished", never "succeeded" — no exit code exists to read. |
+
+**The rule that makes it safe.** It only watches. It cannot end, pause or restart
+another program, and a test reads the code and fails if that ever becomes
+possible. A supervisor that can kill is a supervisor that will one day kill the
+wrong thing.
+
+**Tuning it.** Set `ULTRON_WATCH` to a comma-separated list of program names. The
+default is one: `antigravity`. It polls every two seconds.
+
+**Your language list.** All 46 are answered in `docs/LANGUAGE_MATRIX.md`. Six are
+kept, two are used through libraries, five wait behind a named trigger, and
+thirty-three are refused with a reason. Short version: Python is the shell,
+numpy is the arithmetic, C is a leaf only when nothing is copied, SQLite is the
+memory, Qt is the pixels, PowerShell is the door.
+
