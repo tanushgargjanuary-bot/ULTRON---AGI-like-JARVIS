@@ -1,3 +1,28 @@
+=== 2026-11-06 · build 1.2.24 · the two levers, closed honestly ===
+
+1. Warm connection — done. providers/connections.py pools every provider client,
+   keyed by base, timeout, trust_env, follow_redirects and, for async, the event
+   loop. benchmark: 10 connections / 6.805 ms per request -> 1 connection /
+   0.558 ms. Nine handshakes removed out of ten. 10 tests.
+
+2. Shorter prompt — measured, then guarded instead of trimmed. 16,620 chars
+   assembled (~4,155 tokens): 15,534 hand-written, 1,669 tools, 1,107 limits.
+   No duplicated line exists, so cutting means changing behaviour. The budget test
+   now fails at 20,000 chars, a missing or repeated tool, or an unfilled brace.
+
+3. Found while verifying: the executable bit on sidecar/bin/watchd-linux does not
+   survive a snapshot or a zip round trip. core/sidecar.py restores it before
+   starting, so the app never silently falls back to the Python watcher again.
+
+4. The proof gate now explains its own PARTIAL column:
+   "Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1".
+
+5. One flake seen and named: providers/_tests segfaulted inside verify once
+   (exit -11, Qt teardown under load) and passed three times standalone and on the
+   next full run. Not fixed, not hidden.
+
+Gate 16 PROVEN / 13 PARTIAL / 0 FAILED. 1383 tests OK (skipped=6).
+
 ===============================================================================
 MARK (CUSTOM JARVIS) — DECISION & CHANGE LOG
 Append-only. Newest entries at the bottom of each dated section.

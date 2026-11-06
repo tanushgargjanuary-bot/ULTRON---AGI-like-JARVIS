@@ -1,3 +1,14 @@
+build 1.2.24 · 2026-11-06
+
+Both performance levers are closed and the gate explains itself.
+
+- Warm connection: `providers/connections.py`; 10 conns/6.805 ms -> 1 conn/0.558 ms (`scripts/bench_connection.py`).
+- Prompt: 16,620 chars (~4,155 tokens) measured by `scripts/profile_turn.py`; `PromptBudget` in `tests/test_performance_budget.py` stops growth at 20,000.
+- `core/sidecar.py` restores the sidecar's executable bit, so a lost bit can no longer hide the Go watcher.
+- `scripts/proof_gate.py` prints why claims are open: Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1.
+- State: HEAD green, 1,388 tests OK (skipped=6), gate 16 / 13 / 0.
+- Open: one unreproduced Qt teardown segfault seen once inside verify; loop id is in the async key, so a reconnect in a new loop gets a new pool rather than a stale one.
+
 # HANDOFF — Ultron (built on MARK LVI)
 
 > The assistant is named **Ultron**. Upstream application: MARK LVI by FatihMakes (CC BY-NC 4.0); that

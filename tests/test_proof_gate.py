@@ -157,3 +157,39 @@ def _load_gate():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+class BlockedByTests(unittest.TestCase):
+    """A count of PARTIAL claims should say what was missing, not just how many.
+
+    The owner asked what "13 PARTIAL" meant. The answer is a list of this machine's
+    gaps — Windows APIs, a live key, an installed package — and it is also why the
+    number drifts between runs: install PyQt6 and one claim closes itself.
+    """
+
+    def setUp(self):
+        self.gate = _load_gate()
+
+    def test_a_windows_only_step_is_classed_as_windows(self):
+        results = [{"verdict": "PARTIAL", "steps": [
+            {"status": "PROVEN", "detail": "the easy part"},
+            {"status": "SKIPPED", "detail": "UI Automation is a Windows API; this is Linux"}]}]
+        self.assertEqual(self.gate.blocked_by(results), {"Windows": 1})
+
+    def test_a_live_key_step_is_classed_as_keys(self):
+        results = [{"verdict": "PARTIAL", "steps": [
+            {"status": "SKIPPED", "detail": "re-run with --live for a real judgement"}]}]
+        self.assertEqual(self.gate.blocked_by(results), {"keys": 1})
+
+    def test_a_missing_package_is_classed_as_packages(self):
+        results = [{"verdict": "PARTIAL", "steps": [
+            {"status": "SKIPPED", "detail": "playwright — not installed"}]}]
+        self.assertEqual(self.gate.blocked_by(results), {"packages": 1})
+
+    def test_proven_claims_are_not_counted(self):
+        results = [{"verdict": "PROVEN", "steps": [
+            {"status": "PROVEN", "detail": "fine"}]}]
+        self.assertEqual(self.gate.blocked_by(results), {})
+
+    def test_nothing_unproven_means_no_bucket(self):
+        self.assertEqual(self.gate.blocked_by([]), {})

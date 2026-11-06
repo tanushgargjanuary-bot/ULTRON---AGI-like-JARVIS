@@ -220,3 +220,22 @@ execute bit, so the app quietly used the slower fallback.
 recognition (300–1500 ms), and a connection handshake per turn (100–300 ms). The
 last one is ours, in Python, and it is the next thing I would fix.
 
+## 2026-11-06 · 1.44 — the owner's two levers
+
+The owner picked the two owned levers out of the performance table and left for 15
+minutes. Both are now closed, and neither was closed the easy way.
+
+The warm connection was real work: seven call sites, a module that keys the pool by
+everything that changes behaviour, and an event loop in the key because an async
+pool belongs to one loop. It also produced the best measurement mistake of the
+session — the benchmark said pooling was *slower*, and the benchmark was wrong.
+
+The shorter prompt was not real work, and saying so is the honest result. 16,620
+characters, no duplicated line, nine tenths persona and rules. Cutting it would
+change how Ultron behaves, and this project does not change behaviour to win 50 ms.
+It is guarded instead, so it cannot grow unnoticed.
+
+Two things were found by not trusting a green run: the sidecar's executable bit
+does not survive a snapshot, and the gate's PARTIAL column was a number without a
+reason. Both are fixed. A single segfault in a Qt teardown was seen once, could not
+be reproduced, and is written down rather than swept.

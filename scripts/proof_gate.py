@@ -1759,6 +1759,44 @@ CLAIMS = [
 ]
 
 
+# Why a claim could not be closed here. The owner asked what "13 PARTIAL" means,
+# and the honest answer is not a number: it is a list of what this machine lacks.
+# A bare count drifts with whichever optional packages happen to be installed,
+# which makes a green run look different on two days for no reason. These buckets
+# turn the count into a sentence anyone can check.
+# Order matters: the first bucket that matches wins, so the specific reasons are
+# tested before the general one. A missing PortAudio driver is this machine's audio
+# stack, not a missing Python package, and saying "packages 4" when half of those
+# are a driver would be a smaller truth than the one available.
+BLOCKERS = (
+    ("Windows", ("needs Windows", "Windows API", "is Windows", "UI Automation")),
+    ("keys", ("--live", "fake server cannot judge", "say 'switch")),
+    ("audio or display", ("PortAudio", "no display", "will not load",
+                          "could not be imported", "xkbcommon")),
+    ("hardware", ("camera index", "could not be opened", "camera")),
+    ("your voice", ("your eyes", "legibility", "watch the log")),
+    ("packages", ("is not installed", "No module named", "not installed")),
+)
+
+
+def blocked_by(results: list[dict]) -> dict[str, int]:
+    """Group the unproven steps by what was missing, not by how many there were."""
+    counts: dict[str, int] = {}
+    for row in results:
+        if row["verdict"] == PROVEN:
+            continue
+        detail = " ".join(step.get("detail", "") for step in row.get("steps", [])
+                          if step.get("status") not in (PROVEN,))
+        low = detail.lower()
+        bucket = "unclassified"
+        for name, needles in BLOCKERS:
+            if any(needle.lower() in low for needle in needles):
+                bucket = name
+                break
+        counts[bucket] = counts.get(bucket, 0) + 1
+    return counts
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="prove the claims, end to end")
     parser.add_argument("--live", action="store_true",
@@ -1818,6 +1856,12 @@ def main(argv=None) -> int:
             worst = next(s for s in row["steps"] if s["status"] in {FAILED, MISSING})
             print(f"    · {row['claim']} — {worst['detail'][:110]}")
     if tally.get(SKIPPED) or tally.get("PARTIAL"):
+        reasons = blocked_by(results)
+        if reasons:
+            described = ", ".join(f"{name} {count}"
+                                  for name, count in sorted(reasons.items(),
+                                                            key=lambda kv: -kv[1]))
+            print(f"\n  Unproven here because: {described}")
         print("\n  PARTIAL and SKIPPED are not passes. Run the same command on the "
               "target machine to close them.")
 
