@@ -113,6 +113,13 @@ ROUTINE_TOOLS: frozenset[str] = frozenset(
         "dev_hash",
         "dev_cron",
         "crypto_ident",
+        # Two read-only readers of public technical data. Neither changes an
+        # account, a file or a device; both return what a browser would show.
+        # A confirmation banner in front of "what is trending" is the excessive
+        # prompting the owner rejected, so the tier is routine — and the table
+        # below keeps every write-shaped action at guarded if one is ever added.
+        "github_tool",
+        "tech_platforms",
     }
 )
 
@@ -156,6 +163,8 @@ _GUARDED_REASONS: dict[str, str] = {
     "hindsight_bridge": "posts to an external memory service",
     "voicestudio_bridge": "posts to an external voice service",
 }
+
+
 
 # Tools that carry their own, stricter internal gates. `custom_jarvis` either
 # runs read-only skills or routes mutations through ControlledRegistry, which
@@ -326,6 +335,31 @@ def grants() -> dict[str, float]:
         for scope in [s for s, until in _grants.items() if until <= now]:
             _grants.pop(scope, None)
         return {s: round(until - now, 3) for s, until in _grants.items()}
+
+
+# The two platform readers are routine as a whole. If a writing action is ever
+# added to either, it is listed here and it asks first — the default for a name
+# that is not in the table stays "guarded", so forgetting an entry fails safe.
+_ACTION_TIERS.setdefault("github_tool", {})
+_ACTION_TIERS["github_tool"].update({
+    "trending": Tier.ROUTINE,
+    "status": Tier.ROUTINE,
+    "repo": Tier.ROUTINE,
+    "pulls": Tier.ROUTINE,
+    "checks": Tier.ROUTINE,
+    "notifications": Tier.ROUTINE,
+    "watch": Tier.ROUTINE,
+    "unwatch": Tier.ROUTINE,
+    "watchlist": Tier.ROUTINE,
+    "reminders": Tier.ROUTINE,
+})
+_ACTION_TIERS.setdefault("tech_platforms", {})
+_ACTION_TIERS["tech_platforms"].update({
+    "hackernews": Tier.ROUTINE,
+    "stackexchange": Tier.ROUTINE,
+    "pypi": Tier.ROUTINE,
+    "npm": Tier.ROUTINE,
+})
 
 
 def _granted(tier: Tier) -> bool:

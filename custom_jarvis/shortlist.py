@@ -36,8 +36,41 @@ def terms(text: Any) -> list[str]:
             if len(word) > 1 and word not in _STOP]
 
 
+def _field_score(asked: list[str], texts: list[str], k1: float, b: float) -> float:
+    """BM25 over one field: document frequency and length are counted per field."""
+    total = len(texts)
+    if not total:
+        return 0.0
+    counted = [terms(text) for text in texts]
+    average = (sum(len(words) for words in counted) / total) or 1.0
+    seen = {}
+    for words in counted:
+        for word in set(words):
+            seen[word] = seen.get(word, 0) + 1
+    scores = []
+    for words in counted:
+        length = len(words)
+        if not length:
+            scores.append(0.0)
+            continue
+        frequencies = {}
+        for word in words:
+            frequencies[word] = frequencies.get(word, 0) + 1
+        value = 0.0
+        for word in asked:
+            times = frequencies.get(word, 0)
+            if not times:
+                continue
+            idf = math.log(1.0 + (total - seen[word] + 0.5) / (seen[word] + 0.5))
+            value += idf * (times * (k1 + 1.0)) / (
+                times + k1 * (1.0 - b + b * length / average))
+        scores.append(value)
+    return scores
+
+
 def rank(query: Any, documents: Sequence[dict], *, text_key: str = "text",
-         id_key: str = "id", limit: int = 5, k1: float = K1, b: float = B) -> list[dict]:
+         id_key: str = "id", limit: int = 5, k1: float = K1, b: float = B,
+         fields: dict[str, float] | None = None) -> list[dict]:
     """Return the documents that share meaningful words with `query`, best first.
 
     Each result is `{"id", "score", "document"}`. A document with no shared word
@@ -48,6 +81,23 @@ def rank(query: Any, documents: Sequence[dict], *, text_key: str = "text",
     rows = [row for row in documents if isinstance(row, dict)]
     if not asked or not rows:
         return []
+
+    if fields:
+        # Weighted fields: a hit in a lesson's trigger is worth more than the same
+        # word buried in its prose. Scoring is per field, then combined, because
+        # document frequency inside one field is not the frequency in another.
+        combined = [0.0] * len(rows)
+        for name, weight in fields.items():
+            texts = [str(row.get(name, "") or "") for row in rows]
+            for index, value in enumerate(_field_score(asked, texts, k1, b)):
+                combined[index] += float(weight) * value
+        results = []
+        for row, value in zip(rows, combined):
+            if value > 0.0:
+                results.append({"id": row.get(id_key), "score": round(value, 4),
+                                "document": row})
+        results.sort(key=lambda item: (-item["score"], str(item["id"])))
+        return results[: max(1, int(limit))]
 
     counted = [(row, terms(row.get(text_key, ""))) for row in rows]
     total = len(counted)

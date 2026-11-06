@@ -59,6 +59,9 @@ def main():
         ("MARK upstream provider/UI self-tests", ["-m", "providers._tests"]),
         ("1,000 offline stress scenarios", ["scripts/stress_custom.py"]),
         ("15 targeted seeded mutations", ["scripts/check_mutations.py"]),
+        # Organisation is a check, not a hope: every module in the folders this
+        # project owns must have a docstring and a test that names it.
+        ("module map and organisation", ["scripts/map.py"]),
     ]
     for title, args in checks:
         print("\n=== " + title + " ===", flush=True)

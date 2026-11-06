@@ -1,0 +1,49 @@
+# Document index
+
+Every document in the repository, one line each, and who it is for.
+
+## Start here
+
+| Document | Who it is for | What it answers |
+|---|---|---|
+| [`readme.md`](../readme.md) | everyone | what Ultron is, how to install it, and what changed in the last build |
+| [`ARCHITECTURE.md`](../ARCHITECTURE.md) | anyone changing code | the six layers, one turn end to end, where a change belongs |
+| [`docs/MAP.md`](MAP.md) | anyone changing code | every module with its one-line purpose, line count and test — **generated** by `python scripts/map.py --write` |
+| [`DECISIONS.md`](../DECISIONS.md) | anyone proposing a change | what the owner decided, in his words, and where it is enforced |
+| [`GATEKEEPERS.md`](../GATEKEEPERS.md) | anyone making a claim | which claims are proven, which need his machine, and why |
+
+## How it was built
+
+| Document | What it holds |
+|---|---|
+| [`HANDOFF.md`](../HANDOFF.md) | the build log by phase: what each pass fixed, what it cost, what is left |
+| [`log.txt`](../log.txt) | the same, as plain append-only text, newest last |
+| [`verification-results.txt`](../verification-results.txt) | the last full `scripts/verify.py` output |
+| [`ALGORITHMS.md`](../ALGORITHMS.md) | which algorithms are on a live path, mapped to the AKTU DAA/AIML syllabus, and which are refused and why |
+| [`AGENTS.md`](../AGENTS.md) | hard rules for any AI editing this repository |
+| [`CUSTOM_ULTRON.md`](../CUSTOM_ULTRON.md) | what was changed from upstream MARK, and how to use it |
+| [`PUBLISH.md`](../PUBLISH.md) | the two commands that publish, and the licence rules |
+
+## Capability documents
+
+| Document | What it holds |
+|---|---|
+| [`docs/SKILLS.md`](SKILLS.md) | every skill family, why meta-learning and meta-cognition are built this way, the next tier in value order, and the four things that must never become a skill |
+| [`docs/TOOL_SUGGESTIONS.md`](TOOL_SUGGESTIONS.md) | which tools were considered, which shipped, and which were refused with a reason |
+| [`docs/LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | should this be rewritten in another language — no, with numbers |
+| [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
+
+## Scripts that produce a document or a verdict
+
+| Script | Produces |
+|---|---|
+| `scripts/verify.py` | the full suite, the self-checks, the migration checks (`verification-results.txt`) |
+| `scripts/proof_gate.py` | the claim table: `PROVEN`, `PARTIAL`, `FAILED`, `NOT PRESENT` |
+| `scripts/verify_all.py` | the same questions on the target machine, where Windows, a microphone and a display exist |
+| `scripts/map.py` | `docs/MAP.md`, and exit code 1 when a new module has no docstring or no test |
+| `scripts/bench_algorithms.py` | timings for the algorithm modules |
+
+## The rule for this folder
+
+A document that is not linked here is a document nobody will read. When you add
+one, add its line.

@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+from core.numerics import wilson_lower
+
 # Subtracted from the score. The names match the risk tiers the rest of the
 # project already uses, and a blocked option is not scored at all: it loses.
 RISK_PENALTY = {"routine": 0.0, "guarded": 0.15, "confirm": 0.4, "blocked": 1.0}
@@ -47,6 +49,30 @@ def score(p: Any, value: Any = 1.0, cost: Any = 0.0, risk: Any = "routine") -> f
     return round(probability * worth - price - RISK_PENALTY[tier], 4)
 
 
+def from_record(wins: int, tries: int) -> float:
+    """The chance to use when the evidence is a record: its Wilson lower bound.
+
+    A raw ratio says 1 of 1 is a 100% chance. It is not. The lower bound says
+    what the record still supports after the small sample is accounted for, which
+    is the only version of the number a decision can safely be built on.
+    """
+    attempts, hits = int(tries), int(wins)
+    if attempts <= 0:
+        raise ValueError("a record needs at least one attempt")
+    if not 0 <= hits <= attempts:
+        raise ValueError("wins must be between 0 and tries")
+    return round(wilson_lower(hits, attempts), 4)
+
+
+def _probability(candidate: dict) -> Any:
+    """`p` if it is given, otherwise the honest bound from wins/tries."""
+    if candidate.get("p") is not None:
+        return candidate.get("p")
+    if candidate.get("wins") is not None and candidate.get("tries") is not None:
+        return from_record(candidate["wins"], candidate["tries"])
+    return None
+
+
 def choose(candidates: Iterable[dict], limit: int = 3) -> dict:
     """Rank candidate actions and name the one to take, or refuse to name one.
 
@@ -59,12 +85,13 @@ def choose(candidates: Iterable[dict], limit: int = 3) -> dict:
             raise ValueError("each candidate must be an object")
         name = str(candidate.get("name") or candidate.get("action") or
                    f"option {index + 1}").strip()[:80]
+        chance = _probability(candidate)
         rows.append({
             "name": name,
-            "score": score(candidate.get("p"), candidate.get("value", 1.0),
+            "score": score(chance, candidate.get("value", 1.0),
                            candidate.get("cost", 0.0), candidate.get("risk", "routine")),
             "risk": str(candidate.get("risk") or "routine").strip().lower(),
-            "p": candidate.get("p"),
+            "p": chance,
         })
 
     if not rows:

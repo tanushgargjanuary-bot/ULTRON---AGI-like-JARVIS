@@ -18,6 +18,8 @@ from custom_jarvis.addon_runtime import AddonRegistry
 from custom_jarvis.addon_tools import register_addon_tools
 from custom_jarvis.metacog import Ledger
 from custom_jarvis.metacog_tools import register_metacog_tools
+from custom_jarvis import skillpacks
+from custom_jarvis.pack_tools import register_pack_tools
 from custom_jarvis.autonomy_governor import AutonomyGovernor
 from custom_jarvis.brain import JarvisBrain
 from custom_jarvis.evidence import BackupManager
@@ -83,12 +85,8 @@ class TrackedRepairs(HotRepairManager):
 class CustomService:
     def __init__(self, data_dir: Path | None = None, approval=None):
         if data_dir is None:
-            base = Path(
-                os.environ.get("LOCALAPPDATA")
-                or os.environ.get("XDG_DATA_HOME")
-                or Path.home() / ".local" / "share"
-            )
-            data_dir = base / "CustomMarkJarvis"
+            from core.paths import state_dir
+            data_dir = state_dir()
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.store = KnowledgeStore(self.data_dir / "knowledge.sqlite3")
@@ -118,6 +116,14 @@ class CustomService:
         # the assistant's judgement rather than of the workspace.
         self.metacog = Ledger(self.data_dir / "metacog.json")
         register_metacog_tools(raw, self.metacog)
+        # Skill packs: recipes Ultron wrote for itself, kept as data beside the
+        # state. They are loaded here so a skill added yesterday is present
+        # today without anyone editing skills.py.
+        self.packs_dir = self.data_dir
+        self.pack_errors = {}
+        known = [row.get("name", "") for row in raw.list_tools()]
+        register_pack_tools(raw, self.packs_dir, known)
+        self.pack_errors = skillpacks.load(self.packs_dir, known)["errors"]
         self.control = AddonRegistry(raw, self._approve_tool, self.store, self.backups)
         self.breaker = RepairCircuitBreaker()
         self.repairs = TrackedRepairs(self.data_dir / "repairs", self.breaker)

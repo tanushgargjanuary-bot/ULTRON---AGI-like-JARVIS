@@ -46,7 +46,7 @@ def call(name: str, **args: Any) -> tuple[str, dict[str, Any]]:
     return name, args
 
 
-SKILLS = (
+SKILLS = [
     Skill(
         "orient",
         "Orient in workspace",
@@ -412,8 +412,35 @@ SKILLS = (
             call("search_text", path="@workspace", query="TODO", max_results=20),
         ),
     ),
-)
+]
 SKILL_BY_ID = {skill.identity: skill for skill in SKILLS}
+
+
+def register(skill: Skill) -> bool:
+    """Add one skill at runtime. False when the identity is already taken.
+
+    This is the seam a **skill pack** uses: packs are data, and data is added
+    without editing this file. A built-in always wins over a pack with the same
+    id, so a downloaded pack cannot silently replace a reviewed recipe.
+    """
+    if skill.identity in SKILL_BY_ID:
+        return False
+    SKILLS.append(skill)
+    SKILL_BY_ID[skill.identity] = skill
+    return True
+
+
+def unregister(identity: str) -> bool:
+    """Remove a skill that came from a pack. A built-in cannot be removed here."""
+    skill = SKILL_BY_ID.get(identity)
+    if skill is None:
+        return False
+    SKILL_BY_ID.pop(identity, None)
+    try:
+        SKILLS.remove(skill)
+    except ValueError:
+        return False
+    return True
 
 
 def judge_skill_applicability(skill, workspace):

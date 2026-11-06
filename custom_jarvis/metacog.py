@@ -48,6 +48,8 @@ from custom_jarvis.shortlist import rank
 
 MAX_PREDICTIONS = 500
 MAX_LESSONS = 300
+RECENT_ATTEMPTS = 20
+HALF_LIFE_DAYS = 30.0
 MAX_ATTEMPTS_PER_STRATEGY = 200
 
 OUTCOMES = {"correct": 1.0, "partly": 0.5, "wrong": 0.0}
@@ -268,12 +270,15 @@ class Ledger:
                                                    row.get("created", 0.0)), reverse=True)
             chosen = ordered[: max(1, int(limit))]
         else:
-            documents = [{"id": index,
-                          "text": f"{row.get('trigger', '')} {row.get('rule', '')} "
-                                  f"{row.get('domain', '')}",
+            documents = [{"id": index, "trigger": row.get("trigger", ""),
+                          "rule": row.get("rule", ""), "domain": row.get("domain", ""),
                           "row": row} for index, row in enumerate(rows)]
+            # The trigger says when the rule applies, so it counts double. The
+            # domain is context, so it counts half.
             chosen = [item["document"]["row"]
-                      for item in rank(task, documents, limit=max(1, int(limit)))]
+                      for item in rank(task, documents, limit=max(1, int(limit)),
+                                       fields={"trigger": 2.0, "rule": 1.0,
+                                               "domain": 0.5})]
         if chosen:
             with self._lock:
                 for row in chosen:
@@ -293,6 +298,15 @@ class Ledger:
             row["tries"] = min(int(row.get("tries", 0)) + 1, MAX_ATTEMPTS_PER_STRATEGY)
             if success:
                 row["wins"] = min(int(row.get("wins", 0)) + 1, MAX_ATTEMPTS_PER_STRATEGY)
+            # A strategy is not a fixed thing: code changes, a dependency moves,
+            # and the method that worked in March may fail in November. The last
+            # twenty attempts are kept with their times so the choice can weigh
+            # what is recent more heavily than what is old.
+            recent = row.get("recent")
+            if not isinstance(recent, list):
+                recent = []
+            recent.append({"ok": bool(success), "at": round(time.time(), 1)})
+            row["recent"] = recent[-RECENT_ATTEMPTS:]
             self._save()
             return {"task_type": kind, "strategy": name, **row,
                     "lower_bound": round(wilson_lower(row["wins"], row["tries"]), 3)}
@@ -319,16 +333,28 @@ class Ledger:
         bandit = UCB1(names)
         for name in names:
             row = table[name]
-            for _ in range(int(row["wins"])):
-                bandit.update(name, 1.0)
-            for _ in range(int(row["tries"]) - int(row["wins"])):
-                bandit.update(name, 0.0)
+            history = row.get("recent")
+            if isinstance(history, list) and history:
+                # Decayed replay: a reward halves every HALF_LIFE days, so a
+                # method that stopped working loses its lead instead of keeping
+                # it for ever.
+                for attempt in history[-RECENT_ATTEMPTS:]:
+                    age_days = max(0.0, (time.time() - float(attempt.get("at", 0.0)))
+                                   / 86400.0)
+                    weight = 0.5 ** (age_days / HALF_LIFE_DAYS)
+                    bandit.update(name, (1.0 if attempt.get("ok") else 0.0) * weight)
+            else:
+                for _ in range(int(row["wins"])):
+                    bandit.update(name, 1.0)
+                for _ in range(int(row["tries"]) - int(row["wins"])):
+                    bandit.update(name, 0.0)
         best = bandit.choose() or names[0]
         upper = dict(bandit.scores()).get(best, 0.0)
         row = table[best]
         return {"task_type": kind, "strategy": best, "tries": row["tries"], "wins": row["wins"],
                 "lower_bound": round(wilson_lower(row["wins"], row["tries"]), 3),
                 "ucb": None if upper == float("inf") else round(upper, 3),
+                "recent": len(row.get("recent") or []),
                 "why": (f"{row['wins']}/{row['tries']} on record, lower bound "
                         f"{wilson_lower(row['wins'], row['tries']):.2f}; chosen by UCB1, "
                         "which pays a bonus to the option tried least")}

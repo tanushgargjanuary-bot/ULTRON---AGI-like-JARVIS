@@ -1251,3 +1251,76 @@ Gate: 208 files · **1,219 tests** (6 skipped) · 99 self-checks · `verify.py` 
 native GitHub (with the trending-repository reminders), then the push — the push
 last of all, and with the owner's own credentials.
 
+## 6x. Native GitHub, self-extension, and a project that can be read (2026-11-06, build 1.2.16)
+
+Four asks in one build. In order of how much they change the product.
+
+**GitHub is native.** `core/webapi.py` is one bounded JSON reader — deadline,
+ETag cache, 2 MB cap, gzip, and a failure phrased as a sentence. `core/github.py`
+adds the token and the endpoints; `plugins/github_tool.py` turns them into the
+tool the model calls. The token is `github_token` in `config/api_keys.json`, it
+travels in exactly one header, and the gate asserts it is **not** in the cache
+file. ETag caching is not tidiness: a `304` does not count against the hourly
+quota, so a watch list of twenty repositories fits inside one quota instead of
+blowing it six times over. "Trending" is a search for recently created
+repositories sorted by stars, and the answer says so, because GitHub publishes no
+trending API and an approximation labelled as official is the exact defect this
+project keeps removing.
+
+**Four more platforms, one pattern.** `core/platforms.py` and
+`plugins/tech_platforms.py` add Hacker News, Stack Overflow, PyPI and npm. All
+public, all keyless, all cached. An unreachable platform says so; it does not
+return an empty list that reads like "nothing is happening".
+
+**Ultron adds features to itself.** `custom_jarvis/skillpacks.py` lets it write a
+**skill pack**: JSON naming read-only tools and their arguments. It validates
+every step against the live registry, saves atomically with a `.bak`, and the
+skill is available at once and again after a restart. The limits are the safety
+story, and they are short enough to remember: **no writing tool, no built-in id,
+no path outside the workspace, at most eight steps.** A bad pack is a bad recipe,
+not a breach. `add_skill` asks for approval because a skill runs later, when
+nobody is watching. This is the answer to "I want it to add features itself"
+that does not also hand it the ability to rewrite its own safety.
+
+**Interruption is earned.** `custom_jarvis/schedule.py` is the queue behind the
+reminders. A card is scored by **the same expected-value arithmetic** that chooses
+an action — that is why the decision layer came first — and then four rules
+apply: quiet hours hold everything except an emergency, a per-card cooldown stops
+repetition, a card worth less than the interruption is dropped, and state is one
+small JSON file so a reminder shown at 09:00 is remembered after a restart.
+
+**The two algorithms from last build got smarter.** Strategy choice replays the
+last twenty attempts with a **30-day half-life**, so a method that worked in
+March loses to one that works now. Lesson recall weights a lesson's **trigger**
+above its prose (2.0 / 1.0 / 0.5). `decision.from_record()` turns wins/tries into
+a **Wilson lower bound**, so a decision can be built on a record instead of a
+ratio — the metacog ledger and the decision layer now share one honest number.
+
+**And it is readable.** `ARCHITECTURE.md` gives the six layers, one turn end to
+end, where each kind of change belongs, and every invariant with the test that
+enforces it. `docs/INDEX.md` lists every document. `docs/MAP.md` is **generated**
+by `scripts/map.py`, which now runs inside `verify.py`: a new module with no
+docstring or no test fails the build. The map separates the folders this project
+owns from the inherited upstream ones — eleven upstream `core/` modules with no
+test are listed, not hidden, and do not fail the build.
+
+**Two defects, both mine, both caught by a test.** `github_tool` was
+"unclassified" in the policy table, which means every call would have asked
+permission for ever — caught by `tests/test_policy_new_tools.py`. And the
+reminder tests failed at 01:00 local time because quiet hours were doing their
+job; the code was right and the test was wrong, which is worth saying plainly
+because it is the second time this week. The two bugs from 1.2.15 are covered by
+`tests/test_decision_layers.py` and pass.
+
+Gate: 220 files · **1,267 tests** (6 skipped) · 99 self-checks · `verify.py` exit
+0 · proof gate **12 PROVEN / 13 PARTIAL / 0 FAILED** (new: `github`,
+`self_extension`, `reminders`).
+
+**What is deliberately still absent.** GitHub *writes* (comment, pull request,
+merge): those change an account other people can see, so they arrive with an
+approval that names the exact action. Packs that call writing tools: the same
+reason. Repositories bought in from a trending list as new tools: that is
+`docs/SKILLS.md` Level 2, generated code, and it needs the repair pipeline with
+two confirmations. The order agreed with the owner is unchanged: this, then the
+deep scan, then GitHub writes, then the push.
+

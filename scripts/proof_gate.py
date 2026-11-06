@@ -1035,6 +1035,268 @@ def claim_decisions(c: Claim) -> None:
          "the model can call `decide`, and it never asks permission to do arithmetic")
 
 
+def _fake_web(routes):
+    """A urlopen stand-in for the gate: the web layer is proven without a network."""
+    import json as _json
+
+    class _Reply:
+        def __init__(self, body, status=200, headers=None):
+            self._body = body if isinstance(body, bytes) else _json.dumps(body).encode()
+            self.status = status
+            self.headers = headers or {}
+
+        def read(self, size=-1):
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def opener(request, timeout=None):
+        answer = routes.get(request.full_url, routes.get("*"))
+        if isinstance(answer, Exception):
+            raise answer
+        if callable(answer):
+            return answer(request)
+        return answer
+
+    return opener
+
+
+def claim_github(c: Claim) -> None:
+    """GitHub is read natively, the token stays out of everything else."""
+    try:
+        from core import github, webapi
+        from core.paths import state_dir
+        from plugins import github_tool
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the client", f"{type(exc).__name__}: {exc}")
+    c.ok("the client", "core/github.py, core/webapi.py and plugins/github_tool.py import")
+
+    import tempfile
+    import urllib.error
+
+    folder = Path(tempfile.mkdtemp(prefix="gate-github-"))
+    cache_path = folder / "cache.json"
+    class Reply:
+        def __init__(self, body, headers=None):
+            self._body = json.dumps(body).encode()
+            self.status = 200
+            self.headers = headers or {}
+
+        def read(self, size=-1):
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    state = {"urls": [], "headers": []}
+
+    def opener(request, timeout=None):
+        state["urls"].append(request.full_url)
+        state["headers"].append(dict(request.headers))
+        return Reply({"items": [{"full_name": "acme/rocket", "description": "a fast engine",
+                                 "stargazers_count": 4321, "language": "Rust",
+                                 "html_url": "u"}]},
+                     headers={"ETag": '"one"'})
+
+    try:
+        webapi.set_opener(opener)
+        client = github.GitHub("ghp_gate_token", webapi.Cache(cache_path))
+        result = client.trending(days=7, minimum_stars=50, language="rust", limit=3)
+        if not result["ok"] or result["data"]["items"][0]["stars"] != 4321:
+            return c.bad("a real read", f"trending returned {result}")
+        url = state["urls"][0]
+        for piece in ("search/repositories", "sort=stars", "created%3A%3E",
+                      "stars%3A%3E49", "language%3Arust"):
+            if piece not in url:
+                return c.bad("a real read", f"the query did not contain {piece}: {url}")
+        if "no trending API" not in result["data"]["source"]:
+            return c.bad("an honest label",
+                         "trending did not say that GitHub has no trending API")
+        c.ok("a real read", "a search for recently created repositories, sorted by stars")
+        c.ok("an honest label",
+             "the answer says it is an approximation, not an official trending list")
+
+        if state["headers"][0].get("Authorization") != "Bearer ghp_gate_token":
+            return c.bad("a token in one header", "the token was not sent")
+        if cache_path.exists() and "ghp_gate_token" in cache_path.read_text(encoding="utf-8"):
+            return c.bad("a token in one header", "the token reached the cache file")
+        c.ok("a token in one header",
+             "sent as a bearer header, and absent from the cache file on disk")
+
+        webapi.set_opener(_fake_web({"*": urllib.error.URLError("down")}))
+        offline = github.GitHub("", None).repo("acme/rocket")
+        if offline["ok"] or "no network" not in offline["note"].lower():
+            return c.bad("the truth when it fails", f"offline returned {offline}")
+        no_token = github.GitHub("", None).notifications()
+        if no_token["ok"] or "token" not in no_token["note"]:
+            return c.bad("the truth when it fails", f"no token returned {no_token}")
+        c.ok("the truth when it fails",
+             "no network and no token are two different, useful sentences")
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("a real read", f"{type(exc).__name__}: {exc}")
+    finally:
+        webapi.set_opener(None)
+
+    try:
+        webapi.set_opener(_fake_web({"*": urllib.error.URLError("down")}))
+        sentence = github_tool.run({"action": "trending"})
+        if "network" not in sentence.lower():
+            return c.bad("a plugin, not a link", f"the plugin said {sentence!r}")
+    finally:
+        webapi.set_opener(None)
+    c.ok("a plugin, not a link", "the tool speaks in a sentence when GitHub is unreachable")
+
+
+def claim_self_extension(c: Claim) -> None:
+    """It adds a skill to itself as data, and cannot add one that writes."""
+    try:
+        from custom_jarvis import skillpacks
+        from custom_jarvis.service import CustomService
+        from custom_jarvis.skills import SKILL_BY_ID, SKILLS
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the pack loader", f"{type(exc).__name__}: {exc}")
+    c.ok("the pack loader", "custom_jarvis/skillpacks.py imports")
+
+    import tempfile
+
+    folder = Path(tempfile.mkdtemp(prefix="gate-packs-"))
+    pack = {"id": "gate_pack_todos", "title": "Gate todo report",
+            "purpose": "Count TODO markers, so the gate has a pack to install.",
+            "steps": [{"tool": "search_text",
+                       "args": {"path": "@workspace", "query": "TODO"}}]}
+    before = len(SKILLS)
+    result = skillpacks.install(pack, folder, ["search_text", "measure_code"])
+    if not result["ok"] or "gate_pack_todos" not in SKILL_BY_ID:
+        return c.bad("a skill it wrote", f"install returned {result}")
+    if len(SKILLS) != before + 1:
+        return c.bad("a skill it wrote", f"the skill count went {before} -> {len(SKILLS)}")
+    if not (folder / "skills" / "gate_pack_todos.json").exists():
+        return c.bad("a skill it wrote", "no file was written")
+    c.ok("a skill it wrote",
+         f"a pack became skill '{result['id']}', live at once and stored as one JSON file")
+
+    refused = {
+        "a tool that writes": {"steps": [{"tool": "write_file",
+                                          "args": {"path": "@workspace/x"}}]},
+        "a built-in id": {"id": "secret_scan"},
+        "a path outside": {"steps": [{"tool": "search_text",
+                                      "args": {"path": "/etc/passwd", "query": "x"}}]},
+        "too many steps": {"steps": [{"tool": "search_text",
+                                      "args": {"path": "@workspace"}}] * 9},
+    }
+    for label, patch in refused.items():
+        bad = dict(pack, **patch)
+        if not skillpacks.validate(bad, ["search_text", "write_file"]):
+            return c.bad("four refusals", f"{label} was accepted")
+    c.ok("four refusals",
+         "a writing tool, a built-in id, a path outside, and nine steps are all refused")
+
+    missing = skillpacks.remove("not_a_real_pack", folder)
+    if missing["ok"]:
+        return c.bad("removable", "removing a pack that does not exist reported success")
+    if not skillpacks.remove("gate_pack_todos", folder)["ok"]:
+        return c.bad("removable", "the pack could not be removed")
+    if "gate_pack_todos" in SKILL_BY_ID:
+        return c.bad("removable", "the skill stayed loaded after removal")
+    if skillpacks.remove("secret_scan", folder)["ok"]:
+        return c.bad("removable", "a built-in skill was removed as if it were a pack")
+    c.ok("removable", "a pack leaves in one call; a built-in refuses to")
+
+    reload_dir = Path(tempfile.mkdtemp(prefix="gate-packs2-"))
+    skillpacks.install(pack, reload_dir, ["search_text"])
+    skillpacks.remove("gate_pack_todos", reload_dir)
+    skillpacks.install(pack, reload_dir, ["search_text"])
+    SKILL_BY_ID.pop("gate_pack_todos", None)
+    SKILLS[:] = [skill for skill in SKILLS if skill.identity != "gate_pack_todos"]
+    loaded = skillpacks.load(reload_dir, ["search_text"])
+    if loaded["loaded"] != ["gate_pack_todos"]:
+        return c.bad("remembered tomorrow", f"reload returned {loaded}")
+    SKILL_BY_ID.pop("gate_pack_todos", None)
+    SKILLS[:] = [skill for skill in SKILLS if skill.identity != "gate_pack_todos"]
+    c.ok("remembered tomorrow", "a saved pack is loaded again at the next start")
+
+    service = CustomService(folder / "state", approval=lambda *args: True)
+    names = {row["name"] for row in service.perform("list_tools", {})}
+    for tool in ("add_skill", "remove_skill", "list_packs"):
+        if tool not in names:
+            return c.bad("a tool you can ask", f"{tool} is not registered")
+    c.ok("a tool you can ask",
+         "add_skill, remove_skill and list_packs are callable, and adding asks first")
+
+
+def claim_reminders(c: Claim) -> None:
+    """It decides when to interrupt, and it can decide not to."""
+    try:
+        from custom_jarvis.schedule import Queue
+    except Exception as exc:                                   # noqa: BLE001
+        return c.absent("the queue", f"{type(exc).__name__}: {exc}")
+    c.ok("the queue", "custom_jarvis/schedule.py imports")
+
+    import tempfile
+    import time as _time
+
+    noon = _time.mktime((2026, 11, 1, 12, 0, 0, 0, 0, -1))
+    queue = Queue(Path(tempfile.mkdtemp(prefix="gate-queue-")) / "q.json")
+    queue.add("trending:acme/rocket", "A repository is trending", urgency=0.35, value=0.9)
+    queue.add("ci:mine/app", "The build is broken", urgency=0.9, value=1.5)
+    due = queue.due(now=noon)
+    if [row["id"] for row in due][:1] != ["ci:mine/app"]:
+        return c.bad("the order", f"the queue ranked {[row['id'] for row in due]}")
+    c.ok("the order",
+         f"a failing build ({due[0]['score']:+.2f}) outranks trending "
+         f"({due[1]['score']:+.2f}) by the same arithmetic that chooses an action")
+
+    queue.mark_shown(["ci:mine/app"], now=noon)
+    if any(row["id"] == "ci:mine/app" for row in queue.due(now=noon + 60)):
+        return c.bad("silence is a decision", "the same card was repeated inside its cooldown")
+    noise = Queue(Path(tempfile.mkdtemp(prefix="gate-queue2-")) / "q.json")
+    noise.add("noise:chatter", "Somebody commented somewhere", urgency=0.05,
+              value=0.5, cost=0.6)
+    if noise.due(now=noon):
+        return c.bad("silence is a decision",
+                     "a card worth less than its interruption was still shown")
+    c.ok("silence is a decision",
+         "a cooldown stops repetition, and a card that costs more than it is worth is dropped")
+
+    quiet = Queue(Path(tempfile.mkdtemp(prefix="gate-queue3-")) / "q.json",
+                  quiet_start=22, quiet_end=7)
+    quiet.add("pr:mine/app", "A pull request waits", urgency=0.5)
+    quiet.add("ci:mine/app", "Production is down", urgency=0.99, value=2.0)
+    night = _time.mktime((2026, 11, 2, 3, 0, 0, 0, 0, -1))
+    ids = [row["id"] for row in quiet.due(now=night)]
+    if ids != ["ci:mine/app"]:
+        return c.bad("quiet hours", f"at 03:00 the queue offered {ids}")
+    c.ok("quiet hours",
+         "at 03:00 only the emergency is spoken; an ordinary pull request waits")
+
+    try:
+        from core import webapi
+        import urllib.error
+        from plugins import github_tool
+        import os
+
+        home = tempfile.mkdtemp(prefix="gate-watch-")
+        os.environ["XDG_DATA_HOME"] = home
+        webapi.set_opener(_fake_web({"*": urllib.error.URLError("down")}))
+        github_tool.run({"action": "watch", "repository": "acme/rocket"})
+        said = github_tool.run({"action": "reminders"})
+        if "acme/rocket" not in said and "Nothing needs you" not in said:
+            return c.bad("a watch list", f"reminders said {said!r}")
+        webapi.set_opener(None)
+        github_tool.run({"action": "unwatch", "repository": "acme/rocket"})
+    except Exception as exc:                                   # noqa: BLE001
+        webapi.set_opener(None)
+        return c.bad("a watch list", f"{type(exc).__name__}: {exc}")
+    c.ok("a watch list", "a watched repository is turned into cards, then removed again")
+
+
 CLAIMS = [
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
@@ -1070,6 +1332,12 @@ CLAIMS = [
      "meta-cognition / meta-learning", claim_metacognition),
     ("decisions", "It chooses with arithmetic, and it can say \u201cdo nothing\u201d.",
      "a decision system, not a mannerism", claim_decisions),
+    ("github", "GitHub is native, and the token stays in one header.",
+     "the platforms are native", claim_github),
+    ("self_extension", "It adds skills to itself, and cannot add one that writes.",
+     "it extends itself", claim_self_extension),
+    ("reminders", "It decides when to interrupt you, and when to stay quiet.",
+     "the reminder queue", claim_reminders),
 ]
 
 
