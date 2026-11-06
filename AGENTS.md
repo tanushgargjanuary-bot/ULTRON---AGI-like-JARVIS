@@ -153,3 +153,12 @@ in this repository had the same shape: the program claimed something it had not
 checked. If your change makes a new sentence appear — in a tool result, a status
 line, a document, a commit message — add the check that makes it true, or make
 the sentence weaker.
+
+## A tool schema is validated by the provider, not by hope
+
+- A declaration may only mark a parameter `required` if it also declares that parameter
+  under `properties`. Google refuses the whole tool list — not the tool — with `1007`.
+- Never test a close code alone. `1007` also covers a bad model name and a bad schema.
+  Read the message: `core/close_codes.py`.
+- `tests/test_provider_schema.py` and the `plugins` proof-gate claim check every
+  declaration from `actions/`, `plugins/` and `main.py`. Do not weaken them.

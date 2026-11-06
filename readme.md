@@ -84,6 +84,18 @@ before it is written. The next start says what happened, in one line, and
 records the crashes known at the time, so a repair starts from the fault instead of a
 hunch. Details: **[docs/CRASHES.md](docs/CRASHES.md)**.
 
+## It does not blame your key
+
+On 6 November 2026 it would not stay connected. The log said `APIError: 1007` and then
+*"API key invalid — please re-enter your key"*, so a key was re-entered, and re-entered.
+
+The key was fine. One plugin declared an argument as **required** and never declared the
+argument itself. The provider refuses the whole tool list for one field like that and
+closes the session, and the reconnect loop read the close code — 1007, which means almost
+nothing on its own — as a key error. **A schema fault now costs one argument, not the
+session**, and a close message is read as words before it is read as a number.
+Details: **[docs/CONNECTION.md](docs/CONNECTION.md)**.
+
 ## Every skill has a reason to be used
 
 A tool that exists is not a tool that gets called. The instruction that lists them used
@@ -193,7 +205,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**249 Python files. 94,334 lines. 1,719 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**251 Python files. 94,825 lines. 1,737 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -257,6 +269,7 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | [docs/MENTAL.md](docs/MENTAL.md) | which course topics run as Ultron's own algorithms, and where each one lives |
 | [docs/TRIGGERS.md](docs/TRIGGERS.md) | what makes each tool fire, and the count that shows a tool nothing calls |
 | [docs/CRASHES.md](docs/CRASHES.md) | what a crash leaves behind, and how self-repair starts from that report |
+| [docs/CONNECTION.md](docs/CONNECTION.md) | what a close code means, and why a schema fault once looked like a bad key |
 | [docs/SELF-CHANGE.md](docs/SELF-CHANGE.md) | how it changes its own code: five stages, a rehearsal copy, and the referee it may not touch |
 | [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) | the seven minds, how to blend them by voice, and the three rules that hold them |
 | [docs/SPACE.md](docs/SPACE.md) | the folder stays under 100 MB: why it matters, and the two lines that keep it there |

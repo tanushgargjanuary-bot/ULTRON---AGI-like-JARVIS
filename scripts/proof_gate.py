@@ -1116,6 +1116,34 @@ def claim_tool_catalog(c: Claim) -> None:
          f"{len(failed)} failed action(s) listed with their reason")
 
 
+def _gate_accepted_schema(c: Claim, declarations) -> None:
+    """Does the provider accept this list, or does one field cost the session?
+
+    Google closes the Live session with 1007 for a single undeclared `required` name, so
+    the check is on the whole list and it names the offender. The five bridge plugins
+    failed exactly here and nothing looked.
+    """
+    from core.action_loader import TYPE_NAMES
+
+    offenders = []
+    for decl in declarations:
+        params = (decl or {}).get("parameters") or {}
+        props = params.get("properties") or {}
+        for key in params.get("required") or []:
+            if key not in props:
+                offenders.append(f"{decl.get('name')}: requires an undeclared '{key}'")
+        for key, spec in props.items():
+            kind = str((spec or {}).get("type") or "").upper()
+            if kind not in TYPE_NAMES:
+                offenders.append(f"{decl.get('name')}.{key}: type "
+                                 f"{(spec or {}).get('type')!r}")
+    if offenders:
+        return c.bad("the provider accepts the list", "; ".join(offenders[:4]))
+    c.ok("the provider accepts the list",
+         f"{len(declarations)} declarations: every required name is declared and every "
+         f"type is one the API knows")
+
+
 def claim_plugins(c: Claim) -> None:
     """There are plugins, they validate, and every one of them answers."""
     try:
@@ -1154,6 +1182,8 @@ def claim_plugins(c: Claim) -> None:
     if len(bridges) != 5:
         return c.bad("the five tools are callable", f"only {sorted(bridges)}")
     c.ok("the five tools are callable", "REA, HyperFrames, Hindsight, VoiceStudio, Hypit")
+
+    _gate_accepted_schema(c, _gate_tools(ROOT)[2] + registry.get_tool_declarations())
 
 
 def claim_tool_tabs(c: Claim) -> None:

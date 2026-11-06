@@ -18,6 +18,10 @@ PLUGIN = {
     "parameters": {
         "type": "OBJECT",
         "properties": {
+            "action": {"type": "STRING",
+                       "description": (
+                           "Which call to make: 'help' lists what this HyperFrames can do, 'command' renders with one subcommand."),
+                       "enum": ["help", "command"]},
             "command": {"type": "STRING",
                         "description": "For action=command: the subcommand"},
             "target": {"type": "STRING",

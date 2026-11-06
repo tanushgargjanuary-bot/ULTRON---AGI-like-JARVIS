@@ -29,6 +29,7 @@ Every document in the repository, one line each, and who it is for.
 - [The syllabus as logic](MENTAL.md) — which course topics run as Ultron's own algorithms, and where.
 - [How a skill gets used](TRIGGERS.md) — the condition that triggers each tool, and the count that shows a dead one.
 - [When it falls over](CRASHES.md) — crash reports, redaction, and how self-repair starts from them.
+- [When it will not connect](CONNECTION.md) — close codes, and the schema fault that looked like a bad API key.
 | [`docs/SELF-CHANGE.md`](SELF-CHANGE.md) | the five stages of changing its own source, the rehearsal copy, and the referee that is off limits |
 | [`docs/PHILOSOPHY.md`](PHILOSOPHY.md) | the seven minds Ultron blends, their methods, and why a voice can never add a permission |
 | [`docs/SPACE.md`](SPACE.md) | how big the folder may get, what is counted, and why a save once lost 6,352 files |

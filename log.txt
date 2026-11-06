@@ -2913,3 +2913,34 @@ the most performant it can be. The answer is a measurement, so here it is.
 
 State: 1370 tests OK (skipped=6). Proof gate 16 PROVEN / 13 PARTIAL / 0 FAILED.
 
+=== 2026-11-07 · build 1.2.35 · it stopped blaming the API key ===
+
+The owner pasted his activity log. The session would not stay up:
+  APIError: 1007 None. ... function_declarations[40].parameters.required[0]:
+  property is not defined
+and every retry died the same way, while the log said "API key invalid" and asked for a
+key that was already correct.
+
+Cause, found by scanning every declaration against the provider's own rule:
+  - five bridge plugins (rea, hyperframes, hypit, hindsight, voicestudio) marked `action`
+    as required and declared no `action` property.
+  - one malformed field does not fail the tool. Google refuses the whole tool list and
+    closes the session with 1007.
+  - the reconnect loop tested `"1007" in err_str` and opened the re-key panel, so a
+    schema fault was reported as a credential fault.
+
+Fixed:
+  - the five plugins declare `action` with the values they accept.
+  - core/action_loader.py: sanitize_declarations() repairs a bad list at start and says
+    what it repaired, so one bad field costs one argument instead of the session.
+  - core/close_codes.py: a close message is read as words, not as a number. schema, key,
+    quota, model, network, other. The tool index is mapped back to the tool's name.
+  - main.py: the schema branch runs before the key branch, names the tool, and never asks
+    for a key.
+  - tests/test_provider_schema.py: 18 tests over every declaration from actions/,
+    plugins/ and main.py, plus the owner's own log line as the fixture.
+  - proof_gate: the plugins claim proves "the provider accepts the list" (46 declarations).
+  - docs/CONNECTION.md, readme section, AGENTS rule, docs/INDEX row.
+
+Numbers: 1,737 tests OK (skipped=8) · 10.7 MB / 546 files · 22 PROVEN / 13 PARTIAL /
+0 FAILED · 251 py files / 94,825 lines.

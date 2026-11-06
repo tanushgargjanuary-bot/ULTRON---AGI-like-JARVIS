@@ -65,6 +65,87 @@ _SCHEDULING = ("WHEN_IDLE", "SILENT", "INTERRUPT")
 META_KEYS = ("tier", "brief")
 
 
+# A property type the provider accepts. Anything else in a declaration is a
+# validation error on the whole request, not just on that field.
+TYPE_NAMES = {"STRING", "NUMBER", "INTEGER", "BOOLEAN", "ARRAY", "OBJECT"}
+
+
+def sanitize_declarations(decls):
+    """Make every declaration acceptable to the provider, and say what was repaired.
+
+    A single bad field does not fail that tool. It fails the whole session: the Live
+    API answers 1007 and names the index of the declaration, so the assistant cannot
+    connect at all and the activity log looks like a broken API key.
+
+    That is exactly what happened with the five bridge plugins: each declared
+    `"required": ["action"]` and never declared an `action` property, because the
+    handler reads it from the call rather than from the schema. The provider rejected
+    the list at index 40 and the app spent the evening asking for a new key.
+
+    The plugins are fixed. This function is the reason one of them cannot do that
+    again: a `required` name with no property behind it is removed, a property with no
+    type is given one, and every repair is returned as a sentence a person can read.
+    """
+    clean, repairs = [], []
+    for declaration in decls:
+        if not isinstance(declaration, dict):
+            clean.append(declaration)
+            continue
+        params = declaration.get("parameters")
+        if not isinstance(params, dict):
+            clean.append(declaration)
+            continue
+        props = params.get("properties")
+        if not isinstance(props, dict):
+            props = {}
+            params = dict(params, properties=props)
+        name = str(declaration.get("name") or "?")
+        fixed = _repair_properties(name, props, repairs)
+        out_params = dict(params, properties=fixed)
+        # Only touch `required` when the declaration had one. Adding an empty list to a
+        # tool that never had the key would change what a correct build sends, and this
+        # pass must be invisible on a correct build.
+        if "required" in params:
+            out_params["required"] = _repair_required(
+                name, {"properties": fixed, "required": params.get("required")}, repairs)
+        clean.append(dict(declaration, parameters=out_params))
+    return clean, repairs
+
+
+def _repair_properties(name: str, props: dict, repairs: list) -> dict:
+    """Every property must be an object with a type the provider knows."""
+    out = {}
+    for key, value in props.items():
+        if not isinstance(value, dict):
+            repairs.append(f"{name}.{key}: not an object, sent as a string")
+            value = {"type": "STRING"}
+        kind = str(value.get("type") or "").upper()
+        if kind not in TYPE_NAMES:
+            repairs.append(f"{name}.{key}: type {value.get('type')!r} is not one the "
+                           f"provider accepts, sent as STRING")
+            value = dict(value, type="STRING")
+        out[key] = value
+    return out
+
+
+def _repair_required(name: str, params: dict, repairs: list) -> list:
+    """`required` may only name a property that exists.
+
+    Written as a loop rather than a comprehension on purpose: the repair has to be
+    reported, and a side effect hidden inside a filter is how a repair list ends up
+    empty when it should not be.
+    """
+    wanted = params.get("required") or []
+    props = params.get("properties") or {}
+    kept = []
+    for key in wanted:
+        if key in props:
+            kept.append(key)
+        else:
+            repairs.append(f"{name}: '{key}' was required but never declared")
+    return kept
+
+
 def strip_meta(decls):
     """Declarations without META_KEYS. Non-dict entries pass through untouched;
     a declaration carrying none is returned as the same object, so what an API

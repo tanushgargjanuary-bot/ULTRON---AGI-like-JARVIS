@@ -18,6 +18,10 @@ PLUGIN = {
     "parameters": {
         "type": "OBJECT",
         "properties": {
+            "action": {"type": "STRING",
+                       "description": (
+                           "Which call to make: 'help' lists its commands, 'command' runs one of them."),
+                       "enum": ["help", "command"]},
             "command": {"type": "STRING",
                         "description": "For action=command: the subcommand"},
             "target": {"type": "STRING",

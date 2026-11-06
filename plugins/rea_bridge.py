@@ -20,6 +20,10 @@ PLUGIN = {
     "parameters": {
         "type": "OBJECT",
         "properties": {
+            "action": {"type": "STRING",
+                       "description": (
+                           "Which call to make: 'help' asks REA for its own command list, 'command' runs one subcommand."),
+                       "enum": ["help", "command"]},
             "command": {"type": "STRING",
                         "description": "For action=command: the REA subcommand"},
             "args": {"type": "ARRAY", "items": {"type": "STRING"},

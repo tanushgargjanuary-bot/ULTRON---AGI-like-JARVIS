@@ -20,6 +20,10 @@ PLUGIN = {
     "parameters": {
         "type": "OBJECT",
         "properties": {
+            "action": {"type": "STRING",
+                       "description": (
+                           "Which call to make: 'status' reads /health, 'request' calls one endpoint."),
+                       "enum": ["status", "request"]},
             "path": {"type": "STRING",
                      "description": "Endpoint path starting with /, for example /health"},
             "method": {"type": "STRING", "description": "GET or POST"},

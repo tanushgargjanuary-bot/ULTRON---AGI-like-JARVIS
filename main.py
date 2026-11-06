@@ -96,7 +96,8 @@ _crash.install()
 # One number for the starting delay, so main.py and the policy cannot drift
 # apart: two copies of "3 seconds" is how a retry loop ends up with a 0.
 _RECONNECT_BASE = float(_reconnect.BASE_DELAY)
-from core.action_loader import strip_meta
+from core.action_loader import sanitize_declarations, strip_meta
+from core import close_codes
 from actions.screen_processor  import _capture_camera, _capture_screen
 from actions.system_monitor    import SystemMonitor, get_system_status
 from actions.proactive         import ProactiveEngine
@@ -1366,6 +1367,18 @@ class JarvisLive:
         _all_decls = (TOOL_DECLARATIONS
                       + self._action_registry.get_tool_declarations()
                       + self._plugin_registry.get_tool_declarations())
+
+        # One malformed field fails the WHOLE session, not one tool: the Live API
+        # answers 1007 and names the index, and the assistant cannot connect at
+        # all. Five bridge plugins did exactly that — `required: ["action"]` with
+        # no `action` property — and the activity log blamed the API key. The
+        # plugins are fixed; this is why one of them cannot cost an evening again.
+        _all_decls, _repairs = sanitize_declarations(_all_decls)
+        for _repair in _repairs:
+            print(f"[JARVIS] tool declaration repaired — {_repair}")
+            self.ui.write_log(f"SYS: a tool schema had to be repaired — {_repair}")
+        self._decl_names = [(d.get("name") if isinstance(d, dict)
+                             else getattr(d, "name", "")) for d in _all_decls]
 
         # An engine that cannot do something is not offered the tool for it.
         #
@@ -2993,8 +3006,29 @@ class JarvisLive:
                     )
                     continue
 
-                # Invalid API key — stop hammering the API, prompt re-configuration
-                if "API key not valid" in err_str or "1007" in err_str:
+                # A tool list the provider will not accept is NOT a bad key.
+                #
+                # 1007 is the Live API's generic close code, and the old test treated
+                # it as proof that the key was wrong: the assistant asked for a new
+                # key it did not need, repeatedly, while the real fault was a schema
+                # in one plugin. The message names the tool, because the server's
+                # index into the list means nothing to a person.
+                _rejected = close_codes.rejected_declaration(err_str)
+                if _rejected is not None:
+                    _names = getattr(self, "_decl_names", [])
+                    _which = (_names[_rejected] if 0 <= _rejected < len(_names)
+                              else f"declaration {_rejected}")
+                    self.ui.write_log(
+                        f"ERR: the server rejected my tool list — {_which}. That is "
+                        f"a schema fault, not your API key. Retrying.")
+                    print(f"[JARVIS] tool declaration rejected: {_which} — {err_str[:200]}")
+                    self._conn_backoff = max(float(_RECONNECT_BASE), 6.0)
+                    await asyncio.sleep(self._conn_backoff)
+                    continue
+
+                # Invalid API key — stop hammering the API, prompt re-configuration.
+                # The message decides, never the number: see core/close_codes.py.
+                if close_codes.kind(err_str) == "key":
                     self.ui.write_log("ERR: API key invalid — please re-enter your key.")
                     self.ui.set_state("SLEEPING")
                     self.ui.prompt_reconfig()
