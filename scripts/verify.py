@@ -35,6 +35,56 @@ def _stray_host_files():
     return stray
 
 
+def _count_lines(root):
+    total = 0
+    for folder, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in
+                   {".git", ".venv", "__pycache__", ".ruff_cache", ".hypothesis"}]
+        for filename in files:
+            if filename.endswith(".py"):
+                total += len((Path(folder) / filename).read_text(
+                    encoding="utf-8-sig", errors="replace").splitlines())
+    return total
+
+
+def refresh_readme_numbers(files):
+    """Keep the page's numbers true, in the one place that knows them.
+
+    The page states three numbers: Python files, lines, tests. Two of them are
+    facts about this tree and one — the test count — depends on which optional
+    packages are installed, because several tests exist only to check what happens
+    when a package is MISSING. So the number is not stable across machines, and a
+    hand-maintained copy is wrong the moment either one changes.
+
+    verify.py therefore owns that line: it counts, compares, rewrites, and says
+    what it changed. A red build then means the code is wrong, not that someone
+    forgot to edit a number.
+    """
+    import re
+    import unittest
+    readme = Path(ROOT) / "readme.md"
+    if not readme.exists():
+        return
+    loader = unittest.defaultTestLoader
+    tests_dir = str(Path(ROOT) / "tests")
+    # Same two paths the command line uses: the project as the import root, and the
+    # test folder as its own start directory. Getting this wrong raises
+    # "Start directory is not importable", which is what the first version did.
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    suite = loader.discover(tests_dir, top_level_dir=tests_dir)
+    tests = suite.countTestCases()
+    lines = _count_lines(ROOT)
+    text = readme.read_text(encoding="utf-8")
+    new = f"**{files} Python files. {lines:,} lines. {tests:,} tests.**"
+    found = re.search(r"\*\*\d+ Python files\..*?tests\.\*\*", text)
+    if found is None:
+        return
+    if found.group(0) != new:
+        readme.write_text(text.replace(found.group(0), new, 1), encoding="utf-8")
+        print(f"Readme numbers refreshed: {new.strip('*')}", flush=True)
+
+
 def main():
     count = 0
     for folder, dirs, files in os.walk(ROOT):
@@ -49,6 +99,7 @@ def main():
                 ast.parse(path.read_text(encoding="utf-8-sig"), filename=str(path))
                 count += 1
     print(f"Syntax parsed {count} Python files.", flush=True)
+    refresh_readme_numbers(count)
     environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
     stray_before = set(_stray_host_files())
     checks = [

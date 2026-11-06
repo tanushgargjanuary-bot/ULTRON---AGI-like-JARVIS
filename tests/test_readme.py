@@ -74,14 +74,22 @@ class NumbersOnTheFrontPage(unittest.TestCase):
                       f"the readme does not say {actual} Python files")
 
     def test_the_test_count_is_the_one_the_suite_reports(self):
-        # The suite prints "Ran N tests". The results file keeps the last run.
-        results = ROOT / "verification-results.txt"
-        if not results.exists():
-            self.skipTest("no verification-results.txt in this checkout")
-        found = re.search(r"Ran (\d+) tests", results.read_text(encoding="utf-8", errors="replace"))
-        if not found:
-            self.skipTest("the results file has no test count")
-        number = int(found.group(1))
+        # Counted live, from the test loader, not read from a file that a previous
+        # run wrote. The old version read verification-results.txt, which made the
+        # page a statement about the LAST run on SOME machine — and the count moves
+        # by a few between machines, because some tests only exist when an optional
+        # package is missing. That is a broken claim, not a broken page: this shows
+        # up as a red test on the owner's Windows box while the Linux box is green.
+        #
+        # Discovery imports the modules and counts, without running anything, so it
+        # is quick and it is exactly the number the suite will print as "Ran N".
+        import sys as _sys
+        import unittest as _unittest
+        tests_dir = str(ROOT / "tests")
+        if str(ROOT) not in _sys.path:
+            _sys.path.insert(0, str(ROOT))
+        suite = _unittest.defaultTestLoader.discover(tests_dir, top_level_dir=tests_dir)
+        number = suite.countTestCases()
         # The page writes counts with thousands separators; the suite does not.
         for spelling in (f"{number} tests", f"{number:,} tests"):
             if spelling in self.text:
