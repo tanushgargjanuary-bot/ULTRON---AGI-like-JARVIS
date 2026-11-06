@@ -107,6 +107,12 @@ a small built-in fallback — instead of crashing.
   belongs in a file the owner can read and correct. Every subject says where its
   syllabus came from, and a reading link is written down only after it has been
   opened.
+- **A syllabus topic that Ultron can do cites its unit, in the code that does it.**
+  `@implements("DAA", 4, "Branch and bound")` attaches the citation to the function;
+  `core/mental/registry.py` checks it against the syllabus file. Never write a citation
+  for code that is not there, never cite a topic the unit does not contain, and never
+  let the decorator change behaviour. The course is meant to run in the assistant, not
+  sit on a shelf.
 - **A mind in `core/philosophy.py` is text, and it states its bound.** Every voice
   arrives with a maxim, a stance and a limit it may never cross; the limit is rendered
   into the instruction with the maxim. Never give a voice a code path, never let one

@@ -51,6 +51,7 @@ import uuid
 from pathlib import Path
 
 from core import failures
+from core.mental.registry import implements
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -128,6 +129,7 @@ def _note(entry: dict) -> None:
         handle.write(json.dumps(entry) + "\n")
 
 
+@implements("DBMS", 4, "Log-based recovery")
 def ledger(limit: int = 20) -> list[dict]:
     """Every change this module made, newest first."""
     try:

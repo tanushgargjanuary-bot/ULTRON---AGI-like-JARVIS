@@ -1283,6 +1283,21 @@ TOOL = {
             "clear_first": {
                 "type": "BOOLEAN",
                 "description": "Clear field before typing (default: true)"
+            },
+            # The handler has always read these two and the schema never declared
+            # them, so a model could not send what the tool was waiting for:
+            # fill_form without `fields` filled nothing, and `target` was silently
+            # always the default browser. Found by the schema-contract test once
+            # playwright was installed and the module could be imported.
+            "fields": {
+                "type": "OBJECT",
+                "description": "For fill_form: field name or label to the value to "
+                               "type into it, e.g. {\"Email\": \"me@example.com\"}"
+            },
+            "target": {
+                "type": "STRING",
+                "description": "Which browser to use: chrome, edge, firefox, brave "
+                               "or the name of an open one. Same as browser."
             }
         },
         "required": [

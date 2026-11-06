@@ -16,6 +16,7 @@ syllabus answer that cannot be checked against the page is worth nothing.
 from __future__ import annotations
 
 from core import curriculum, failures
+from core.mental import registry
 
 MAX_TOPICS = 40          # a unit is at most this many topics; a course is not
 
@@ -169,7 +170,36 @@ def _check(_parameters=None) -> str:
             f"links checked {facts['checked'] or 'never'}.")
 
 
+def _running(parameters: dict) -> str:
+    """Which of these topics are not notes but machinery — and where the code is.
+
+    The owner's correction, answered in the one place he would look for it: asking
+    about the syllabus now returns, per subject, how much of it Ultron can actually
+    execute, and asking about one subject lists the functions that do the work.
+    """
+    wanted = str(parameters.get("subject") or "").strip()
+    rows = registry.coverage()
+    if wanted:
+        rows = {name: row for name, row in rows.items()
+                if registry.short(wanted) in (name, row["code"])}
+        if not rows:
+            return _unknown(wanted)
+    lines = ["What runs, by subject:"]
+    for name, row in rows.items():
+        lines.append(f"  {row['code']:<7} {name:<5} {row['implemented']:>2} of "
+                     f"{row['topics']:>3} topics")
+    if wanted:
+        for row in registry.by_course(wanted)[:20]:
+            lines.append(f"  unit {row['unit']}: {row['topic']} — {row['function']}")
+    problems = registry.verify()
+    lines.append("Every citation matches the code and the syllabus."
+                 if not problems else f"{len(problems)} citation(s) do not match: "
+                 + "; ".join(problems[:3]))
+    return _say(lines)
+
+
 ACTIONS = {
+    "running": _running, "logic": _running, "implemented": _running,
     "subjects": _subjects, "list": _subjects, "courses": _subjects,
     "show": _show, "syllabus": _show, "subject": _show,
     "units": _units, "outline": _units,
@@ -192,7 +222,8 @@ def curriculum_tool(parameters: dict) -> str:
     handler = ACTIONS.get(action)
     if handler is None:
         return (f"I do not know the action '{action}'. I can: subjects, show, units, "
-                f"topics, plan, next, resources, done, progress, search, reset, check.")
+                f"topics, plan, next, resources, done, progress, search, running, "
+                f"reset, check.")
     try:
         return handler(parameters)
     except ValueError as error:
@@ -211,7 +242,8 @@ TOOL = {
         "its topics, and each has reading at three levels. Use this tool whenever the "
         "user asks about their syllabus, their course, what a subject contains, what "
         "to study next, where to start, what book or course to use, or to mark a "
-        "topic done. Quote the unit and the topic when you teach from it, and say "
+        "topic done, or which topics Ultron can actually run as code rather than "
+        "merely list. Quote the unit and the topic when you teach from it, and say "
         "which subject the topic belongs to."
     ),
     "parameters": {
@@ -223,10 +255,12 @@ TOOL = {
                     "subjects (what I hold), show (one subject's units), units, "
                     "topics (one unit's topics), plan (the whole course in order), "
                     "next (the first topic not done), resources (reading by level), "
-                    "done (mark a topic finished), progress, search, reset, check."
+                    "done (mark a topic finished), progress, search, running (which "
+                    "topics are code, and where), reset, check."
                 ),
                 "enum": ["subjects", "show", "units", "topics", "plan", "next",
-                         "resources", "done", "progress", "search", "reset", "check"],
+                         "resources", "done", "progress", "search", "running",
+                         "reset", "check"],
             },
             "subject": {
                 "type": "STRING",

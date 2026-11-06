@@ -44,6 +44,7 @@ THE 2-APPROXIMATION, AND WHY IT IS VALID
 from __future__ import annotations
 
 from dataclasses import dataclass
+from core.mental.registry import implements
 
 
 @dataclass(frozen=True)
@@ -83,6 +84,7 @@ def _clean(items) -> list[Item]:
     return [item for item in items if item.weight >= 0 and item.value > 0]
 
 
+@implements("DAA", 4, "Dynamic programming and the knapsack problem")
 def solve_exact(items: list[Item], capacity: int) -> Selection:
     """0/1 knapsack by dynamic programming over integer capacity.
 
@@ -136,6 +138,7 @@ def solve_exact(items: list[Item], capacity: int) -> Selection:
     )
 
 
+@implements("DAA", 3, "Knapsack by greedy method")
 def solve_greedy(items: list[Item], capacity: int) -> Selection:
     """The 2-approximation: greedy by ratio, then `max(greedy, break item)`."""
     ordered = sorted(_clean(items), key=lambda item: (-item.ratio, item.name))

@@ -28,10 +28,12 @@ IMPLEMENTATION NOTE
 from __future__ import annotations
 
 from collections.abc import Iterator
+from core.mental.registry import implements
 
 _END = "\x00"          # sentinel key that cannot appear in a word
 
 
+@implements("DAA", 2, "Tries")
 class Trie:
     """Weighted prefix tree. Higher weight sorts first within a prefix."""
 

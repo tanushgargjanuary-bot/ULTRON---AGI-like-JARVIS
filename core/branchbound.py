@@ -37,6 +37,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
+from core.mental.registry import implements
 
 
 @dataclass
@@ -74,6 +75,7 @@ class Decision:
         return f"{lead_in} {self.chosen.label}?"
 
 
+@implements("DAA", 4, "Branch and bound")
 def decide(
     candidates: Iterable[Candidate],
     *,

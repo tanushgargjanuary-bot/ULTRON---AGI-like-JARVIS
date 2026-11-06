@@ -563,6 +563,67 @@ def claim_curriculum(c: Claim) -> None:
     c.ok("the tool", "reachable by voice, and it names the course code and its source")
 
 
+def claim_mental(c: Claim) -> None:
+    """The syllabus is not stored in it: the syllabus is what it thinks with."""
+    try:
+        from core.mental import registry
+        from actions import reasoning as tool
+        from core import prompt_store
+    except Exception as exc:
+        return c.absent("the kernel", f"{type(exc).__name__}: {exc}")
+    problems = registry.verify()
+    if problems:
+        return c.bad("the citations", "; ".join(problems[:3]))
+    rows = registry.catalogue()
+    c.ok("the citations", f"{len(rows)} algorithm(s) cite a course unit, and every one "
+                          f"points at code that is callable and a topic the course "
+                          f"contains")
+    running = sum(row["implemented"] for row in registry.coverage().values())
+    if running < 15:
+        return c.bad("the work", f"only {running} topics run as code")
+    courses = sorted({row["course"] for row in rows})
+    if len(courses) < 5:
+        return c.bad("the subjects", f"logic from only {len(courses)} course(s)")
+    c.ok("the work", f"{running} topics run as code, from {len(courses)} of the eight "
+                     f"subjects")
+
+    # A permission question is answered by a chain, and the chain agrees with the
+    # policy. This is the part that changes behaviour rather than describing it.
+    from core import policy
+    for name in ("file_controller", "web_search", "screen_process", "shutdown_jarvis"):
+        answer = tool.reasoning({"action": "may", "tool": name})
+        tier = policy.classify(name, {}).tier.value
+        if tier not in answer:
+            return c.bad("the chain", f"the answer about {name} does not carry its tier")
+        if "cannot all be right" in answer:
+            return c.bad("the chain", f"the rules contradict each other on {name}")
+    c.ok("the chain", "a permission question is answered with the derivation that "
+                      "produced it, and it agrees with the policy every time")
+
+    ordered = tool.reasoning({"action": "plan", "steps": "['apply','confirm']",
+                              "needs": "{'apply':['confirm']}"})
+    if "confirm -> apply" not in ordered:
+        return c.bad("the order", "a plan with a dependency came back out of order")
+    cycle = tool.reasoning({"action": "plan", "steps": "['a','b']",
+                            "needs": "{'a':['b'],'b':['a']}"})
+    if "cannot be ordered" not in cycle:
+        return c.bad("the order", "a cycle was not refused")
+    c.ok("the order", "steps are ordered, and a cycle is refused instead of looped")
+
+    asked = tool.reasoning({"action": "prove", "facts": "[]", "goal": "['may','x','run']"})
+    if "not the same as false" not in asked:
+        return c.bad("the refusal", "a goal that does not follow was reported as false")
+    c.ok("the refusal", "a goal that does not follow is said not to follow, and is "
+                        "never called false")
+
+    text = prompt_store.read_prompt() if hasattr(prompt_store, "read_prompt") else \
+        (ROOT / "core" / "prompt.txt").read_text(encoding="utf-8", errors="replace")
+    if "[REASONING]" not in text or "action=plan" not in text:
+        return c.bad("the habit", "the instruction never tells it to plan its steps")
+    c.ok("the habit", "the instruction tells it to order its steps before it takes "
+                      "them, so the kernel is used rather than merely present")
+
+
 def claim_self_modify(c: Claim) -> None:
     """It changes its own source in five stages, and cannot touch the referee."""
     import tempfile
@@ -1851,6 +1912,8 @@ CLAIMS = [
      "the whole course, inside it", claim_curriculum),
     ("self_modify", "It changes its own code in five stages, and the referee is safe.",
      "self-modification, gated", claim_self_modify),
+    ("mental", "The syllabus is not stored in it — it thinks with it.",
+     "the syllabus as logic, not notes", claim_mental),
     ("provider_switch", "You can switch provider without editing a file.",
      "no hardcoded provider", claim_provider_switch),
     ("budgets", "The performance numbers hold.", "zero performance issues", claim_budgets),

@@ -1,5 +1,10 @@
 # The syllabus Ultron holds
 
+> **The course is not here to be recited.** The topics that Ultron can actually do are
+> wired into its own thinking, and each one names its course unit in the code. See
+> [MENTAL.md](MENTAL.md) for what runs, and where.
+
+
 Ultron carries your AKTU course. **8 subjects, 40 units, 284 topics, 42 reading links** — from the first lecture to the advanced paper, inside the assistant, with no internet needed to answer *"what is in unit 3 of DBMS?"*
 
 ## The plain version

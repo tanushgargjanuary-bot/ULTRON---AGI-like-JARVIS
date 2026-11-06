@@ -1,3 +1,75 @@
+=== 2026-11-06 · build 1.2.32 · the syllabus is not stored, it is running ===
+
+The owner corrected the premise of the last build, in one line:
+
+  "BTW I didn't want the syllabus as stored, but I wanted the topics implemented as
+   logic of the ULTRON. Make the changes. This syllabus is meant to improve the
+   working of ULTRON."
+
+He was right, and the correction moved the work from documentation to machinery. A
+JSON file of topics makes the assistant able to recite a course. It does not make the
+assistant better at its job. So the course became code:
+
+  core/mental/registry.py   @implements(course, unit, topic) — the citation is
+                            attached to the function, and verify() checks it against
+                            both the code (callable) and curriculum/aktu_aiml.json
+                            (the topic is really in that unit). The map cannot drift.
+  core/mental/logic.py      DSTL 3, AI 3 — forward chaining with the proof kept,
+                            truth tables, and a refusal that says "not derivable" is
+                            not "false"
+  core/mental/plan.py       AI 2, DS 5 — topological order that refuses cycles,
+                            A*, Dijkstra, Kruskal, union-find, BFS/DFS, one-slot CSP
+  core/mental/choose.py     DAA 1, 4, 5 — growth of functions against a work budget,
+                            so an exact job is chosen or an approximate one is stated
+  core/mental/context.py    COA 4, DBMS 4 — three tiers, LRU eviction, and a log so an
+                            eviction can be explained afterwards
+  core/mental/records.py    DBMS 2, 3, DS 3 — the four integrity constraints, functional
+                            dependencies, repeating groups, a hash index
+
+Then the code that was already here stopped being uncited. The trie names DAA unit 2.
+The knapsack names DAA units 3 and 4. The branch-and-bound cut names DAA unit 4. The
+self-change ledger names DBMS unit 4 — it is a log, and it is replayed as one.
+
+The part that changes behaviour, rather than describing it: "may this tool run" is now
+a derivation. The tier becomes a fact, the rules that turn a tier into a verdict are
+stated as data, and forward chaining produces the verdict with its chain. If the rules
+and the policy ever disagree the policy wins and the disagreement is said out loud and
+recorded — a contradiction is not something to hide. The instruction in core/prompt.txt
+now tells it to order its steps before taking them, so the kernel is used and not
+merely present. "Which of the syllabus is inside you" answers per subject, with the
+count that runs and the function behind it.
+
+18 topics run as code, out of 284, and the tool says 284. 21 citations, 8 modules, all
+checked. The remaining 266 are listed as waiting, which is the honest number and the
+next piece of work.
+
+Also in this build: the plan/rehearse order in the self-change doc, and
+`curriculum` grew a `running` action, so asking about his syllabus now answers with
+what Ultron can execute.
+
+Fixed while testing, by the tests rather than by reading: permission_rules built its
+rule bodies as one tuple of strings instead of a tuple of atoms, so every rule was
+inert; the `may` action first raised on Decision.allow (it is .allow) and then derived
+two verdicts for one tier because the rules did not carry the tier in the body;
+context.evicted read keys out of a list of strings. Each of the three would have been a
+silent wrong answer.
+
+Two real defects fell out of running the suite with the optional packages installed —
+they had been invisible because the modules could not import without them:
+
+  actions/browser_control.py  declared no `fields` or `target` parameter, and the
+                              handler read both. fill_form could never fill anything,
+                              and `target` was always silently the default browser.
+                              The schema now declares what the handler reads.
+  core/mental/registry.py     a scanned module that failed to import was skipped with
+                              `except Exception: continue`, so the map would have lost
+                              its evidence and still looked complete. The failure is now
+                              recorded and `verify()` reports it.
+
+State: 1,650 tests OK (skipped=8), 9.7 MB / 437 files. Proof gate 20 PROVEN /
+13 PARTIAL / 0 FAILED, including the new claim `mental` — the citations are true, the
+chain agrees with the policy, and the order is refused when it cycles.
+
 === 2026-11-06 · build 1.2.31 · the syllabus, and the right to change itself ===
 
 Two requests in one message, and they had nothing to do with each other.
