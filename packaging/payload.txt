@@ -1,0 +1,42 @@
+# What the installer puts on the machine, one path per line.
+#
+# This file is the single list. packaging/build_installer.ps1 copies exactly these
+# paths into the staging folder, packaging/ultron.iss wraps the folder, and
+# tests/test_installer.py checks that every path here exists today. Three files
+# agreeing because they read one list is the only way an installer stays honest
+# about what it ships.
+#
+# A trailing slash means "this folder, with everything inside it".
+# Lines starting with # are comments.
+#
+# Deliberately absent: .git, .venv, build output, and the owner's own configuration.
+# A fresh install must start at the setup screen, not with somebody else's keys.
+
+main.py
+run.ps1
+run.bat
+setup.py
+requirements.txt
+requirements-dev.txt
+readme.md
+LICENSE
+AGENTS.md
+ARCHITECTURE.md
+CUSTOM_ULTRON.md
+GATEKEEPERS.md
+ALGORITHMS.md
+
+core/
+providers/
+actions/
+custom_jarvis/
+memory/
+config/
+dashboard/
+plugins/
+native/
+scripts/
+sidecar/
+docs/
+tests/
+OwnerFiles/

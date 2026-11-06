@@ -45,11 +45,13 @@ You talk. It answers. It does the work.
 
 ## Install — three steps
 
-1. **Unpack** this project into a folder you can write to.
-2. **Double-click `run.bat`.** Or in PowerShell: `.\run.ps1`
-3. **Wait once.** Ten to twenty minutes. It finds Python, builds a private environment, installs the packages, and starts.
+1. **Run `UltronSetup-1.2.27.exe`** and click Next three times. No administrator prompt: it installs into your own folder. It checks for Python first and says so in a sentence if it is missing.
+2. **Or, from a folder:** unpack it, then double-click `run.bat` — or in PowerShell: `.\run.ps1`
+3. **Wait once.** Ten to twenty minutes. It builds a private environment, installs the packages, and starts.
 
-After that, it opens straight away.
+After that, it opens straight away. The installer makes a Start-menu shortcut and one on the desktop.
+
+Uninstalling removes the program and keeps your keys and your memory, then tells you where they are. Every path, both build routes and the error table are in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 Then add **one key**: open `config/api_keys.json` and paste a key for the model you use. You can also do it inside the app on the first screen.
 
@@ -118,7 +120,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**218 Python files. 86,664 lines. 1,410 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**219 Python files. 86,876 lines. 1,437 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 

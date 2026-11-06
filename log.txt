@@ -1,3 +1,48 @@
+=== 2026-11-06 · build 1.2.27 · an installer, and no administrator password ===
+
+The owner asked for a proper application and chose "installer" first. This is the
+packaging layer: five files in packaging/, one page of instructions, and 27 tests
+that check the parts a Linux machine can check.
+
+  packaging/version.txt      one version number, for the installer only
+  packaging/payload.txt      the list of what ships — files, one per line
+  packaging/ultron.iss       Inno Setup: per-user install, shortcuts, uninstall
+  packaging/build_installer.ps1   one command: read, stage, compile
+  packaging/ultron.spec      PyInstaller route for a PC with no Python (unbuilt)
+
+Three decisions worth writing down:
+
+1. No administrator. Ultron installs into %LOCALAPPDATA%\Programs\Ultron. An
+   assistant that needs an administrator password is one most people cannot install.
+
+2. The uninstaller keeps the owner's files. It removes the program and the .venv it
+   built, and keeps config/api_keys.json and memory/, then a message box says where
+   they are. Deleting somebody's keys because they uninstalled is the kind of tidy
+   that costs them an afternoon.
+
+3. One list. payload.txt names what ships. The build script stages from it, the
+   .iss wraps the staged folder, and a test fails if a named path does not exist.
+   A wildcard would ship whatever happens to be in the folder that day.
+
+The installer needs Python 3.11-3.13 on the machine, because it reuses run.ps1 —
+the launcher that already builds a private environment and that has tests behind it.
+It checks for Python before copying anything and says the same sentence the launcher
+would say. The Python-free route is written but NOT built on Windows, and both the
+spec's own docstring and docs/INSTALL.md say so rather than implying it works.
+
+Mistake made and caught inside the hour: the first uninstall test searched the block
+for the word "memory" and found it in the comment explaining why the memory store is
+kept. The test now reads only the `Type:` lines, which are the ones that delete.
+
+Two environment facts worth keeping, both found the hard way this hour:
+
+  * A workspace restore drops empty directories, and .git/refs is empty on a
+    repository whose refs are all packed. Without .git/refs/heads, git answers
+    "not a git repository" about a .git folder that looks perfectly healthy. Fix:
+    mkdir -p .git/refs/heads .git/refs/tags.
+  * The same restore drops .git/config, which is a credential path. Both are
+    environment noise, not project faults, but both look like a broken repository.
+
 === 2026-11-06 · build 1.2.26 · CI green on both platforms ===
 
 Run c6d2b8c0: linux success, windows success. First green pair in the record.
