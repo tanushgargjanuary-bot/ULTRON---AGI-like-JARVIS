@@ -220,7 +220,8 @@ class ServiceTests(unittest.TestCase):
         # resolve both sides or it compares two spellings of one folder.
         self.assertEqual(Path(state["path"]).resolve(), Path(self.workspace).resolve())
         second = CustomService(self.base / "state", approval=lambda *args: False)
-        self.assertEqual(second.control.engine.workspace, self.workspace)
+        self.assertEqual(second.control.engine.workspace,
+                         Path(self.workspace).resolve())
 
     def test_no_ui_means_no_custom_mutation(self):
         service = CustomService(self.base / "headless")

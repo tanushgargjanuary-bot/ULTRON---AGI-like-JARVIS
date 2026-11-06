@@ -2136,6 +2136,13 @@ THE LAST WINDOWS FAILURE WAS THE SHELL
   under bash, and `tee` keeps each console in the artifact, so the next red job
   arrives with its own evidence.
 
+  The console in the artifact then named it at once: the same 8.3 short-path
+  comparison, on the SECOND assertion in that test — the one checking that a
+  restarted service reads the stored workspace back. One line was resolved and
+  the line under it was not. Both are resolved now, and the lesson is the one
+  this project keeps relearning: a fix is finished when the failing thing passes,
+  not when the first assertion does.
+
 SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The
   repository reports push: true, and PUT /contents answers 403 "Resource not
