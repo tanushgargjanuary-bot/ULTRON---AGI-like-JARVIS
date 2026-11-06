@@ -30,9 +30,11 @@ WHAT IT IS FOR
     It needs no network and no API key — every service is a local mock.
 """
 from __future__ import annotations
+from core import failures
 
 import asyncio
 import gc
+import os
 import json
 import sys
 import threading
