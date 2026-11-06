@@ -163,6 +163,17 @@ def try_start(patterns: list[str] | tuple[str, ...], events_path: Path,
     binary = binary_path()
     if binary is None or not patterns:
         return None
+    # An executable bit does not survive every copy: an archive, a zip round trip
+    # or a repository checkout can drop it, and the failure looks exactly like
+    # "the sidecar is missing" — which is how it hid once already. Restore it
+    # before trying to run, and say nothing when the platform has no such concept.
+    if os.name != "nt":
+        try:
+            if not os.access(binary, os.X_OK):
+                os.chmod(binary, 0o755)
+        except OSError:
+            pass
+
     try:
         events_path.parent.mkdir(parents=True, exist_ok=True)
         # Start from a clean log: events from an earlier run are not news.
