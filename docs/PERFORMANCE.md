@@ -75,23 +75,81 @@ copy it is slower than Python.
 runs once and is read by a human. Rewriting it in a compiled language would make
 it slower to change and no faster to run.
 
-## 5. What would actually make it faster
+## 5. The connection, measured and fixed
+
+Every provider call site used to build its own HTTP client inside a `with`. A new
+client means a new TCP connection, and on `https` a new TLS handshake — three round
+trips before the request itself. It was being paid on every transcription, every
+synthesis and every one-shot model call.
+
+`providers/connections.py` pools them. `scripts/bench_connection.py`, loopback, ten
+requests:
+
+| Pattern | Connections opened | Median per request |
+|---|---|---|
+| a client per call | **10** | 6.805 ms |
+| pooled | **1** | **0.558 ms** |
+
+Loopback has no TLS and no distance, so 6.2 ms is a floor and not the prize. What
+is true everywhere is the count: **nine handshakes removed out of ten.** On a
+residential connection to a provider in another country, one handshake is the
+100–300 ms the earlier table listed — now paid once per session instead of once
+per call.
+
+Two details that keep the pool honest, both tested:
+
+* async clients are keyed by **event loop**, because an httpx async pool belongs to
+  one loop; sharing it across two is a fault that shows up only after a reconnect;
+* `Pooled` is a context manager that does **not** close the client on exit, so a
+  caller that writes `with` out of habit cannot close the pool for everyone else.
+
+A measurement mistake, kept: the first version of this benchmark reported that
+pooling was **slower** — 43.9 ms against 7.3 ms. The cause was the server, not the
+pool: a keep-alive socket on loopback falls into the Nagle and delayed-ACK trap and
+every request waits 40 ms. With `TCP_NODELAY` set on the accepted socket, the real
+picture appeared.
+
+## 6. The prompt, measured and guarded
+
+The system instruction is not a Python cost; it is a token cost that the provider
+pays on **every** request. Measured with `scripts/profile_turn.py`:
+
+| Part | Characters | Share |
+|---|---|---|
+| hand-written template (`core/prompt.txt`, 234 lines) | 15,534 | 93 % |
+| tool descriptions, one line per tool | 1,669 | 10 % |
+| the limits block | 1,107 | 7 % |
+| **assembled** | **16,620** (≈ 4,155 tokens) | |
+
+There is nothing to cut safely. The template has **no duplicated line**, and nine
+tenths of it is persona, rules and refusal policy — the part a rewrite would gamble
+on without an evaluation that can tell whether the assistant still behaves. Cutting
+1,000 tokens here would save tens of milliseconds at the provider and could change
+how Ultron answers, which is a trade this project does not take blind.
+
+So the prompt is **guarded instead of trimmed**:
+`tests/test_performance_budget.py::PromptBudget` fails if the assembled prompt
+passes 20,000 characters, if the hand-written template passes 18,000, if a tool is
+missing from the list or appears twice, or if any `{placeholder}` is left unfilled.
+
+## 7. What would actually make it faster
 
 | Lever | Effect | Owner | How to know |
 |---|---|---|---|
 | A closer or faster model provider | **300–1000 ms** | the network | measured by the app's own turn timer |
 | Smaller speech recogniser | 200–700 ms | the recogniser | `--live` run of the gate |
-| Warm connection, no handshake per turn | 100–300 ms | us (Python) | not yet measured |
-| Shorter prompt and history per turn | 50–200 ms | us (Python) | prompt token count |
+| Warm connection, no handshake per turn | **100–300 ms — done** | us (Python) | 9 of 10 handshakes removed; see §5 |
+| Shorter prompt per turn | 50–200 ms | us (Python) | measured: 4,155 tokens, no duplicated line; guarded, not trimmed blind — see §6 |
 | Lazy action loading | **0 ms** — the tool list is needed to build the prompt at launch, so the work has to happen anyway | us | `bench_startup.py` |
 | Compiling the hot leaf with mypyc/Cython | 1.5–4× on that leaf, which is 0.005 % of a frame | us | not worth it yet |
 | Rewriting the shell in Go or Rust | **0.165 ms** | — | this document |
 
-The honest ranking is: everything that matters is outside the language. The one
-lever that is both ours and unmeasured is the **warm connection**, and it is next
-on the list.
+The honest ranking is: everything that matters is outside the language. Of the two
+levers that were ours, the warm connection is **done and measured**, and the prompt
+is **measured and guarded** — trimming it is a behaviour change, and behaviour
+changes here need the live harness, not a benchmark.
 
-## 6. The budget is enforced
+## 8. The budget is enforced
 
 `tests/test_performance_budget.py` holds four ceilings, each at least twenty times
 the measured value:
@@ -107,11 +165,12 @@ regex compiled inside a loop, a JSON parse per tool. Two further tests assert th
 structural version of the same rule — the policy tables are module constants, and
 the transcript pattern is compiled once.
 
-## 7. Reproduce it
+## 9. Reproduce it
 
 ```powershell
 python scripts\profile_turn.py    # the 0.165 ms table
 python scripts\bench_startup.py   # the launch
 python scripts\bench_hybrid.py    # the audio leaf
 python scripts\bench_sidecar.py   # the Go supervisor
+python scripts\bench_connection.py # connections opened: per call vs pooled
 ```

@@ -108,6 +108,64 @@ class TurnBudget(unittest.TestCase):
                         f"memory read took {elapsed:.2f} ms")
 
 
+class PromptBudget(unittest.TestCase):
+    """The system prompt is paid for by the provider on every request.
+
+    Measured on the build machine: 15,534 characters of hand-written template,
+    1,669 of tool descriptions and 1,107 of limits — 16,620 characters assembled,
+    about 4,155 tokens. Nine tenths of it is persona and rules, and there is no
+    duplicated line in it, so there is nothing to cut safely without a live
+    evaluation of whether the assistant still behaves.
+
+    What this test does instead of trimming blind: it stops the prompt from
+    *growing* unnoticed, and it checks the two things that make it correct — every
+    tool appears once, and no placeholder is left unfilled.
+    """
+
+    CEILING_CHARS = 20_000          # measured 16,620; about 20 % of headroom
+
+    @classmethod
+    def setUpClass(cls):
+        cls.main = load_main()
+
+    def assemble(self) -> tuple[str, str, str]:
+        base = self.main._load_system_prompt()
+        declarations = list(self.main.TOOL_DECLARATIONS)
+        tools = self.main._describe_tools(declarations)
+        limits = self.main._describe_limits(True, True)
+        rendered = self.main._render_prompt(base, {
+            "assistant_name": "Ultron", "user_name": "Owner", "tools": tools,
+            "limits": limits, "platform": "Windows", "memory": '{"identity": {}}',
+            "date": "2026-11-06", "time": "10:30"})
+        return rendered, tools, base
+
+    def test_the_assembled_prompt_stays_inside_its_budget(self):
+        rendered, tools, base = self.assemble()
+        self.assertLess(len(rendered), self.CEILING_CHARS,
+                        f"the prompt is {len(rendered)} chars, over its "
+                        f"{self.CEILING_CHARS} budget")
+        # The template is the part a person edits, so it gets its own line here:
+        # a jump in this figure is someone writing a new paragraph, not a bug.
+        self.assertLess(len(base), 18_000, "the hand-written template has grown")
+
+    def test_every_tool_appears_exactly_once(self):
+        _rendered, tools, _base = self.assemble()
+        names = [d.get("name") for d in self.main.TOOL_DECLARATIONS
+                 if isinstance(d, dict) and d.get("name")]
+        lines = [line for line in tools.splitlines() if line.startswith("- ")]
+        self.assertEqual(len(lines), len(names), "a tool is missing from the prompt")
+        for name in names:
+            self.assertEqual(sum(1 for line in lines if line.startswith(f"- {name}:")
+                                 or line == f"- {name}"), 1,
+                             f"{name} appears more than once")
+
+    def test_no_placeholder_is_left_unfilled(self):
+        rendered, _tools, _base = self.assemble()
+        for token in ("{tools}", "{limits}", "{memory}", "{assistant_name}",
+                      "{user_name}", "{date}", "{time}", "{platform}"):
+            self.assertNotIn(token, rendered, f"{token} was never filled in")
+
+
 class NoWorkPerCall(unittest.TestCase):
     """The mistake a language change cannot fix: doing the same work twice."""
 

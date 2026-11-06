@@ -192,6 +192,29 @@ def main_profiled(rounds: int, top: int) -> int:
         rows.append((label, result))
         print(f"{label:<34}{result['median_ms']:>8.3f} ms{result['p95_ms']:>8.3f} ms")
     print(f"\n{'sum of the stages above':<34}{total:>8.3f} ms")
+
+    # The other lever the performance document lists: prompt length. It is not a
+    # Python cost, it is a token cost paid by the provider on every request, so it
+    # is reported in characters and an estimated token count rather than in ms.
+    try:
+        import main as _main
+        base = _main._load_system_prompt()
+        decls = list(_main.TOOL_DECLARATIONS)
+        tools = _main._describe_tools(decls)
+        limits = _main._describe_limits(True, True)
+        rendered = _main._render_prompt(base, {
+            "assistant_name": "Ultron", "user_name": "Owner", "tools": tools,
+            "limits": limits, "platform": "Windows", "memory": "{}",
+            "date": "2026-11-06", "time": "10:30"})
+        print(f"\n{'prompt: base template':<34}{len(base):>8d} chars")
+        print(f"{'prompt: tool descriptions':<34}{len(tools):>8d} chars"
+              f"  ({len(decls)} tools)")
+        print(f"{'prompt: limits block':<34}{len(limits):>8d} chars")
+        print(f"{'prompt: assembled':<34}{len(rendered):>8d} chars"
+              f"  (~{len(rendered) // 4} tokens)")
+        print("Prompt length is a provider cost per request, not a Python cost.")
+    except Exception as exc:
+        print(f"\nprompt composition not measurable here: {type(exc).__name__}: {exc}")
     print("One model round trip is 600-4000 ms. Everything above is what Python")
     print("adds to it.")
 

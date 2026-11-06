@@ -118,7 +118,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**234 Python files. 84,895 lines. 1,370 tests.** Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**237 Python files. 85,531 lines. 1,383 tests.** Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -166,6 +166,7 @@ python scripts\verify_all.py    # the same questions on YOUR machine
 python scripts\bench_hybrid.py  # the table above, on your hardware
 python scripts\bench_startup.py # what a launch costs, layer by layer
 python scripts\profile_turn.py   # the Python half of a turn, stage by stage
+python scripts\bench_connection.py # handshakes per call, removed
 ```
 
 A `SKIP` is never counted as a pass and never as a failure. CI runs all three on `ubuntu-latest` and `windows-latest`: [`.github/workflows/verify.yml`](.github/workflows/verify.yml).
@@ -181,7 +182,7 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | [DECISIONS.md](DECISIONS.md) | every choice, with the file that enforces it |
 | [docs/LANGUAGE_MATRIX.md](docs/LANGUAGE_MATRIX.md) | 46 languages filtered to seven keepers, and the best language per section |
 | [docs/SIDECAR.md](docs/SIDECAR.md) | the one Go component: why it exists, what it measures, what it may never do |
-| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | every measured stage: 0.165 ms of Python per turn, 244 ms of launch, 1.5 µs of C |
+| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | every measured stage: 0.165 ms of Python per turn, 244 ms of launch, 1.5 µs of C, and the handshake removed from every call |
 | [HANDOFF.md](HANDOFF.md) | where the work stopped and what is next |
 | [log.txt](log.txt) | the build log, mistakes included |
 | [OwnerFiles/](OwnerFiles) | the owner's session log and journey, published on purpose |
