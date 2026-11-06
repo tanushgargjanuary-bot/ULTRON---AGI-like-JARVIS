@@ -149,6 +149,39 @@ levers that were ours, the warm connection is **done and measured**, and the pro
 is **measured and guarded** — trimming it is a behaviour change, and behaviour
 changes here need the live harness, not a benchmark.
 
+
+## 10. If most of this were Rust
+
+A fair question, and the answer is measurable rather than a matter of taste.
+
+**What a rewrite would gain.** Python's share of one turn is **0.165 ms**. Against
+600–4,000 ms of model time that is 0.004 %–0.03 %. Rust is roughly 10–50× faster on
+the kind of code here, so the Python share would fall to something like 0.02 ms —
+about **0.145 ms saved**, which changes no measurement a person can feel.
+
+**What it would cost.** 85,674 lines and 1,388 tests would be rewritten. The
+interface would have to leave Qt, because the HUD, the avatar and the settings panel
+are Qt widgets and painting; there is no Rust toolkit that gives the MARK look
+without being a different product. Every provider (ElevenLabs, Whisper, Gemini,
+OpenAI-compatible, Ollama, Piper) would become a hand-written HTTP client instead of
+a maintained SDK, which is the opposite of "any provider, switchable by voice".
+
+**Where a systems language does win, with numbers.**
+
+| Work | Measured as Python | At C speed (numpy as the stand-in) | Worth it? |
+|---|---|---|---|
+| top-5 recall over 2,000 vectors × 384 dims | **55.3 ms per query** | **0.14 ms** (404×) | yes, when the store is that big |
+| one video frame's encoding (`native/frame.c`) | 53.9 µs | 1.5 µs (36×) | already done in C |
+| the sidecar (Go) | — | 3 ms start, 2.0 MB RSS | already done in Go |
+| the turn itself | 0.165 ms | ~0.02 ms | no |
+
+So the honest split is the one this project already follows: orchestration, provider
+adapters and the interface stay Python because that is where the ecosystem is; the
+few pure number-crunching loops that are measurably slow move out one at a time,
+behind a stable interface, with a before-and-after measurement. The first candidate
+is not the turn — it is **memory recall at 55 ms**, which is the only figure in this
+document a person can actually feel.
+
 ## 8. The budget is enforced
 
 `tests/test_performance_budget.py` holds four ceilings, each at least twenty times

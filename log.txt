@@ -1,3 +1,22 @@
+=== 2026-11-06 · build 1.2.25 · the numbers own themselves, and a Rust answer ===
+
+1. Cleaning: the workspace was 1,158 files / 22 MB, mostly because .git held 730
+   loose objects and no packs. `git gc --prune=now` -> 1 pack, .git 7.8 MB -> 2.1 MB.
+   Also removed an unused font folder and two unreferenced HUD renders.
+   Now 428 files / 16 MB. What is left, and why: sidecar/bin 4.2 MB of build output
+   (gitignored, rebuildable), uploads 2.8 MB of the owner's screenshots (nothing
+   references them), .git 2.1 MB of history.
+
+2. Found while re-verifying on a fresh environment: the page's test count is not a
+   fact about the tree. Tests that check what the app does when a package is MISSING
+   only exist when it is missing, so installing google-genai moved the count 1,384 ->
+   1,388 with no test code changed. verify.py now counts the loader, rewrites the
+   line and says so; test_readme compares against the live count, not a stale file.
+
+3. docs/PERFORMANCE.md §10 answers "what if most of it were Rust" with numbers
+   instead of opinion: 0.165 ms of Python per turn would become ~0.02 ms, and the
+   only figure a person can feel is memory recall at 55.3 ms against 0.14 ms.
+
 === 2026-11-06 · build 1.2.24 · the two levers, closed honestly ===
 
 1. Warm connection — done. providers/connections.py pools every provider client,
