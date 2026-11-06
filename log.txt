@@ -2321,3 +2321,36 @@ is not "write fewer benchmarks"; it is "look before overwriting".
 State: 1348 tests OK (skipped=6). Proof gate 15 PROVEN / 13 PARTIAL / 0 FAILED on
 Linux. Pushed to GitHub as 9b36ba1.
 
+=== 2026-11-06 · 1.2.22 · the first compiled component, and why it is Go ===
+
+The owner said: start rewriting the areas where Go and Rust win. There is exactly
+one such area, and it is not arithmetic.
+
+1. sidecar/watchd — the supervisor that outlives the assistant. A watcher written
+   inside the program dies with the program, so the record of a finished
+   background job disappears during the one moment the owner needs it: while
+   Ultron is restarting. 400 lines of dependency-free Go, its own tests, a
+   Windows cross-build that is one command.
+
+   Measured (scripts/bench_sidecar.py, median of fresh processes):
+   size 2.0 MB, startup 3 ms, resident 2.7 MB, event latency 10 ms, against the
+   Python watcher's 26 ms and 13.6 MB.
+
+2. core/sidecar.py — the bridge. The binary is optional in both directions: no
+   binary means the psutil watcher, a dead sidecar is reported once and replaced.
+   Both sources feed the same SpeechGate, so "log at once, speak when the talking
+   stops" holds either way.
+
+3. docs/SIDECAR.md — the argument, the numbers, the two limits (no start stamp on
+   Windows, no exit code for a process we did not start), and the build commands.
+
+Why not Rust: it wins hot loops and memory promises. This component is a poll loop
+and a child process. The toolchain also could not be installed on this build
+machine (no root; 300 MB into a scratch directory that is wiped), so a Rust
+version would have shipped unverified. Rust stays on the LATER list for a leaf
+that is measured hot, and there is still no such leaf.
+
+State: 1364 tests OK (skipped=6), including 13 sidecar tests and 4 Go tests.
+Proof gate 16 PROVEN / 13 PARTIAL / 0 FAILED. Binaries are not committed; the
+source, the tests and build.ps1 / build.sh are.
+

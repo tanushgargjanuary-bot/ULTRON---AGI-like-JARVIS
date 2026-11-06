@@ -160,3 +160,34 @@ single audio leaf, and it is 0.005 % of a frame. So the honest answer is: it is
 not the fastest stack, it is the fastest stack that also keeps your approvals,
 your files and your memory safe — and that trade was made on purpose.
 
+### 2026-11-06 — the one part of Ultron that is not Python
+
+You asked me to start rewriting where Go and Rust win. I found exactly one place,
+and I built it.
+
+**The place.** A supervisor cannot live inside the program it supervises. If
+Ultron crashes or restarts, a watcher inside it dies — and the notification you
+asked for ("the agent finished") is lost at the moment it matters most.
+
+**What it costs now, measured:**
+
+| | Go sidecar | Python watcher |
+|---|---|---|
+| size | 2.0 MB | an interpreter + psutil |
+| start to first look | 3 ms | 26 ms |
+| memory while watching | 2.7 MB | 13.6 MB |
+| time from job ending to notification | 10 ms | same poll, same table |
+
+**Why not Rust.** Rust is better at hot loops and tight memory promises. This
+component does neither; it polls and restarts one child process. Also, the Rust
+toolchain could not be installed on my build machine, and I will not ship code I
+could not run. Rust stays on the list for the first leaf that is measured hot.
+
+**What did not change.** The shell is still Python, and so is every safety rule:
+path confinement, risk tiers, approvals, the evidence trail. That is the part a
+rewrite would cost weeks to re-prove, and it would make nothing faster.
+
+**If you want the compiled watcher:** install Go once from go.dev/dl, then run
+`.\sidecar\build.ps1`. Without it, everything still works — you lose only the
+crash-proof part.
+
