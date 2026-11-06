@@ -2244,6 +2244,14 @@ Mistakes in this round, kept for the next reader:
     1222 tests instead of 1319 and reported a setUpClass error. Reinstalled; the
     suite is green. A missing package is a skip, a missing install is not a bug.
 
-State: 1319 tests OK (skipped=6). Proof gate 14 PROVEN / 13 PARTIAL / 0 FAILED on
-Linux. CI not yet run on these commits.
+6. The gate itself was wrong, and the log has to say so. Running it in a fresh
+   git worktree instead of in my working copy gave claim `digest` as FAILED there
+   and PROVEN here. The claim counts every file under memory/ as evidence that the
+   report wrote nothing - including memory/__pycache__/*.pyc, which a clean clone
+   writes on its first import. The gate accused a program that had done nothing.
+   Fixed: _store_state() ignores bytecode, and three tests pin the rule. A gate
+   that only passes on the machine that built it is not a gate.
+
+State: 1322 tests OK (skipped=6). Proof gate 13 PROVEN / 14 PARTIAL / 0 FAILED on
+Linux, now measured from a clean clone as well. CI not yet run on these commits.
 
