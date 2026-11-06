@@ -90,3 +90,9 @@ ship_pending.json
 # machine's run of the instruments and changes on every invocation.
 verification/
 sidecar/bin/
+
+# ── Versions of the system prompt ─────────────────────────────────────────────
+# Every applied change to core/prompt.txt keeps the text it replaced, plus a
+# changelog. It is the owner's history, not the repository's: a fresh clone starts
+# with the shipped prompt and an empty history, which is the truth about it.
+config/prompt_versions/

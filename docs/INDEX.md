@@ -42,6 +42,7 @@ Every document in the repository, one line each, and who it is for.
 | [`docs/LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | should this be rewritten in another language — no, with numbers |
 | [`docs/SIDECAR.md`](SIDECAR.md) | anyone building or auditing the Go component | why one part is Go, what it measures, and the rule that it only watches |
 | [`docs/PERFORMANCE.md`](PERFORMANCE.md) | the owner, and anyone asking “why is this not faster” | every measured stage of a turn, a launch and an audio frame, and what would actually move them |
+| [`docs/PROMPT.md`](PROMPT.md) | the owner, and anyone who wants to know what the assistant was told | the system prompt: where it lives, how to read it, how to change it, and why a change needs two confirmations |
 | [`docs/LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | the owner, and anyone tempted by a rewrite | all 46 candidate languages, filtered: seven keepers, four laters, and the reason each of the rest lost |
 | [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
 

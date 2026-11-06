@@ -170,7 +170,13 @@ _GUARDED_REASONS: dict[str, str] = {
 # runs read-only skills or routes mutations through ControlledRegistry, which
 # asks per step; adding a second banner in front of it produced two prompts for
 # one decision.
-BYPASS_TOOLS: frozenset[str] = frozenset({"custom_jarvis"})
+# `system_prompt` edits the instruction the model gives itself, which sounds like the
+# last tool that should carry its own gate — so it carries the strictest one in the
+# project: nothing is written until the same change is confirmed twice, in two
+# different places, and every applied change keeps the version it replaced. The gate
+# lives in core/prompt_store.py, where it can be tested, rather than in the policy
+# table, where it would be one line somebody could delete without noticing.
+BYPASS_TOOLS: frozenset[str] = frozenset({"custom_jarvis", "system_prompt"})
 
 # A tool can be mostly one tier and answer to a dangerous action name. These
 # tables are consulted before the tool-level tier and can only make things

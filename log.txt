@@ -1,3 +1,46 @@
+=== 2026-11-06 · build 1.2.28 · the prompt is readable, and editable on instruction ===
+
+The owner asked for two things: that the system prompt be visible to them, and that
+they be able to instruct Ultron to change it. Both are now true, with a gate on the
+second one.
+
+  core/prompt_store.py      the prompt as a stored object: read, validate, stage,
+                            confirm, apply, version, revert
+  actions/prompt_editor.py  the tool the model calls: "show", "stage", "confirm"...
+  scripts/show_prompt.py    read it from a terminal, no app running
+  docs/PROMPT.md            one page: where it lives, how to change it, what cannot
+                            be changed, how to go back
+
+Three decisions:
+
+1. A proposal is not a change. "Make your answers shorter" stages a diff and says
+   plainly that nothing has happened. It applies only after two confirmations made
+   in two different places — a voice yes and a click in the panel. A model that can
+   rewrite its own instruction in one step can delete the paragraphs that stop it
+   doing something, and two acts in two places means the owner has read it twice.
+
+2. A change must keep the shape. The template carries {assistant_name}, {limits},
+   {capabilities}, {platform}, {tools}. Deleting one does not make the assistant
+   different, it makes it broken: the tool list never arrives and the assistant
+   answers questions about itself from imagination. Also refused: under 2,000
+   characters, over 19,000, an ambiguous "find", or an edit with no reason written
+   beside it.
+
+3. It cannot touch a permission. Approvals, file limits and tool tiers live in code.
+   Editing the prompt changes how Ultron talks and what it will attempt, not what it
+   is allowed to do. A prompt edit must never be a way around a gate.
+
+Every applied change keeps the text it replaced in config/prompt_versions/ with a
+changelog line naming the reason and the two confirmation channels. Going back is a
+change like any other, so it needs the same two confirmations. It takes effect when
+the next session starts, and the tool says so rather than implying it is instant.
+
+The ratchet bit twice while building this, and was right both times: a 116-line
+handler branching 40 ways was refused by the debt ceiling, so it became a table of
+small functions; then a typed exception discarded without a note was refused, so it
+now leaves a note. Both are better code than what the first draft had.
+
+Evidence: 1464 tests OK (skipped=6), 27 of them new for this feature.
 === 2026-11-06 · build 1.2.27 · an installer, and no administrator password ===
 
 The owner asked for a proper application and chose "installer" first. This is the
