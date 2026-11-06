@@ -133,3 +133,30 @@ thirty-three are refused with a reason. Short version: Python is the shell,
 numpy is the arithmetic, C is a leaf only when nothing is copied, SQLite is the
 memory, Qt is the pixels, PowerShell is the door.
 
+### 2026-11-06 — I tried to make it start faster. The numbers said no.
+
+You said: do what you find safe. So I measured first.
+
+| What I tried | What the measurement said | What I did |
+|---|---|---|
+| Move a 12–30 ms import out of the window module | 186 ms → 182 ms, and no faster first frame | **Reverted.** The cost moved, it did not go away. |
+
+That is the whole report, and it is the right kind of report. A change that makes
+a claim I cannot see in a number does not go in.
+
+Two things did improve:
+
+- A figure I had written from arithmetic ("0.02 ms per process") is now the
+  measured one: **3.4 ms per full process-table sweep**, 0.17 % of the two-second
+  poll.
+- The tool that measures starts now has tests of its own, so its numbers cannot
+  quietly become warm-process numbers wearing cold labels.
+
+**Your performance question, answered plainly.** On memory, start-up and install
+size, this stack loses to Go or Rust, and nothing in it will change that. On the
+time a turn actually takes — the model answer and speech recognition — the
+language does not matter at all. The one place a faster language still wins is a
+single audio leaf, and it is 0.005 % of a frame. So the honest answer is: it is
+not the fastest stack, it is the fastest stack that also keeps your approvals,
+your files and your memory safe — and that trade was made on purpose.
+

@@ -2289,3 +2289,35 @@ State: 1345 tests OK (skipped=6). Proof gate 15 PROVEN / 13 PARTIAL / 0 FAILED o
 Linux (28 claims, including the new procwatch claim). CI not yet run on these
 commits.
 
+=== 2026-11-06 · 1.2.21 · a safe change is a measured change ===
+
+The owner said: do what you find safe. This round is what that means.
+
+1. I tried the obvious start-up win: ui.py imported psutil at module scope, and
+   deferring it looked like 22 ms off every launch. It was not. Measured with
+   seven fresh processes per case, it was 186 ms -> 182 ms, and the first frame
+   was not faster, because the window builds the system monitor during
+   construction anyway. The import cost moved; it did not disappear. ui.py is
+   unchanged and the measurement is written into docs/LANGUAGE_MATRIX.md.
+
+2. The reason the wrong figure survived an hour: my first harness timed both
+   cases in warm interpreters and the variance was larger than the effect. The
+   rule already in this repository - one row, one fresh process, median of many -
+   is what exposed it.
+
+3. scripts/bench_startup.py keeps its job, and tests/test_lazyimport.py now pins
+   its two honest properties: each stage in its own process, and an unmeasurable
+   stage reported as unmeasurable instead of guessed.
+
+4. Corrected a claim I had written: the process sweep was described as "about
+   0.02 ms per process", which was arithmetic. Measured: 3.4 ms for the whole
+   table per poll, 0.17 % of the two second interval.
+
+Mistake worth recording: I overwrote scripts/bench_startup.py with a new file of
+the same name, without checking that the repository already had a better one
+(217 lines, its own subprocesses, --json, --stage). Restored from git. The lesson
+is not "write fewer benchmarks"; it is "look before overwriting".
+
+State: 1348 tests OK (skipped=6). Proof gate 15 PROVEN / 13 PARTIAL / 0 FAILED on
+Linux. Pushed to GitHub as 9b36ba1.
+
