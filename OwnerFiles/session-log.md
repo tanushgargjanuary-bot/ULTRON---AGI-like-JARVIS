@@ -59,3 +59,7 @@ write, because GitHub checks the whole push and one CI file has been in the
 history since the first commit. A classic token with `repo` and `workflow` worked
 at once. Two probe commits from the write test were removed with a lease-pinned
 force, and no other work was touched.
+**The first real Windows run.** GitHub ran the verifiers on a real Windows machine. The display checks passed 13 of
+13 — the window draws, at three sizes, with the log panel inside the frame and text in it. Three areas failed, and
+all three were the instrument reporting a missing device as a broken product; that is fixed, and a test now locks
+the rule. Two mistakes in the CI file itself were also found by the same run and fixed.

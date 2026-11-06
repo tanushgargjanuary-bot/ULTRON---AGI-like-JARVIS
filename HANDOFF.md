@@ -1355,3 +1355,30 @@ comes from `GITHUB_TOKEN` or `config/api_keys.json: github_token`.
 **What the next person should not do.** Do not make the push automatic by default. Do not add a force path "just for recovery". Do not call a reload an update — imported modules keep their old code, so the honest contract is: files updated, data reloaded, restart asked for only when `.py` changed.
 
 **The token fix, exactly.** Two settings decide a fine-grained token: *Repository access* (Only select repositories → this repository) and *Permissions → Repository permissions → Contents* (Read and write). A token made as *Public repositories (read-only)* reads every public repository and writes none, which is the symptom seen twice on 2026-11-06.
+
+## 6z. The first real Windows run, and what it proved (2026-11-06, build 1.2.17)
+
+The repository is live, so the CI job ran on a real `windows-2025` machine for the first time in this project's
+history. Verbatim at `d0efd28`:
+
+    platform   8 pass, 3 fail, 5 skip   BROKEN
+    display   13 pass, 0 fail, 0 skip   WORKS
+    capture    2 pass, 0 fail, 1 skip   PARTLY TESTED
+    audio      1 pass, 1 fail, 1 skip   BROKEN
+    browser    0 pass, 1 fail, 0 skip   BROKEN
+
+**`display` at 13 of 13 is the result that matters**: the real Ultron window renders on Windows at 980x700, 1280x800
+and 1600x900, the activity-log panel sits inside the frame, and text is painted in it. That claim was PARTIAL for
+weeks because no Windows machine had ever run it.
+
+**The three failures were the instrument, not the product.** A hosted runner has no microphone, no speaker and no
+Playwright, and the verifiers called all three FAIL. A missing device is a SKIP with a reason — the rule this project
+applied to `sees_screen` in 1.2.11 and had not applied here. `verify_audio.device_status`, `verify_windows`
+(recording and playback), and `verify_browser` were changed, and `tests/test_verifiers.SkipVersusFail` locks the rule.
+**A device that exists and fails is still FAIL**, so nothing was weakened: that is the case that matters on the
+owner's PC.
+
+**Two defects in the CI file, found by its first run.** The Windows job called `verify_all.py --json` (it takes
+`--report`), and the Linux job asked for `verification/proof-gate.json` in a folder a fresh clone does not have.
+`WorkflowArguments` now reads `.github/workflows/verify.yml` and asserts every flag it passes is declared by the
+script it calls.

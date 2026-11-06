@@ -108,3 +108,30 @@ class WorkflowArguments(unittest.TestCase):
     def test_the_workflow_runs_the_scripts_that_exist(self):
         for script in re.findall(r"python scripts/([\w]+\.py)", self.workflow):
             self.assertTrue((self.root / "scripts" / script).exists(), script)
+
+
+class SkipVersusFail(unittest.TestCase):
+    """A missing device is "not tested here"; a present one that fails is broken.
+
+    The first real Windows CI run reported the whole audio area as BROKEN because
+    a build server has no microphone, and the browser area as BROKEN because a
+    lean CI install has no Playwright. Both were the instrument mis-reporting the
+    machine as the product.
+    """
+
+    def test_zero_devices_is_a_skip_and_any_device_is_a_pass(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        import verify_audio
+
+        self.assertEqual(verify_audio.device_status(0), "SKIP")
+        self.assertEqual(verify_audio.device_status(1), "PASS")
+        self.assertEqual(verify_audio.device_status(7), "PASS")
+
+    def test_the_three_scripts_agree_about_a_missing_device(self):
+        root = Path(__file__).resolve().parents[1] / "scripts"
+        audio = (root / "verify_audio.py").read_text(encoding="utf-8")
+        windows = (root / "verify_windows.py").read_text(encoding="utf-8")
+        browser = (root / "verify_browser.py").read_text(encoding="utf-8")
+        self.assertIn('return "PASS" if count else "SKIP"', audio)
+        self.assertIn('return ("SKIP", "no input device', windows)
+        self.assertIn('"playwright installed", "SKIP"', browser)

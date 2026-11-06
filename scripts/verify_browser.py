@@ -158,7 +158,9 @@ def main(argv=None) -> int:
         import playwright                                     # noqa: F401
         record("playwright installed", "PASS")
     except ImportError as exc:
-        record("playwright installed", "FAIL",
+        # Not installed is the absence of a capability, and the sentence says how
+        # to add it. Installed and failing to launch is the FAIL below.
+        record("playwright installed", "SKIP",
                f"{exc} — run: pip install playwright && playwright install chromium")
         return finish(args.json)
 

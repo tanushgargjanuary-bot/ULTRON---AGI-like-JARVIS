@@ -27,6 +27,17 @@ sys.path.insert(0, str(ROOT))
 results: list[dict] = []
 
 
+def device_status(count: int) -> str:
+    """Zero devices is a fact about the machine, so it is a SKIP, not a FAIL.
+
+    A build server has no microphone. Reporting FAIL there says Ultron is broken
+    on a machine that has nothing to be broken with — the same mistake the display
+    check made in 1.2.11, fixed the same way. Devices that exist and then fail are
+    still a FAIL, which is the case that matters on the owner's PC.
+    """
+    return "PASS" if count else "SKIP"
+
+
 def record(name: str, status: str, detail: str = "") -> None:
     results.append({"check": name, "status": status, "detail": detail})
     print(f"  {status:4s}  {name}" + (f" — {detail}" if detail else ""))
@@ -53,8 +64,9 @@ def main(argv=None) -> int:
     devices = sd.query_devices()
     ins = [d for d in devices if d.get("max_input_channels")]
     outs = [d for d in devices if d.get("max_output_channels")]
-    record("input devices", "PASS" if ins else "FAIL",
-           f"{len(ins)}: " + "; ".join(d["name"][:28] for d in ins[:3]))
+    record("input devices", device_status(len(ins)),
+           (f"{len(ins)}: " + "; ".join(d["name"][:28] for d in ins[:3])) if ins
+           else "no microphone on this machine — nothing to test here")
     record("output devices", "PASS" if outs else "SKIP",
            f"{len(outs)}: " + "; ".join(d["name"][:28] for d in outs[:3]))
 
