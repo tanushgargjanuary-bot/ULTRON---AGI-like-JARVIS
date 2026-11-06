@@ -37,7 +37,7 @@ its source is not ours. **LATER** — worth adding, with a named trigger.
 | 5 | Odin | **NO** | Excellent for games and tools, zero libraries for voice, Qt or Windows accessibility. |
 | 6 | Nim | **NO** | Python-like syntax with native speed sounds ideal until the packaging: a second toolchain, a small community, and no gain at 0.18 %. |
 | 7 | D | **NO** | A fine language that never found its niche; nothing here needs what it uniquely offers. |
-| 8 | Go | **LATER** | The best candidate for a *single-binary sidecar* (a tray app, a file watcher that survives the Python process crashing). Trigger: when Ultron must run a component that outlives the app. |
+| 8 | Go | **KEEP** | The supervisor that outlives the assistant: `sidecar/watchd`, 2.0 MB, 3 ms to start, 2.7 MB resident, tested. Measured against the Python watcher in `scripts/bench_sidecar.py`. |
 | 9 | Ada | **NO** | Built for proof-grade correctness in systems where a bug kills someone. The invariants here are enforced by tests, and a compiler cannot check "ask the owner twice". |
 | 10 | C3 | **NO** | A promising evolution of C, far too young to be a dependency. |
 | 11 | V | **NO** | Same answer as C3, with a smaller standard library. |
@@ -77,9 +77,9 @@ its source is not ours. **LATER** — worth adding, with a named trigger.
 | 45 | SQL | **KEEP** | SQLite holds the state that must survive a crash: approvals, evidence, the queue, the schedule. |
 | 46 | WebAssembly | **LATER** | The right sandbox for a *generated* skill: a skill that can only touch what it is given. Trigger: the first skill pack that runs code I did not write. |
 
-Tally: **6 keep** (Python, C, PowerShell, Bash, SQL, JavaScript), **2 consume**
-(C++, CUDA through llama.cpp), **5 later** (Rust, Go, TypeScript, WebAssembly,
-and Mojo on watch), **33 no** — each with a reason, not a shrug.
+Tally: **7 keep** (Python, C, Go, PowerShell, Bash, SQL, JavaScript), **2 consume**
+(C++, CUDA through llama.cpp), **4 later** (Rust, TypeScript, WebAssembly, and Mojo
+on watch), **33 no** — each with a reason, not a shrug.
 
 ## Section by section: the best language for each part of Ultron
 
@@ -101,8 +101,9 @@ and Mojo on watch), **33 no** — each with a reason, not a shrug.
 
 ## The hybrid, in one paragraph
 
-**Python is the shell, numpy is the arithmetic, C is the leaf, SQLite is the
-memory, Qt is the pixels, PowerShell is the door, and Bash is the conveyor.**
+**Python is the shell, numpy is the arithmetic, C is the leaf, Go is the
+supervisor that outlives the shell, SQLite is the memory, Qt is the pixels,
+PowerShell is the door, and Bash is the conveyor.**
 Everything else on the list is a tool this program either already consumes
 (C++, CUDA through llama.cpp), will adopt behind a named trigger (Rust, Go,
 TypeScript, WebAssembly), or has no use for.

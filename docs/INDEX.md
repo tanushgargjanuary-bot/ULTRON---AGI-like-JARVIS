@@ -40,7 +40,8 @@ Every document in the repository, one line each, and who it is for.
 | [`docs/SKILLS.md`](SKILLS.md) | every skill family, why meta-learning and meta-cognition are built this way, the next tier in value order, and the four things that must never become a skill |
 | [`docs/TOOL_SUGGESTIONS.md`](TOOL_SUGGESTIONS.md) | which tools were considered, which shipped, and which were refused with a reason |
 | [`docs/LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | should this be rewritten in another language — no, with numbers |
-| [`docs/LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | the owner, and anyone tempted by a rewrite | all 46 candidate languages, filtered: six keepers, five laters, and the reason each of the rest lost |
+| [`docs/SIDECAR.md`](SIDECAR.md) | anyone building or auditing the Go component | why one part is Go, what it measures, and the rule that it only watches |
+| [`docs/LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | the owner, and anyone tempted by a rewrite | all 46 candidate languages, filtered: seven keepers, four laters, and the reason each of the rest lost |
 | [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
 
 ## Shipping and updating
