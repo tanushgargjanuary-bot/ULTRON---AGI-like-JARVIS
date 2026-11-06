@@ -1,0 +1,1031 @@
+Syntax parsed 179 Python files.
+
+=== Custom and ported regression suite ===
+.......................................................[2026-11-06 05:13:47,594] [JarvisPlanner] INFO: Goal received: "write new.txt"
+[2026-11-06 05:13:47,594] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 05:13:47,594] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+[2026-11-06 05:13:47,594] [JarvisPlanner] INFO: Formulated execution plan with 2 action step(s):
+[2026-11-06 05:13:47,594] [JarvisPlanner] INFO:   [1] read (Tool: read_file)
+[2026-11-06 05:13:47,594] [JarvisPlanner] INFO:   [2] write (Tool: write_file)
+[2026-11-06 05:13:47,595] [JarvisPlanner] INFO: 
+--- [Step 2/2] (Attempt 1): write ---
+[2026-11-06 05:13:47,595] [JarvisPlanner] INFO: Invoking tool: 'write_file' with args: {'path': 'new.txt', 'content': 'hello'}
+[2026-11-06 05:13:47,596] [JarvisPlanner] INFO: [+] Step 2 succeeded in 0.0s.
+[2026-11-06 05:13:47,596] [JarvisPlanner] INFO:     Output: Successfully written to '/tmp/tmp4faotjwe/A/new.txt' (5 characters).
+[2026-11-06 05:13:47,596] [JarvisPlanner] INFO: [+] Tool plan reached its end after 1 attempt(s) (0.0s), Sir. Verified tool postconditions: 1/2. Overall goal completion has not been independently verified.
+.................................................................[Video] playback unavailable (libpulse.so.0: cannot open shared object file: No such file or directory) — the HUD will not show video.
+[open_app] 'browser' resolved to 'C:\\Apps\\msedge.exe' (default handler)
+.This launcher supports Python 3.11 to 3.13; this environment is 3.14.
+Delete the .venv folder, install 64-bit Python 3.12, run run.bat again.
+.Launch with run.bat (or run.ps1) so packages are installed only inside this folder's .venv.
+..................
+== Installing the browser engines (chromium + firefox) ==
+.
+Skipping the browser engines (ULTRON_SKIP_BROWSERS is set).
+Browser automation stays off until: /usr/local/bin/python3 -m playwright install chromium firefox
+..................................................................................................................................Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 174, in run
+    return _call_handler(rec.handler, _coerce_parameters(
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        _clean_parameters(parameters), rec.parameters), ctx or {}) or "Done."
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/mark-jarvis/core/action_loader.py", line 248, in _call_handler
+    return fn(parameters=_clean_parameters(parameters), **kwargs)
+  File "/home/user/mark-jarvis/actions/video_player.py", line 173, in video_player
+    action = (params.get("action") or "play").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'strip'
+
+...............................................................................................................................................................................[2026-11-06 05:13:49,285] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:49,287] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:49,289] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+............................sssss.....................Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+..[Dashboard] iptables: port 8000 opened.
+[Dashboard] iptables: port 8001 opened.
+[Dashboard] ufw: port 8000 allowed.
+[Dashboard] ufw: port 8001 allowed.
+STOPPED: not a folder: /definitely/not/here
+Pass the install folder, for example: --path "D:\Downloads\mark-custom-jarvis"
+scanning: /tmp/tmpsx8ncirt/mark-custom-jarvis
+files: 7   cache=2  code=2  config=1  data=1  doc=1
+
+data-like files:
+  [config ] config/api_keys.json  (157 B)
+  [data   ] memory/long_term.json  (69 B)
+❌ Cannot use the config folder /tmp/tmpfzxcyz1g/config-is-a-file: [Errno 17] File exists: '/tmp/tmpfzxcyz1g/config-is-a-file'
+❌ Cannot use the config folder /tmp/tmpfzxcyz1g/config-is-a-file: [Errno 17] File exists: '/tmp/tmpfzxcyz1g/config-is-a-file'
+❌ Could not save settings to /tmp/tmp0g8q0qqy/api_keys.json: [Errno 13] Permission denied: '/tmp/tmp0g8q0qqy/api_keys.json.tmp'
+[Memory] ⚠️ Load error: Unterminated string starting at: line 1 column 18 (char 17)
+[Memory] ⚠️ Load error: Unterminated string starting at: line 1 column 18 (char 17)
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] ⚠️ Refusing to replace the 'notes' group with a single value — entries would be lost.
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Memory] 💾 Saved: ['notes']
+[Code] 🤖 Auto-detected: write
+[Code] 🤖 Auto-detected: write
+[Code] 🤖 Auto-detected: write
+[ComputerControl] ▶ 5  {'action': '5'}
+[ComputerControl] ▶ ['not', 'a', 'string']  {'action': ['not', 'a', 'string']}
+[ComputerControl] ▶ play  {'action': 'play', 'volume': 'loud', 'seconds': 'soon'}
+[Weather] Sir, the city is missing for the weather report.
+[Weather] Sir, the city is missing for the weather report.
+[Weather] Sir, the city is missing for the weather report.
+[Weather] Sir, the city is missing for the weather report.
+[Weather] Sir, the city is missing for the weather report.
+[Weather] Sir, the city is missing for the weather report.
+[YouTube] ▶️  Action: play  Params: {}
+[YouTube] ▶️  Action: 5  Params: {'action': '5'}
+[YouTube] ▶️  Action: play  Params: {'action': ''}
+[YouTube] ▶️  Action: play  Params: {}
+[YouTube] ▶️  Action: ['not', 'a', 'string']  Params: {'action': ['not', 'a', 'string']}
+[YouTube] ▶️  Action: play  Params: {'action': 'play', 'volume': 'loud', 'seconds': 'soon'}
+STOPPED: not a folder: /tmp/tmpsv8mrrl0/nope
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] the language model failed at FakeLLM: RuntimeError: provider explodedTraceback (most recent call last):
+  File "/home/user/mark-jarvis/providers/engine_pipeline.py", line 558, in _generate
+    async for ev in self._llm.chat(self._messages(), self._tools):
+    ...<20 lines>...
+            calls.extend(ev["tool_calls"])
+  File "/home/user/mark-jarvis/tests/test_live_config.py", line 171, in chat
+    raise item
+RuntimeError: provider exploded
+........Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.[2026-11-06 05:13:54,885] [httpx] INFO: HTTP Request: POST http://127.0.0.1:40039/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
+Traceback (most recent call last):
+  File "/home/user/mark-jarvis/providers/engine_pipeline.py", line 558, in _generate
+    async for ev in self._llm.chat(self._messages(), self._tools):
+    ...<20 lines>...
+            calls.extend(ev["tool_calls"])
+  File "/home/user/mark-jarvis/providers/llm_openai.py", line 540, in chat
+    raise RuntimeError(f"{r.status_code} {detail}")
+RuntimeError: 500 internal
+.[2026-11-06 05:13:54,893] [httpx] INFO: HTTP Request: POST http://127.0.0.1:40039/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:55,106] [httpx] INFO: HTTP Request: POST http://127.0.0.1:40039/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:55,116] [httpx] INFO: HTTP Request: POST http://127.0.0.1:40039/v1/chat/completions "HTTP/1.1 200 OK"
+[2026-11-06 05:13:55,126] [httpx] INFO: HTTP Request: POST http://127.0.0.1:40039/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:55,633] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33061/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-06 05:13:55,640] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33061/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+.[2026-11-06 05:13:55,649] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33061/v1/chat/completions "HTTP/1.1 404 Not Found"
+.[2026-11-06 05:13:55,662] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33061/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+.[2026-11-06 05:13:55,678] [httpx] INFO: HTTP Request: POST http://127.0.0.1:33061/v1/chat/completions "HTTP/1.1 500 Internal Server Error"
+..[2026-11-06 05:13:56,191] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,201] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,209] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,217] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,231] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,243] [httpx] INFO: HTTP Request: POST http://127.0.0.1:35027/v1/chat/completions "HTTP/1.1 200 OK"
+.[2026-11-06 05:13:56,751] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41963/v1/chat/completions "HTTP/1.1 400 Bad Request"
+.[2026-11-06 05:13:56,760] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41963/v1/chat/completions "HTTP/1.1 200 OK"
+..[2026-11-06 05:13:56,773] [httpx] INFO: HTTP Request: POST http://127.0.0.1:41963/v1/chat/completions "HTTP/1.1 400 Bad Request"
+..........[2026-11-06 05:13:57,356] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,359] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,361] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,364] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,365] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,367] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 05:13:57,368] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,369] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 05:13:57,370] [JarvisPlanner] INFO: Goal received: "Orient in workspace"
+[2026-11-06 05:13:57,370] [JarvisPlanner] INFO: Intent identified: MULTI_STEP_PLAN (Confidence: 100.0%)
+[2026-11-06 05:13:57,370] [JarvisPlanner] INFO: Reasoning: Explicit intent override provided.
+.[2026-11-06 05:13:57,372] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,375] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,380] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,382] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,386] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,389] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,392] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+[2026-11-06 05:13:57,393] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+.[2026-11-06 05:13:57,394] [JarvisBrain] INFO: No Groq API key available. Running in heuristic/simulated reasoning mode.
+...........................
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  0 chars  |  FakeLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  11 chars  |  FakeLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  19 chars  |  FakeLLM
+[Pipeline]   tools     0.73s  #                               open_app
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.73s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
+[Pipeline]   tools     0.00s                                  open_app
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  2 chars  |  FakeLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  4 chars  |  FakeLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+[Pipeline] the language model failed at http://127.0.0.1:40039/v1: RuntimeError: 500 internal
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.21s                                  first word 0.16s  |  19 chars  |  slow
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.21s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.01s                                  first word 0.01s  |  31 chars  |  echo
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.01s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.02s                                  first word 0.01s  |  19 chars  |  tools
+[Pipeline]   tools     0.00s                                  open_app
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.02s
+STOPPED: /tmp/tmp3jw_ao_i/empty does not look like a previous install (no main.py, config or memory)
+from: /tmp/tmpxtn36w40/old
+to:   /tmp/tmpxtn36w40/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpxtn36w40/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpxtn36w40/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmp6zj1mui9/old
+to:   /tmp/tmp6zj1mui9/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmp6zj1mui9/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmp6zj1mui9/new/memory/long_term.json, 1 entries
+COPIED (previous kept as workspace.json.bak-20261106-051357) workspace.json -> /tmp/tmp6zj1mui9/state/workspace.json, 1 entries
+COPIED (previous kept as approved-insights.json.bak-20261106-051357) approved-insights.json -> /tmp/tmp6zj1mui9/state/approved-insights.json, 1 entries
+done. Start Ultron and it will use this data.
+STOPPED: long_term.json is not valid JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+from: /tmp/tmpr5zgpwcv/old
+to:   /tmp/tmpr5zgpwcv/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+WOULD COPY (adapted) api_keys.json -> /tmp/tmpr5zgpwcv/new/config/api_keys.json
+WOULD COPY long_term.json -> /tmp/tmpr5zgpwcv/new/memory/long_term.json
+dry run — nothing was written
+from: /tmp/tmphx3_g2so/old
+to:   /tmp/tmphx3_g2so/new
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmphx3_g2so/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmphx3_g2so/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmpeiv9hx4x/old
+to:   /tmp/tmpeiv9hx4x/new
+note: credentials removed: gemini_api_key
+note: keeping the old name: JARVIS
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpeiv9hx4x/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpeiv9hx4x/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmpl5jdv9zj/old
+to:   /tmp/tmpl5jdv9zj/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpl5jdv9zj/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpl5jdv9zj/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmpuqittrmq/old
+to:   /tmp/tmpuqittrmq/new
+note: credentials removed: providers.groq.api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpuqittrmq/new/config/api_keys.json, 2 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpuqittrmq/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmp8ds_b5w0/old
+to:   /tmp/tmp8ds_b5w0/new
+nothing to migrate — no config, memory or custom state was found
+from: /tmp/tmprbyqbduh/old
+to:   /tmp/tmprbyqbduh/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmprbyqbduh/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmprbyqbduh/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+STOPPED: source and target are the same folder
+from: /tmp/tmpps62krq9/old
+to:   /tmp/tmpps62krq9/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpps62krq9/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpps62krq9/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmpmdee_33o/old
+to:   /tmp/tmpmdee_33o/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpmdee_33o/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpmdee_33o/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+from: /tmp/tmpvf0yioaa/old
+to:   /tmp/tmpvf0yioaa/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpvf0yioaa/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpvf0yioaa/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data..................................................................................[2026-11-06 05:13:57,523] [custom_jarvis.addon_runtime] WARNING: Repair context unavailable; preserving original failure
+..............................................s................................................................................................................................................Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/tmpx0f50lhd/broken.py", line 1, in <module>
+    raise ImportError('needs a package that is not installed')
+ImportError: needs a package that is not installed
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/tmpi2nwe1wf/broken.py", line 1, in <module>
+    raise ImportError('needs a package that is not installed')
+ImportError: needs a package that is not installed
+
+Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 174, in run
+    return _call_handler(rec.handler, _coerce_parameters(
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        _clean_parameters(parameters), rec.parameters), ctx or {}) or "Done."
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/mark-jarvis/core/action_loader.py", line 248, in _call_handler
+    return fn(parameters=_clean_parameters(parameters), **kwargs)
+  File "/tmp/tmpx0f50lhd/crasher.py", line 2, in _handler
+RuntimeError: handler exploded
+
+.Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/tmpnqakz1_s/broken.py", line 1, in <module>
+    raise ImportError('needs a package that is not installed')
+ImportError: needs a package that is not installed
+
+..Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/tmp20c9_yfl/broken.py", line 1, in <module>
+    raise ImportError('needs a package that is not installed')
+ImportError: needs a package that is not installed
+
+.....Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+.....Traceback (most recent call last):
+  File "/home/user/mark-jarvis/core/action_loader.py", line 332, in discover_actions
+    spec.loader.exec_module(module)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/user/mark-jarvis/actions/browser_control.py", line 36, in <module>
+    raise ImportError(
+    ...<2 lines>...
+    )
+ImportError: browser_control needs playwright, which is not installed. Run: pip install playwright  &&  playwright install chromium
+
+....................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 1038 tests in 11.615s
+
+OK (skipped=6)
+
+from: /tmp/tmpf6xcu_4e/old
+to:   /tmp/tmpf6xcu_4e/new
+note: credentials removed: gemini_api_key
+note: name: JARVIS -> Ultron
+COPIED (previous kept as api_keys.json.bak-20261106-051357) api_keys.json -> /tmp/tmpf6xcu_4e/new/config/api_keys.json, 5 entries, adapted
+COPIED (previous kept as long_term.json.bak-20261106-051357) long_term.json -> /tmp/tmpf6xcu_4e/new/memory/long_term.json, 1 entries
+done. Start Ultron and it will use this data.
+
+=== MARK upstream provider/UI self-tests ===
+Traceback (most recent call last):
+  File "/home/user/mark-jarvis/providers/engine_pipeline.py", line 725, in _speak
+    async for pcm in self._tts.speak(text, **kwargs):
+    ...<4 lines>...
+            await self._emit(Msg.audio(pcm))
+  File "/home/user/mark-jarvis/providers/_tests.py", line 461, in speak
+    raise httpx.ConnectError("All connection attempts failed")
+httpx.ConnectError: All connection attempts failed
+Traceback (most recent call last):
+  File "/tmp/pkg/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/tmp/pkg/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/tmp/pkg/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pool_request.request
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/pkg/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/tmp/pkg/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/tmp/pkg/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/pkg/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: All connection attempts failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/mark-jarvis/providers/engine_pipeline.py", line 558, in _generate
+    async for ev in self._llm.chat(self._messages(), self._tools):
+    ...<20 lines>...
+            calls.extend(ev["tool_calls"])
+  File "/home/user/mark-jarvis/providers/llm_openai.py", line 536, in chat
+    async with cl.stream("POST", f"{self.base}/chat/completions",
+               ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         headers=self._headers(), json=body) as r:
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpx/_client.py", line 1583, in stream
+    response = await self.send(
+               ^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/tmp/pkg/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/tmp/pkg/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/pkg/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pkg/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/pkg/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: All connection attempts failed
+providers self-test
+
+[1] main.py's real call shapes
+  PASS  send_realtime_input accepts types.Blob
+  PASS  Blob bytes counted
+  PASS  dict / bytes / None also accepted
+
+[2] A whole turn, run the way main.py's TaskGroup runs it
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   hear      0.00s                                  0.1s of speech  |  FakeSTT
+[Pipeline]   think     0.00s                                  first word 0.00s  |  26 chars  |  FakeLLM
+[Pipeline]   tools     0.00s                                  open_app
+[Pipeline]   speak     0.00s                                  first sound 0.00s  |  0.0s of audio  |  FakeTTS
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+  PASS  TaskGroup survived the turn
+  PASS  microphone reached the recogniser
+  PASS  the tool ran
+  PASS  both halves of the reply arrived
+  PASS  audio reached the speaker
+  PASS  the acknowledgement was SPOKEN, not just logged
+
+[3] Engine -> httpx -> HTTP -> server
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.05s                                  first word 0.04s  |  16 chars  |  qwen3:8b
+[Pipeline]   tools     0.00s                                  open_app, web_search
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.05s
+  PASS  turn completed end to end
+  PASS  fragmented, interleaved tool calls reassembled
+  PASS  both turns' text arrived
+
+[4] Vision is measured, not typed in by the user
+  PASS  a fresh model is measured without TEST being pressed
+  PASS  the answer is stored with the model it was measured on
+  PASS  a stored answer is not measured again
+  PASS  changing the model re-measures it
+  PASS  server vision=True -> detected True
+  PASS  server vision=False -> detected False
+
+[5] Tool declarations, translated and budgeted
+  PASS  wrapped as OpenAI functions
+  PASS  no upper-case types survive at any depth
+  PASS  names and order preserved
+  PASS  no budget returns the input unchanged
+  PASS  a count budget bites
+  PASS  a size budget bites
+  PASS  prompt mode lists the tools
+  PASS  an invented tool name is not a call
+
+[6] Sample rates and formats
+  PASS  16k -> 24k has the right length
+  PASS  same rate is not copied
+  PASS  a round trip preserves the signal
+  PASS  WAV in, 24k PCM out
+  PASS  an odd trailing byte does not raise
+
+[7] A failure names the part and the address
+[Pipeline] the voice failed at https://api.elevenlabs.io/v1: ConnectError: All connection attempts failed
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  6 chars  |  LiveLLM
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+  PASS  a broken voice is reported as the VOICE
+  PASS  the voice's address is named
+  PASS  a broken voice does not stop the answer
+[Pipeline] the language model failed at http://127.0.0.1:9/v1: ConnectError: All connection attempts failed
+  PASS  an unreachable model is reported as the MODEL
+  PASS  the model's address is named
+  PASS  what it says out loud names the part too
+
+[8] Addresses people actually type
+  PASS  localhost:11434  ->  http://127.0.0.1:11434/v1
+  PASS  http://localhost:11434/v1  ->  http://127.0.0.1:11434/v1
+  PASS  http://localhost:11434/v1/  ->  http://127.0.0.1:11434/v1
+  PASS  192.168.1.40:1234  ->  http://192.168.1.40:1234/v1
+  PASS  https://openrouter.ai/api/v1  ->  https://openrouter.ai/api/v1
+  PASS  https://api.openai.com  ->  https://api.openai.com/v1
+
+[9] A default install pays nothing
+  PASS  providers is never imported
+  PASS  the ladder decision costs 3 us
+
+[19] It speaks before the tool runs, and again after
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  40 chars  |  m
+[Pipeline]   tools     0.60s  #                               open_app
+[Pipeline]   speak     0.00s                                  first sound 0.00s  |  0.1s of audio  |  TTS
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.60s
+  PASS  it said something before the tool started
+  PASS  it also spoke the result afterwards
+
+[16] A repeated tool call does not run the tool again
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.00s                                  first word 0.00s  |  5 chars  |  qwen3:8b
+[Pipeline]   tools     0.00s                                  open_app
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.00s
+  PASS  the app was launched ONCE, not 1 times
+  PASS  the turn still ended
+  PASS  two identical calls share a signature
+  PASS  different arguments do not
+  PASS  key order does not make a call look new
+
+[18] A system alert is neither the user nor an interruption
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   hear      0.00s                                  1.0s of speech  |  STT
+[Pipeline]   think     0.46s                                  first word 0.46s  |  17 chars  |  m
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.46s
+[Pipeline] -- turn ----------------------------------------------------
+[Pipeline]   think     0.45s                                  first word 0.45s  |  17 chars  |  m
+[Pipeline]   --------------------------------------------------------------------
+[Pipeline]   total     0.45s
+  PASS  only recognised speech becomes 'You:'
+  PASS  the answer in progress was not cancelled
+  PASS  the injection was answered afterwards, not instead
+
+[17] What reaches the log, and what reaches the voice
+  PASS  sentences survive main.py's space-join
+  PASS  an emoji is not sent to the voice
+  PASS  several are removed cleanly
+  PASS  Japanese survives the emoji filter
+  PASS  Chinese survives the emoji filter
+  PASS  Korean survives the emoji filter
+  PASS  Russian survives the emoji filter
+  PASS  Arabic survives the emoji filter
+  PASS  Hindi survives the emoji filter
+  PASS  Greek survives the emoji filter
+  PASS  Hebrew survives the emoji filter
+  PASS  Turkish survives the emoji filter
+
+[11] A reasoning model's thinking is not spoken
+  PASS  a whole block is removed
+  PASS  text on both sides survives
+  PASS  other tag spellings too
+  PASS  a reply with no thinking is untouched
+  PASS  an unterminated block is dropped, not spoken
+  PASS  a tag split across chunks is still caught
+  PASS  character-by-character streaming
+  PASS  200 random chunk splits (200/200)
+
+[12] Local models are given a tool budget
+  PASS  a config saved before the budget existed still gets it
+  PASS  a hosted endpoint is not limited
+  PASS  an explicit choice wins
+  PASS  a machine on the home network counts as local
+  PASS  an empty or zero field means 'decide for me'
+  PASS  every local preset carries a budget
+  PASS  no cloud preset is limited
+  PASS  the budget shrinks the prompt (2,532 -> 1,632)
+
+[13] The voice follows the language spoken
+  PASS  piper installed (skipped)
+
+[14] Voices land somewhere writable
+  PASS  the voice folder can be written to (/home/user/mark-jarvis/providers/voices)
+  PASS  a read-only install falls back to a per-user folder
+
+[15] A chosen voice fetches itself
+  PASS  piper installed (skipped)
+
+[10] The settings panel remembers
+[Video] playback unavailable (libpulse.so.0: cannot open shared object file: No such file or directory) — the HUD will not show video.
+  PASS  named services are offered for background requests
+  PASS  choosing one shows its form
+  PASS  its address is filled in from the preset
+  PASS  a typed model survives a redraw
+  PASS  APPLY writes the config once
+  PASS  the mode was stored
+  PASS  all three slots were stored
+  PASS  reopening shows MY OWN SETUP
+  PASS  the local card is the selected one
+  PASS  Ollama is remembered
+  PASS  no slot reads 'not set'
+  PASS  all 10 boxes ignore the wheel unless focused
+
+========================================================
+99 passed, 0 failed
+========================================================
+
+=== 1,000 offline stress scenarios ===
+{
+  "seed": 20261104,
+  "scenarios_passed": 1000,
+  "checks": {
+    "normalization": 150,
+    "bounded_attack_rejection": 100,
+    "workspace_boundary": 50,
+    "ambiguous_failure_quarantine": 50,
+    "unreviewed_input_abstention": 50,
+    "literal_filename_preservation": 50,
+    "cross_workspace_abstention": 50,
+    "expired_review_abstention": 50,
+    "workspace_catalog_lifecycle": 100,
+    "canary_countdown_lifecycle": 100,
+    "circuit_breaker_lifecycle": 100,
+    "shadow_replay_lifecycle": 100,
+    "transaction_rollback_lifecycle": 50
+  },
+  "elapsed_seconds": 3.391,
+  "live_provider_requests": 0,
+  "scope": "Scoped repair judgment, restricted adapters and execution boundaries; not model intelligence or Windows hardware"
+}
+
+=== 15 targeted seeded mutations ===
+{
+  "baseline_passed": true,
+  "seeded_mutations": 15,
+  "detected": 15,
+  "results": [
+    {
+      "mutation": "workspace_gate",
+      "test": "test_cross_workspace_abstains",
+      "detected": true
+    },
+    {
+      "mutation": "expiry_gate",
+      "test": "test_expired_scope_abstains",
+      "detected": true
+    },
+    {
+      "mutation": "quarantine_gate",
+      "test": "test_quarantine_survives_restart",
+      "detected": true
+    },
+    {
+      "mutation": "no_change_gate",
+      "test": "test_unchanged_contract_abstains",
+      "detected": true
+    },
+    {
+      "mutation": "unreviewed_input_gate",
+      "test": "test_unreviewed_input_never_runs_adapter",
+      "detected": true
+    },
+    {
+      "mutation": "schema_gate",
+      "test": "test_schema_invalid_expected_arguments_rejected",
+      "detected": true
+    },
+    {
+      "mutation": "literal_path_gate",
+      "test": "test_existing_literal_filename_is_not_redirected",
+      "detected": true
+    },
+    {
+      "mutation": "version_rollback_gate",
+      "test": "test_old_failure_cannot_retire_newer_version",
+      "detected": true
+    },
+    {
+      "mutation": "index_error_boundary",
+      "test": "test_runtime_index_error_is_normalized",
+      "detected": true
+    },
+    {
+      "mutation": "contract_freeze_gate",
+      "test": "test_changed_contracts_require_retesting",
+      "detected": true
+    },
+    {
+      "mutation": "circuit_breaker_gate",
+      "test": "test_autonomy_upgrades.AutonomyUpgradeTests.test_circuit_breaker_blocks_repair_loop",
+      "detected": true
+    },
+    {
+      "mutation": "fingerprint_memory_gate",
+      "test": "test_autonomy_upgrades.AutonomyUpgradeTests.test_fingerprint_memory_reuses_validated_adapter",
+      "detected": true
+    },
+    {
+      "mutation": "state_drift_gate",
+      "test": "test_autonomy_upgrades.AutonomyUpgradeTests.test_state_drift_blocks_clobbering_write",
+      "detected": true
+    },
+    {
+      "mutation": "repair_budget_gate",
+      "test": "test_autonomy_upgrades.AutonomyUpgradeTests.test_budget_governor_enforces_repair_limit",
+      "detected": true
+    },
+    {
+      "mutation": "transaction_lifo_gate",
+      "test": "test_autonomy_upgrades.AutonomyUpgradeTests.test_transaction_batch_rolls_back_multiple_files",
+      "detected": true
+    }
+  ],
+  "live_provider_requests": 0,
+  "scope": "Fifteen deliberately seeded gate defects; not comprehensive mutation coverage"
+}
+
+All migration checks passed. This suite exercises the app in-process on this machine: provider transport against a local fake server, memory, actions, gates and the UI tree. It does NOT prove native Windows behaviour, a real microphone or speaker, screen capture, or a real browser. Run scripts/verify_all.py on the target machine for those — it reports SKIP where a question does not apply instead of guessing.

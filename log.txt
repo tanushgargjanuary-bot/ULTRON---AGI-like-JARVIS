@@ -1,0 +1,1876 @@
+===============================================================================
+MARK (CUSTOM JARVIS) — DECISION & CHANGE LOG
+Append-only. Newest entries at the bottom of each dated section.
+Format:  [YYYY-MM-DD] [AREA] decision or change — evidence / where it lives
+Status words: DECIDED (user agreed) · DONE (implemented+verified) · REJECTED ·
+              OPEN (unresolved) · DEFERRED (agreed, later) · SUPERSEDED
+===============================================================================
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 0 — original application (historical, SUPERSEDED)
+-------------------------------------------------------------------------------
+[DONE]   CustomTkinter JARVIS built from earlier work: 270 tests / 664 assertions,
+         1000 stress scenarios, 15 mutations. Windows launcher fixed for PyAudio and
+         Python 3.14 refusal (8 mocked tests). ZIP 274,398 bytes, 92 files.
+[NATIVE] Never executed on real Windows hardware.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 1 — migration to MARK LVI  (DECIDED)
+-------------------------------------------------------------------------------
+[DECIDED] Rebase the project on FatihMakes/Mark-LVI instead of continuing the
+          CustomTkinter app. Reason: keep a real HUD, avatar, voice stack, provider
+          system, plugin/action ecosystem that already exists.
+[DECIDED] Pin upstream commit 0101e540ac4b16cc3a862d9979e08fefcc1c7a01.
+[DONE]    Cloned and inspected upstream; ported the deterministic evidence/repair
+          engine into a namespaced package `custom_jarvis/` so it can never shadow
+          MARK's own `core/`.
+[DONE]    19 namespaced modules + service/settings; 24 workspace skills; knowledge,
+          checkpoint, repair lifecycle, budgets; gate/plugin/main wrapper.
+[DONE]    Ported test suites: 162 tests / 312 assertions retained — none weakened.
+[DONE]    24 integration tests; original work preserved at first delivery.
+[DECIDED] Preserve upstream look/identity/attribution and the CC BY-NC 4.0 license.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 2 — consent-first insights & RAM suppression  (DONE)
+-------------------------------------------------------------------------------
+[DECIDED] "Only remember what I approve." No silent persistence of inferred
+          personality or preferences.
+[DONE]    core/insights.py: enum-only preference detection (response length, tone,
+          planning style). Candidates + evidence live in RAM, 1 h TTL. Sensitive
+          keyword skip, digest dedup. Atomic write of approved enums only.
+[DONE]    Approved store: %LOCALAPPDATA%\CustomMarkJarvis\approved-insights.json
+          (XDG fallback). Contains no transcript text.
+[DONE]    Memory-affecting operations still require a real HUD confirmation;
+          review_insight / reject_insight accept an optional id or pick the next
+          candidate.
+[DECIDED] Manual memory only — automatic session-summary saving disabled
+          (_save_session_summary clears the RAM log only).
+[DECIDED] RAM warnings OFF (user reaffirmed several times). Meter and on-request
+          status answers stay. Other alerts (CPU/temp/disk) stay.
+[DONE]    actions/system_monitor.py: notify_ram = False. Fixed _can_alert so the
+          first non-RAM alert can fire before 300 s uptime.
+[DONE]    actions/proactive.py + core/prompt.txt: no unsolicited RAM/cleanup advice;
+          at most one useful next-step; no invented preparations.
+[DONE]    Fifth HUD Controls button "INSIGHTS / NEXT STEPS" with view / review /
+          dismiss / forget.
+[DONE]    Verification: 101 files parsed, 209 tests, 99 MARK self-checks, 1000
+          stress, 15/15 mutations, Ruff clean. Recorded in verification-results.txt.
+[DONE]    Delivered mark-custom-jarvis.zip (116 files, 815,937 bytes,
+          SHA256 004dbaf5712b3b1ff6f8796b19c06cdf135737f4f550e5f94e0a0b2796427901).
+[OPEN]   Real Windows run, microphone/audio, live providers, accessibility of the
+          new controls — all still unverified.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 3 — architecture & evolution design  (DISCUSSION ONLY)
+-------------------------------------------------------------------------------
+[DECIDED] Two human confirmations for any self-improvement: (1) approve the
+          proposed change before development/testing, (2) approve the tested
+          artifact before activation.
+[DECIDED] One visible installation. Internal staging/versioning only; no second
+          product the user has to manage.
+[DECIDED] Bounded rollback of code and data migrations; reversible steps preferred
+          over destructive in-place edits.
+[DECIDED] Evolution is high importance; conversation stays usable; separate
+          Evolution pane on the left, conversation on the right.
+[REJECTED] Fixed daily "evolution budget"/quota. Use adaptive allocation instead,
+          with runaway protection rather than a hard everyday allowance.
+[REJECTED] Pure rewrite in Rust. Keep Python/Qt host + native inference; use Rust
+          only for a measured bottleneck.
+[DECIDED] UI: larger readable text, adjustable scaling, flexible saved panel
+          widths, richer avatar. Original MARK identity retained.
+[DECIDED] Humanistic decision principles + metacognition, but only user-approved
+          ones are durable. No AGI claims.
+[DECIDED] Background local/cloud model for evolution proposals, plus independent
+          deterministic evaluation (tests, mutation gates) — the proposer must not
+          grade its own work.
+[DECIDED] GitHub capability discovery: search by capability, not the JARVIS name;
+          relevance scoring (>=70 deep review, 40–69 manual queue, <40 skip);
+          license/security review; never auto-execute or auto-integrate.
+[DEFERRED] Vision: last, no local vision model bundled, free options welcome.
+
+--- Phase 3b — security/performance rethink (user asked for a critical pass) ---
+[DECIDED] A staging directory is NOT a sandbox. Generated code must run with
+          restricted filesystem, no production credentials, no personal memory DB,
+          and constrained network.
+[DECIDED] Activation approval must be bound to the exact patch hash + dependency
+          set + test evidence + requested permissions. Any later edit invalidates
+          the approval.
+[DECIDED] A small separately-protected supervisor owns approval validation,
+          activation, migration and rollback — enforced by real permissions, not
+          prompt text. The evolving agent must not be able to edit it.
+[DECIDED] Rollback cannot undo external effects (sent message, purchase). Mutating
+          actions on real accounts stay out of unattended testing.
+[DECIDED] Memory provenance is explicit: user-stated / user-approved inference /
+          external claim / temporary hypothesis. Retrieved content and repo text are
+          data, never instructions that grant permission.
+[DECIDED] Adaptive compute, finite inspectable jobs: completion criteria,
+          checkpointing, cancellation, and a stated reason to extend scope.
+[DECIDED] Evolution and conversation coordinate shared provider quotas; separate
+          keys do not imply separate limits.
+[DECIDED] Cloud-first for heavyweight evolution on this laptop; local inference
+          optional rather than a mandatory large download.
+[DECIDED] Evaluate updates on outcome quality and responsiveness (audio
+          interruption, GUI stalls, latency, memory growth), not test count alone.
+[DECIDED] Data-sharing policy per provider: public/synthetic content may use free
+          tiers; private code/personal context only with explicit permission; no
+          silent provider fallback that changes privacy terms or adds cost.
+
+--- Phase 3c — model & provider research (verified against official docs) ---
+[DECIDED] Gemma 4 31B dense and 26B-A4B are realistic candidates for the desired
+          27–30B class. Q4 load memory ≈ 17.5 GB and 14.4 GB incl. 20% overhead —
+          not laptop-friendly at 16 GB, so hosted inference is preferred.
+[DECIDED] Google's API pricing lists the Gemma 4 family as free (input/output/
+          cache), and free-tier content is used to improve products. Exact 31B/26B
+          endpoint IDs and account quotas still unverified.
+[DECIDED] OpenRouter exposes google/gemma-4-31b-it:free (262K ctx, tool calling).
+          Documented free-model limits: 20 RPM,   50 requests/day below the credit
+          threshold; 1000/day at >= ~10 credits purchased.
+[DECIDED] Groq lists qwen/qwen3.8-27b (Preview): 131,072 ctx, 16,384 max output,
+          tools, JSON schema, reasoning, vision; $0.80/M in, $4/M out. Preview may
+          be withdrawn; free entitlement for this account NOT confirmed.
+[REJECTED] Treating free Colab as an always-on hosting platform for MARK's backend.
+[REJECTED] Rotating keys/accounts to multiply free quota.
+[DECIDED] "Any API" = standard adapter interface + OpenAI-compatible endpoints;
+          other shapes need adapters; compatibility is never claimed untested.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 4 — delegation, desktop automation, autonomy, providers
+-------------------------------------------------------------------------------
+[DECIDED] Sub-agents are a native MARK capability with explicit roles
+          (researcher / planner / implementer / tester / reviewer), scoped context,
+          no self-granted permissions, structured evidence, cancellable, visible in
+          the Evolution pane. Delegation is selective, never per-command.
+[DECIDED] Easy sub-agent roles (classification, diff summary, first-pass critique,
+          tool-arg shaping) run on a LOCAL model to conserve API quota. Deterministic
+          verification of anything a local model emits. Local model may never approve
+          or activate.
+[DECIDED] Background-first app control: "write these reminders" must populate the app
+          without stealing the screen; app stays available in the taskbar.
+           Hierarchy: app/document API -> UI Automation -> off-screen Win32 desktop
+          session -> announced foreground handoff. Never type into an unverified
+          window; never click stale coordinates; abort on target ambiguity.
+[DECIDED] Specialised native helper tools ("desktop operator") are the approved shape
+          for this, exposed to Python over local IPC behind capability tokens — not
+          more pyautogui inside actions/. Some apps genuinely cannot be driven in the
+          background; MARK must report that instead of faking success.
+[DECIDED] Semantic app resolution: interpret "browser" as a capability, consult the
+          registered default handler / installed-app metadata / already-running
+          windows, verify the launched identity, reuse an existing session when
+          sensible. No hardcoded browser name list. Ask one short question when truly
+          ambiguous.
+[DECIDED] Over-confirmation is a defect. Replace the 4-name READ_ONLY allowlist with
+          risk-tiered consent: user-initiated reversible actions execute immediately
+          (undo-tracked); destructive/irreversible/external actions confirm; camera
+          and screen capture need explicit consent, visible indicator and stop control.
+          Task-level session scopes avoid repeat prompts.
+[DECIDED] The requested instruction itself can serve as consent for the requested act
+          (e.g. "open the camera"); an unrelated task may not.
+[DECIDED] Speed comes from direct execution + discovery caching + short task context +
+          persistent connections + parallel independent reads, not from removing
+          safeguards. Targets must be measured on the real machine.
+[DECIDED] Multi-provider setup at first launch (optional credentials, not mandatory),
+          Windows-protected secret storage (not plaintext config, not prompts),
+          model discovery + capability validation, and voice switching of provider and
+          model for conversation / evolution / critic separately.
+[DECIDED] Fallback ladder ends at a local model, and a capability downgrade must be
+          visible (queue or pause rather than silently emitting a weaker repair).
+[SUPERSEDED] Earlier claim that MARK is Google-AI-Studio-only. Upstream already ships
+          an OpenAI-compatible provider layer + engine UI (providers/, "ENGINE &
+          PROVIDERS"). The real gaps are voice switching, per-purpose routing, quota
+          grouping and secret storage.
+
+--- Phase 4b — code investigation findings (facts, not plans) ---
+[FOUND]  actions/open_app.py::_desktop_search() types the raw app name into the Start
+          menu and presses Enter. That is why "open browser" launched a folder named
+          browser. No post-launch identity verification exists on that path.
+[FOUND]  core/custom_gate.py READ_ONLY = {recall_memory, system_status, web_search,
+          weather_report}. Everything else, including open_app and camera, goes
+          through confirm.request() -> HUD banner. Source of "it asks for everything".
+[FOUND]  core/prompt.txt line 195 (added by this custom layer) tells the model that
+          mutating and unknown tools need confirmation "even if reversible", which
+          doubles the over-asking behaviour.
+[FOUND]  core/confirm.py's own docstring already states the correct policy: confirm
+          only irreversible things, use core/undo.py for the rest. The implementation
+          has drifted from that intent.
+[FOUND]  actions/computer_control.py uses pyautogui (foreground-only global input);
+          actions/browser_control.py uses Playwright. Neither supports the requested
+          background taskbar behaviour.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 5 — workspace hygiene & handoff documentation
+-------------------------------------------------------------------------------
+[DONE]    Deleted superseded artifacts: /home/user/jarvis-repaired/ (old
+          CustomTkinter project) and /home/user/jarvis-100x-upgraded.zip.
+          The old application is no longer retained as a fallback.
+[KEPT]    /home/user/mark-jarvis/            active source
+[KEPT]    /home/user/mark-custom-jarvis.zip  single delivered artifact (+docs/)
+[KEPT]    /home/user/uploads/                user's own attachments (older code
+          copies + screenshots). Flagged to the user; delete on request.
+[DECIDED] Standing rule: this workspace keeps only the current source, the current
+          ZIP, current verification output and documentation. No old versions,
+          scratch files or caches accumulate.
+[DONE]    Added README.md (this project, in depth), HANDOFF.md (transfer brief for
+          another AI) and log.txt (this file) at the workspace root and inside the
+          ZIP under docs/.
+[OPEN]   Windows acceptance run, live provider checks, desktop-operator feasibility
+          test on the actual laptop.
+
+===============================================================================
+END OF LOG
+===============================================================================
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 6 — avatar expression, backlog traceability, daily digest
+-------------------------------------------------------------------------------
+[FOUND]  core/avatar.py already rigs more than lipsync: brow lift, gaze saccades +
+          glance(), state bias (thinking/asleep), blink, lid openness, lip spread.
+          Missing piece is a semantic expression channel, not a new renderer.
+[DECIDED] Avatar expressions: add an Expression parameter vector (smile, brow
+          raise, brow furrow, squint, lid widen, lip press, asymmetry) blended in
+          step() before paint(), driven by (a) app state, (b) an optional reply tag
+          from the model, (c) TTS prosody. Frame-rate independent easing preserved;
+          content guard suppresses positive expressions on errors/failures; subtle
+          amplitudes only. Tests: exact target vectors, bounded blending, neutral
+          after speech, none while slept/MUTED.
+[DECIDED] Avatar work is cosmetic and isolated -> scheduled with P8, not P1.
+[DECIDED] Daily "ready to apply" digest (user: fun, non-priority): first launch of
+          the day shows at most 2-3 already-tested proposals with Approve / Later /
+          Dismiss. NOTHING activates from the digest - approval 2 remains required
+          per exact artifact. Silent when the queue is empty. Local model generates
+          the summary to save quota and may not add claims absent from the evidence
+          bundle. Global off switch + quiet hours.
+[FOUND]  Revised code paths confirmed: ui.py calls avatar.step(dt, amp, speaking,
+          muted, state, v_*) once per tick; state string already drives gaze/brow/
+          lid, so the expression channel can extend the same call.
+[DONE]   HANDOFF.md now carries a 24-row requirement traceability table (every
+          request so far -> phase -> status) so nothing earlier is silently dropped.
+[DONE]   README section 12 extended with items 13 (expressive avatar) and 14
+          (daily digest, explicitly not an autonomy feature).
+[KEPT]   uploads/image-13.png (current avatar screenshot from the user).
+[OPEN]   Which apps the desktop operator must support first - still unanswered and
+          it shapes P3 more than the model choice does.
+[OPEN]   No implementation authorised. Baseline unchanged: 209 tests, 15/15
+          mutations, ZIP rebuilt only to refresh docs/.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 7 — FIRST IMPLEMENTATION PASS  (user authorised: "start working")
+-------------------------------------------------------------------------------
+[SCOPE]  Three workstreams, each in its own module with its own tests, because
+          they do not share files: consent policy, app resolution, expressions.
+          Not started, still pending: P4 provider routing, P5 sub-agents, P3
+          desktop operator, P6 reviewed self-improvement, P7 GitHub discovery,
+          P8 Evolution pane / adjustable UI, P9 daily digest.
+[NOTE]   "Boot up multiple agents": this environment has no sub-agent spawner.
+          The work was split into isolated modules instead and serialised only on
+          the shared files (ui.py, actions/open_app.py).
+
+[DONE]   core/policy.py — risk tiers (observe / routine / guarded / sensor).
+          Replaces the 4-name allowlist that made opening a browser ask for
+          permission. Unknown tools are guarded; plugins cannot exempt
+          themselves. grant(scope, seconds) gives bounded task consent for
+          sensors. set_workspace_roots() makes writes inside the approved folder
+          routine while leaving every other write guarded.
+[DONE]   core/custom_gate.py — consults the policy; routine calls run straight
+          through, guarded/sensor keep the original frozen-args HUD path, the
+          pending-banner rule and the 64 KiB argument ceiling.
+[DONE]   core/prompt.txt — replaced "confirm even if reversible" with the tiered
+          rule; CRLF preserved.
+[DONE]   core/app_resolver.py — category words resolve via the OS handler
+          (http -> default browser), then the installed-app index matched on
+          words, then reuse of running apps; directories are never applications;
+          ambiguous means ask + launch nothing; unknown means report honestly.
+          No browser or vendor name is stored anywhere.
+[DONE]   actions/open_app.py — consumes the resolver, launches the resolved
+          target, disables the Start-menu typing path for category words, and
+          keeps the existing process verification.
+[DONE]   core/expression.py — 7-parameter expression vector (smile, brow raise,
+          brow furrow, squint, lid widen, lip press, asymmetry), tag/state/
+          prosody drivers, failure guard (never smile through an error),
+          deliberate amplitude ceiling.
+[DONE]   core/avatar.py — expression blended into the existing brow/lid/lip
+          channels; squint narrows the eye opening; smile lifts the mouth
+          corners by horizontal weight; one brow can ride higher (wryness).
+          Frame-rate independence preserved.
+[DONE]   ui.py — HudCanvas.set_expression(tag, spoken, hold) plus a state-derived
+          resting face; safe to call from a tool thread (assigns only).
+[DONE]   tests: test_policy.py (27), test_app_resolver.py (19),
+          test_expression.py (32) = 78 new offline tests. Two real bugs found and
+          fixed during the pass: non-portable Path().stem on Windows paths, and
+          a missing routine entry for volume/brightness style settings.
+[VERIFY] scripts/verify.py: 107 files parsed, 287 tests passed, 99 MARK
+          self-checks 0 failed, 1,000 stress, 15/15 mutations, Ruff clean on the
+          new/changed modules. No existing assertion weakened.
+[NOT]    Verified on Windows. No launcher, registry path, Start-menu index or
+          real HUD frame has been exercised on the target machine.
+[OPEN]   Which apps the desktop operator must support first (blocks P3).
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 8 — provider routing mechanism + workspace consent wiring
+-------------------------------------------------------------------------------
+[SCOPE]  Only fully decided work; nothing that needs the user's pending choices
+          (which apps for the desktop operator, default provider/model routes,
+          isolation flavour) was touched.
+[DONE]   core/routing.py — routing table with three purposes (conversation,
+          evolution/repair, critic). Quota is tracked per QUOTA GROUP, so two
+          keys on one account are one budget; a 429 blocks the group, not the key
+          that hit it. Fallback ladder refuses to take a paid or data-sharing
+          provider silently; a paid PRIMARY is fine because it was chosen.
+          Ladder ends at the local model. Voice/typed switch parser handles
+          "use Groq", "switch the critic to Groq", "use Groq with qwen3.8-27b",
+          "go local for now" — only configured names, so an unconfigured name is
+          a question for the model, not a silent switch. No provider or model
+          name is hardcoded; no socket, no key handling.
+[DONE]   custom_jarvis/service.py — _sync_workspace_policy() called on workspace
+          restore and on selection, so core/policy.py knows the approved folder.
+          Writes inside it are routine; everything outside still asks.
+[DONE]   tests/test_routing.py — 35 tests (quota exhaustion, day rollover,
+          Retry-After, paid/data-sharing refusals, local tail, parser, apply).
+[VERIFY] 109 files parsed, 322 tests passed, 99 MARK self-checks 0 failed,
+          1,000 stress, 15/15 mutations, Ruff clean on new and changed modules.
+[NOT]    Wired to the engine. providers/engine_pipeline.py, core/llm_client.py
+          and the Providers panel still use MARK's own configuration, so today
+          the routing table is a tested mechanism, not live behaviour. Said
+          plainly in CUSTOM_JARVIS.md and HANDOFF.md section 6d.
+[NOTE]    Sandbox packages do not persist between sessions; PyQt6/numpy were
+          reinstalled to run the suite. No workspace file depends on them.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 9 — USER DECISIONS (answers to the eleven open questions)
+-------------------------------------------------------------------------------
+[DECIDED 1] Desktop operator: no fixed app list. Learn the most-used and most
+            frequently opened applications and let that drive what gets a
+            background automation path first. -> core/app_usage.py (planned)
+[DECIDED 2] Isolation for generated-code testing: user has no preference;
+            delegate to engineering. CHOSEN: tiered isolation, fastest tier by
+            default — (a) AppContainer/low-integrity token + Job Object with no
+            network, (b) Windows Sandbox for unattended/long test runs where it
+            exists, (c) Hyper-V VM only for deliberately risky experiments.
+            No VM on the normal path; nothing slow by default.
+[DECIDED 3] No named-model policy. Route by CAPABILITY TIER (local / cheap /
+            strong) plus capability flags (tools, vision, long context), chosen
+            per task difficulty. Priority is flexibility: MARK should make its
+            own routing and change decisions under supervision rather than the
+            user naming models. -> extend core/routing.py with tiers.
+[DECIDED 4] Local model budget accepted: one 1.5-3B quantized model, ~2 GB disk,
+            ~3 GB RAM ceiling, used only for cheap sub-agent roles.
+[CONFLICT 5] User wants: "nothing applied without approval unless a predictor
+            says >70% chance the user would allow it". This contradicts the
+            earlier hard rule (two approvals, nothing activates unattended).
+            ASSISTANT POSITION: predictions may set ORDERING and DEFAULTS, never
+            PERMISSIONS, and never for protected classes (policy, test roots,
+            self-modification, credentials, money, messages, deletions).
+            PROPOSED: calibrated predictor, threshold expressed as a lower
+            confidence bound (>=0.70 of an 80% interval), active only for
+            reversible non-protected actions, only after it proves calibration on
+            held-out decisions, always with an undo receipt in the HUD. The
+            predictor must be unable to vote on its own threshold.
+            STATUS: awaiting user sign-off on that modification.
+[DECIDED 6] Sensor consent is risk-based, not blanket-ask. A spoken instruction
+            alone does not authorise; the seriousness of the task decides. Low
+            risk => run with a visible indicator and a stop control. -> policy
+            gains a risk score and a "is the sensor the subject of the request"
+            test.
+[DECIDED 7] Sub-agent shape accepted: five roles, max 2 concurrent on this
+            laptop, local model limited to summarising and first-pass critique.
+[DECIDED 8] UI accepted: draggable and saved pane widths, 100-200% text scale,
+            default 125%, Evolution pane left.
+[DECIDED 9] Daily digest appears at launch when the user comes online after
+            09:00. The time is a PREFERENCE, not a constant: MARK may change it
+            itself (low risk) and must say what it changed.
+[DECIDED 11] Vision is not deferred to the end any more: keep the best available
+            capability, and Gemini's current vision work is considered good.
+            Plan: route vision by capability flag (no model names), keep a small
+            local option for offline/privacy use, and use the accessibility tree
+            instead of vision wherever it is cheaper (UI automation).
+[QUESTION] Screen sharing without disk cost: design agreed in principle —
+            in-memory frames only, no recording by default, on-demand and
+            change-triggered capture, small RAM ring buffer, explicit save only.
+            Sensitive-window blanking by user-editable rule list.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 10 — RENAME TO ULTRON + SPOKEN REGISTER
+-------------------------------------------------------------------------------
+[CORRECTION] GitHub repository search needs NO token. The user was right: the
+          public search API answers unauthenticated. My earlier note was about
+          high-volume listing (60 core requests/hour); a token would only raise
+          that ceiling. The capability scanner needs none to start.
+[DECIDED/ DONE] Project and assistant renamed to ULTRON.
+          - core/identity.py is the single source of truth: NAME = "Ultron",
+            ADDRESS = "sir", ALIASES = Ultron / Jarvis / J.A.R.V.I.S / Mark.
+            Old names are ANSWERED, not corrected.
+          - memory/config_manager.py, main.py, ui.py defaults now read the
+            identity module instead of a hardcoded "JARVIS".
+          - Log prefixes "JARVIS:" -> "ULTRON:" in the action modules; HUD
+            dialogs and the microphone/speaker labels use the configured name.
+          - run.bat title: "Ultron - built on MARK LVI".
+          - CUSTOM_JARVIS.md -> CUSTOM_ULTRON.md; readme.md retitled; upstream
+            attribution and CC BY-NC 4.0 retained deliberately.
+[DONE]    core/prompt.txt: [SELF] now states the project name and that Jarvis /
+          Mark are also this assistant. New [MANNER] section: finished sentences
+          only, no bullets/markdown/emoji in speech, no preamble ("Certainly",
+          "Great question"), address as "sir" sparingly, report outcomes not tool
+          calls, flat register for failure and success alike, dry understatement
+          only, hedge about limits never about being a program.
+          "CUSTOM JARVIS SAFETY ADDENDUM" -> "CUSTOM ULTRON SAFETY ADDENDUM".
+[DONE]    core/voice_style.py — the reason it "still outputs like an LLM": a
+          model writes for a page. This strips markdown/headings/code ticks,
+          flattens bullet and numbered lists into sentences, drops stacked
+          openers, keeps numbers, paths and names untouched, and never deletes a
+          complete short answer ("Sure." stays "Sure.").
+[DONE]    providers/engine_pipeline.py `_speakable` now runs that pass, so the
+          pipeline engine's TTS never reads a document aloud.
+[NOT]     Gemini Live generates audio natively and bypasses _speakable. For that
+          engine the [MANNER] prompt is the only control. Stated in the module
+          docstring and below.
+[KEPT]    Environment variables named JARVIS_VISION_* are unchanged so existing
+          custom_jarvis configuration keeps working; renaming them would break
+          saved settings for no user-visible gain.
+[VERIFY]  112 files parsed, 345 tests passed (+23 for identity/voice),
+          99 MARK self-checks, 1,000 stress, 15/15 mutations, Ruff clean.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 11 — CARRYING OLD DATA INTO ULTRON
+-------------------------------------------------------------------------------
+[FOUND]  The user is running the PRE-RENAME build on Windows (screenshot:
+          title "JARVIS — MARK LVI", assistant name JARVIS, "A Friendly
+          Assistant", log spam "SYS: JARVIS online — sleeping. Say 'Hey Jarvis'
+          to wake me." and "NET: Connection failed — retrying in 6s. (a VPN may
+          be required)"). So the HUD does run on the target machine; the network
+          path is the current failure, not the UI.
+[MAPPED] Where a previous install keeps its state:
+          <install>/config/api_keys.json   gemini_api_key, assistant_name,
+                                           user_name, voice_name, ui_color,
+                                           wake_word_enabled, morning_brief_enabled,
+                                           providers (per-provider settings + keys),
+                                           plugins_enabled, plugin_config, turn_tuning
+          <install>/memory/long_term.json  long-term memory
+          %LOCALAPPDATA%\CustomMarkJarvis\ knowledge.sqlite3, workspace.json,
+                                           approved-insights.json (+ a previews DB)
+          NOT state: screenshots/, backups/, repairs/, the browser profile.
+[DONE]   scripts/migrate_legacy.py — copies that state into a new Ultron folder.
+          Dry run available; every overwritten file is backed up beside itself;
+          writes are atomic; the source install is only read. Credential-looking
+          fields (any key/token/secret/password name, at any depth) are blanked by
+          default and reported BY NAME ONLY — never by value. The assistant name is
+          migrated JARVIS -> Ultron unless --keep-name is given. Refuses to run on
+          the same folder, on a folder that is not an install, or on invalid JSON.
+[DONE]   tests/test_migrate_legacy.py — 17 tests: memory and settings carried,
+          name renamed or kept, provider keys blanked while non-secret provider
+          settings survive, --include-keys works, no secret value ever printed,
+          dry run writes nothing, source untouched, previous file backed up,
+          broken JSON stops, screenshots/backups left behind.
+[VERIFY] 114 files parsed, 362 tests passed, 99 MARK self-checks, 1,000 stress,
+          15/15 mutations, Ruff clean.
+[OPEN]   The user's network failure is unrelated to the rename and predates it:
+          "Connection failed" is the provider link, not the app. Diagnose next if
+          wanted (region reachability, proxy/VPN, API key validity).
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 12 — WHERE CONVERSATION DATA ACTUALLY LIVES
+-------------------------------------------------------------------------------
+[USER]   Attached twenty actions/*.py from the install, observing correctly that
+          none of them is memory and that they are not the whole app.
+[FACT]   Those files are code — the same twenty modules that ship in ultron.zip.
+          No action module stores a word the user said. Nothing in actions/,
+          core/, providers/, plugins/ or ui.py holds conversation data.
+[MAPPED] Every place this application writes USER data, from a grep of the build:
+          <install>/config/api_keys.json    settings + provider config (secrets here)
+          <install>/memory/long_term.json   facts: identity, preferences, projects,
+                                            relationships, wishes, notes
+          %LOCALAPPDATA%\CustomMarkJarvis\  knowledge.sqlite3, workspace.json,
+                                            approved-insights.json
+          nothing else. screenshots/backups/repairs/ are caches and history.
+[IMPORTANT] THIS BUILD STORES NO TRANSCRIPT.
+          main.py::_save_session_summary was deliberately changed to clear the
+          in-RAM session log instead of writing it (manual-memory policy, phase 2).
+          memory_manager.save_session_summary still exists and would append 1-2
+          sentence summaries to long_term.json['sessions'], but nothing calls it
+          in this build. So a user who only ever ran this build has no conversation
+          history to migrate — not a missing file, a decision.
+          Upstream MARK (and any earlier build) DID write those summaries, so an
+          old install may still contain a 'sessions' list worth carrying over.
+[DONE]   scripts/inventory_data.py — reports what data exists in an install
+          without printing any value: file sizes, JSON keys and per-key record
+          counts, sqlite table row counts (opened mode=ro), credential FIELDS by
+          name only, and a plain verdict on whether conversations were stored.
+          --json for a bug report. Read-only.
+[DONE]   tests/test_inventory_data.py — 10 tests, including: a stored memory and
+          a secret must never appear in the printed output.
+[VERIFY] 116 files parsed, 372 tests passed, 99 MARK self-checks, 1,000 stress,
+          15/15 mutations, Ruff clean.
+[OPEN]   Decision for the user: should Ultron START keeping an opt-in local
+          conversation archive (with retention and a delete command), or stay
+          manual-memory-only? Not implemented either way.
+
+-------------------------------------------------------------------------------
+2026-11-05  PHASE 13 — INSTALL COLLECTOR FOR D:\Downloads\mark-custom-jarvis
+-------------------------------------------------------------------------------
+[USER]   Wants a terminal script that finds NEW things in the old install folder
+          and turns them into data that can be handed over.
+[DONE]   scripts/collect_install.py + collect-data.bat (double-click launcher).
+          Defaults to D:\Downloads\mark-custom-jarvis so it can be run with no
+          arguments.
+          - classifies every file: code / doc / cache / config / data / unknown.
+            Unknown is kept as a first-class result because an unrecognised file
+            IS the new stuff worth looking at.
+          - fingerprints each file (sha256, or size+mtime above 8 MB) and stores a
+            snapshot, so a second run reports NEW / CHANGED / GONE instead of
+            repeating the same list.
+          - --watch polls (default 5s) and prints files as they appear, for when
+            the app is running and writing.
+          - --bundle writes a ZIP of DATA ONLY plus MANIFEST.json and REPORT.txt;
+            credential values are blanked unless --include-secrets; oversized
+            files are skipped, not truncated.
+          - never uploads, never deletes, never follows a symlink out of the
+            scanned folder, never prints a memory value or a key value.
+[DONE]   tests/test_collect_install.py — 20 tests: classification of every kind,
+          cache/virtualenv exclusion, own state file ignored, fingerprints change
+          with content, add/change/remove detection, bundle holds data and not
+          code, secrets blanked by default, --include-secrets honoured, report
+          states that no transcript is stored, oversized skipped, CLI codes.
+[FOUND]  Environment finding worth keeping: PyQt6 6.12.0 (Qt 6.12.0) SEGFAULTS
+          when constructing QAudioOutput on a machine with no audio backend, in
+          this project's own HUD. 6.8.2 constructs it cleanly. requirements.txt
+          now pins PyQt6>=6.6,<6.12 with the measurement written beside it. A
+          launch crash is the worst failure mode available, so the ceiling stays
+          below the version that does it until re-tested on Windows.
+[NOTE]   Sandbox Qt was pinned to 6.8.2 to run the suite; the pin in
+          requirements.txt is the durable half of that finding.
+[VERIFY] 118 files parsed, 392 tests passed, 99 MARK self-checks 0 failed,
+          1,000 stress, 15/15 mutations.
+
+================================================================================
+PHASE 14 — PowerShell entry points (user works in PowerShell, not cmd)
+================================================================================
+[ASKED]  User: "I will be using powershell." Every launcher so far was a .bat.
+         Rather than telling them to type `cmd /c` or to open a cmd window, the
+         launchers exist a second time in PowerShell.
+[ADDED]  run.ps1 — same logic as run.bat: reuse .venv if present, otherwise create
+         it from Python 3.11-3.13, run scripts\bootstrap.py, then main.py. Refuses
+         3.14. Never upgrades an existing .venv: a working install outranks a
+         current one.
+[ADDED]  collect-data.ps1 — wraps scripts\collect_install.py.
+[DECISION] No param() block in collect-data.ps1. Flags pass through verbatim, so
+         `.\collect-data.ps1 --bundle data.zip` reaches the collector unchanged.
+         A [CmdletBinding()] wrapper would make PowerShell bind `--bundle` as a
+         parameter and fail; renaming the flags to -Bundle would fork the
+         documented interface in two. Verbatim is the smaller lie.
+[DECISION] Python discovery: .venv\Scripts\python.exe first (the interpreter the app
+         uses), else the first of py -3.12/-3.13/-3.11/-3/python/python3 reporting
+         3.8+. The collector is stdlib-only so it runs on a bare machine BEFORE
+         .venv exists — that is the point of the tool.
+[ADDED]  Exit codes survive the wrapper: 0 ok, 2 not a folder, 3 no Python or the
+         collector script missing. A non-zero exit holds the window open when run
+         by right-click > Run with PowerShell; success never waits for a keypress.
+[DOCS]   CUSTOM_ULTRON.md gains "Using PowerShell": command table (run, scan, scan
+         elsewhere, bundle, bundle with secrets, watch, json, inventory, migrate,
+         verify), plus the three traps that look like a broken app:
+         (1) execution policy — Set-ExecutionPolicy -Scope Process Bypass, or
+             powershell -ExecutionPolicy Bypass -File;
+         (2) mark of the web after extraction — Get-ChildItem -Recurse | Unblock-File;
+         (3) redirection encoding — PS 5.1 writes UTF-16LE, so use
+             `| Set-Content -Encoding utf8` for --json.
+[FIXED]  scripts/collect_install.py: the bundle summary printed one collapsed line,
+         "N skipped (too large or unreadable)". A bundle that omits a file is worse
+         than no bundle, because the manifest is then trusted to be complete. It now
+         names each omitted file and the reason.
+[ADDED]  tests/test_launchers.py — 11 tests, two layers.
+         Static (always): both files exist, CRLF, pure ASCII (PS 5.1 reads BOM-less
+         files as the system codepage, so a typographic dash in a comment can be a
+         parse error), names a script that exists, no install/import commands, and
+         documents the execution-policy trap.
+         Live (only where pwsh exists, skipped otherwise — a missing tool is not a
+         defect in the file): parses both files with PowerShell's own
+         Parser::ParseFile, runs the collector through the wrapper, asserts exit-code
+         passthrough (2 refused / 3 missing), and checks the missing-main.py branch
+         of run.ps1.
+[FOUND]  Test-writing trap: `pwsh -Command <script> <arg>` concatenates the argument
+         onto the command text, producing "You must provide a value expression
+         following the '/' operator" for a path. The path is passed in an environment
+         variable instead.
+[NOTE]   The live layer was exercised for real: PowerShell 7.4.6 was installed in
+         this sandbox and all 11 tests pass with it on PATH, 6 static + 4 skipped
+         without it. Linux pwsh parsing is strong evidence for syntax and startup
+         logic; it is still not Windows PowerShell 5.1.
+[VERIFY] 119 files parsed, 403 tests passed, 99 MARK self-checks 0 failed,
+         1,000 stress, 15/15 mutations, Ruff clean.
+
+================================================================================
+PHASE 15 — launch-path optimisation, measured
+================================================================================
+[ASKED]  "Optimise the ULTRON code."
+[APPROACH] Measured first. scripts/bench_startup.py was written BEFORE any change so
+         the claim would have a before-number, and every stage runs in its own
+         subprocess: timing imports in one process reports the first stage hot and
+         every later one cold, which is how import benchmarks lie.
+[RESULT] import main 723 ms -> 170 ms (-76%); action discovery 185 ms -> 117 ms
+         (-37%); heavy libraries loaded at launch: genai, genai.types, PIL,
+         PIL.Image -> none. Per-turn local work unchanged at 0.7 ms, on purpose.
+[CHANGED] main.py — google.genai and google.genai.types (590 ms, of which
+         google.genai.types alone was 507 ms: pydantic + httpx + aiohttp before
+         anything asks for a model) now LazyModule proxies from core/lazyimport.py,
+         the mechanism this project already used for pyautogui and cv2. Names at
+         every call site unchanged; _GENAI_INSTALLED answers "is it installed?"
+         without importing, so a missing SDK still reports in words.
+[TRAP]   THREE return annotations had to become strings:
+         `def _build_config(self) -> types.LiveConnectConfig`. main.py has no
+         `from __future__ import annotations`, so an annotation is evaluated when
+         the FUNCTION IS DEFINED — at module import — and would have re-imported
+         genai immediately, leaving the proxy in place and the 590 ms still spent.
+[CHANGED] actions/youtube_video.py — `import pyautogui` and `import numpy as np`
+         were DEAD: no pyautogui. call, no np. use, and the _PYAUTOGUI/_NUMPY
+         flags were read nowhere in the repository. pyautogui is ~290 ms on
+         Windows and action_loader executes this file at every launch, so a
+         browser-only tool was a third of a second of startup. Deleted rather
+         than deferred. requests (156 ms) -> LazyModule; youtube_transcript_api
+         -> imported at its one call site; dead `time`, `shutil`, `get_os` gone.
+[CHANGED] actions/screen_processor.py — PIL.Image (23ms) -> LazyModule("PIL")
+         with a configure hook binding the submodule, because the call sites say
+         PIL.Image.open(...) and importing PIL alone does not bind Image.
+[FIXED]  main.py _build_config — config read through a context manager (the old
+         open(...).read() left the handle to the GC; on Windows an open file is
+         one the settings dialog cannot rewrite) and the failure fallback
+         `self._asst_name = "JARVIS"` -> identity.NAME. A config that failed to
+         parse renamed the assistant to the name this build stopped using.
+[ADDED]  tests/test_lazyimport.py — 15 tests. core/lazyimport.py had NO tests at
+         all, and the two things it promises are exactly what a refactor breaks
+         silently: a proxy that resolves early is only slower, and a proxy that
+         does not behave like a module raises NameError mid-conversation. The
+         probe module writes a marker file at import, so "did it execute?" is
+         answered by the filesystem, not by trust. Plus an AST guard over
+         actions/ + plugins/ that fails on module-scope heavy imports.
+[NOTE]   The guard flagged browser_control.py's playwright import; inspection
+         showed it is inside `if TYPE_CHECKING:` and never executes, so the check
+         learned to skip TYPE_CHECKING/False blocks rather than the file gaining a
+         pointless allowlist entry.
+[NOT TOUCHED] _trimmed() re-serialises every history message per turn (147 us for
+         250 messages) and format_memory_for_prompt re-sorts on every connect
+         (396 us). Both are rounding errors against a network round trip; caching
+         them would add state and a staleness bug to save nothing a person can
+         perceive.
+[VERIFY] 121 files parsed, 418 tests passed, 99 MARK self-checks 0 failed,
+         1,000 stress, 15/15 mutations.
+
+================================================================================
+PHASE 16 — syllabus to system: AKTU DAA + AIML mapped onto this codebase
+================================================================================
+[ASKED]  User is in B.Tech 3rd year (AKTU) taking DAA and AIML, and wants the
+         syllabus - especially the AI/ML algorithms, but also the whole course -
+         used in how Ultron works and behaves.
+[DONE]   ALGORITHMS.md written: every syllabus topic mapped to the file and
+         function it would replace or extend here, with complexity notes, a
+         measurement plan and an explicit "does not apply" table.
+         Tier A (build first): fuzzy app matching (Damerau-Levenshtein + phonetic
+         bucketing), context assembly as a 0/1 knapsack, branch-and-bound over
+         interpretations pruned at the 0.70 confidence bound, cheapest-capable
+         provider as a contextual bandit, FFT/spectral-flatness turn-end
+         detection, Beta reputation for tools and sub-agents.
+         Tier B: trie, Viterbi, MinHash, reservoir sampling, greedy set cover,
+         interval scheduling/graph colouring for the two-lane sub-agent limit,
+         topological sort + Warshall closure for the planner, logistic
+         regression WITH calibration, k-NN/k-d tree scope limits, naive Bayes
+         pre-classifier, SQLite FTS5.
+         Tier C: minimax/alpha-beta, AO*, Fibonacci heaps, red-black/AVL,
+         B-trees, Strassen, Floyd-Warshall all-pairs, matrix chain, N-Queens,
+         deep RL - each with the reason it does not apply here. The refusals are
+         part of the value and are examinable in their own right.
+[INSIGHT] The AIML papers matter to Ultron's MANNER more than its algorithms:
+         Unit II (KR&R) -> memory as a knowledge base with backward chaining,
+         resolution-based contradiction detection and default reasoning with
+         exceptions; Unit IV (agents) -> proposer/critic/adjudicator argumentation
+         in front of the two-confirmation repair loop, plus trust and reputation;
+         Unit III (model evaluation) -> the calibration harness the >=0.70
+         predictor currently lacks, which is the highest-value item in the file
+         because it is what lets any later change be called an improvement.
+[NOTE]   First recommendation is deliberately unglamorous: build the evaluation
+         harness before the algorithms, or every later claim is a vibe.
+
+PHASE 17 — the algorithms, implemented rather than recommended
+================================================================================
+Trigger  "Implement these natively very strongly", after PHASE 16 mapped the
+         AKTU DAA and AIML syllabi onto this codebase. The instruction was not
+         for a reading list. It was for working code, written here, wired into
+         the paths that actually run.
+
+WHAT "NATIVE" MEANS IN THIS BUILD
+    No scipy, no numpy-ML, no gorilla library import for a 40-line algorithm.
+    Every module below is plain Python from the standard library, except
+    core/audio_features.py, which uses numpy because the microphone path in
+    providers/ already holds numpy and a 480-sample FFT in pure Python would
+    cost more than the frame it measures. Nothing was pulled in to satisfy an
+    acronym.
+
+NEW MODULES (core/)
+    numerics.py        regularised incomplete beta, Beta quantile by bisection,
+                       Beta mean/variance, Wilson lower bound. Exists because
+                       the >=0.70 predictor needs an honest lower confidence
+                       bound and scipy is not a dependency of this project.
+    fuzzy.py           Damerau-Levenshtein (full Wagner-Fischer with a
+                       transposition term), Soundex, Metaphone, phonetic keys,
+                       and match_score(): exact, phonetic, prefix, word-subset,
+                       partial-overlap, word-similarity, acronym and consonant-
+                       skeleton tiers. FuzzyIndex buckets by phonetic key, by
+                       first letter and, as a rejection filter, by character
+                       bigrams.
+    trie.py            Iterative trie: completion, longest-prefix, key walk. No
+                       recursion anywhere — a 10,000-character key must not be
+                       able to raise RecursionError.
+    knapsack.py        0/1 knapsack, exact DP with a cell budget, and the
+                       greedy half-bound as the honest fallback when the table
+                       would be too large.
+    branchbound.py     Branch and bound over interpretations: optimistic bounds,
+                       pruning at the confidence threshold, an ambiguity margin,
+                       and a node budget. It returns a Decision, including the
+                       words to ask with.
+    reputation.py      Beta reputation with exponential half-life decay:
+                       record/get/lower/rank/best, serialisable snapshot.
+    bandit.py          UCB1, Thompson and a Contextual wrapper. The bandit is
+                       for choosing a provider, not for choosing permissions.
+    audio_features.py  RMS, zero-crossing rate, spectral flatness (Hann-windowed
+                       rfft), a percentile noise floor and a TurnEndDetector that
+                       reports idle/speech/end.
+
+WIRED IN — NOT LIBRARY CODE SITTING ON A SHELF
+    core/app_resolver.py
+        Words still decide first. When word overlap finds nothing, _fuzzy_hits()
+        queries a FuzzyIndex built once per installed-application scan (identity
+        is the cache key, so a rescan silently rebuilds it). Scores are mapped
+        into 4..7 so the ranking below does not need to know which tier spoke,
+        and a similarity match is reported at a lower confidence than a word
+        match, with the reason saying so. Running windows get the same tier at a
+        higher bar (0.85).
+
+    providers/engine_pipeline.py
+        _watch_for_turn_end() now pushes each frame through TurnEndDetector and
+        acts on idle/speech/end. The old level-based detector remains as a
+        fallback for a machine where numpy or the module is unavailable; the
+        detector is built lazily, once, and a failure to build it logs one line
+        and falls back rather than taking the microphone down.
+
+TESTS ADDED (all offline, all deterministic)
+    test_numerics.py      11   closed forms, symmetry, quantile round-trip
+    test_fuzzy.py         33   28 unit + accuracy fixture + resolver integration
+                               + two cost guards
+    test_trie.py           8   completion, prefix, depth without recursion
+    test_knapsack.py      25   exact vs brute force on random instances, bounds
+    test_branchbound.py   14   pruning, tie-breaking, node budgets
+    test_reputation.py    17   convergence, decay, ranking, snapshot round-trip
+    test_bandit.py        18   seeded simulations against known reward rates
+    test_audio_features.py 23  synthetic voiced/noise/silence frames, plus the
+                               engine wiring driven with real 16-bit PCM
+
+FOUR THINGS THE TESTS CAUGHT, RECORDED BECAUSE THEY WERE REAL
+    1. Branch and bound was asking about a thing and itself. "chrome" scores
+       0.88, and the "Chrome" it expands into also scores 0.88, so the
+       ambiguity margin declared a tie between a summary and its own best
+       child. Fixed by treating only leaves as answers; a parent that refines
+       into children is not an alternative to them.
+    2. The noise floor learned from speech. Twelve frames of continuous speech
+       in a silent room put the 10th percentile at the speech level, so the
+       threshold rose above the voice and the user was never heard at all. The
+       floor now learns only from frames that are not speech-like: an estimate
+       of the ROOM is what is left when nobody is talking.
+    3. A stuck microphone could hold a turn open forever. The maximum-turn
+       check sat inside the quiet branch, so continuous speech never reached
+       it. It is now checked before classification — which is exactly the case
+       it exists for.
+    4. The matcher was 11.7 ms per utterance, then 23 ms, against 600 installed
+       names: it re-normalised every candidate on every query, and a
+       first-letter shortlist on a machine full of "Program..." entries
+       shortlisted all of them. Prepared the derivable data at build time,
+       added a character-bigram rejection gate, and it is 0.28 ms with the same
+       15/15 top-1 accuracy. A cost guard test now fails the suite if that is
+       given back.
+
+MEASURED (python scripts\bench_algorithms.py, offline)
+    fuzzy        top-1 15/15 (1.000) on misheard names; 279 us per query against
+                 a 590-entry index
+    knapsack     exact path agrees with brute force; greedy lands at 0.968 of
+                 the optimum on average, 0.708 worst case, against a proven
+                 bound of 0.5; exact 1.8 ms median, greedy 0.018 ms
+    branchbound  42.1% of nodes pruned, 84.3% explored before a decision
+    reputation   lower bound after 1/4/8/20/100 clean results: 0.22 / 0.55 /
+                 0.72 / 0.87 / 0.97 — 8 results is the first point it clears 0.70
+    bandit       regret over 2,000 rounds: Thompson 7.2, UCB1 48.2, uniform
+                 random 666.7
+    audio        9/9 synthetic frames classified; 70 us per 30 ms frame, 0.24%
+                 of realtime
+
+VERIFICATION AFTER THIS PHASE
+    138 Python files parsed, 559 tests passed, MARK upstream self-test 99/0,
+    1,000 stress scenarios, 15/15 targeted mutations detected, exit 0.
+    Native Windows, microphone hardware and live providers remain untested and
+    are not implied by any number above.
+
+STILL NOT DONE (deliberately, in this order)
+    Tier B is unbuilt: trie is written but unused, MinHash/reservoir sampling,
+    the planner's topological sort and Warshall closure, graph colouring for the
+    two-lane sub-agent limit, and the calibration harness that would let the
+    predictor's 0.70 threshold be called calibrated rather than chosen. The
+    calibration harness is the item to build next, because every later claim of
+    improvement depends on it.
+
+PHASE 18 — computer use by structure, and self-improvement that must prove itself
+================================================================================
+Trigger  A pointer to vercel-labs/agent-desktop ("implement this too"), plus two
+         questions: can Ultron be recursively self-improving like the recent
+         model releases, and what native capabilities could it have.
+
+PART 1 — THE ACCESSIBILITY-TREE IDEA, IMPLEMENTED HERE
+    What agent-desktop gets right, and what was worth taking:
+      - read the OS accessibility tree instead of screenshots;
+      - give every actionable element a ref that carries its snapshot id;
+      - act on the ref, do not move the pointer or steal focus;
+      - skeleton snapshots with depth clamping and drill-down refs;
+      - fail closed on a stale or ambiguous ref, and say whether retry is safe.
+
+    New modules:
+      core/ui_tree.py      the snapshot model: qualified refs (@<sid>:eN), find by
+                           name and role, ambiguity as an error, redaction of
+                           secret values at capture time, depth clamping with
+                           children_count and drill refs, terse text rendering for
+                           the model, JSON envelope. Pure Python, no OS.
+      core/ui_action.py    the discipline: adapter protocol, wait-until-ready with
+                           a timeout, action coercion (click on a text field means
+                           focus), dispositions (retry_safe / resnapshot /
+                           needs_user / fatal), batch that stops at the first
+                           failure, and the rule that ANY action makes the
+                           snapshot stale.
+      core/ui_windows.py   UI Automation bridge through uiautomation/pywinauto,
+                           invoking controls through their patterns rather than
+                           synthesising clicks — that is where "works in the
+                           background without stealing focus" actually comes from.
+                           UNVERIFIED: written on Linux with no Windows machine
+                           and no bridge installed. Fails closed with a reason.
+      core/ui_browser.py   the DOM adapter. A browser window publishes almost
+                           nothing to UI Automation, and the page it is showing
+                           already has a perfect tree.
+      core/ui_ladder.py    the escalation policy: tree → drill → DOM → keyboard →
+                           vision → ask.
+      actions/ui_control.py the tool the model calls (snapshot/drill/act/batch/
+                           describe), registered by the existing loader, tiered in
+                           core/policy.py (snapshot is a sensor act; batch is
+                           guarded; act is routine).
+
+    The weakness the user named, answered in code. "If the website doesn't have
+    button trees, or misses them, it's a disadvantage" — correct, and the ladder
+    is the answer: web content falls to the DOM (a real tree, on pages that expose
+    no accessibility nodes at all), then to keyboard access keys read out of the
+    menu names, then to vision only if a provider is configured and the
+    screenshot is consented to, and finally to a question. The last rung is the
+    point: the alternative — quietly clicking coordinates — is the same failure
+    as the folder-opened-instead-of-browser bug this project already fixed.
+
+    Honesty about what is verified: 126 tests cover refs, staleness, ambiguity,
+    redaction, compaction, waiting, dispositions, the ladder and the tool's
+    return vocabulary. None of that is a Windows test. The UIA bridge has never
+    run on Windows here, and no test claims otherwise.
+
+PART 2 — RECURSIVE SELF-IMPROVEMENT, THE HONEST VERSION
+    The loop in core/selfimprove.py is real: propose candidate values for
+    something Ultron owns (thresholds, ranking weights, prompt wording, tool
+    order, retry budgets), score every candidate against the current value on the
+    SAME held-out cases, and keep one only if it clears an exact paired sign test,
+    a minimum effect size, a minimum case count, and breaks no safety case.
+
+    What it deliberately is not: a model rewriting its own weights. That needs a
+    training pipeline, a GPU, a licence to ship a different model, and would buy
+    very little on a 1.5-3 B local model. Saying so is part of the deliverable.
+
+    The arithmetic that makes it worth anything:
+      - the sign test is exact and needs no distribution: 5 wins of 5 gives
+        p = 0.0625 and is NOT accepted; 6 of 6 gives 0.0313 and is;
+      - a mean can rise while the votes are 2-2, so the gate requires both;
+      - any regression on a case marked safety rejects the candidate whatever the
+        average says — a change that helps ninety tasks and breaks one file is not
+        an improvement;
+      - protected artefacts (code, permissions, the confirmation gate) return
+        needs_human with the evidence attached, never an automatic accept;
+      - every accepted change is journalled with the value it replaced, so one
+        call reverts it.
+
+PART 3 — NATIVE CAPABILITIES
+    docs/CAPABILITIES.md: what Windows already offers that this project does not
+    use, with cost and risk for each. The two that matter most are
+    Windows.Media.Ocr (an OCR engine already installed on the machine, no model
+    to download, which turns "no accessibility tree" into a local fallback one
+    rung above vision) and UI Automation events (so "wait for it to finish" stops
+    being a polling loop).
+
+MEASURED
+    159 new tests: ui_tree 42, ui_action 31, ui_ladder 35, ui_control 18,
+    selfimprove 33. Full suite 559 -> 718. No assertion weakened.
+    Ruff clean on all twelve new or changed files.
+
+VERIFICATION
+    150 Python files parsed, 718 tests passed, 99 MARK self-checks 0 failed,
+    1,000 stress scenarios, 15/15 seeded mutations, exit 0.
+    Native Windows, microphone hardware and live providers remain untested.
+
+NEXT
+    1. Run the UIA bridge on a real Windows machine; fix what it finds. Until
+       then ui_control behaves correctly by refusing.
+    2. OCR rung above vision.
+    3. Point core/selfimprove.py at the first real artefacts: the 0.70 predictor
+       threshold and the provider ordering, both of which already have measurable
+       cases in the existing test suite.
+    4. Tool-ordering weights tuned by the same loop, since tool choice is where
+       most of the remaining friction is.
+
+PHASE 19 — closeout: three real defects, and the engine the loop was missing
+================================================================================
+Trigger  "I think we shouldn't do anything else in here... exception being if its
+         self improvement doesn't work or some features don't work then we'll fix
+         them." So: no new capability. An audit instead, then only the defects.
+
+THE AUDIT (run before changing anything)
+    Imported every module added in PHASE 17 and 18: all fifteen import clean.
+    Ran action discovery over actions/ with the real loader: ui_control is found
+    and registered (17 active, browser_control skipped for want of playwright as
+    usual). Policy classifies ui_control correctly: describe=observe,
+    snapshot=sensor, act=routine, batch=guarded.
+    Then drove the actual code paths with a fake adapter, which is where the
+    defects showed up.
+
+DEFECT 1 — acting on a ref never worked (the whole point, broken)
+    actions/ui_control.py built a NEW Session on every tool call. A Session holds
+    the snapshot id its refs belong to; a new one takes a new snapshot before
+    acting, so the ref the model had just read was already from the previous
+    snapshot. Measured: snapshot returned @523be7251d:e1, the next call answered
+    "ref @523be7251d:e1 belongs to snapshot 523be7251d, not 063f8b3fda" and the
+    adapter was never called. Every ref was decorative.
+    Fix: one session per process, rebuilt only when the bridge changes, plus
+    reset_session() for the case where it should be forgotten. Measured after:
+    snapshot -> act by ref performs the invoke, and reusing the same ref after an
+    action is refused with a stale-ref error, which is the intended behaviour.
+
+DEFECT 2 — a batch could not run more than one step
+    An action marks the snapshot stale on purpose, and the batch loop did not look
+    again, so step two had nothing legitimate to resolve against. Measured: a
+    three-step form fill (two fields, then Save) performed ZERO actions.
+    Fix: the batch looks again before each step and refers to elements by name,
+    because a ref belongs to one snapshot. A ref given for a later step now stops
+    the batch with a message saying exactly that, rather than acting on whatever
+    now sits at that number. Measured after: all three steps performed, three
+    snapshots, in order.
+
+DEFECT 3 — self-improvement had no engine
+    core/selfimprove.py could decide whether a change was real. Nothing invoked
+    it. A loop nothing can start is not self-improvement; "Ultron should be able
+    to self-evolve" was therefore not yet true, and that was the most important
+    finding of this phase.
+    Fix: scripts/evolve.py. It measures a named artefact against cases, prints the
+    verdict, and appends it to memory/evolution-log.json. It never edits source,
+    by design: a program that rewrites itself while running is a program whose
+    next failure nobody can reproduce, and the standing rule is two human
+    confirmations for a change to code.
+    Proved it both ways on the repo's own fixture: with the value in use (0.75) it
+    reports "nothing tried was better by enough to be believed"; with a floor set
+    too high (0.95) it proposes 0.65 with 6/18 cases better, 0 worse, p=0.0313,
+    and still changes nothing.
+
+SMALLER FIXES IN THE SAME PASS
+    - a dead `waited` variable and a `del` after a return in the wait loop;
+    - the renderer's "N more elements" count was computed from the budget rather
+      than from what was printed;
+    - an annotation referring to `Optional` after the import had been pruned
+      (harmless at runtime because annotations are deferred, wrong on inspection);
+    - the evolve log path was bound as a default argument, so it could not be
+      pointed elsewhere without editing the file.
+
+NEW TESTS
+    tests/test_evolve_script.py (15) — fixture building, that a right value is not
+    changed, that a wrong one is, that rejections are recorded, that a corrupt log
+    is replaced, and that --no-log writes nothing.
+    tests/test_ui_action.py and tests/test_ui_control_action.py grew by seven:
+    the three-step batch, the look-again between steps, the refusal of a ref in a
+    later step, and the ref that must survive from a snapshot call to an act call.
+
+VERIFICATION
+    152 Python files parsed, 740 tests passed, 99 MARK self-checks 0 failed,
+    1,000 stress scenarios, 15/15 seeded mutations, ruff clean on every file
+    touched, exit 0.
+
+STILL BROKEN, AND NOT FIXABLE FROM HERE
+    core/ui_windows.py has never run on Windows. The defects above were found by
+    driving the layers beneath it with a fake adapter, which is exactly the part
+    that can be tested in this environment. The bridge is the part that cannot.
+    Until it is run there, ui_control refuses rather than guessing — correct, and
+    not evidence that computer use works on a real desktop.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 20 — WORKSPACE CLEANED. NOTHING BUILT. 2026-11-06
+───────────────────────────────────────────────────────────────────────────────
+
+WHY
+    Standing instruction: keep the workspace to what is current and load-bearing.
+    A project with four copies of its own history is a project nobody can hand on.
+    This phase removed copies, not capability. No module was touched, no test was
+    added or weakened, no behaviour changed.
+
+REMOVED
+    docs/ALGORITHMS.md        byte-identical to ALGORITHMS.md (md5 76680066…)
+    docs/README.md            stale copy, diverged from readme.md
+    docs/HANDOFF.md           stale copy, superseded by HANDOFF.md
+    .ultron-collect-state.json  collect-data run state, not source; added to
+                              .gitignore so it stops coming back
+    log.txt (workspace root)  byte-identical to mark-jarvis/log.txt
+
+MOVED
+    HANDOFF.md from the workspace root into the repo root, beside readme.md and
+    log.txt where whoever picks this up will actually look. One handoff, one
+    readme, one log. Its §11 takeover prompt was rewritten: it still named the
+    old zip and the 209-test baseline.
+
+REWRITTEN
+    HANDOFF.md §11          current zip name, 740 tests, what is built vs absent,
+                            feature freeze stated
+    .gitignore              machine state excluded
+    README.md (root)        version 1.2.1, status date 2026-11-06
+
+KEPT ON PURPOSE
+    docs/CAPABILITIES.md    live, cited by readme.md
+    ui.py, crypto-js.min.js large but legitimate
+    uploads/                user data, not mine to delete
+
+CHECKED AFTER
+    Repo imports and the five pure test modules run: 159 tests OK with no PyQt6
+    in the environment, i.e. nothing depended on the deleted files. The 152-file
+    / 740-test figures in verification-results.txt still hold because no .py file
+    was added or removed. Archive rebuilt; see release.txt for the new digest.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 21 — ONE DOUBLE-CLICK. 2026-11-06
+───────────────────────────────────────────────────────────────────────────────
+
+ASKED FOR
+    "Make the setup easiest possible, so that I can just run the bat file."
+    No new feature. The launch path was the defect.
+
+WHAT WAS WRONG
+    1. Python was a manual prerequisite. run.bat printed a web address and
+       exited; the "just double-click" promise started with a scavenger hunt.
+    2. A broken .venv bricked every launch. A .venv outlives the interpreter
+       that made it, and the launcher trusted it unconditionally.
+    3. One bad package killed the whole install. bootstrap.py ran a single
+       pip install -r requirements.txt; on failure the window closed before the
+       reason could be read, and nothing recorded what was missing.
+    4. Found on the way: .gitignore ignored nothing. Every pattern carried a
+       trailing "# comment", which git reads as part of the pattern — so
+       config/api_keys.json, config/certs/ and the WhatsApp session dir were
+       NOT ignored. `git check-ignore` proved it. That is a security defect.
+
+WHAT CHANGED
+    run.bat                 finds Python 3.11-3.13 (py -3.12/-3.13/-3.11, then
+                            python), offers a winget install of 3.12 when there
+                            is none, moves a dead .venv aside to .venv.old
+                            instead of failing on it, and never closes on an
+                            error without saying why. It still contains no pip
+                            call of its own: installing stays in Python.
+    scripts/bootstrap.py    rebuilt. Streams to console AND setup-log.txt; on a
+                            failed whole-file install retries each requirement
+                            alone so one bad wheel does not take forty with it;
+                            names what is missing and what stays off; proves
+                            the app can start by importing the third-party
+                            modules main.py imports at module level (read from
+                            main.py, not hardcoded) plus PyQt6.QtWidgets; one
+                            --force-reinstall retry; ready marker keyed on
+                            requirements.txt + Python version + own version.
+    .gitignore              comments to their own lines; secrets actually
+                            ignored now (verified with git check-ignore).
+    setup.py                the console reconfigure guard main.py already had,
+                            so the arrows and marks it prints cannot raise
+                            UnicodeEncodeError on a cp1251/cp932 console.
+    setup-log.txt, .venv.old/, .ultron-python.tmp   ignored.
+
+TESTS
+    tests/test_bootstrap.py, 27 tests: run.bat is ASCII and CRLF, every goto and
+    call lands on a label, a failure never closes silently, a dead .venv is
+    moved and not deleted, Python is offered before giving up; requirements
+    parsing keeps environment markers; the critical-import list is derived from
+    main.py and never demands this project's own packages from pip; every broken
+    module is named, not just the first; editing requirements invalidates the
+    marker; the launcher refuses to install outside a venv; the .gitignore has
+    no trailing comments and real git confirms the secrets are ignored.
+
+VERIFICATION
+    153 Python files parsed, 767 tests passed (6 skipped), 99 MARK self-checks
+    0 failed, 1,000 stress scenarios, 15/15 seeded mutations, ruff clean on the
+    three touched files, exit 0. verification-results.txt refreshed.
+
+NOT VERIFIED
+    cmd.exe. This sandbox is Linux; the .bat is checked for everything that
+    stops a .bat running and everything it calls is tested, but the first real
+    execution is the owner's. If it fails, setup-log.txt and the console text
+    are enough to fix it without guessing.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 22 — THE FIVE THINGS THE OWNER COULD SEE. 2026-11-06
+───────────────────────────────────────────────────────────────────────────────
+
+REPORTED, WITH A SCREENSHOT OF THE RUNNING APP
+    1. "GUI is still small and I can't edit it."
+    2. "When the ULTRON started up, it didn't have the multiple API thing we
+       decided."
+    3. The activity log in that screenshot was a column of identical
+       "SYS: JARVIS online." lines and "Could not restore the conversation",
+       over and over, with no error anywhere on screen.
+
+WHAT WAS ACTUALLY WRONG
+
+    A. The interface scale existed and could not be reached. `ui_scale` was read
+       from config at launch and applied through QT_SCALE_FACTOR, but nothing in
+       the UI could set it: the only way to change it was to hand-edit
+       config/api_keys.json. And the automatic value was too small — 1080/900 =
+       1.20 on a 1080p laptop, a fifth larger and still, correctly, reported as
+       small.
+
+    B. First-run demanded Gemini. SetupOverlay had one field, GEMINI API KEY, and
+       _check_config returned False without it — so an owner with a Groq key or a
+       local Ollama could not start the app at all. The requirement is "any or
+       several provider APIs, configurable at launch".
+
+    C. Reopening setup erased everything else. _on_setup_done wrote a two-key
+       file straight over api_keys.json. The app opens that screen by itself when
+       a key is rejected, so an expired key silently reset the assistant's name,
+       voice, colour, interface scale and every configured provider.
+
+    D. The reconnect loop was a hot loop. The branch that handled "the resumption
+       handle was rejected" fired whenever the exception text contained the
+       substring "handle" — including "cannot schedule new futures after shutdown
+       while handling audio" — and answered by setting the backoff to 0 and
+       `continue`, which skips the sleep at the bottom of the loop. Connect, die,
+       log, connect, die. That is the column of identical lines in the
+       screenshot, and the reason the real error never reached the screen.
+
+    E. The name was hardcoded in the two lines a user sees first:
+       "SYS: JARVIS online." — while the window title, logo and greeting all said
+       ULTRON.
+
+    F. Found while rendering the fix: the first-run panel was placed at
+       (-10, -90), because _show_setup computed its geometry before the window
+       had laid out. On a 1920x1080 display the top and left of the very first
+       screen sat outside the window.
+
+    G. Found by the test for F: an added provider row was drawn twice, because
+       takeAt() removes a widget from a layout without unparenting it and
+       deleteLater() only queues the deletion — so the previous row stayed on
+       screen until the next event-loop turn.
+
+FIXES
+    ui.py
+      CustomizeOverlay gains INTERFACE SCALE: 100 / 115 / 130 / 145 / 165 / 185 %
+         plus a RESTART TO APPLY button that relaunches the process. Qt takes a
+         global scale factor once, before QApplication exists, so a control that
+         pretended otherwise would be a lie.
+      _auto_ui_scale baseline 900 -> 760: 1.20 becomes 1.42 on a 1080p screen.
+      SetupOverlay rebuilt: Gemini Live key, plus any number of
+         OpenAI-compatible services taken from the provider's own CATALOG (15 of
+         them), with the address prefilled, a local server known to need no key,
+         and rows that can be removed. It writes nothing; it emits.
+      _check_config asks config_manager.has_a_brain() — a key OR a provider.
+      _on_setup_done writes through config_manager.apply_first_run(), which
+         merges. Blank fields never delete stored values.
+      _place_overlay() centres a panel and clamps it inside the window, called
+         both immediately and on the next event-loop turn.
+      LogWidget counts consecutive duplicates ("previous line x2" at 2, 4, 8 …)
+         and drops the typewriter delay when a burst is queued behind it.
+      The ghost provider row is unparented before deletion.
+
+    core/reconnect_policy.py (new, 15 tests)
+      classify(exc, resumed_with, consecutive, backoff) -> Verdict. Specific
+      resumption markers instead of a substring, ONE handle drop per streak, a
+      delay that is never zero, 3 -> 6 -> 12 -> 24 -> 30 s backoff, the error
+      told to the user once per streak with credentials redacted, and a summary
+      after three failures instead of a repeating line. main.py calls it in both
+      the resumption branch and the generic handler.
+
+    main.py
+      The two "online" lines use _assistant_name() instead of the literal
+      "JARVIS". A successful reconnect resets the failure streak.
+
+VERIFICATION
+    157 Python files parsed, 818 tests passed (6 skipped), 99 MARK self-checks,
+    1,000 stress scenarios, 15/15 seeded mutations, exit 0.
+    The interface was rendered off-screen at 100 % and 145 % and inspected:
+    renders/hud-at-145-percent.png, renders/setup-multi-provider.png,
+    renders/customise-ui-scale.png.
+
+NOT VERIFIED
+    Windows. The layout was checked with Qt's offscreen platform at 1920x1080 in
+    both scale modes, which is enough to catch geometry and sizing errors and not
+    enough to claim the HUD looks right on the owner's screen. The reconnect fix
+    is policy logic with tests; the loop it feeds can only be exercised against a
+    live session.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 23 — HUNTING, NOT ADDING. 2026-11-06
+───────────────────────────────────────────────────────────────────────────────
+
+Asked for: make sure there are no bugs in this, work rigorously, and make the
+sizing adjustable. Nothing new was designed this phase. Twenty-two defects were
+found and fixed, each with a test that fails without the fix, and the sizing was
+made adjustable in the ways it was not.
+
+THE BUG HUNT — HOW IT WAS DONE
+    Not "run the tests and see green". The suite was already green, and the two
+    worst defects were in code the suite had just declared healthy. The method
+    was:
+      1. Read every line this week's changes touched, as source.
+      2. ruff over the whole tree with F/E9 (undefined names, unused imports,
+         expressions that are not what they look like) — 54 findings, one of them
+         a real NameError.
+      3. Trace each user-visible path end to end: first run, invalid key,
+         restart, resize, crash-in-config, empty provider catalog.
+      4. Adversarial inputs on every function that touches the config file.
+      5. Render the interface at the sizes it will actually be used at.
+    What that found, in the order it mattered:
+
+  1. The setup panel was still being squashed. resizeEvent hardcoded 460x390 for
+     self._overlay — a size belonging to a different dialog — so the centring
+     added last phase was undone by the first window resize.
+  2. "RESTART TO APPLY" applied nothing. _apply_ui_scale sets QT_SCALE_FACTOR in
+     this process; the relaunched child inherited it, saw the variable already
+     set, and kept the OLD scale. The button restarted the app to no effect.
+     Also unchecked: startDetached's result, so a failed relaunch closed the app.
+  3. The scale docstring said 1.45 and the maths produces 1.40 — and the readme,
+     release notes and handoff all repeated it as 1.42. Three files disagreeing
+     with the code, in a document whose job is to be checked.
+  4. A damaged api_keys.json was silently overwritten by the next save: read as
+     {}, then written back with one key. A power cut during a colour change could
+     cost every provider key. The damaged file is now kept as .broken-<epoch>.
+  5. Config writes were not atomic — write_text truncates before writing, which
+     is how a config gets damaged in the first place. Now written beside and
+     replaced.
+  6. A stored scale of 3.0 was accepted, which draws the panel that would let you
+     undo it off the screen. Clamped to 0.85-2.50 on the way in and on the way
+     out, with an AUTO button that writes 0.
+  7. apply_first_run indexed providers[0] after a loop that skips invalid rows:
+     one non-dict row first in the list and the save raised AttributeError, after
+     the setup screen had been dismissed.
+  8. An empty provider CATALOG raised IndexError on the first click.
+  9. Every failed click on INITIALISE appended another QSS rule to the key field,
+     and nothing ever cleared the red border.
+ 10. SetupOverlay had no hideEvent, unlike every other panel, so its last frame
+     stayed on the HUD as a ghost.
+ 11. A save failure on first run printed to a console nobody has, and set
+     _ready = True anyway; the name fell back to the literal "JARVIS".
+ 12. THE MARKER LIST, WHICH WAS MY OWN REGRESSION. core/reconnect_policy
+     classified "invalid_argument" and "not_found" as a dead resumption handle.
+     Both are also what the server says about a tuning field it dislikes or a
+     model name that does not exist — so a bad model name dropped the handle and
+     SKIPPED the branch that repairs it, printing "Could not restore the
+     conversation" every half second. A session word AND a failure word now, or
+     "resum" alone.
+ 13. The "N attempts failed" summary was printed on every attempt after the
+     third: the same wall of identical lines, from the code meant to stop it.
+ 14. main.py: the network backoff doubled a stored 0 into a 0-second retry, was
+     capped at 60 while the policy caps at 30, and was never reset after a
+     successful connect — so one blip early in the day left every later reconnect
+     waiting up to a minute.
+ 15. prompt_reconfig built a new setup panel on top of the old one for every
+     rejected key; the hidden one stayed wired to the same handler.
+ 16. dashboard/server.py used an undefined `port` nine times: the Linux firewall
+     helper raised NameError on any machine with ufw, firewalld or iptables
+     running. Best effort, background thread, no output — the phone simply could
+     not reach the dashboard and nothing said why.
+ 17. The same function tested "active" in "Status: inactive", which is true. An
+     inactive firewall was treated as active.
+ 18. load_api_keys returned whatever JSON parsed: a file containing a list or a
+     string got past it and the next .get() raised AttributeError at start-up.
+ 19. save_api_keys, the last open-coded read-modify-write, had all of 4 and 5.
+ 20. .gitignore did not cover the new api_keys.json.tmp / .broken-* files or
+     long_term.json.bak-* — the backups contain exactly the secrets the file
+     being protected contains.
+ 21. At a scale of 1.85 or more the 820x580 minimum size is larger than a 1080p
+     screen in logical pixels: the window could not be made to fit, and the
+     microphone button sat below the display. Minimum and default are now bounded
+     by the screen.
+ 22. A provider address without http:// or https:// was stored and failed later,
+     in the HTTP client, where nothing could explain it.
+
+SIZING — WHAT IS ADJUSTABLE NOW
+    * - and + steppers, 5% at a time, from 85% to 250%: any value, not six.
+    * Presets 100/115/130/145/165/185 and AUTO, which hands the scale back to the
+      screen and says what that works out as.
+    * Ctrl+=, Ctrl+-, Ctrl+0 (automatic) and Ctrl+Shift+R (restart and apply).
+    * The window remembers its size, and ignores a remembered size that would not
+      fit the screen it is opened on.
+    * The relaunch that applies the scale actually applies it (defect 2).
+
+VERIFICATION
+    158 Python files parsed · 880 tests passed (6 skipped) · 99 MARK self-checks ·
+    1,000 stress scenarios · 15/15 seeded mutations · exit 0.
+    New: tests/test_bugfix_pass.py (56 tests), 6 added to test_reconnect_policy.py.
+    Rendered and looked at: the window at 980x700 and 1280x800, the Customise
+    panel with the new controls, the first-run panel with two providers.
+
+STILL NOT VERIFIED
+    Windows. Every one of these was fixed and tested on Linux, off-screen. The
+    window-size and scale paths depend on what Qt reports for your display, and
+    the reconnect paths need a live session. core/ui_windows.py has still never
+    run on Windows. That has not changed and will not change until it runs there.
+
+-------------------------------------------------------------------------------
+PHASE 24 — READING THE PATHS NOBODY WALKS. 2026-11-06
+-------------------------------------------------------------------------------
+The instruction is still "make sure there are no bugs in this". Three rounds in,
+the defects left are not in the code the user sees every day — they are in the
+code that runs once, or only on a bad day. This pass went to those places: the
+first five seconds of start-up, the file paths, and the engine that only runs
+when the chosen provider is not Gemini.
+
+BUILD 1.2.5. Thirteen defects: the four below found earlier in the same build,
+and the nine this pass went looking for. Every one measured before it was changed,
+and every one has a test that fails without the fix.
+
+  THE EARLIER FOUR, IN THE SAME BUILD
+    * A key getter that could hand back another provider's key.
+    * A prompt fallback that could drop the persona.
+    * A pipeline failure reported twice.
+    * A run loop that could spin with no session configured.
+
+  A. THE FIRST FIVE SECONDS
+  1. A TOOL SCHEMA THAT DID NOT DECLARE ITS ARGUMENTS. Four actions read
+     parameters the declaration never mentioned — weather_report.time,
+     file_controller.append and max_results, computer_control's x1/y1/x2/y2 for
+     drag, computer_settings.text/key/press_enter. A model cannot pass an
+     argument that is not in the schema, so drag had no box to drag and append
+     silently overwrote. Declared. The declaration is now also built into a real
+     google.genai.Tool in the test suite, so a malformed one fails here instead of
+     on the user's machine at connect time, retrying for ever.
+  2. LOADING AN ACTION COULD TAKE THE WHOLE START-UP DOWN. When an action file
+     raised on import, discovery called traceback.print_exc(). Under pythonw —
+     the launcher that shows no console — sys.stderr is None, and printing to it
+     raises AttributeError from inside the error handler. Formatting first and
+     printing second cannot fail that way.
+  3. A CAPABILITY COULD DISAPPEAR WITHOUT ANYBODY BEING TOLD. Missing playwright
+     takes browser_control out of the session: the file raises ImportError, the
+     loader logs a line to a console the user may never open, and the tool is
+     simply not there. From the user's side that is indistinguishable from the
+     assistant refusing. Discovery now records the reason, and main.py says it
+     once, in the activity log: "browser_control is unavailable — needs
+     playwright".
+  4. core/policy.py NAMED TWO TOOLS THAT DO NOT EXIST (system_monitor,
+     screen_processor) and missed the one that does: screen_process. So the
+     sensor tier, its per-task grant and its consent wording applied to nothing,
+     and the actual screen tool fell through as unclassified. Renamed, and
+     save_memory / forget_memory / shutdown_jarvis now carry their own reasons
+     ("memory is permanent", "turns the assistant off") instead of a generic one.
+
+  B. THE PATHS
+  5. THE SAFETY TEST WAS "IS IT INSIDE THE HOME DIRECTORY", AND HOME IS WHERE
+     EVERY CREDENTIAL LIVES. Measured: reading ~/.ssh/id_rsa was allowed, and so
+     was reading this program's own config/api_keys.json from a project folder
+     inside home — a web page that talked the model into it would have had the
+     keys read out loud into the activity log. Credential stores and key material
+     are now refused by name, by directory and by extension, with a refusal that
+     says which kind of refusal it is instead of "Access denied", which sends
+     people looking for a permissions problem that does not exist. Twelve tests;
+     the ordinary case — notes, Documents, Downloads, undo of a write — is
+     asserted alongside it so the deny-list cannot quietly grow into a cage.
+
+  C. THE ENGINE THAT RUNS ON ANY OTHER PROVIDER
+  6. A TURN COULD STAY OPEN FOR EVER. The pipeline engine waits for every tool
+     call it made before asking the model again, which is right for a parallel
+     batch. But a call that is never answered is a real outcome — refused by the
+     consent gate, raised before it could report, lost to an interrupt — and two
+     calls with one answer left the turn open until the stall watchdog rescued
+     it. Now the wait is armed when the calls are emitted and lasts 1.5 s from the
+     last result; whatever has not answered is recorded as having not answered
+     and the model is told to carry on. The placeholder matters: an assistant turn
+     that announced two calls and answered one is a transcript the vendor's API
+     rejects on the next request, which turns a missing result into a dead
+     session.
+  7. THE TEST SUITE WROTE INTO THE USER'S OWN CONFIG FILE. Building a real
+     MainWindow saves the window size, and saving goes to config/api_keys.json —
+     the file the user's providers, scale and remembered size live in. Measured:
+     running the suite created that file in the project, containing the test's
+     1600x900 alongside 760x700 from another module. On a real installation,
+     running the verification would change the size their window reopens at, and
+     would write beside the file that holds their keys. The two modules now point
+     the config at a temporary directory, and scripts/verify.py fails if the suite
+     leaves the file behind.
+  8. The dead base64 encode: code_helper encoded the screenshot a second time and
+     read neither copy (the request inlines the bytes).
+  9. _smoke_harness raised IndexError when imported without arguments. It is a
+     program, not a library; it now says so and exits 2.
+
+  Measured end to end, with a fake model speaking the documented protocol:
+  a text turn, a tool round trip with a real FunctionResponse, a provider that
+  raises at the start and mid-stream, a provider that says nothing, two calls
+  answered twice, once and never, the same call twice in a turn, and text and
+  calls in the same event batch. Eleven scenarios, all of which now end.
+
+VERIFICATION
+    162 Python files parsed · 939 tests passed (6 skipped) · 99 MARK self-checks,
+    0 failed · 1,000 stress scenarios · 15/15 seeded mutations · exit 0.
+    New: tests/test_live_config.py (17), tests/test_file_safety.py (12), and 5
+    added to test_tool_contract.py (19 total).
+
+STILL NOT VERIFIED
+    Windows, as ever. All of this was run on Linux, off-screen. The two things in
+    this build that most need a real machine are the ones a suite cannot reach:
+    whether an unreachable provider is reported in words the user understands,
+    and whether the credential deny-list blocks a folder somebody was actually
+    using. Neither has been seen on the target.
+
+OPEN
+    browser_control still disappears without playwright installed. It is now said
+    out loud, but the honest options are to install playwright with the app or to
+    remove the tool; that is a decision, not a defect, and it is not mine.
+
+-------------------------------------------------------------------------------
+PHASE 25 — EVERY TOOL, EVERY INPUT, BOTH ENGINES. 2026-11-06
+-------------------------------------------------------------------------------
+"Make sure Ultron works just as intended, that all features work, and that the
+possible edge cases work too." That is not a question the test suite answers, so
+this pass drove the program instead of reading it: every one of the 26 tools
+called with empty, null, wrong-typed, oversized and hostile arguments; every
+settable value written with junk; both engine paths started from a dozen config
+states; the window, the panels and the scale controls exercised off-screen.
+
+BUILD 1.2.6. Nine defects, every one found by driving it, every one with a test.
+
+  1. A NULL ARGUMENT CRASHED SIX TOOLS. `dict.get(key, default)` returns the
+     default only when the key is ABSENT, so a model that sends "action": null —
+     which Gemini does for optional fields — got None and called .lower() on it.
+     Six of the seventeen actions answered with "Tool 'file_controller' failed:
+     'NoneType' object has no attribute 'lower'", which is not something a model
+     can act on. Fixed at the dispatch boundary, so it covers all of them and
+     every action written later; the eight inline tools in main.py get the same
+     treatment where their arguments arrive.
+  2. A WRONG-TYPED ARGUMENT CRASHED THEM TOO. "action": 5, "volume": "loud",
+     "count": "7". The declaration already says which type each parameter is, so
+     the value is now coerced to that type before any handler sees it. Anything
+     that cannot be coerced is left alone and refused in words.
+  3. CONCURRENT MEMORY WRITES LOST FACTS — silently. update_memory read the
+     store, merged, wrote; load_memory and save_memory each locked their own
+     half, which does not make the whole operation atomic. Measured: six threads,
+     thirty writes each, 53 of 180 remembered facts survived. No error, no
+     message. Now one lock covers read-merge-write: 180 of 180.
+  4. A SINGLE VALUE COULD REPLACE A WHOLE CATEGORY. update_memory({"notes": "x"})
+     turned {"notes": {entry, entry}} into {"notes": "x"} and every entry in it
+     was gone. Refused now, with a line saying why.
+  5. A CONFIG WRITE COULD CLOSE THE APPLICATION. With `config` occupied by a file
+     — or the folder read-only, which is what a copy under Program Files gets —
+     mkdir and the write raised OSError out of whatever Qt slot called a setter,
+     and PyQt6 turns an unhandled exception in a slot into an abort. Setters now
+     report and return; the scale panel verifies its own save before claiming it.
+  6. A HAND-EDITED CONFIG CRASHED THE PROVIDER BUILD. "model": 123 raised
+     "AttributeError: 'int' object has no attribute 'strip'" out of session
+     set-up, where the only visible result is that the assistant never starts.
+     Settings are coerced with defaults.
+  7. A PROVIDER ID THAT IS NOT A STRING raised TypeError instead of LookupError.
+     Same origin, same fix: one clear message.
+  8. AN UNREACHABLE MODEL SERVER ERASED THE VISION DECISION. can_see() returned
+     False for every exception, including "connection refused" — Ollama starts on
+     demand, so on a cold machine the app wrote `vision: ""` over a stored "yes",
+     withdrew screen_process and close_camera for that session, and did it again
+     every launch. The probe is now tri-state: True, False only when the server
+     answered and refused the image specifically, and None — "could not ask" —
+     which leaves the stored decision untouched.
+  9. save_memory ANSWERED "ok" WHEN IT SAVED NOTHING. Called with no key or no
+     value it wrote nothing and reported success, so the model told the user it
+     had remembered something it had not. It now says what is missing.
+
+WHAT WAS DRIVEN, AND WHAT IT SHOWED
+    Tools. All 26 declarations build into a real google.genai.Tool. A text-only
+    provider is handed 24 — screen_process and close_camera withheld — and the
+    default Gemini path gets all 26. Via the real loader, every action survived
+    {"action": null}, {"action": 5}, {"action": ["a"]}, empty, and 300-character
+    values with a sentence rather than a traceback.
+    Inline tools. All eight were called through main.py's own _execute_tool
+    path with null and junk arguments: recall_memory, undo (including "list"),
+    system_status, manage_monitor (add/remove/list/bad action), save_memory,
+    screen_process (screen and camera, cooldown honoured), close_camera.
+    Window. Constructed, every state set, the log written with None, 20 000
+    characters and emoji, mute toggled, camera stream started and stopped,
+    resized to 300x200, 4000x3000 and 0x0. Scale controls: floor 0.85, ceiling
+    2.50, 200 nudges up and 400 down stay inside, AUTO works. A missing face
+    model and an empty path both start.
+    Files. Unicode names, deep missing folders, zero-byte writes, 5 MB writes,
+    names too long for the filesystem, a directory given as a file, copy/move/
+    rename onto an existing name, delete to trash and undo of it, an undo stack
+    capped at 10, 12 undos restoring 10, and the credential deny-list.
+    Memory and config. Corrupt JSON, a list-shaped file, six concurrent writers,
+    a read-only folder, a folder that is a file, junk scale values.
+    Providers. Five provider kinds discovered; missing-field reporting; openai,
+    gemini and prompt conversions; the budget; prompt-mode tool parsing on
+    garbage, an unknown tool and escaped unicode; sentence splitting.
+    Startup. No config, empty config, junk provider_mode, pipeline with nothing
+    chosen, unknown provider, creds as a list — each produced a sentence and a
+    working fallback rather than a crash.
+
+VERIFICATION
+    163 Python files parsed · 957 tests passed (6 skipped) · 99 MARK self-checks ·
+    1,000 stress scenarios · 15/15 seeded mutations · verify.py exit 0.
+    New: tests/test_edge_cases.py (18).
+
+STILL NOT VERIFIED
+    Windows, as ever — and now a specific list: screen capture (mss is not
+    installed here), browser automation (no Playwright), any live provider (no
+    network, no keys), a real microphone and speaker, and how any of this looks
+    on a real display. The suite and the harnesses prove the logic, not the
+    platform.
+
+-------------------------------------------------------------------------------
+PHASE 26 — SIX CLAIMS THAT WERE ONLY BELIEFS. 2026-11-06
+-------------------------------------------------------------------------------
+Six things in the readme were true statements about code, not demonstrated facts
+about a machine: native Windows behaviour, screen capture, browser automation, a
+live model provider, a microphone and speaker, and how any of it looks on a real
+display. A green suite cannot settle any of them, because the suite does not have
+Windows, a screen, a camera, a microphone or a browser. So this phase built the
+instruments that can, and ran every one of them on the machine available.
+
+BUILD 1.2.7. Five verifiers, one runner, and four real defects.
+
+The instruments, all in scripts/:
+
+  verify_windows.py   16 checks — OS and DPI, window fits the screen, no console
+                      window flashes from subprocesses, audio devices, microphone
+                      records, speaker plays, screen capture, camera, UI
+                      Automation tree, volume and brightness round-trips, browser
+                      discovery, app resolution, PowerShell launchers are plain
+                      ASCII, run.bat preflight. Three of them apply everywhere.
+  verify_display.py   renders the REAL MainWindow at 980x700, 1280x800 and
+                      1600x900, then looks at the pixels: is anything drawn, is
+                      the activity-log panel inside the frame, is text painted
+                      inside it. Writes the renders out so they can be looked at.
+  verify_capture.py   screen and camera frames, through actions.screen_processor.
+  verify_audio.py     devices, a real recording, peak and RMS, latency, and an
+                      optional 440 Hz tone.
+  verify_browser.py   Playwright engine end to end (launch, load, read text,
+                      click, type, screenshot) plus Ultron's own control layer;
+                      when a browser binary will not start it reads ldd and names
+                      the missing libraries instead of reporting "closed".
+  verify_all.py       runs all five as separate processes, so one hard crash
+                      cannot take the rest down, and prints one verdict table:
+                      WORKS / PARTLY TESTED / BROKEN / NOT TESTED HERE. SKIP is
+                      never counted as a failure.
+
+THE FOUR DEFECTS THE INSTRUMENTS FOUND. Every one was invisible to the suite.
+
+  1. A STREAMED TOOL CALL WELDED ITS OWN NAME. OpenAI-compatible servers send the
+     function name in fragments. A server that repeats the whole name in the
+     final chunk — legal, and common — produced "open_appopen_app", an
+     unmatched, un-callable tool. The buffer now keeps a repeat of the name it
+     already has and appends only a genuine fragment.
+  2. A REFUSED IMAGE WAS NEVER RECORDED. When a provider answers 400 "does not
+     support image input", the client raises RuntimeError("<code> <body>"), not
+     an httpx error. The code was read from an attribute that was therefore
+     always None, so can_see() stayed None for ever and the screen and camera
+     tools were offered to a model that had just refused them. The status is now
+     read from the message.
+  3. AN HTML ERROR PAGE WENT INTO THE LOG. A gateway between the app and the
+     provider answers with a page, not JSON; the whole page was logged. Tag-free
+     text now.
+  4. "No default applications for “x-scheme-handler/http”" BECAME AN APP.
+     xdg-mime exits 0 and prints that sentence. The resolver took it as a
+     resolution target with 0.95 confidence and "the system's default handler for
+     http" as the reason, so "open the browser" reported success and then failed
+     to open anything. Backend prose is now rejected everywhere a handler can be
+     read, and resolve("browser") honestly answers unknown.
+
+WHAT THE MACHINE HERE COULD AND COULD NOT SETTLE.
+
+  display   12/12 pass. The window draws at all three sizes, the log panel stays
+            inside the frame and its text is painted — 90 to 149 distinct colours
+            inside the panel, which is text, not a smear.
+  platform  2 pass, 14 skip. The Windows checks do not apply on Linux and say so.
+  capture   FAIL — "Cannot connect to display: display is unset or invalid".
+  audio     FAIL — "PortAudio library not found".
+  browser   FAIL — Playwright and a Chromium that will not start: the binary is
+            missing libavahi-client, libavahi-common and a libxkbcommon the
+            system does not have. Chromium was downloaded (408 MB) and could not
+            be started in this container; that is a fact about the container, not
+            about Ultron.
+
+  Nothing above was fixed by pretending. The four failures are the honest state
+  of THIS machine, and the same five scripts on the user's Windows box will
+  answer the same questions with real hardware.
+
+SUITE AND GATE
+  983 tests OK (skipped=6), 15/15 seeded mutations, 1,000 stress scenarios,
+  163 files parsed, exit 0. tests/test_verifiers.py keeps the instruments alive:
+  every one must parse, answer --help, and be wired into the runner, and the
+  verdict wording is asserted so SKIP can never quietly become a pass.
+
+STILL NOT VERIFIED
+  Everything that needs the user's hardware, and this phase did not change that:
+  Windows itself, a real microphone and speaker, a real screen and camera, a real
+  browser, and a live provider with a real key. What changed is that the user now
+  has one command that asks those questions on the machine that can answer them,
+  and reports SKIP rather than guessing.
+
+-------------------------------------------------------------------------------
+PHASE 26b — THE CAPABILITY THAT WAS LYING ABOUT ITSELF. 2026-11-06
+-------------------------------------------------------------------------------
+Asked what else was gatekeeping the build, the honest way to answer was to audit
+the dependencies rather than the prose. That audit found the worst defect of the
+whole run, in the one place the design cannot afford one.
+
+BUILD 1.2.8. The accessibility tree reported itself available and could not walk
+a single node.
+
+  "Accessibility tree before vision" is a standing requirement, and it rests on
+  core/ui_windows.py. Its available() checked uiautomation, and failing that,
+  pywinauto — answering "usable, pywinauto". But pywinauto is installed on every
+  Windows machine this app sets up, because three plugins import it directly, and
+  the pywinauto branch of the driver raises NotImplemented. So on a fresh install
+  the ladder would prefer the tree over vision exactly as instructed, and the
+  first real action would fail with a message about a package the user had never
+  heard of. The capability looked present, was selected, and threw.
+
+  Three things were wrong and all three are fixed:
+    1. uiautomation — the package the driver is actually written against — was
+       not a declared dependency at all. Now it is, in requirements.txt, and
+       core/installer.py knows its name so the in-app installer can add it.
+    2. available() confused "a package is importable" with "a driver exists".
+       It now answers usable only for a backend that can be driven, and when
+       pywinauto is present on its own it says "pywinauto is installed but this
+       bridge has no pywinauto driver; install uiautomation". A capability that
+       reports itself ready and then throws is worse than one that reports
+       itself missing.
+    3. scripts/verify_windows.py imported uiautomation itself to test the tree,
+       so its instrument could report SKIP while the product believed the tree
+       was fine. It now asks core.ui_windows.available() — the same question the
+       product asks. An instrument that answers a different question measures
+       nothing.
+
+  tests/test_ui_bridge.py (9 tests) holds the invariant: usable is true only when
+  a driver exists AND its package is installed; if available() ever reports a
+  backend with no driver, _module() must fail loudly rather than silently; and
+  the declared dependency cannot be dropped without a test going red.
+
+NOT VERIFIED, UNCHANGED
+  The bridge has still never walked a real Windows tree. That is a proof gap, not
+  a defect, and scripts/verify_windows.py is the instrument that closes it. If it
+  fails there, the tree-before-vision premise has no proven leg and the honest
+  fallback is vision at seconds per look instead of milliseconds.
+
+SUITE AND GATE
+  173 files · 992 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+
+-------------------------------------------------------------------------------
+PHASE 27 — THE PROOF GATE, AND TWO THINGS THAT ARE NOT BUILT. 2026-11-06
+-------------------------------------------------------------------------------
+"Just feed an API" is right: the key is one line, and calling it a gate was
+wrong. What is left is not a build problem but an evidence problem — nothing in
+this product has ever run on Windows — so this phase built the instrument that
+answers claims instead of components.
+
+BUILD 1.2.9. scripts/proof_gate.py: sixteen claims, four verdicts.
+
+  A component check says "the microphone records". A claim is a chain: sound
+  arrives, the words are recognised, the model answers, the answer comes out of
+  the speaker. Those are different questions, and only the second one is the
+  product. Each claim prints every step, so a chain that breaks at step three
+  says where.
+
+  PROVEN        every step ran and fed the next
+  PARTIAL       some steps proved, a later one needed hardware, an OS or a key
+  FAILED        a step ran and produced the wrong thing
+  NOT PRESENT   there is no code behind the claim at all
+
+  NOT PRESENT is the verdict that matters, because it is the one an enthusiastic
+  report rounds up to "works". Two claims reach it here, and they are the real
+  finding of this build.
+
+  MEMORY IS NOT APPROVAL-ONLY. save_memory writes immediately and returns
+  silent: true. The model can persist an inferred preference without asking. The
+  standing rule is "only remember what the user approves"; the code does not
+  implement it. Not a bug in the sense of a broken function — a missing one.
+
+  THE DAILY DIGEST DOES NOT EXIST IN ULTRON. The only "digest" in the tree is an
+  md5 hash in background_monitor.py. It is an Agentic OS milestone property.
+  Claiming it here would have been inventing a feature, so the gate says NOT
+  PRESENT in those words.
+
+WHAT THE GATE PROVED HERE (Linux container, no hardware)
+  consent   PROVEN   a capture is withheld and a banner requested; CANCEL clears
+                     it; policy classifies screen capture as Tier.SENSOR
+  persona   PROVEN   name Ultron, four aliases, 2,612-word prompt, name
+                     interpolated at startup
+  acts      PARTIAL  a tool call wrote and read back a real file in ~/Documents;
+                     a write to /tmp was REFUSED; an SSH key path was refused AS
+                     CREDENTIALS; the model's chosen tool was declared and
+                     callable. Only "does a real model choose well" is unproven
+  budgets   PARTIAL  8 ms in-process reply latency and 55 MB peak measured;
+                     import main could not run here (no PortAudio), so startup
+                     time is unknown rather than fast
+  nine more PARTIAL, each naming the step that could not run: no display, no
+  PortAudio, no Playwright, not Windows
+
+DEFECTS FOUND BY BUILDING IT
+  1. The acts claim first "failed" because a write to /tmp was refused — and the
+     refusal was correct. The claim was wrong, not the code: file_controller
+     confines writes to the user's own folders. The claim now proves BOTH the
+     effect and the confinement, in the same run.
+  2. fake_provider's "tools" model only emitted tool calls on the streaming path,
+     so a caller that asked once could not tell "no tools" from "SSE only". It
+     answers a non-streamed request with a tool call now.
+  3. The startup-timing step counted a failed import as a fast one (0.1 s,
+     because main.py raised on a missing PortAudio). A fast failure is not a fast
+     start; the step now reports SKIP with the reason.
+  4. tests/test_proof_gate.py pins the arithmetic so a verdict can never round
+     up: FAILED outranks NOT PRESENT outranks PARTIAL outranks PROVEN, and one
+     skipped step is enough to stop a claim being PROVEN.
+
+SUITE AND GATE
+  175 files · 1,005 tests OK (skipped=6) · 99 MARK self-checks · exit 0 ·
+  proof_gate exits 1 here on purpose: one FAILED (no display) and two NOT PRESENT.
+
+-------------------------------------------------------------------------------
+PHASE 28 — THE WRITE PATH THAT NEVER ASKED. 2026-11-06
+-------------------------------------------------------------------------------
+The proof gate said NOT PRESENT next to "only what the user approves is
+remembered". The fix was smaller than the finding, and worse than it looked.
+
+BUILD 1.2.10. core/memory_consent.py, and one call site changed.
+
+  The rule was already written down. core/policy.py has classified save_memory as
+  GUARDED since the policy table existed: "memory is permanent — remembering is
+  approval-gated". The verdict was there. The inline tool path in main.py never
+  asked the policy anything, and called update_memory directly. A rule enforced
+  nowhere is a comment, and the model could store an inferred preference with no
+  prompt, no log line and no way for the user to know.
+
+  Now save_memory parks behind the same on-screen confirmation the shutdown path
+  uses (core/confirm.py, already bound to the HUD in run()). Nothing is written
+  until CONFIRM. The tool hands the model a [CONFIRMATION_PENDING] sentence that
+  tells it to ask out loud and forbids claiming it is done, and the banner shows
+  the fact verbatim — the user approves the value, not a summary of it.
+
+WHY THERE IS NO "THE USER ALREADY SAID REMEMBER" SHORTCUT
+  It would be the obvious optimisation and it is the wrong one. Deciding that
+  intent from an utterance means "do you remember what I told you?" saving
+  silently when the classifier guesses wrong, and being wrong in that direction
+  writes something permanent without asking. One confirmation for a permanent
+  change is not the trivial-action prompting to be avoided.
+
+TWO QUALITY DETAILS THAT MATTER MORE THAN THE FEATURE
+  1. ONE BANNER AT A TIME. The gate holds a single pending decision. A second
+     memory write would have replaced the first and the fact behind it would have
+     vanished with no error anywhere — the exact silent loss this module exists
+     to stop. It now answers "I already have a confirmation on screen" and the
+     first decision stays intact.
+  2. A GATE THAT CANNOT ASK SAVES NOTHING. If no interface is bound (headless,
+     early startup), confirm.request already refuses; that sentence now reaches
+     the model unchanged instead of becoming an implied success.
+
+  The write path is also single: policy-allow (nothing in this build) and
+  policy-guarded both funnel through one function, so there is one place to audit.
+
+THE DIGEST IS NOT AN ULTRON CLAIM AND WAS REMOVED FROM THE GATE
+  It was reported NOT PRESENT because there is no daily digest in Ultron. True,
+  and beside the point: the digest is an Agentic OS milestone property. Keeping
+  it in this gate meant the instrument punished Ultron for not having a feature
+  nobody asked Ultron for. Removed rather than built — a digest is new feature
+  work and this app is frozen.
+
+SUITE AND GATE
+  177 files · 1,016 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+  Proof gate: 3 PROVEN (consent, memory_approval, persona), 11 PARTIAL, 1 FAILED
+  (screen capture, no display in this container), 0 NOT PRESENT.
+  New: core/memory_consent.py (11 tests), tests/test_memory_consent.py.
+
+-------------------------------------------------------------------------------
+PHASE 29 — THE DIGEST, AND A TEST THAT BLAMED THE WRONG THING. 2026-11-06
+-------------------------------------------------------------------------------
+Two requested changes: build the daily digest natively, and do something about
+the one FAILED claim. One is a feature, one was a fault in the instrument.
+
+BUILD 1.2.11.
+
+THE DIGEST — core/digest.py, and it activates nothing by construction
+  The standing rule is one sentence: the digest activates nothing. So the module
+  is shaped so that it cannot: build() reads three local files and returns a
+  plain dict, render_*() turn that dict into words, should_run() decides whether
+  today is due — and none of the three opens a socket, starts a process, calls a
+  tool or writes a file. The single write in the whole module is save_last_run(),
+  which stores one date so the digest runs once a day.
+
+  What it reports: facts remembered today (from the memory store, by the date
+  each entry carries), how many older facts exist, the topics being watched, and
+  how many reminders are set by name. Nothing else. News checking stays in
+  background_monitor; reminders stay in reminder.py. A digest that quietly did
+  their work would be the worst kind of feature: one the user believes is inert.
+
+  Three details that are decisions, not accidents:
+    1. It does not import actions/reminder.py — that module's helper CREATES its
+       folder, and a digest that creates a folder is a digest that changed the
+       machine. The path is built locally instead, and a test asserts that a
+       missing folder stays missing.
+    2. Watched topics are machine state, not things the user asked to remember,
+       so they are reported in their own line and excluded from the fact count.
+    3. The spoken version is capped at 240 characters. The digest must not hold
+       the floor while the user is talking.
+
+  Delivery, twice: the `daily_digest` tool for when the user asks, and a daily
+  loop that writes the report to the activity log at the configured hour (default
+  20:00, memory/config_manager.get_digest_hour). The loop never speaks — a
+  summary that interrupts is not a summary. It checks every ten minutes; the
+  check is a string comparison.
+
+  Tests: tests/test_digest.py (22). The ones that matter are the inert ones —
+  building with socket.socket and subprocess.run replaced by functions that raise,
+  and a before/after snapshot of the memory folder proving nothing was touched.
+
+THE FAILED TEST WAS THE INSTRUMENT'S FAULT
+  sees_screen reported FAILED because screen capture raised "Cannot connect to
+  display" — on a container with no screen. The feature did not fail; the
+  question did not apply. That is the definition of SKIP, and the gate has had
+  SKIP since the day it was written. It now asks one more thing before judging:
+  is there a display at all (DISPLAY/WAYLAND_DISPLAY on Linux, always on Windows
+  and macOS)? No display becomes SKIP with the reason; a display that returns no
+  frame stays FAILED, because that is a real fault.
+
+  This is the distinction the whole gate exists for. A report that says FAILED on
+  a machine that could not answer teaches the user to ignore the colour.
+
+SUITE AND GATE
+  179 files · 1,038 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+  Proof gate: 4 PROVEN (consent, memory_approval, persona, digest) · 12 PARTIAL ·
+  0 FAILED · 0 NOT PRESENT. proof_gate now exits 0 on this machine.
+BUILD 1.2.12.
+  Five tools integrated natively: REA, HyperFrames, Hindsight, VoiceStudio, Hypit.
+  core/bridges.py: one adapter each, probe() + run(), no shell, 25 s timeout,
+  4000-character cap, endpoints are configuration and never invented.
+  core/tool_catalog.py: self-knowledge from four sources (inline, action, plugin,
+  bridge). main.py gains `tools_status`; prompt tells the model to call it rather
+  than guess at its own abilities.
+  ui.py: ToolsOverlay — nine tabs, Ctrl+T, drawer button, unavailable tools shown
+  with their blocker.
+  Plugins: 1 -> 12. dev_json, dev_regex, dev_hash, dev_cron, crypto_ident,
+  net_check, plus rea_bridge, hyperframes_bridge, hindsight_bridge,
+  voicestudio_bridge, hypit_bridge. core/policy.py gained per-action tiers so a
+  local converter is routine and a renderer is guarded.
+  Defect fixed during the build: ActionRegistry.failures is a method returning
+  {file: reason}, not a list. The catalog called it as a list and crashed; a
+  failed action now appears with the loader's own sentence.
+  docs/TOOL_SUGGESTIONS.md and docs/LANGUAGE_DECISION.md written.
+
+SUITE AND GATE
+  197 files · 1,108 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+  Proof gate: 7 PROVEN (consent, memory_approval, persona, digest, tool_catalog,
+  plugins, tool_tabs) · 12 PARTIAL · 0 FAILED · 0 NOT PRESENT.
+BUILD 1.2.13.
+  Four defects, all found by using the last build.
+  1. plugins/_whatsapp_core.py did not exist. Three docstrings described it and
+     send_message fell back to blind keystrokes every time. Written: tree-driven
+     send that refuses a missing or ambiguous conversation and reads the box back
+     before it says sent. Fails closed. A real WhatsApp window is still unproven.
+  2. dev_regex could freeze a turn: `re` has no timeout and (a+)+$ ran for 90 s.
+     Matching now runs in a child process with a 2 s deadline.
+  3. crypto_ident called a UUID "base64, 27 bytes". UUIDs are recognised first.
+  4. No CI existed. .github/workflows/verify.yml runs verify.py, proof_gate.py
+     and verify_all.py on ubuntu-latest and windows-latest.
+  Also: .gitignore was overwritten during this build and test_bootstrap's own
+  GitignoreTests caught it in the same run. Restored, plus tool caches. The test
+  was right and the file is now the project's, not mine.
+
+SUITE AND GATE
+  200 files · 1,145 tests OK (skipped=6) · 99 MARK self-checks · exit 0.
+  Proof gate: 7 PROVEN · 13 PARTIAL (whatsapp added) · 0 FAILED · 0 NOT PRESENT.
