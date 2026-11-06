@@ -290,5 +290,58 @@ class OverlayPlacementTests(unittest.TestCase):
             window.close()
 
 
+class CoreColourFade(unittest.TestCase):
+    """A change of state is a movement, not a cut.
+
+    The old code picked two colours straight from the state and drew them, so a
+    switch from listening to thinking changed the accent from green to violet in
+    one frame. That reads as a glitch. The colours are eased now, and these tests
+    pin the two things a person would notice: the change is gradual, and it does
+    arrive.
+    """
+
+    def setUp(self):
+        from PyQt6.QtWidgets import QApplication
+        import ui
+
+        self.app = QApplication.instance() or QApplication([])
+        self.canvas = ui.HudCanvas(None)      # no face image: the avatar path
+        self.canvas.state = "IDLE"
+        self.canvas.speaking = False
+        self.canvas.muted = False
+
+    def tearDown(self):
+        self.canvas.deleteLater()
+
+    def test_the_first_colour_is_the_state_colour_with_no_fade_in(self):
+        self.canvas.state = "LISTENING"
+        self.canvas._ease_core_colours(1 / 60)
+        drawn = self.canvas._core_colours()[1]
+        target = self.canvas._core_colours_for_state()[1]
+        self.assertEqual(drawn.name(), target.name())
+
+    def test_a_state_change_moves_the_colour_and_does_not_jump(self):
+        self.canvas._ease_core_colours(1 / 60)                 # settle on IDLE
+        start = self.canvas._core_colours()[1].name()
+        self.canvas.state = "THINKING"
+        self.canvas._ease_core_colours(1 / 60)
+        after_one_frame = self.canvas._core_colours()[1].name()
+        target = self.canvas._core_colours_for_state()[1].name()
+        self.assertNotEqual(after_one_frame, target, "one frame must not complete the fade")
+        self.assertNotEqual(after_one_frame, start, "one frame must still move")
+        for _ in range(120):
+            self.canvas._ease_core_colours(1 / 60)
+        self.assertEqual(self.canvas._core_colours()[1].name(), target,
+                         "two seconds must be enough to arrive")
+
+    def test_a_broken_colour_source_falls_back_instead_of_raising(self):
+        def explode():
+            raise RuntimeError("no palette")
+
+        self.canvas._core_colours_for_state = explode
+        self.canvas._ease_core_colours(1 / 60)                 # must not raise
+        self.assertIsNone(self.canvas._core_a)
+
+
 if __name__ == "__main__":
     unittest.main()

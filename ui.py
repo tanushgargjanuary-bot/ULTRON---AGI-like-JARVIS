@@ -131,6 +131,26 @@ _PALETTE_DEFAULTS: dict[str, str] = {k: getattr(C, k) for k in _HUE_LINKED}
 DEFAULT_UI_COLOR = _PALETTE_DEFAULTS["PRI"]
 
 
+def _mix_colour(a, b, k: float):
+    """Move colour `a` a fraction `k` of the way to colour `b`, alpha included.
+
+    Qt already has a way to blend two colours, and using it keeps this honest:
+    `QColor` interpolation here is linear in RGBA, which is what the eye expects
+    for a short cross-fade between two close hues.
+    """
+    k = 0.0 if k < 0.0 else (1.0 if k > 1.0 else k)
+    try:
+        from PyQt6.QtGui import QColor
+        out = QColor(a)
+        out.setRed(round(out.red() + (b.red() - out.red()) * k))
+        out.setGreen(round(out.green() + (b.green() - out.green()) * k))
+        out.setBlue(round(out.blue() + (b.blue() - out.blue()) * k))
+        out.setAlpha(round(out.alpha() + (b.alpha() - out.alpha()) * k))
+        return out
+    except Exception:                                       # noqa: BLE001
+        return QColor(b) if k >= 0.5 else QColor(a)
+
+
 def apply_ui_accent(accent_hex: str) -> bool:
     """
     Re-derives the whole teal-family palette from the chosen accent colour
@@ -424,6 +444,16 @@ class HudCanvas(QWidget):
         self._face_spoken = ""
         self._face_until = 0.0
 
+        # The core colour is eased, not switched. A state change is a moment, and
+        # a hard cut between two colours looks like a glitch: the eye reads it as
+        # a dropped frame. These two hold the colours actually on screen, and the
+        # step function walks them toward the state's own colours at a rate that
+        # settles in about a sixth of a second — fast enough to feel immediate,
+        # slow enough to be seen as movement.
+        self._core_a = None
+        self._core_b = None
+        self._core_settle = 0.16
+
         # The holographic head that fills the HUD. If it could not be imported
         # we fall back to the old glowing core so the panel is never empty.
         self._avatar = None
@@ -666,6 +696,7 @@ class HudCanvas(QWidget):
             sp = 0.38 if self.speaking else (0.30 if amp > 0.02 else 0.15)
             self._scale += (self._tgt_scale - self._scale) * sp
             self._halo  += (self._tgt_halo  - self._halo)  * sp
+            self._ease_core_colours(1.0 / 60.0)
 
         self._blink_tick += 1
         if self._blink_tick >= 38:
@@ -711,7 +742,8 @@ class HudCanvas(QWidget):
     # the core brightens with the voice. Nothing here is decoration that moves
     # for its own sake, which is what made the old glowing orb feel dead.
 
-    def _core_colours(self):
+    def _core_colours_for_state(self):
+        """The colours this state asks for. The target, not what is drawn."""
         if self.muted:
             return qcol(C.MUTED_C), qcol(C.MUTED_C)
         if self.speaking:
@@ -721,6 +753,32 @@ class HudCanvas(QWidget):
         if self.state == "LISTENING":
             return qcol(C.PRI), qcol(C.GREEN)
         return qcol(C.PRI), qcol(C.PRI_DIM)
+
+    def _core_colours(self):
+        """The colours to draw with: the eased pair when it exists, else the target."""
+        if self._core_a is not None and self._core_b is not None:
+            return self._core_a, self._core_b
+        return self._core_colours_for_state()
+
+    def _ease_core_colours(self, dt: float) -> None:
+        """Walk the drawn colours toward the state's colours. Never raises."""
+        try:
+            target_a, target_b = self._core_colours_for_state()
+            if self._core_a is None or self._core_b is None:
+                self._core_a, self._core_b = target_a, target_b
+                return
+            k = 1.0 - math.exp(-max(0.0, dt) / max(0.01, self._core_settle))
+            for name, target in (("_core_a", target_a), ("_core_b", target_b)):
+                eased = _mix_colour(getattr(self, name), target, k)
+                # An exponential approach never quite arrives — and with whole
+                # colour channels it can stop one unit short for ever, which is
+                # invisible and unstoppable. A step that changes nothing is the
+                # signal to finish: the colour is the state's colour then.
+                same = all(getattr(eased, channel)() == getattr(getattr(self, name), channel)()
+                           for channel in ("red", "green", "blue", "alpha"))
+                setattr(self, name, target if same else eased)
+        except Exception:                                      # noqa: BLE001
+            self._core_a = self._core_b = None      # fall back to the plain table
 
     def _paint_core(self, p: QPainter, cx: float, cy: float, r: float,
                     W: float = 0.0, H: float = 0.0):
