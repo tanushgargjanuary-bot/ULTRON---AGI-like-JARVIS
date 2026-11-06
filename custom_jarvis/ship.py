@@ -301,6 +301,11 @@ class Shipper:
                                f"HEAD:refs/heads/{branch}"], self.repo, self.token)
         if code != 0:
             return {"ok": False, "note": f"GitHub refused the push: {err or out}"}
+        # The push went to a URL, not to the configured remote, so git does not
+        # move refs/remotes/<remote>/<branch> by itself. Without this, status()
+        # reports "ahead 1" seconds after a successful push, which is the kind of
+        # small lie this project exists to remove.
+        self.git("update-ref", f"refs/remotes/{self.remote}/{branch}", "HEAD")
         return {"ok": True, "note": f"Pushed {branch} to {re.sub(r'//[^@/]+@', '//', url)}.",
                 "branch": branch}
 

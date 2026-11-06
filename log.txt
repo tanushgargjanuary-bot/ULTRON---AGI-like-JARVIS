@@ -2062,7 +2062,7 @@ TWO DEFECTS THIS BUILD FOUND IN ITSELF
      been shipped. It lives in the state folder now; .gitignore names it too.
 
 SUITE AND GATE
-  224 files · 1,298 tests OK (skipped=6) · 31 of them in tests/test_shipping.py ·
+  224 files · 1,299 tests OK (skipped=6) · 32 of them in tests/test_shipping.py ·
   99 self-checks · verify.py exit 0 · module map regenerated.
   Proof gate: 14 PROVEN (shipping, self_update added) · 13 PARTIAL · 0 FAILED.
 

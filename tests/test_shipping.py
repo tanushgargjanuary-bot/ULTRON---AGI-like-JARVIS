@@ -125,6 +125,14 @@ class Pushing(Base):
         self.assertIn("change the greeting", git(self.origin, "log", "--oneline", "main"))
         self.assertEqual(git(self.origin, "show", "main:app.py"), "print('hello, again')")
 
+    def test_a_push_leaves_the_copy_reporting_nothing_to_send(self):
+        """A fresh push must not read as "ahead 1" a second later."""
+        (self.work / "app.py").write_text("print('changed')\n")
+        result = self.shipper().ship("a change worth sending")
+        self.assertTrue(result["ok"], result.get("note"))
+        status = self.shipper().status()
+        self.assertEqual((status["ahead"], status["behind"]), (0, 0), status)
+
     def test_the_commit_message_carries_the_evidence(self):
         (self.work / "app.py").write_text("print('third')\n")
         self.shipper().ship("third attempt", why="because two is not three")
