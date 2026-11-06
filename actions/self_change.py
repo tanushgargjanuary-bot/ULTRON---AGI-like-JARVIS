@@ -169,7 +169,9 @@ def self_modify(parameters: dict) -> str:
 TOOL = {
     "name": "self_modify",
     "description": (
-        "Change Ultron's own source code, safely and in the open. Use 'propose' with a "
+        "Change Ultron's own source code, safely and in the open. Use when the user asks "
+        "you to change your own code, repair a fault in yourself, or add a "
+        "capability to yourself. Use 'propose' with a "
         "path inside the project plus either 'text' (the whole new file) or 'find' and "
         "'replace' (one passage), and a 'reason'. Then 'rehearse' runs the change in a "
         "temporary copy of the project with the test harness, 'confirm' twice in two "

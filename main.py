@@ -85,6 +85,7 @@ from core import identity
 from core import outcome
 from core import philosophy
 from core import reconnect_policy as _reconnect
+from core import tool_prompt, tool_usage
 
 # One number for the starting delay, so main.py and the policy cannot drift
 # apart: two copies of "3 seconds" is how a retry loop ends up with a 0.
@@ -279,20 +280,14 @@ def _describe_tools(declarations) -> str:
     discovered at startup, so whatever the user has installed is what the model
     is told it can do. Adding a plugin extends this by itself, and removing one
     stops the model from claiming an ability it no longer has.
+
+    Each line leads with the CONDITION for calling that tool. A list of abilities
+    with no conditions is a list the model cannot act on: it knows there is a
+    reasoning kernel but not that it should plan before a multi-step job, so the
+    kernel stays unused. The shaping lives in core/tool_prompt.py, where the proof
+    gate and the tests can call it without importing the session.
     """
-    lines = []
-    for d in declarations or ():
-        try:
-            name = d.get("name") if isinstance(d, dict) else getattr(d, "name", None)
-            desc = (d.get("description") if isinstance(d, dict)
-                    else getattr(d, "description", "")) or ""
-        except Exception:
-            continue
-        if not name:
-            continue
-        desc = " ".join(str(desc).split())
-        lines.append(f"- {name}: {desc[:150]}" if desc else f"- {name}")
-    return "\n".join(lines)
+    return tool_prompt.describe(declarations)
 
 
 def _describe_limits(has_vision: bool, has_mic: bool) -> str:
@@ -545,6 +540,8 @@ TOOL_DECLARATIONS = [
             "Save an important personal fact about the user to long-term memory. "
             "Offer to save this only after explicit human approval on the HUD: "
             "name, age, city, job, preferences, hobbies, relationships, projects, or future plans. "
+            "Use when the user tells you something lasting about themselves that "
+            "they would expect you to remember next time. "
             "Do NOT call for: weather, reminders, searches, or one-time commands. "
             "Explain the proposed fact; the actual save requires the human confirmation banner. "
             "Values must be in English regardless of the conversation language."
@@ -1527,6 +1524,10 @@ class JarvisLive:
         args = {k: v for k, v in (fc.args or {}).items() if v is not None}
 
         print(f"[JARVIS] 🔧 {name}  {args}")
+        # Which hand was used. Recorded here because this is the one point every
+        # approved call passes through; without it, a feature that is never chosen
+        # and a feature that is never needed look identical from outside.
+        tool_usage.note(name)
         _t_tool = time.monotonic()
         self.ui.set_state("THINKING")
 
@@ -1572,11 +1573,17 @@ class JarvisLive:
 
             elif name == "tools_status":
                 # Self-knowledge from the same sources the app uses, so the answer
-                # matches reality instead of a list written by hand.
-                from core import tool_catalog
+                # matches reality instead of a list written by hand. The usage line
+                # is the part that is not a claim: it says which of them have ever
+                # been reached for, so a tool nobody calls can be found and fixed.
+                from core import tool_catalog, tool_usage
                 wanted = str(args.get("tool") or "").strip()
-                result = (tool_catalog.describe(wanted) if wanted
-                          else tool_catalog.render_text())
+                if wanted:
+                    result = tool_catalog.describe(wanted)
+                else:
+                    entries = tool_catalog.build()
+                    result = (tool_catalog.render_text(entries) + "\n\n"
+                              + tool_usage.render([entry.name for entry in entries]))
 
             elif name == "daily_digest":
                 # Read-only by construction (core/digest.py): three files in,

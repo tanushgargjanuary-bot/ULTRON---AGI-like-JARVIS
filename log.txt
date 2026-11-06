@@ -1,3 +1,74 @@
+=== 2026-11-06 · build 1.2.33 · every skill gets a reason to be used ===
+
+The owner asked the question that follows every feature ever added:
+
+  "Now how do I make sure that the triggers for all the skills and features will work.
+   because they need a condition to get triggered, otherwise ULTRON will never use
+   them. Is this solved already?"
+
+It was not solved, and the measurement said why in one line. A tool needs three things
+before it is ever used: it must exist, the model must be told WHEN to use it, and
+something must count the calls so a dead one can be found. Only the first was true.
+
+MEASURED, NOT GUESSED. The instruction lists every tool with a one-line summary, and
+the builder cut that line at 150 characters of the description. On this build 10 of 32
+tools had the sentence that says when to call them entirely past that cut. The ability
+survived; the reason to use it did not. The ones it cost were the newest and least
+obvious: reasoning, curriculum, philosophy, self_modify, recall_memory, ui_control,
+dev_agent, video_player, computer_settings, daily_digest. A feature nobody knew to ask
+for. Twelve more tools had no condition sentence at all.
+
+  core/tool_prompt.py   the line is now `- name: WHEN — what`. The condition comes
+                        from the tool's own description, never written a second time,
+                        and it is FIRST, so the cap can only ever cost a description.
+                        A condition that starts late in a long sentence is cut at its
+                        own cue and re-capitalised, not lost.
+  main.py               `_describe_tools` delegates to it. One implementation, so the
+                        gate and the tests call the same code the app does — and no
+                        `exec()` of a slice of main.py, which was a HIGH finding.
+  12 tools              one plain condition sentence each: file_controller, reminder,
+  + browser_control     weather_report, flight_finder, code_helper, send_message,
+                        desktop_control, self_modify, save_memory, screen_process,
+                        computer_control, ui_control, and browser_control — that last
+                        one only appeared in the scan once playwright was installed,
+                        which is how a missing trigger stays invisible.
+  core/prompt.txt       one added line: the block is a list of CONDITIONS, so match the
+                        request to the condition, not to the tool's name.
+
+COUNTED. `core/tool_usage.py` records a count and a date per tool, in the settings file,
+from the single point every approved call passes through. `tools_status` now ends its
+answer with what has never been called:
+
+  "12 of 32 tools have been called. Most used: web_search (40). Never called (20):
+   flight_finder, game_updater, … A tool in this list has a description the model has
+   not found a reason to use."
+
+That sentence is the audit the owner asked for. It finds a dead trigger by using the
+assistant rather than by reading it. A failure to write the statistic can never break a
+tool call, and nothing here records what was asked — only which hand was used.
+
+THE BUDGET, HONESTLY. Moving the conditions to the front did not grow the instruction:
+the block is 4,736 characters for 32 tools, the same as before, because the line is 150
+characters either way. But measuring it showed the old test was wrong: PromptBudget
+measured `TOOL_DECLARATIONS`, the ten inline tools, while the app sends those plus
+everything discovered — 22,320 characters, not 16,620. A new test measures the real
+configuration and holds it under 24,000.
+
+  tests/test_triggers.py   30 tests: every tool has a condition and it comes before the
+                           description; a long description never loses its condition; a
+                           condition cut mid-sentence is capitalised; the real prompt
+                           fits; the cue list is the one the test checks; main delegates
+                           instead of keeping a second copy; a call is counted; nothing
+                           called yet is said in words; a broken settings write does not
+                           break the call; an old shape on disk does not crash the
+                           reader.
+  proof_gate               new claim `triggers` — every tool has a condition, the model
+                           is told to read it, two calls are counted as two, and the
+                           tool status reports what was never used.
+
+State: 1,680 tests OK (skipped=8), 10.0 MB / 475 files. Proof gate 21 PROVEN / 13
+PARTIAL / 0 FAILED.
+
 === 2026-11-06 · build 1.2.32 · the syllabus is not stored, it is running ===
 
 The owner corrected the premise of the last build, in one line:

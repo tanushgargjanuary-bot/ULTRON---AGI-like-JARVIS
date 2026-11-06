@@ -412,7 +412,8 @@ TOOL = {
     "description": (
         "Sends a text message via WhatsApp, Telegram, or another messaging "
         "platform. Write 'message_text' in the USER'S OWN LANGUAGE, exactly "
-        "what they asked to be said. "
+        "what they asked to be said. Use when the user asks to send a message or a "
+        "file to someone on one of those apps. "
         "This tool answers immediately and sends in the background. On "
         "status=started say only that you are sending it, never that it is "
         "sent. The result follows separately: status=done means it was "

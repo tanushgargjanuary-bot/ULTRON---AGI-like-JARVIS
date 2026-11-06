@@ -390,6 +390,21 @@ def save_philosophy(value: dict) -> None:
     _save_flag("philosophy", value if isinstance(value, dict) else {})
 
 
+def get_tool_usage() -> dict:
+    """Which tools have been called, and how often.
+
+    A count and a date per tool name, nothing else. Kept in the settings file rather
+    than a log so it survives a restart, and small enough that deleting it costs the
+    owner nothing but the history of the count.
+    """
+    value = load_api_keys().get("tool_usage")
+    return value if isinstance(value, dict) else {}
+
+
+def save_tool_usage(value: dict) -> None:
+    _save_flag("tool_usage", value if isinstance(value, dict) else {})
+
+
 def get_curriculum_progress() -> dict:
     """Which syllabus topics the owner has marked done, and nothing else."""
     value = load_api_keys().get("curriculum")

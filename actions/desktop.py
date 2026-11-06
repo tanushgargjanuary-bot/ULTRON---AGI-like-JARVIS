@@ -476,6 +476,8 @@ TOOL = {
     "name": "desktop_control",
     "description": (
         "Controls the DESKTOP itself: the wallpaper, and tidying the files on "
+        "it. Use when the user asks about the wallpaper, asks to tidy, clean or "
+        "sort the desktop, or asks what is on it. "
         "it. Actions: wallpaper (needs 'path') | wallpaper_url (needs 'url') | "
         "current_wallpaper | organize (needs 'mode': by_type or by_date) | "
         "clean | list | stats. "

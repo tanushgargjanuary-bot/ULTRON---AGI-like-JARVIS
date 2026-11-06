@@ -1209,6 +1209,8 @@ TOOL = {
     "name": "browser_control",
     "description": (
         "Controls the web browser: open an address, search, click, type, "
+        "Use when the user asks to open a site, search the web in a real "
+        "browser, fill a form, log in, or read a page that needs a browser. "
         "scroll, read the page, manage tabs, go back and forward. "
         "THIS TOOL OPENS THE BROWSER ITSELF. Never call open_app for the "
         "browser first - doing both launches it twice, the second copy on a "

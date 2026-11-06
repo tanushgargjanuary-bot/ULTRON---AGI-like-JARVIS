@@ -34,6 +34,9 @@ These are the actions you can actually perform right now. Judge every request
 against this list: if it is within reach, DO it — call the tool — rather than
 describe it or merely say you are about to. Saying you will do something and
 not calling its tool leaves the user with nothing.
+Each line below begins with WHEN to call that tool, then what it does. Match
+the request to the condition, not only to the tool's name. A tool whose
+condition you have just met is the wrong tool to skip.
 {capabilities}
 
 [WHAT YOU CANNOT DO]

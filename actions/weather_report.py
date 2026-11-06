@@ -54,7 +54,9 @@ def _log(message: str, player=None) -> None:
 # ── Tool declaration (auto-discovered by core/action_loader.py) ──────────────
 TOOL = {
     "name": "weather_report",
-    "description": "Gives the weather report to user",
+    "description": "Gives the weather report to user. "
+        "Use when the user asks about the weather, the temperature, rain, or what to "
+        "wear today.",
     "parameters": {
         "type": "OBJECT",
         "properties": {

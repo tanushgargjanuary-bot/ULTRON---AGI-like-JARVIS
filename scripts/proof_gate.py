@@ -624,6 +624,81 @@ def claim_mental(c: Claim) -> None:
                       "them, so the kernel is used rather than merely present")
 
 
+def _gate_tools(root: Path):
+    """Every tool the model is told about, read the way the app reads them."""
+    import ast as _ast
+
+    from core import action_loader
+    source = (root / "main.py").read_text(encoding="utf-8", errors="replace")
+    inline = []
+    for node in _ast.walk(_ast.parse(source)):
+        if isinstance(node, _ast.Assign) and getattr(node.targets[0], "id", "") == "TOOL_DECLARATIONS":
+            for item in node.value.elts:
+                inline.append({k.value: v.value for k, v in zip(item.keys, item.values)
+                               if isinstance(v, _ast.Constant)})
+    registry = action_loader.discover_actions(actions_dir=root / "actions",
+                                              reserved_names={d["name"] for d in inline},
+                                              logger=lambda _m: None)
+    return inline, registry, inline + registry.get_tool_declarations()
+
+
+def claim_triggers(c: Claim) -> None:
+    """Every tool says when to call it, the model reads that, and calls are counted."""
+    from core import tool_prompt, tool_usage
+
+    root = Path(__file__).resolve().parent.parent
+    inline, registry, declarations = _gate_tools(root)
+    if len(declarations) < 20:
+        return c.bad("the tools", f"only {len(declarations)} tools were discovered")
+    c.ok("the tools", f"{len(declarations)} tools, {len(inline)} inline and "
+                      f"{len(declarations) - len(inline)} discovered from actions/")
+
+    missing = [d["name"] for d in declarations
+               if not tool_prompt.condition_of(str(d.get("description", "")))]
+    if missing:
+        return c.bad("the conditions", "no when-to-use sentence for: "
+                                       + ", ".join(missing[:6]))
+    c.ok("the conditions", "every tool leads with the condition that should trigger it, "
+                           "so a feature cannot be declared and never chosen")
+
+    block = tool_prompt.describe(declarations)
+    template = (root / "core" / "prompt.txt").read_text(encoding="utf-8", errors="replace")
+    if len(template) + len(block) >= 24_000:
+        return c.bad("the budget", f"the real prompt is "
+                                   f"{len(template) + len(block):,} characters")
+    if "begins with WHEN to call" not in template:
+        return c.bad("the reading", "the instruction never tells it to read the condition")
+    c.ok("the reading", f"the model is told to match the condition, and the whole "
+                        f"instruction is {len(template) + len(block):,} characters")
+
+    source = (root / "main.py").read_text(encoding="utf-8", errors="replace")
+    if "tool_usage.note(name)" not in source:
+        return c.bad("the count", "no call is recorded, so a dead trigger is invisible")
+    # A temporary store, so the gate never writes the owner's settings file. Both
+    # ends are replaced: stubbing only the writer would leave every call reading the
+    # real file and counting from zero, which is what the first version of this probe
+    # did — and it reported two calls as one.
+    written: dict = {}
+    saved_read = tool_usage.read
+    saved_save = tool_usage.settings.save_tool_usage
+    tool_usage.read = lambda: dict(written)
+    tool_usage.settings.save_tool_usage = lambda value: written.update(value)
+    try:
+        tool_usage.note("gate_probe")
+        tool_usage.note("gate_probe")
+    finally:
+        tool_usage.read = saved_read
+        tool_usage.settings.save_tool_usage = saved_save
+    if written.get("gate_probe", {}).get("count") != 2:
+        return c.bad("the count", f"two calls were recorded as {written!r}")
+    c.ok("the count", "each call is counted, so 'never used' can be told from "
+                      "'never needed'")
+    if "tool_usage.render(" not in source:
+        return c.bad("the report", "tools_status never reports what was never used")
+    c.ok("the report", "asking what it can do also says which tools have never been "
+                       "reached for")
+
+
 def claim_self_modify(c: Claim) -> None:
     """It changes its own source in five stages, and cannot touch the referee."""
     import tempfile
@@ -1914,6 +1989,8 @@ CLAIMS = [
      "self-modification, gated", claim_self_modify),
     ("mental", "The syllabus is not stored in it — it thinks with it.",
      "the syllabus as logic, not notes", claim_mental),
+    ("triggers", "Every tool says when to use it, and the calls are counted.",
+     "a feature cannot be silently unreachable", claim_triggers),
     ("provider_switch", "You can switch provider without editing a file.",
      "no hardcoded provider", claim_provider_switch),
     ("budgets", "The performance numbers hold.", "zero performance issues", claim_budgets),

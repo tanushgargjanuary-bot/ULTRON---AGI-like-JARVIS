@@ -113,6 +113,13 @@ a small built-in fallback — instead of crashing.
   for code that is not there, never cite a topic the unit does not contain, and never
   let the decorator change behaviour. The course is meant to run in the assistant, not
   sit on a shelf.
+- **Every tool must say when to call it, and its calls are counted.** The condition is
+  the sentence in the tool's own description that starts with a cue such as "Use it
+  when"; `core/tool_prompt.py` puts it at the front of the line the model reads, because
+  the line is capped and whatever comes last is what gets cut. Never add a tool with no
+  condition, never keep a second copy of a description, and never remove
+  `tool_usage.note(name)` from the call path: without it a feature that is never chosen
+  looks exactly like a feature that is never needed.
 - **A mind in `core/philosophy.py` is text, and it states its bound.** Every voice
   arrives with a maxim, a stance and a limit it may never cross; the limit is rendered
   into the instruction with the maxim. Never give a voice a code path, never let one

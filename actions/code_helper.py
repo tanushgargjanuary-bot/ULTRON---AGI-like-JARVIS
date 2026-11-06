@@ -589,7 +589,9 @@ def code_helper(
 # ── Tool declaration (auto-discovered by core/action_loader.py) ──────────────
 TOOL = {
     "name": "code_helper",
-    "description": "Writes, edits, explains, runs, or builds code files.",
+    "description": "Writes, edits, explains, runs, or builds code files. "
+        "Use when the user asks you to write, change, explain, run or build code, "
+        "whether it goes into a file or stays in the chat.",
     "parameters": {
         "type": "OBJECT",
         "properties": {
