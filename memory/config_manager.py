@@ -374,6 +374,22 @@ def _save_flag(key: str, value) -> None:
     _write_config(data)
 
 
+def get_philosophy() -> dict:
+    """The minds Ultron thinks with, as the owner chose them.
+
+    One key, holding one object, because a blend is one decision rather than six
+    settings that could disagree. Anything malformed reads as "not chosen" and the
+    caller falls back to the shipped blend, which is always usable.
+    """
+    value = load_api_keys().get("philosophy")
+    return value if isinstance(value, dict) else {}
+
+
+def save_philosophy(value: dict) -> None:
+    """Store the chosen blend through the same atomic write as every other setting."""
+    _save_flag("philosophy", value if isinstance(value, dict) else {})
+
+
 def get_brief_enabled() -> bool:
     return load_api_keys().get("morning_brief_enabled", True)
 

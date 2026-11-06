@@ -493,6 +493,43 @@ def claim_persona(c: Claim) -> None:
         c.ok("persona", "the prompt names Ultron and its aliases")
 
 
+def claim_philosophy(c: Claim) -> None:
+    """Its philosophy is a blend the owner owns, and no voice can grant permission."""
+    try:
+        from core import philosophy as minds
+        from actions import philosophy as tool
+    except Exception as exc:
+        return c.absent("philosophy", f"{type(exc).__name__}: {exc}")
+    cast = minds.VOICES
+    unbound = [key for key, voice in cast.items() if not voice.bound.strip()]
+    if unbound:
+        return c.bad("bounds", "a mind states no limit: " + ", ".join(unbound))
+    c.ok("cast", f"{len(cast)} minds, each with a maxim, a stance and a bound")
+    # Pure: `_normalise` writes nothing, so the gate can ask the hardest question
+    # without touching the owner's settings.
+    chosen, _notes = minds._normalise({"ultron": 0.9})
+    if chosen.get("ultron", 0) > minds.VOICES["ultron"].ceiling + 0.01:
+        return c.bad("ceiling", f"the adversary reached {chosen.get('ultron', 0):.0%}")
+    c.ok("ceiling", f"asked for 90%, the adversary is held at "
+                    f"{chosen.get('ultron', 0):.0%}")
+    block = minds.prompt_block()
+    if minds.CHARTER not in block:
+        return c.bad("charter", "the block does not say that permission is unchanged")
+    missing = [key for key in minds.active()
+               if minds.VOICES[key].bound not in block]
+    if missing:
+        return c.bad("bounds", "not in the instruction: " + ", ".join(missing))
+    c.ok("charter", f"{len(block)} characters added, and every bound in them")
+    source = (ROOT / "main.py").read_text(encoding="utf-8", errors="replace")
+    if "philosophy.prompt_block()" not in source:
+        return c.bad("instruction", "main.py never adds the block to the prompt")
+    c.ok("instruction", "appended to the system instruction at session start")
+    answer = tool.philosophy_tool({"action": "rules"})
+    if "40%" not in answer:
+        return c.bad("tool", "the tool does not state its own ceiling")
+    c.ok("tool", "reachable by voice, and it states the ceiling itself")
+
+
 def claim_provider_switch(c: Claim) -> None:
     """You can switch provider without editing a file."""
     try:
@@ -1723,6 +1760,8 @@ CLAIMS = [
     ("memory_approval", "Only what you approve is remembered.",
      "approval-only memory", claim_memory_approval),
     ("persona", "It is Ultron, and it knows it.", "named, robotic persona", claim_persona),
+    ("philosophy", "Its philosophy is a blend you choose, and no voice may widen it.",
+     "a philosophy, with bounds", claim_philosophy),
     ("provider_switch", "You can switch provider without editing a file.",
      "no hardcoded provider", claim_provider_switch),
     ("budgets", "The performance numbers hold.", "zero performance issues", claim_budgets),

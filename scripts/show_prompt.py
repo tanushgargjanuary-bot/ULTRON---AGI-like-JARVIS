@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core import prompt_store
+from core import philosophy, prompt_store
 
 
 def _check(as_json: bool) -> int:
@@ -72,6 +72,11 @@ def _text(as_template: bool, as_json: bool) -> int:
         return 0
     print(text)
     if not as_template:
+        block = philosophy.prompt_block()
+        if block:
+            print()
+            print("— added after that file when a session starts —")
+            print(block)
         print()
         print(f"— {len(text)} characters, placeholders filled for reading. "
               f"The file itself is {prompt_store.PROMPT_PATH}.")

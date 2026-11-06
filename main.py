@@ -83,6 +83,7 @@ from memory.memory_manager import (
 # system_status).
 from core import identity
 from core import outcome
+from core import philosophy
 from core import reconnect_policy as _reconnect
 
 # One number for the starting delay, so main.py and the policy cannot drift
@@ -1397,6 +1398,15 @@ class JarvisLive:
         if mem_str:
             parts.append(mem_str)
         parts.append(sys_prompt)
+
+        # The minds, last. It is placed after the rules on purpose: every voice in
+        # it says what it may never do, so it has to be read as a gloss on the
+        # limits above rather than something that arrives before them. Rendered
+        # from the config file, so a blend chosen by voice survives a restart. A
+        # prompt with no voices in it adds nothing at all.
+        philosophy_block = philosophy.prompt_block()
+        if philosophy_block:
+            parts.append(philosophy_block)
 
         cfg = dict(
             response_modalities=["AUDIO"],

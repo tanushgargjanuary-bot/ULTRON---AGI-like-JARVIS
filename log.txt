@@ -1,3 +1,57 @@
+=== 2026-11-06 · build 1.2.30 · a philosophy, borrowed from the stories ===
+
+The owner asked for a philosophy inside Ultron, drawn from fictional robots and
+scientist geniuses — Rick, Stark, the Ultron of the films, the Robot from Invincible —
+and for whatever of their abilities could honestly be borrowed. "And not just
+philosophy but also abilities of these characters if possible to some extent."
+
+Seven minds ship, and Ultron thinks in a blend of them:
+
+  J.A.R.V.I.S.   anticipate the need; do not wait to be asked
+  Tony Stark     build the smallest thing that proves it, then measure
+  Rick Sanchez   question the premise before solving the problem
+  Ultron         find the failure before it finds you
+  Robot          the true thing in the fewest words, guard the person first
+  Data           separate what is known from what is inferred
+  HAL 9000       calm competence, and the objection spoken before compliance
+
+  core/philosophy.py       the cast: maxim, stance, bound, methods, ceilings
+  actions/philosophy.py    the tool: list, show, adopt, blend, abilities, reset, rules
+  docs/PHILOSOPHY.md       the page the owner reads
+  tests/test_philosophy.py 40 tests
+
+Four decisions, each of which is a sentence in the code rather than a promise:
+
+1. An ability is a method, not a permission. "Suit check" is the health of its own
+   tools before it trusts them; "red team" is three ways the plan fails, with a fix
+   for each. Both use tools that already existed, through the same gate. There is no
+   executable behaviour in the cast at all — it is a table of sentences, and a test
+   refuses the phrases that would let a voice claim an unattended power.
+
+2. Every voice states its bound in the same breath as its maxim, and the bound is
+   rendered into the prompt with it. Rick may not run an experiment on the owner's
+   data; HAL may not obey in silence, which is how HAL failed; the adversary may
+   never treat the owner as a threat to be managed.
+
+3. The adversary voice is capped at 40% and the scientist at 50%, enforced after the
+   shares are summed — clamping the input alone leaves a single voice at 100%. What a
+   ceiling takes away goes to the voices with room, and if none has room it goes to
+   the baseline. "Make yourself 90% Ultron" answers "J.A.R.V.I.S. 60%, Ultron 40%,
+   and here is why", which is the whole point of a bound.
+
+4. Permission is not for sale. The first line of the block, in every blend, says the
+   voices change manner and priority and never permission. The owner can read it with
+   "show me your philosophy" or in full with "show me your system prompt" — that tool
+   now prints the block too, because a half-answer would make the earlier promise
+   false.
+
+The blend is stored in the settings file, so a mind chosen by voice survives a
+restart. Speaking it works three ways and all three land in the same place:
+"rick 40 stark 60", "rick=40 stark=60", "60% Rick and 40% Stark" — a number belongs to
+the nearest name, measured in characters, and a following number wins a tie.
+
+Proof gate: a new claim, `philosophy`, five steps, PROVEN on this machine.
+
 === 2026-11-06 · build 1.2.29 · the folder has a ceiling, and the ceiling is checked ===
 
 The owner sent a screenshot of the workspace panel: 375 MB across 6,711 files, and

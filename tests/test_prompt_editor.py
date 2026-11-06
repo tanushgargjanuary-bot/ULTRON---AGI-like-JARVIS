@@ -73,8 +73,13 @@ class TheOwnerCanSeeIt(WithATemporaryPrompt):
     def test_the_prompt_it_shows_is_the_prompt_the_model_gets(self):
         template = prompt_store.read()
         shown = self.call(action="show")
-        self.assertLess(len(shown), prompt_store.size() + 1_000,
-                         "the whole prompt should fit in one answer")
+        # The answer is now two sections: the file, and the minds that are added to
+        # it at session start (about a thousand characters). Both belong in the
+        # answer, because the model is given both — a show that printed only the
+        # file would be a half-truth about what shapes the behaviour.
+        self.assertIn("[PHILOSOPHY", shown, "the minds are part of the instruction")
+        self.assertLess(len(shown), prompt_store.size() + 2_500,
+                        "the whole prompt should fit in one answer")
         # Distinctive passages from across the file, with the placeholders filled.
         for passage in ("[SELF]", "[WHAT YOU CANNOT DO]", "[UNTRUSTED CONTENT]",
                         "Brevity is the default.", "You are Ultron"):

@@ -97,6 +97,11 @@ a small built-in fallback — instead of crashing.
 - Settings and keys live in `config/api_keys.json` through
   `memory/config_manager.py`; never write that file directly.
 - Keep to the libraries already in `requirements.txt`.
+- **A mind in `core/philosophy.py` is text, and it states its bound.** Every voice
+  arrives with a maxim, a stance and a limit it may never cross; the limit is rendered
+  into the instruction with the maxim. Never give a voice a code path, never let one
+  add a permission, and never remove the ceiling on the adversary voice (40%) without
+  the owner saying so in his own words.
 - **The workspace stays under 100 MB and 5,000 files, and the number is checked.**
   Install packages with `--target` to a temporary folder and set `PIP_CACHE_DIR`
   outside the project. The save after a message keeps about 128 MB and silently drops

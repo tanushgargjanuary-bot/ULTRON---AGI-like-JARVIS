@@ -21,7 +21,7 @@ is read on screen.
 
 from __future__ import annotations
 
-from core import failures, prompt_store
+from core import failures, philosophy, prompt_store
 
 MAX_PREVIEW = 20_000        # the whole prompt fits: the owner asked to see it
 
@@ -39,6 +39,13 @@ def _preview_block() -> list[str]:
 
 def _show() -> str:
     lines = _preview_block()
+    # The file is what a person edits, but it is not the whole of what the model is
+    # given: the minds are added after it, at session start. Showing the file alone
+    # would make "show me your prompt" a half-truth, and this tool exists because the
+    # owner asked for the whole thing.
+    block = philosophy.prompt_block()
+    if block:
+        lines += ["", "--- added after that file, when a session starts ---", block]
     lines.append(f"{prompt_store.size()} characters, from "
                  f"{prompt_store.PROMPT_PATH.name}. The tool list and the limits "
                  f"block are filled in when a session starts.")
