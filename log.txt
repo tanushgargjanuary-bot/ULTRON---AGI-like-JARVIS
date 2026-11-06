@@ -1,3 +1,33 @@
+=== 2026-11-06 · build 1.2.26 · CI green on both platforms ===
+
+Run c6d2b8c0: linux success, windows success. First green pair in the record.
+
+What it took, and what I got wrong on the way:
+
+1. I guessed three times and was wrong three times. The logs said it in one read.
+   The real failures were a readme test demanding that gitignored runtime files
+   exist in a fresh checkout, and a process-watch test that assumed a freshly
+   spawned child is in the table a microsecond later. Neither was anything I had
+   guessed at.
+
+2. The Windows-only crash that I had written down as an unexplained flake was Qt's
+   own shutdown: 0xC0000005 after the last widget test passed. The harness now
+   closes its widgets and quits the application while Python is healthy, and leaves
+   through os._exit after printing its verdict.
+
+3. Two failures were caused by my own work in this same hour, and both were caught
+   by guards built earlier: the proof gate still imported a test module that had
+   been merged into a suite, and the note-taker guard caught the self-test calling
+   failures.note() without importing it. The ratchets earned their place.
+
+4. A process lesson: pushing twice cancelled the first verification run and cost a
+   six-minute cycle. Push once, then wait.
+
+HOUSEKEEPING. The owner asked for fewer files. Twenty-seven test modules became
+four suites, each source file kept whole under a banner. The 58 uploaded screenshots
+became one archive with all 58 entries verified inside it. Test count unchanged at
+1,410, which is the proof nothing was lost.
+
 === 2026-11-06 · build 1.2.25 · the numbers own themselves, and a Rust answer ===
 
 1. Cleaning: the workspace was 1,158 files / 22 MB, mostly because .git held 730
