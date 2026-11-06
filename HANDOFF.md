@@ -1,3 +1,22 @@
+build 1.2.36 · 2026-11-07
+
+The documents a new agent needs, and one new page: `WORKING-PHILOSOPHY.md` - the one rule,
+how we talk, how a change is made, what is never allowed, how we debug, and the checklist
+before a push. `OwnerFiles/for-the-next-agent.md` is the same thing applied to today: what
+stands, what is open, three commands, and ten traps that already cost time.
+
+Corrected rather than appended: `GATEKEEPERS.md` still said "there is no CI, so nothing has
+ever run on Windows". Both were false. `OwnerFiles/journey.md` stopped at 1.2.17 and now runs
+to 1.2.36. `DECISIONS.md` carries the 1.2.33-1.2.35 decisions (tool schema as a provider
+contract, a close code is not a diagnosis, a crash leaves a file). `OwnerFiles/owner-notes.md`
+is filled from the owner's own recorded words, with the last section left empty for him.
+
+Build 1.2.35 closed the fault that made the assistant blame his API key for a malformed tool
+list; `docs/CONNECTION.md` is the plain-words page for it.
+
+State: 1,737 tests OK (skipped=8), 10.8 MB / 547 files, gate 22 / 13 / 0 on Linux without
+hardware, both CI jobs green.
+
 build 1.2.24 · 2026-11-06
 
 Both performance levers are closed and the gate explains itself.

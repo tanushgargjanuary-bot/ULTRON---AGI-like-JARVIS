@@ -269,6 +269,8 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | [docs/MENTAL.md](docs/MENTAL.md) | which course topics run as Ultron's own algorithms, and where each one lives |
 | [docs/TRIGGERS.md](docs/TRIGGERS.md) | what makes each tool fire, and the count that shows a tool nothing calls |
 | [docs/CRASHES.md](docs/CRASHES.md) | what a crash leaves behind, and how self-repair starts from that report |
+| [WORKING-PHILOSOPHY.md](WORKING-PHILOSOPHY.md) | how work on this project is done: the one rule, the process, the red lines, the checklist |
+| [OwnerFiles/for-the-next-agent.md](OwnerFiles/for-the-next-agent.md) | the handover: what stands, what is open, and the ten traps |
 | [docs/CONNECTION.md](docs/CONNECTION.md) | what a close code means, and why a schema fault once looked like a bad key |
 | [docs/SELF-CHANGE.md](docs/SELF-CHANGE.md) | how it changes its own code: five stages, a rehearsal copy, and the referee it may not touch |
 | [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) | the seven minds, how to blend them by voice, and the three rules that hold them |

@@ -239,3 +239,78 @@ Two things were found by not trusting a green run: the sidecar's executable bit
 does not survive a snapshot, and the gate's PARTIAL column was a number without a
 reason. Both are fixed. A single segfault in a Qt teardown was seen once, could not
 be reproduced, and is written down rather than swept.
+
+### 2026-11-06 · 1.2.33 — "how do I make sure the triggers work?"
+
+He asked the question that follows every feature: a skill with no condition is a
+skill Ultron will never use. It was not solved. The instruction cut each tool's
+one-line description at 150 characters, and on that build **10 of 32 tools lost the
+sentence that says when to call them** — the newest and least obvious ones, the
+reasoning kernel and the syllabus tool among them. Twelve more had no condition at
+all.
+
+Every tool now reads `- name: WHEN — what`. The condition is taken from the tool's
+own description, never written twice, and it goes first, so the cap can only cost a
+description. Every call is counted, so asking *"what can you do"* also answers
+*which of these have I never reached for*. Measuring the prompt also showed the old
+budget test measured the wrong list: 16,620 characters was the inline tools only,
+22,320 is what the app actually sends.
+
+### 2026-11-06 · 1.2.34 — a crash that leaves a record
+
+Under `pythonw` there is no console, and there was no `sys.excepthook`, no
+`threading.excepthook`, no unraisable hook and no `faulthandler` anywhere in 93,000
+lines. A bug reached him as a window that disappeared.
+
+`core/crash.py` catches all four kinds of death: the main thread, a worker thread, an
+object dying in a destructor, and a native fault inside a Qt or audio DLL that Python
+never sees. A report holds the time, the build, the kind, the message, the traceback,
+and **the last notes the assistant made before it fell**, which is usually where the
+cause is. Secrets are removed before the file is written. Twenty reports are kept.
+
+Self-repair now starts from the report: a proposal carries the crashes known at the
+time, and *"why did you crash"* reads the newest one.
+
+The Windows runner then found two real bugs in that build, which is exactly what it
+is for: the open fault-handler stopped a temporary folder being deleted, and a test
+that used `chmod` to make a folder unwritable was a **false pass** on Windows, because
+Windows ignores `chmod`. Both fixed, and the second one now blocks a write by pointing
+at a file instead of a folder — a failure every platform agrees on.
+
+### 2026-11-07 · 1.2.35 — it stopped blaming the API key
+
+He pasted his activity log. The session would not stay up, and the log said:
+
+```
+APIError: 1007 ... function_declarations[40].parameters.required[0]:
+property is not defined
+ERR: API key invalid - please re-enter your key.
+```
+
+He re-entered a key that was already right, more than once. There were two faults.
+
+**One field of one tool stopped everything.** Five bridge plugins said *"action is
+required"* and never declared `action`. Google does not ignore a schema it dislikes:
+it refuses the whole tool list and closes the session with 1007. Every retry sent the
+same list and was refused the same way.
+
+**The number was read as an answer.** The reconnect loop tested `"1007" in err_str`,
+and 1007 covers a bad key, a bad model name and a bad schema alike — so a schema fault
+opened the re-key panel.
+
+Both fixed, and both guarded: `core/action_loader.py` repairs a bad declaration at
+start and says what it repaired, so one bad field costs one argument instead of the
+session; `core/close_codes.py` reads the message before the number and names the tool
+that was refused. `tests/test_provider_schema.py` has 18 tests, and his own log line is
+one of the fixtures. The gate now proves *"the provider accepts the list"*.
+
+### 2026-11-07 · 1.2.36 — the pages a new agent needs
+
+He is handing this project to other tools, so the documents were brought up to date and
+one new page was written: `WORKING-PHILOSOPHY.md`. It holds the one rule, how we talk to
+him, how a change is made, what is never allowed, the failure patterns, and the checklist
+before a push. `OwnerFiles/for-the-next-agent.md` is the same thing applied to today: what
+stands, what is open, the first three commands, and the ten traps that already cost time.
+
+`GATEKEEPERS.md` was saying *"there is no CI, so nothing has ever run on Windows"*. That
+stopped being true several builds ago and was corrected rather than appended to.

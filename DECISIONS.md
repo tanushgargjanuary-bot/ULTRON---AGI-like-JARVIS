@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-06**.
+Last updated: **2026-11-07** (build 1.2.36).
 
 ---
 
@@ -179,6 +179,15 @@ new visual language need to be asked for, not assumed.
 | **Silence is a decision, including for reminders** | A card is shown only if its expected value beats the cost of interrupting you, and not twice inside its cooldown. Quiet hours hold everything except an emergency. An assistant that always has something to say is not attentive. | `custom_jarvis/schedule.py`, gate claim `reminders` |
 | **An old success must be allowed to expire** | Strategy attempts carry timestamps and are replayed with a 30-day half-life, so a method that worked in March does not outrank one that works now. | `custom_jarvis/metacog.py:choose_strategy` |
 | **The map is generated, not remembered** | `scripts/map.py` reads the docstrings and the tests and writes `docs/MAP.md`; `verify.py` runs it and fails on a new module with no docstring or no test. Upstream modules with no test are listed rather than hidden. | `scripts/map.py`, `docs/MAP.md` |
+
+| **A tool schema is a contract with a provider, not a suggestion** | A declaration may only mark a parameter `required` if it declares it under `properties`. Google refuses the **whole tool list** for one such field and closes the session with `1007`; retrying cannot help, because the same list is re-sent. Five plugins did this and the owner spent an evening re-entering a key that was already right. | `core/action_loader.py:sanitize_declarations`, `tests/test_provider_schema.py`, gate claim `plugins` |
+| **A close code is not a diagnosis** | `1007` means "I closed this session" and covers a bad key, a bad model name and a bad schema alike. The reconnect loop tested `"1007" in err_str` and asked for a key every time. The message decides now; the number only breaks a tie. | `core/close_codes.py`, `tests/test_provider_schema.py:ARejectedToolListIsNotABadKey` |
+| **One bad field costs one argument, never the session** | A repair pass runs on every start: an undeclared `required` name is dropped, a property with no known type is given one, and each repair is printed and written to the activity log. Silence would be worse than either failure. | `core/action_loader.py:sanitize_declarations` |
+| **A crash leaves a file, and a repair starts from it** | Four deaths, four hooks: main thread, worker thread, unraisable, and a native fault Python never sees. A report carries the build, the kind, the traceback and the last notes before the fall, with credentials replaced. The next start says it crashed; a proposal carries the crashes it was made from. | `core/crash.py`, `tests/test_crash.py`, gate claim `crash_record` |
+| **Every tool says when to call it, and every call is counted** | A tool with no condition is a tool that is never chosen, and a feature that is never chosen looks exactly like a feature that is never needed. The condition comes first in the line the model reads, because the cap can only cost a description. | `core/tool_prompt.py`, `core/tool_usage.py`, gate claim `triggers` |
+| **A yes or no question gets Yes or No first** | A direct answer buried in paragraphs is not an answer to a person who asked a direct question. | how the assistant reports to the owner, recorded in `WORKING-PHILOSOPHY.md` |
+| **Plain words before any table** | He flagged excessive technicality three times. Simplified Technical English, one instruction per sentence, the least technical term that is still accurate. | every reply, `WORKING-PHILOSOPHY.md` section 2 |
+| **The working philosophy is a file, not a habit** | A handover to another agent cannot rely on a conversation that no longer exists. The one rule, the process, the red lines, the failure patterns and the checklist live in one page any agent can read in ten minutes. | `WORKING-PHILOSOPHY.md`, `OwnerFiles/for-the-next-agent.md` |
 
 | **A push is allowed only in one direction** | The ship pushes `main` to `origin` and nothing else: no force, no tag, no other branch, no rewrite of history. A remote that has moved is a refusal sentence, because the alternative is destroying work that someone else published. | `custom_jarvis/ship.py:push`, gate claim `shipping` |
 | **A secret is caught before the commit exists** | The scan runs first, so a leak is never in a local commit that someone might push later out of habit. The trade is a slower ship and the risk of a false alarm, which is why the scanner knows the placeholder shapes this repository's own tests use. | `custom_jarvis/ship.py:scan`, `find_secret` |

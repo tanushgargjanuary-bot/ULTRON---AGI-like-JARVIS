@@ -7,6 +7,8 @@ Every document in the repository, one line each, and who it is for.
 | Document | Who it is for | What it answers |
 |---|---|---|
 | [`readme.md`](../readme.md) | everyone | what Ultron is, how to install it, and what changed in the last build |
+| [`WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | any agent picking this up | the one rule, how we talk, how a change is made, what is never allowed, and the checklist before a push |
+| [`OwnerFiles/for-the-next-agent.md`](../OwnerFiles/for-the-next-agent.md) | any agent picking this up | what stands today, what is open, the first three commands, and the traps |
 | [`ARCHITECTURE.md`](../ARCHITECTURE.md) | anyone changing code | the six layers, one turn end to end, where a change belongs |
 | [`docs/MAP.md`](MAP.md) | anyone changing code | every module with its one-line purpose, line count and test — **generated** by `python scripts/map.py --write` |
 | [`DECISIONS.md`](../DECISIONS.md) | anyone proposing a change | what the owner decided, in his words, and where it is enforced |

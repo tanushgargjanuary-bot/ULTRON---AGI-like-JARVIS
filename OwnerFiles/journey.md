@@ -65,6 +65,97 @@ the order the work happened.
    A reminder queue where silence is a valid answer. `ARCHITECTURE.md`, a
    document index, and a module map generated from the code.
 
+8. **1.2.17: it can hand its own work back.** Shipping and self-updating are the
+   same discipline in two directions: check before you publish, check after you
+   pull, and put it back if it does not hold. The interesting part is not the git
+   commands. It is the ordering — the secret scan runs before the commit exists,
+   so the leak is never in history, and the verify runs before the restart, so the
+   version on disk is always one that starts.
+
+## 2026-11-06 and 07 — from 1.2.18 to 1.2.36
+
+The rest of the run, in order. Each line is a build with a `log.txt` entry and a
+commit behind it.
+
+9. **The honest front page (1.2.19).** The readme was audited line by line and
+   rebuilt: a link to a folder that was not in the repository, and a claim about a
+   feature nobody had run, both removed. The page stopped describing the project
+   and started reporting it.
+
+10. **Supervision without a console (1.2.20 and 1.2.22).** Background supervision
+    that is read-only, and the first compiled component: a small Go supervisor that
+    survives a crash and does not flash a window. Go because it builds on both
+    machines with no toolchain argument, and Rust only once a measured hot leaf
+    exists. Its first bug was a missing execute bit, hidden perfectly by the Python
+    fallback working.
+
+11. **Measured change (1.2.21, 1.2.23, 1.2.24, 1.2.25).** A safe change became a
+    measured change. A profile of one turn showed Python at **0.165 ms** against
+    600 to 4,000 ms of model, which answered "why is it still Python" with a number
+    instead of an argument. Two levers were then closed honestly: a warm connection
+    pool (6.8 ms to 0.56 ms per request) and a prompt that was measured, not cut —
+    and the benchmark that first said pooling was *slower* was itself wrong.
+
+12. **CI on both machines (1.2.26).** The one structural gate — "nothing has ever
+    run on Windows automatically" — stopped being a gate. The workflow runs the
+    suite, the machine verifier and the proof gate on `ubuntu-latest` and
+    `windows-latest`, and it found bugs on the first night that Linux could not see:
+    a workflow flag no script declared, a report folder missing on a fresh clone,
+    three instruments calling a missing device a broken product, and a claim whose
+    code called a method that was never written.
+
+13. **An installer, and a prompt he can read (1.2.27, 1.2.28).** One path to install,
+    no administrator password, and no second launcher. His instructions became a file
+    he can open, edit on instruction, and put back — with a validator, so a prompt
+    that would be refused at runtime is refused at save time instead.
+
+14. **A ceiling, and a philosophy (1.2.29, 1.2.30).** The folder is checked against
+    100 MB and 5,000 files, because a save once silently dropped 6,352 files. And
+    seven minds were added as **methods, not permissions** — the thinking of
+    analytical characters, with no voice acting and no voice able to widen what the
+    assistant may do.
+
+15. **The syllabus as logic (1.2.31, 1.2.32).** He said it plainly: he did not want
+    the syllabus stored, he wanted the topics *implemented as logic*. So 18 of 284
+    topics now cite themselves from the code that runs them, and the citation is
+    checked against the syllabus file, so a citation for code that is not there
+    cannot pass.
+
+16. **Every skill gets a reason (1.2.33).** Ten of 32 tools had lost the sentence that
+    says when to call them, because the instruction cut each line at 150 characters.
+    The condition goes first now, and every call is counted, so a feature that is
+    declared and dead is a number he can ask for.
+
+17. **A crash that leaves a record (1.2.34).** Four kinds of death, four hooks, and a
+    report that holds the last thing the assistant was doing. Self-repair starts from
+    that report instead of a hunch.
+
+18. **It stopped blaming the API key (1.2.35).** Five plugins broke one rule of the
+    provider's format, the provider refused the whole tool list, and the reconnect
+    loop read the close code as "wrong key" — so he re-entered a key that was already
+    right. Both faults fixed, and both guarded by tests and by the gate. This is the
+    clearest example in the record of the pattern below: the program said something it
+    had not checked.
+
+19. **The pages a new agent needs (1.2.36).** `WORKING-PHILOSOPHY.md` and
+    `OwnerFiles/for-the-next-agent.md`, plus every stale page corrected — including
+    one that still said there was no CI.
+
+## What has not changed
+
+The shell is still Python. The referee is still off limits. Nothing is remembered
+without his approval. And the rule from the first session is still the rule: **a claim
+needs evidence, and an unverified claim must say so.**
+
+## The pattern worth noticing
+
+Almost every defect in this record has the same shape: **the program said
+something it had not checked.** A driver that did not exist. A tally that called
+three successes "100%". A tool that was never confined. A surface counted as
+passing because it was never asked. The fixes differ; the failure does not. If
+you are the next assistant, read a change twice with that question in mind: what
+does this make the program say, and what proves it?
+
 ## What the owner asked for repeatedly
 
 These are the instructions that shaped the build, in his words where possible:
@@ -76,19 +167,3 @@ These are the instructions that shaped the build, in his words where possible:
   handle things like this itself."
 - "Only remember what I approve."
 - The assistant must not pretend. A push that did not happen is not a push.
-
-## The pattern worth noticing
-
-Almost every defect in this record has the same shape: **the program said
-something it had not checked.** A driver that did not exist. A tally that called
-three successes "100%". A tool that was never confined. A surface counted as
-passing because it was never asked. The fixes differ; the failure does not. If
-you are the next assistant, read a change twice with that question in mind: what
-does this make the program say, and what proves it?
-
-8. **1.2.17: it can hand its own work back.** Shipping and self-updating are the
-   same discipline in two directions: check before you publish, check after you
-   pull, and put it back if it does not hold. The interesting part is not the git
-   commands. It is the ordering — the secret scan runs before the commit exists,
-   so the leak is never in history, and the verify runs before the restart, so the
-   version on disk is always one that starts.

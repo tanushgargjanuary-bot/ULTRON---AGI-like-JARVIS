@@ -24,9 +24,16 @@ So the rule for this folder is one sentence:
 
 | File | What it holds | Who writes it |
 |---|---|---|
+| `for-the-next-agent.md` | **start here.** What stands today, what is open, the first three commands, and the ten traps that already cost time | the assistant, from the build record |
 | `journey.md` | the build history in plain language: what was asked, what was built, what broke | the assistant, from the build record |
 | `session-log.md` | short dated entries, newest last: what each session did | the assistant, and the owner can append |
 | `owner-notes.md` | the owner's own words: goals, preferences, things he does not want | the owner |
+
+The working philosophy the whole project follows is one level up, in
+[`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md): the one rule, how we talk, how a
+change is made, what is never allowed, and the checklist before a push. That page is the
+shortest path into this repository for an agent; `for-the-next-agent.md` is the same thing
+applied to today's state.
 
 ## What must never be here
 
@@ -47,10 +54,11 @@ public.
 
 Give the other assistant the repository and say:
 
-> Read `OwnerFiles/` first, then `ARCHITECTURE.md`, then `DECISIONS.md`, then
-> `GATEKEEPERS.md`. Do not weaken a test to make a change pass. If a decision in
-> `DECISIONS.md` blocks your change, say so instead of working around it.
+> Read `OwnerFiles/for-the-next-agent.md` first, then `WORKING-PHILOSOPHY.md`, then
+> `AGENTS.md`, then `ARCHITECTURE.md`, then `DECISIONS.md`, then `GATEKEEPERS.md`. Do not
+> weaken a test to make a change pass. If a decision in `DECISIONS.md` blocks your change,
+> say so instead of working around it.
 
-That order matters. The journey explains the intent, the architecture explains
-the shape, the decisions explain the limits, and the gatekeepers say which claims
-already have proof.
+That order matters. The handover says where things stand, the philosophy says how work is
+done, the rules say what breaks, the architecture explains the shape, the decisions explain
+the limits, and the gatekeepers say which claims already have proof.

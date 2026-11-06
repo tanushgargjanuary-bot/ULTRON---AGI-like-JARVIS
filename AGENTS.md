@@ -1,9 +1,13 @@
-# Rules for coding agents working on JARVIS
+# Rules for coding agents working on Ultron
 
 The built-in coding agent (`actions/dev_agent.py`) reads this file before every
 change it makes to this project, and so should any other agent or contributor.
 Each rule below exists because breaking it produced code that looked right,
 passed a syntax check and did nothing when used.
+
+**Read [`WORKING-PHILOSOPHY.md`](WORKING-PHILOSOPHY.md) first.** It holds the one rule
+this project runs on, how work is done, what is never allowed, and the checklist before a
+push. This file is the rule book for the code; that page is the thinking underneath it.
 
 ## How the app runs
 

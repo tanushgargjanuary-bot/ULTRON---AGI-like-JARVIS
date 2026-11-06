@@ -1,7 +1,15 @@
 # GATEKEEPERS — what is actually between us and a working Ultron
 
 Rewritten 2026-11-06, build 1.2.9, after you pushed back on the first version.
-You were right on two counts and I have cut them rather than reword them:
+Updated 2026-11-07, build 1.2.36: the two things this page used to call gates are
+closed. **There is CI now**, on `ubuntu-latest` and `windows-latest`, green on the last
+push, and the product **has** run on Windows — the window renders at three sizes, the
+claim that was PARTIAL for weeks because no Windows machine had ever run it. What
+remains open is hardware this repository cannot reach: your microphone, your speaker,
+your camera, your display and your account. The corrected sections are marked below;
+nothing else here was rewritten to look better than it is.
+
+The original objections, still standing:
 
 - **Legality is not a gate here.** CC BY-NC 4.0 restricts *distribution*, and a
   private Ultron on your own machine is not distribution. Zero exposure, not a
@@ -11,11 +19,17 @@ You were right on two counts and I have cut them rather than reword them:
 - **Build gates are not a wall.** You are right that a key is not a wall. There is
   exactly **one** build gate now — the key — and it is a one-liner.
 
-Which leaves the thing that actually stands in the way, and it is not a gate you
-can buy your way through: **nothing in this product has ever run on Windows.** Not
-the window, not the microphone, not the tree, not the browser, not one real model
-call with your account. That is not a build problem, it is an evidence problem, and
-`scripts/proof_gate.py` is the instrument built for it.
+Which left the thing that actually stood in the way, and it was not a gate you could
+buy your way through: **nothing in this product had ever run on Windows.** Not the
+window, not the microphone, not the tree, not the browser, not one real model call with
+your account. That was not a build problem, it was an evidence problem, and
+`scripts/proof_gate.py` was the instrument built for it.
+
+**Since then:** the window, the tree, the browser library, CI and the tool list have all
+run on Windows. What has still never run there is the part only you own - your microphone
+at your device's real rate, your speaker, your camera, your display at your scaling, and
+one real model call with your account. That list is what the remaining 13 PARTIAL claims
+are about, item by item, lower on this page.
 
 ---
 
@@ -47,9 +61,10 @@ python scripts\proof_gate.py --live           # with your real key / local model
 python scripts\proof_gate.py --json proof.json
 ```
 
-Sixteen **claims**, each a chain rather than a checklist, because a microphone that
+Thirty-five **claims**, each a chain rather than a checklist, because a microphone that
 records and a model that answers have not, together, heard and answered anything
-until the sentence has come out of the speaker. Four verdicts:
+until the sentence has come out of the speaker. The last count on Linux, with no display
+and no hardware attached: **22 PROVEN, 13 PARTIAL, 0 FAILED**. Four verdicts:
 
 | verdict | means | what to do |
 | --- | --- | --- |
@@ -83,6 +98,9 @@ enthusiastic report would quietly round up to "works".
 | **self_update** | **PROVEN** (1.2.17) | six steps against a real remote: an up-to-date copy applies nothing; a documentation change is taken with **no restart** (data is read on demand); a changed `.py` writes a restart marker naming the file and says why; a version that does not parse is **reverted to the previous commit** with the broken file gone; a dirty tree is refused rather than overwritten; and the marker lives beside the state, never in the tree, because an untracked file in the tree blocks the next update |
 | **decisions** | **PROVEN** (1.2.15) | eight steps: expected value picked the careful option at +0.85; a guaranteed loss and a `blocked` option are both answered with "do none of these"; a chance of 1.7 and an unknown risk tier are refused; BM25 put the rare matching word first and returned **nothing** for an unrelated question; fourteen normal turns stayed quiet and a 9.0 s turn was flagged; a 1-in-1 option was explored once and then lost to the 12-in-12 option; and `decide` is reachable as a tool that asks no permission |
 | **metacognition** | **PROVEN** (1.2.14) | eight steps: the ledger imports; 3 of 3 is reported as accuracy 1.0 with a bound of **0.439** and the verdict "not yet evidence"; 40 of 40 earns **0.912**; claims made at 95% and wrong are named as a 90-100% bucket with 0% hit rate (Brier 0.90); a lesson with no rule is **refused**; the rule comes back for a matching task and its use is counted; the proven strategy is passed over once so the untried one gets a fair test; one JSON file, no model, no network |
+| **triggers** | **PROVEN** (1.2.33) | every tool leads with the condition that should trigger it, the model is told to match the request to the condition, two calls are counted as two, and the tool status names what has never been used. The test that mattered: measuring the real prompt showed the old budget watched the inline tools only — 16,620 characters — while the app sent 22,320 |
+| **crash_record** | **PROVEN** (1.2.34) | eight steps: a report is written for an uncaught error, a worker thread, an unraisable object and a native fault; it carries the build, the kind, the traceback and the last notes before the fall; a credential in the message is **replaced**; the 21st report deletes the oldest; the next start says it crashed; and a proposal carries the crashes it was made from |
+| **plugins** (extended 1.2.35) | **PROVEN** | as before, plus: **the provider accepts the list** — 46 declarations, every `required` name declared, every type the API knows. That step exists because five bridge plugins broke it and the whole session was refused with `1007` |
 | **whatsapp** | **PARTIAL** (1.2.13) | driver exists and refuses a stranger; a real WhatsApp window needs Windows, so the last step is a SKIP, not a pass |
 
 The **daily digest** was `NOT PRESENT` in 1.2.9 and removed from the gate in
@@ -133,22 +151,37 @@ Two things no instrument can settle, and both are real:
 
 ---
 
-## The one structural gate
+## The one structural gate — closed on 2026-11-06
 
-**There is no CI, so not one test has ever run on Windows automatically.** Every
-Windows regression is discovered by you, mid-use. A `windows-latest` workflow
-running `verify.py`, `verify_all.py` and `proof_gate.py` converts permanently
-skipped checks into permanent coverage, and it needs a repository — not a feature,
-not code from me.
+This section used to say: **"There is no CI, so not one test has ever run on Windows
+automatically."** That was true when it was written and it is not any more.
+`.github/workflows/verify.yml` runs the suite, the machine verifier and the proof gate on
+`ubuntu-latest` and `windows-latest` on every push, and both jobs are green on the last
+push of build 1.2.36.
+
+It paid for itself on the first night. It found four defects Linux could not see: a
+workflow flag no script declared, a report folder missing on a fresh clone, three
+instruments that called a missing device a broken product, and a claim whose code called
+a method that was never written. In 1.2.34 it found two more in code that had already
+passed on Linux: an open fault-handler handle that stopped a temporary folder being
+deleted on Windows, and a test that used `chmod` to make a folder unwritable — a **false
+pass**, because Windows ignores `chmod`.
+
+**A red CI job is a real defect, not noise.** Read the job log, fix the code, and never
+mark it as an environment problem without evidence.
 
 ---
 
 ## The shortest path from here
 
-1. `pip install` once via `run.bat`, paste a key, and run
-   `python scripts\proof_gate.py --live`. Send me the table.
-2. Whatever reads `FAILED` becomes the next defect I fix. Whatever reads
-   `NOT PRESENT` is a feature you either want built or don't — say which.
-3. Set the three budget numbers.
-4. Then stop testing and use it for a day. The defects that survive that are the
-   ones no instrument here can invent.
+1. Install once with `run.ps1`, paste a key, and run
+   `python scripts\verify_all.py` — that is the instrument that answers what **your**
+   PC does, and it reports SKIP where a question does not apply.
+2. Then `python scripts\proof_gate.py --live`. Whatever reads `FAILED` is the next
+   defect. Whatever reads `NOT PRESENT` is a feature you either want built or do not —
+   say which.
+3. Set the three budget numbers, so "zero performance issues" becomes a sentence that
+   can be true or false.
+4. Then stop testing and use it for a day. The defects that survive that are the ones no
+   instrument here can invent — and each of them now leaves a file in `logs/`, so the
+   next agent starts from the report instead of from a guess.

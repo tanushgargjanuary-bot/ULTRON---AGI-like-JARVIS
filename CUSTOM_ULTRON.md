@@ -348,8 +348,19 @@ For `run_skill`, `save_checkpoint:true` separately asks permission to retain tas
 
 See the single current `verification-results.txt`:
 
-- **101 Python files syntax-parsed**.
-- **209 unit/integration tests passed**, including the ported deterministic engine tests, repair lifecycle tests, actual confirmation-gate tests, service dispatch/backup checks and original MARK window construction with the custom controls. This is not the old application's 210-test UI suite; its old UI was intentionally not transplanted.
+> The four bullets below are kept as they were written, because they describe the
+> **first port** and the number of tests has grown by an order of magnitude since. The
+> current figures are at the top of this list, the old ones are in the sentence that
+> follows each, and `scripts/verify.py` prints the real number every time it runs.
+
+- **251 Python files syntax-parsed** (101 at the first port).
+- **1,737 unit/integration tests passed, 8 skipped, 0 failed** (209 at the first port),
+  including the ported deterministic engine tests, repair lifecycle tests, actual
+  confirmation-gate tests, service dispatch/backup checks and original MARK window
+  construction with the custom controls. This is not the old application's 210-test UI
+  suite; its old UI was intentionally not transplanted. The instrument that grew most is
+  the proof gate: 35 claims, 22 PROVEN on a Linux machine with no display and no hardware,
+  0 FAILED.
 - MARK's unchanged **provider self-test reported 99 passed, 0 failed**, including its offscreen settings-panel checks. Optional Piper-specific paths report skipped when Piper is not installed; those paths were not exercised as live synthesis.
 - **1,000 offline stress scenarios passed**: original 550 plus isolated repeated workspace/canary/breaker/shadow/transaction lifecycle checks. These are not 1,000 unique fuzz inputs.
 - **15/15 targeted seeded mutation defects detected**. This is not comprehensive mutation coverage.
@@ -363,6 +374,21 @@ Reproduce after installing the app dependencies:
 python -m pip install -r requirements-dev.txt
 python scripts/verify.py > verification-results.txt 2>&1
 ```
+
+## What was added after the first port
+
+These are the capabilities that did not exist when this document was written, each with the
+file that holds it. The full history is in `log.txt`, newest first.
+
+| Capability | Where | What it means in use |
+|---|---|---|
+| A crash leaves a record | `core/crash.py`, `logs/` | four kinds of death are caught, the report holds the last thing it was doing, and the next start mentions it. "Why did you crash" answers from the file |
+| Self-repair starts from that record | `core/self_change.py` | a proposal carries the crashes it was made from, so "why was this changed" has evidence |
+| Every tool states when to call it | `core/tool_prompt.py`, `core/tool_usage.py` | the condition comes first in the line the model reads; every call is counted, so a declared-and-dead feature is a number |
+| A tool schema must be one the provider accepts | `core/action_loader.py`, `tests/test_provider_schema.py` | one bad field used to cost the whole session; now it costs one argument, and the repair is reported |
+| A close code is read as words | `core/close_codes.py` | `1007` no longer means "wrong key" by itself, which is what it wrongly meant for one evening |
+| The seven minds | `core/philosophy.py`, `docs/PHILOSOPHY.md` | methods, not permissions, and no voice can widen what the assistant may do |
+| The syllabus as logic | `core/mental/`, `curriculum/*.json` | 18 of 284 course topics cite themselves from the code that runs them |
 
 ## Next integration work
 

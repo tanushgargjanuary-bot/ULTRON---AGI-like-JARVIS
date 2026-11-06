@@ -1,3 +1,78 @@
+=== 2026-11-07 · build 1.2.36 · the pages a new agent needs ===
+
+The owner is handing this project to other tools, and asked for the documents to be brought
+up to date and for the working philosophy to be written down. Both, and one of the old pages
+was saying something false.
+
+NEW
+  WORKING-PHILOSOPHY.md        the one rule (a claim needs evidence, and an unverified claim
+                               must say so), how we talk to the owner (plain words first, a
+                               yes/no question answered Yes or No first, simplified English),
+                               how a change is made (nine steps, one commit per improvement),
+                               what is never allowed (ten lines, each with the cost behind it),
+                               the three instruments and what each one cannot prove, how we
+                               debug (find the false sentence, not just the exception), the
+                               provider boundary, the shape of the code, and the checklist
+                               before a push.
+  OwnerFiles/for-the-next-agent.md  the same thing applied to today: what stands, what is
+                               open, the first three commands, ten traps that already cost
+                               time, the owner's own words, and how decisions are protected.
+
+CORRECTED, because a tracked page that is wrong is the defect this project keeps removing
+  GATEKEEPERS.md               said "there is no CI, so nothing has ever run on Windows", and
+                               "sixteen claims". There is CI on two machines, it is green, and
+                               Windows has run; there are 35 claims and 22 are PROVEN. The two
+                               new claims (triggers, crash_record) and the extended plugins
+                               claim are in the table, and the structural-gate section now
+                               says what the gate found instead of what was missing.
+  OwnerFiles/journey.md        stopped at 1.2.17. It now runs to 1.2.36 in order, and the
+                               stranded item 8 was put back with the list it belongs to.
+  DECISIONS.md                 2026-11-07: a tool schema is a provider contract; a close code
+                               is not a diagnosis; one bad field costs one argument; a crash
+                               leaves a file; every tool says when to call it; a yes or no
+                               question gets Yes or No first; the working philosophy is a file.
+  OwnerFiles/owner-notes.md    his preferences filled in from his own recorded words, quoted
+                               where they are short enough, and the last section left empty for
+                               him to write.
+  OwnerFiles/session-log.md    1.2.33, 1.2.34, 1.2.35 and 1.2.36, in plain words.
+  AGENTS.md                    titled Ultron, not JARVIS, and points at the philosophy page.
+  HANDOFF.md, readme.md, docs/INDEX.md, OwnerFiles/README.md   the new pages listed.
+
+State: 1,737 tests OK (skipped=8) · 11.0 MB / 575 files · 22 PROVEN / 13 PARTIAL / 0 FAILED ·
+both CI jobs green.
+
+=== 2026-11-07 · build 1.2.35 · it stopped blaming the API key ===
+
+The owner pasted his activity log. The session would not stay up:
+  APIError: 1007 None. ... function_declarations[40].parameters.required[0]:
+  property is not defined
+and every retry died the same way, while the log said "API key invalid" and asked for a
+key that was already correct.
+
+Cause, found by scanning every declaration against the provider's own rule:
+  - five bridge plugins (rea, hyperframes, hypit, hindsight, voicestudio) marked `action`
+    as required and declared no `action` property.
+  - one malformed field does not fail the tool. Google refuses the whole tool list and
+    closes the session with 1007.
+  - the reconnect loop tested `"1007" in err_str` and opened the re-key panel, so a
+    schema fault was reported as a credential fault.
+
+Fixed:
+  - the five plugins declare `action` with the values they accept.
+  - core/action_loader.py: sanitize_declarations() repairs a bad list at start and says
+    what it repaired, so one bad field costs one argument instead of the session.
+  - core/close_codes.py: a close message is read as words, not as a number. schema, key,
+    quota, model, network, other. The tool index is mapped back to the tool's name.
+  - main.py: the schema branch runs before the key branch, names the tool, and never asks
+    for a key.
+  - tests/test_provider_schema.py: 18 tests over every declaration from actions/,
+    plugins/ and main.py, plus the owner's own log line as the fixture.
+  - proof_gate: the plugins claim proves "the provider accepts the list" (46 declarations).
+  - docs/CONNECTION.md, readme section, AGENTS rule, docs/INDEX row.
+
+Numbers: 1,737 tests OK (skipped=8) · 10.7 MB / 546 files · 22 PROVEN / 13 PARTIAL /
+0 FAILED · 251 py files / 94,825 lines.
+
 === 2026-11-06 · build 1.2.34 · a crash that leaves a record, and a repair that starts there ===
 
 The owner asked for the crash trace, and for self-evolution to know about older crashes.
@@ -2912,35 +2987,3 @@ the most performant it can be. The answer is a measurement, so here it is.
    Only the two tests that drive the real binary noticed.
 
 State: 1370 tests OK (skipped=6). Proof gate 16 PROVEN / 13 PARTIAL / 0 FAILED.
-
-=== 2026-11-07 · build 1.2.35 · it stopped blaming the API key ===
-
-The owner pasted his activity log. The session would not stay up:
-  APIError: 1007 None. ... function_declarations[40].parameters.required[0]:
-  property is not defined
-and every retry died the same way, while the log said "API key invalid" and asked for a
-key that was already correct.
-
-Cause, found by scanning every declaration against the provider's own rule:
-  - five bridge plugins (rea, hyperframes, hypit, hindsight, voicestudio) marked `action`
-    as required and declared no `action` property.
-  - one malformed field does not fail the tool. Google refuses the whole tool list and
-    closes the session with 1007.
-  - the reconnect loop tested `"1007" in err_str` and opened the re-key panel, so a
-    schema fault was reported as a credential fault.
-
-Fixed:
-  - the five plugins declare `action` with the values they accept.
-  - core/action_loader.py: sanitize_declarations() repairs a bad list at start and says
-    what it repaired, so one bad field costs one argument instead of the session.
-  - core/close_codes.py: a close message is read as words, not as a number. schema, key,
-    quota, model, network, other. The tool index is mapped back to the tool's name.
-  - main.py: the schema branch runs before the key branch, names the tool, and never asks
-    for a key.
-  - tests/test_provider_schema.py: 18 tests over every declaration from actions/,
-    plugins/ and main.py, plus the owner's own log line as the fixture.
-  - proof_gate: the plugins claim proves "the provider accepts the list" (46 declarations).
-  - docs/CONNECTION.md, readme section, AGENTS rule, docs/INDEX row.
-
-Numbers: 1,737 tests OK (skipped=8) · 10.7 MB / 546 files · 22 PROVEN / 13 PARTIAL /
-0 FAILED · 251 py files / 94,825 lines.
