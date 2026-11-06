@@ -197,7 +197,7 @@ class Packs(unittest.TestCase):
         """A pack that is sound on Linux must be sound on Windows too."""
         from custom_jarvis.skillpacks import _escapes
 
-        for text in ("/etc/passwd", "\\server\share", "C:\\Windows\\system.ini",
+        for text in ("/etc/passwd", r"\\server\share", r"C:\Windows\system.ini",
                      "C:/Windows", "../above", "sub/../../above"):
             self.assertTrue(_escapes(text), text)
         for text in ("notes.txt", "sub/notes.txt", "@workspace", "."):
