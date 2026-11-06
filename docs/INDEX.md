@@ -12,6 +12,15 @@ Every document in the repository, one line each, and who it is for.
 | [`DECISIONS.md`](../DECISIONS.md) | anyone proposing a change | what the owner decided, in his words, and where it is enforced |
 | [`GATEKEEPERS.md`](../GATEKEEPERS.md) | anyone making a claim | which claims are proven, which need his machine, and why |
 
+## The owner's folder
+
+| Document | What it holds |
+|---|---|
+| [`OwnerFiles/README.md`](../OwnerFiles/README.md) | what the folder is for, what must never be in it, and the one sentence that defines it: another AI, given only this repository, must understand the intent well enough to continue the work without undoing it |
+| [`OwnerFiles/journey.md`](../OwnerFiles/journey.md) | the build history in plain language, including the defects the assistant caused |
+| [`OwnerFiles/session-log.md`](../OwnerFiles/session-log.md) | dated entries: what was asked, what was built, what is left |
+| [`OwnerFiles/owner-notes.md`](../OwnerFiles/owner-notes.md) | the owner's own words, and the prompts for them |
+
 ## How it was built
 
 | Document | What it holds |

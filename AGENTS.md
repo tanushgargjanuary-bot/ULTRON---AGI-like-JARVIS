@@ -97,3 +97,21 @@ a small built-in fallback — instead of crashing.
 - Settings and keys live in `config/api_keys.json` through
   `memory/config_manager.py`; never write that file directly.
 - Keep to the libraries already in `requirements.txt`.
+
+## Read these first, in this order
+
+1. `OwnerFiles/README.md` — why the repository exists and what it is for.
+2. `ARCHITECTURE.md` — the six layers, where a change belongs, and every
+   invariant with the test that enforces it.
+3. `DECISIONS.md` — what the owner decided. If a change contradicts an entry,
+   the entry wins until the owner says otherwise.
+4. `GATEKEEPERS.md` — which claims already have proof, and which need his machine.
+5. `docs/MAP.md` — every module, its purpose and its test. Generated; do not edit.
+
+## The one question to ask of any change
+
+**What does this make the program say, and what proves it?** Most of the defects
+in this repository had the same shape: the program claimed something it had not
+checked. If your change makes a new sentence appear — in a tool result, a status
+line, a document, a commit message — add the check that makes it true, or make
+the sentence weaker.
