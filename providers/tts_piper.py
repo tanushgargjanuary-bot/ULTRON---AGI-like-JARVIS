@@ -51,6 +51,7 @@ from typing import AsyncIterator, Optional
 
 from . import audio
 from .base import DEFAULT_CAPS, Field
+from . import connections
 
 def _voice_dir() -> Path:
     """Where downloaded voices live.
@@ -131,7 +132,7 @@ def catalog(refresh: bool = False) -> dict:
         # default, so without this the request "succeeds" with a redirect body
         # and the voice list comes back empty — a hundred and fifty voices
         # silently reduced to nothing.
-        with httpx.Client(timeout=20.0, follow_redirects=True) as cl:
+        with connections.Pooled.sync(httpx, timeout=20.0, follow_redirects=True) as cl:
             data = cl.get(_CATALOG_URL).json()
         for key, entry in (data or {}).items():
             lang = (entry.get("language") or {})

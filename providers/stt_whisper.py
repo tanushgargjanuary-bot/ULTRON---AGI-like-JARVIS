@@ -47,6 +47,7 @@ from typing import Optional
 
 from . import audio
 from .base import DEFAULT_CAPS, Field
+from . import connections
 
 # Ordered small to large. Every one of them is multilingual except the `.en`
 # variants, which are deliberately not offered: this assistant is not an English
@@ -212,7 +213,8 @@ class WhisperSTT:
         data = {"model": self.model_name, "response_format": "json"}
         if self.language:
             data["language"] = self.language
-        with httpx.Client(timeout=60.0, trust_env=not _is_loopback(base)) as cl:
+        with connections.Pooled.sync(httpx, timeout=60.0,
+                                     trust_env=not _is_loopback(base)) as cl:
             r = cl.post(f"{base}/audio/transcriptions", headers=headers,
                         data=data,
                         files={"file": ("speech.wav", wav, "audio/wav")})

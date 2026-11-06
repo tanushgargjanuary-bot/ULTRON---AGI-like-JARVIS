@@ -38,6 +38,7 @@ from typing import AsyncIterator
 
 from . import audio
 from .base import DEFAULT_CAPS, Field
+from . import connections
 
 API = "https://api.elevenlabs.io/v1"
 
@@ -109,7 +110,7 @@ class ElevenLabsTTS:
         if not text:
             return
 
-        async with httpx.AsyncClient(timeout=60.0) as cl:
+        async with connections.Pooled.asyncio(httpx, timeout=60.0) as cl:
             fmt = self._format or _PCM
             try:
                 async for piece in self._emit(cl, text, fmt):
@@ -152,7 +153,7 @@ class ElevenLabsTTS:
     def voices(self) -> list[tuple[str, str]]:
         """(id, name) for every voice on the account."""
         import httpx
-        with httpx.Client(timeout=15.0) as cl:
+        with connections.Pooled.sync(httpx, timeout=15.0) as cl:
             r = cl.get(f"{API}/voices", headers={"xi-api-key": self.key})
             if r.status_code >= 400:
                 raise RuntimeError(f"{r.status_code} {_message(r.text)}")

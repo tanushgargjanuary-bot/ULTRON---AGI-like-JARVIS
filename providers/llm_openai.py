@@ -35,6 +35,7 @@ from importlib.util import find_spec
 from typing import Any, AsyncIterator, Optional
 
 from .base import DEFAULT_CAPS, Field, FunctionCall
+from . import connections
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Known endpoints — so nobody has to remember a port number
@@ -482,8 +483,8 @@ class OpenAICompatLLM:
         """Text and any tool calls. Raises on failure so the ladder can read the
         error, classify it and rest this rung exactly as it rests a Gemini one."""
         try:
-            with self._httpx.Client(timeout=timeout or self.timeout,
-                                    trust_env=self._trust_env) as cl:
+            with connections.Pooled.sync(self._httpx, timeout=timeout or self.timeout,
+                                         trust_env=self._trust_env) as cl:
                 r = cl.post(f"{self.base}/chat/completions",
                             headers=self._headers(),
                             json=self._body(messages, tools, False, temperature))
@@ -515,8 +516,8 @@ class OpenAICompatLLM:
         # the pipeline engine, which names the provider and its target itself —
         # see providers/engine_pipeline._report. `complete()` IS wrapped, because
         # its caller is core/gemini.py's ladder, which has no such context.
-        async with self._httpx.AsyncClient(timeout=self.timeout,
-                                           trust_env=self._trust_env) as cl:
+        async with connections.Pooled.asyncio(self._httpx, timeout=self.timeout,
+                                              trust_env=self._trust_env) as cl:
             if not stream:
                 r = await cl.post(f"{self.base}/chat/completions",
                                   headers=self._headers(), json=body)
@@ -564,8 +565,8 @@ class OpenAICompatLLM:
     def models(self, timeout: float = 8.0) -> list[str]:
         """What this endpoint offers, so the panel can present a list instead of
         asking someone to type a model name exactly right."""
-        with self._httpx.Client(timeout=timeout,
-                                trust_env=self._trust_env) as cl:
+        with connections.Pooled.sync(self._httpx, timeout=timeout,
+                                     trust_env=self._trust_env) as cl:
             r = cl.get(f"{self.base}/models", headers=self._headers())
             r.raise_for_status()
             data = r.json()
