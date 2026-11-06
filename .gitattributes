@@ -1,14 +1,18 @@
-# Ultron — how git should treat this tree.
+# Ultron — one line ending policy, applied once.
 #
-# This project has been bitten by line endings more than once: several modules
-# are CRLF, several are LF, and a patch tool that reads bytes has to ask which.
-# Recording the answer here stops git from rewriting one into the other on
-# Windows and also stops a diff from showing a whole file as changed because of
-# an invisible carriage return.
+# The tree grew both endings: 39 modules were CRLF, the documents were LF, and a
+# patch tool had to ask each file which it was. This file is the answer, and the
+# commit that added it also renormalised every stored blob, so the repository and
+# the working tree now agree and never have to guess again.
 #
-# The rule: Python and Markdown are LF everywhere. Windows launchers are CRLF,
-# because cmd.exe and PowerShell read them and a lone LF in a .bat file is a
-# broken file on some Windows versions.
+#   * source and documents: LF, stored and checked out;
+#   * the Windows launchers: CRLF, because cmd.exe and PowerShell read them
+#     (tests/test_launchers.py asserts this, byte by byte);
+#   * binaries: marked, so no diff tries to read them as text.
+#
+# To change the policy later, change this file and run `git add --renormalize .`
+# in ONE commit, then say so in log.txt. Never let a line ending change ride
+# along inside a feature commit.
 
 * text=auto eol=lf
 
@@ -22,11 +26,12 @@
 *.cmd   text eol=crlf
 *.ps1   text eol=crlf
 
-# Real binaries. Never diffed, never converted.
-*.png binary
-*.jpg binary
-*.ico binary
-*.gif binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.gif  binary
 *.webm binary
 *.mp4 binary
-*.zip binary
+*.zip  binary
+*.so   binary
+*.dll  binary
