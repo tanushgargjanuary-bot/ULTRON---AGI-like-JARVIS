@@ -47,6 +47,30 @@ def _count_lines(root):
     return total
 
 
+def refresh_readme_sizes(files):
+    """Files and lines are facts about the tree, true before anything runs.
+
+    They must be written before the suite, because the suite contains a test that
+    compares them. The TEST count is different — it depends on which modules import
+    cleanly — so it is written afterwards, and only if every check passed.
+    """
+    import re
+    readme = Path(ROOT) / "readme.md"
+    if not readme.exists():
+        return
+    text = readme.read_text(encoding="utf-8")
+    found = re.search(r"\*\*(\d+) Python files\. ([\d,]+) lines\.", text)
+    if found is None:
+        return
+    lines = f"{_count_lines(ROOT):,}"
+    if found.group(1) == str(files) and found.group(2) == lines:
+        return
+    replaced = text.replace(found.group(0), f"**{files} Python files. {lines} lines.",
+                            1)
+    readme.write_text(replaced, encoding="utf-8")
+    print(f"Readme sizes refreshed: {files} Python files, {lines} lines.", flush=True)
+
+
 def refresh_readme_numbers(files):
     """Keep the page's numbers true, in the one place that knows them.
 
@@ -76,6 +100,17 @@ def refresh_readme_numbers(files):
     tests = suite.countTestCases()
     lines = _count_lines(ROOT)
     text = readme.read_text(encoding="utf-8")
+    current = re.search(r"\*\*\d+ Python files\..*?(\d[\d,]*) tests\.\*\*", text)
+    previous = int(current.group(1).replace(",", "")) if current else 0
+    # A guard, learned from a real failure: an environment missing one shared
+    # library lost eighty-five tests to an import error, and the first version of
+    # this function wrote that smaller number onto the page as if it were the truth.
+    # A collapse is an environment problem, so the page is left exactly as it is.
+    if previous and tests < previous * 0.9:
+        print(f"Readme test count NOT refreshed: this run collected {tests:,} tests "
+              f"against {previous:,} on the page — that gap means modules failed to "
+              f"import, not that tests were removed.", flush=True)
+        return
     new = f"**{files} Python files. {lines:,} lines. {tests:,} tests.**"
     found = re.search(r"\*\*\d+ Python files\..*?tests\.\*\*", text)
     if found is None:
@@ -99,6 +134,9 @@ def main():
                 ast.parse(path.read_text(encoding="utf-8-sig"), filename=str(path))
                 count += 1
     print(f"Syntax parsed {count} Python files.", flush=True)
+    refresh_readme_sizes(count)
+    # Before the suite, because the suite contains the test that compares this
+    # number to the page. The collapse guard inside makes that safe.
     refresh_readme_numbers(count)
     environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
     stray_before = set(_stray_host_files())

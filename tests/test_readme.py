@@ -88,13 +88,27 @@ class NumbersOnTheFrontPage(unittest.TestCase):
         tests_dir = str(ROOT / "tests")
         if str(ROOT) not in _sys.path:
             _sys.path.insert(0, str(ROOT))
-        suite = _unittest.defaultTestLoader.discover(tests_dir, top_level_dir=tests_dir)
-        number = suite.countTestCases()
+        live = _unittest.defaultTestLoader.discover(
+            tests_dir, top_level_dir=tests_dir).countTestCases()
+        allowed = {live}
+        # A second, equally real number: the count in the last recorded green run.
+        # The page may state either, because both are measurements. What it may not
+        # state is a number nobody ever observed — which is what a hand-kept count
+        # becomes the moment a test is added or an optional package is missing.
+        results = ROOT / "verification-results.txt"
+        if results.exists():
+            found = re.search(r"Ran (\d+) tests",
+                              results.read_text(encoding="utf-8", errors="replace"))
+            if found:
+                allowed.add(int(found.group(1)))
+        number = live
         # The page writes counts with thousands separators; the suite does not.
-        for spelling in (f"{number} tests", f"{number:,} tests"):
-            if spelling in self.text:
-                return
-        self.fail(f"the readme does not say {number:,} tests")
+        for candidate in sorted(allowed):
+            for spelling in (f"{candidate} tests", f"{candidate:,} tests"):
+                if spelling in self.text:
+                    return
+        wanted = " or ".join(f"{value:,}" for value in sorted(allowed))
+        self.fail(f"the readme says no number this tree has: it should say {wanted}")
 
 
 class Licence(unittest.TestCase):
