@@ -2159,6 +2159,23 @@ A DEFECT ON THE ONLY PLATFORM THAT CAN REACH IT
   step is a check now and not a SKIP with instructions. tests/test_ui_bridge.py
   keeps the method there and keeps the gate comparing.
 
+GREEN ON BOTH MACHINES — 23e120e
+  linux    suite, self-checks and gate   success
+  windows  native checks, suite, gate    success
+  On the Windows runner the gate reads 18 PROVEN, 9 PARTIAL, 0 FAILED. focus_safe
+  is PROVEN there, which means a real machine confirmed that reading the
+  accessibility tree does not move the foreground window. That is the claim this
+  project was least able to answer from here, and it is answered.
+
+  The four defects this CI round found, in the order they appeared:
+    1. a workflow flag that no script declared (--json on verify_all)
+    2. a report folder that does not exist on a fresh clone
+    3. three instruments calling a missing device a broken product
+    4. focus_safe calling a method that had never been written, and then asking
+       the returned tree for a field it does not have
+  None of the four could be seen from this Linux machine. That is the argument for
+  CI, made by the CI itself.
+
 SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The
   repository reports push: true, and PUT /contents answers 403 "Resource not

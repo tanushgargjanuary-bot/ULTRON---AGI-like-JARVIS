@@ -1382,3 +1382,11 @@ owner's PC.
 `--report`), and the Linux job asked for `verification/proof-gate.json` in a folder a fresh clone does not have.
 `WorkflowArguments` now reads `.github/workflows/verify.yml` and asserts every flag it passes is declared by the
 script it calls.
+**The CI is green on both machines (23e120e).** `linux` and `windows` both succeed. On the Windows runner the
+gate reads **18 PROVEN, 9 PARTIAL, 0 FAILED** — including `focus_safe`, proved by reading the accessibility tree and
+confirming the foreground window's handle did not change, and `sees_screen`. The suite passes there: 1,308 tests.
+Four defects came out of this round and none of them could be seen from Linux: a workflow flag no script declared,
+a report folder missing on a fresh clone, three instruments calling a missing device a broken product, and
+`focus_safe` calling `WindowsAdapter.foreground()` (never written) and then reading `.refs` from a `Node` that has
+none. The consoles now land in the artifact because every Windows step runs under `bash` with `tee`; PowerShell had
+also been failing a step whose command had already passed.

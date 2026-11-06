@@ -63,3 +63,7 @@ force, and no other work was touched.
 13 — the window draws, at three sizes, with the log panel inside the frame and text in it. Three areas failed, and
 all three were the instrument reporting a missing device as a broken product; that is fixed, and a test now locks
 the rule. Two mistakes in the CI file itself were also found by the same run and fixed.
+**Green on both machines.** Both CI jobs pass: the Linux one and the Windows one. On Windows the proof gate reads
+18 PROVEN, 9 PARTIAL, 0 FAILED, and the suite runs 1,308 tests there. Four defects came out of the round, and every
+one of them was invisible from the machine the code was written on. That is the whole argument for running it on
+yours, made by the thing that ran on yours.
