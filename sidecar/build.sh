@@ -24,6 +24,9 @@ go test ./...
 
 echo "Building..."
 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "$out/watchd-linux" ./watchd
+# A binary that is not executable fails at exec time, not at build time, and the
+# failure looks like "the sidecar is missing" — which is how it hid once.
+chmod +x "$out/watchd-linux"
 
 size=$(du -h "$out/watchd-linux" | cut -f1)
 echo "Built $out/watchd-linux ($size)"
