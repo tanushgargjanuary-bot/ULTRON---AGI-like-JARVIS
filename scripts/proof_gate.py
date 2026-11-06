@@ -96,7 +96,8 @@ def claim_voice_in(c: Claim) -> None:
     try:
         devices = [d for d in sd.query_devices() if d.get("max_input_channels")]
         if not devices:
-            return c.bad("input device", "no microphone reported by the system")
+            return c.skip("input device", "this machine reports no microphone, "
+                                          "so there is nothing to test here")
         c.ok("input device", f"{len(devices)} input device(s), default "
                              f"{sd.query_devices(kind='input')['name'][:40]}")
         info = sd.query_devices(kind="input")
@@ -151,7 +152,8 @@ def claim_voice_out(c: Claim) -> None:
     try:
         out = [d for d in sd.query_devices() if d.get("max_output_channels")]
         if not out:
-            return c.bad("output device", "no speaker reported by the system")
+            return c.skip("output device", "this machine reports no speaker, "
+                                           "so there is nothing to test here")
         rate = int(sd.query_devices(kind="output").get("default_samplerate") or 24000)
         t = np.linspace(0, 0.5, int(rate * 0.5), endpoint=False)
         sd.play((0.2 * np.sin(2 * np.pi * 440 * t) * 32767).astype("int16"),
@@ -393,10 +395,12 @@ def claim_focus_safe(c: Claim) -> None:
         if not snapshot.refs:
             return c.bad("tree", "the foreground window produced no refs")
         c.ok("tree", f"{len(snapshot.refs)} refs from '{snapshot.window.title[:40]}'")
+        after = adapter.foreground()
+        if before.get("handle") != after.get("handle"):
+            return c.bad("no-focus-theft", "reading the tree changed the foreground window")
+        c.ok("no-focus-theft", f"the foreground window is still '{after.get('title', '')[:40]}'")
     except Exception as exc:
         return c.bad("tree", f"{type(exc).__name__}: {str(exc)[:160]}")
-    c.skip("no-focus-theft", "press and hold a key in another app, run the action, "
-                             "and confirm the foreground window did not change")
 
 
 def claim_browser(c: Claim) -> None:

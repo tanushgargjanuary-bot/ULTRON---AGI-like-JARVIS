@@ -230,6 +230,33 @@ class WindowsAdapter:
             pass
         raise RuntimeError("no foreground window")
 
+    def foreground(self) -> dict:
+        """Which window the user is working in, read as data.
+
+        The claim "it works in the background without taking the keyboard from
+        you" needs this before and after an action, and the gate called a method
+        that had never been written — `AttributeError: 'WindowsAdapter' object has
+        no attribute 'foreground'`, on the only platform that can reach it. Reading
+        the foreground window takes no focus and sends no input; the comparison is
+        what turns the claim from a promise into a check.
+        """
+        uia = self._module()
+        try:
+            window = uia.GetForegroundControl()
+        except Exception as exc:                               # noqa: BLE001
+            raise RuntimeError(f"the foreground window cannot be read: {exc}") from exc
+        if window is None:
+            raise RuntimeError("there is no foreground window to read")
+        try:
+            title = str(window.Name or "")
+        except Exception:                                      # noqa: BLE001
+            title = ""
+        try:
+            handle = int(getattr(window, "NativeWindowHandle", 0) or 0)
+        except Exception:                                      # noqa: BLE001
+            handle = 0
+        return {"title": title[:120], "handle": handle}
+
     # ------------------------------------------------------------------ snapshot
     def snapshot(self, app: str = "", root_ref: str | None = None,
                  max_depth: int | None = None) -> Node:

@@ -101,3 +101,36 @@ class DeclaredDependencyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ForegroundContract(unittest.TestCase):
+    """The claim "it does not steal focus" needs a window it can compare.
+
+    `scripts/proof_gate.py` called `WindowsAdapter.foreground()` and the method did
+    not exist; on Windows that surfaced as a FAILED claim with an AttributeError,
+    which is the good direction — the gate caught the missing code instead of
+    reporting a pass. This test keeps the method there and keeps its failure a
+    sentence on a machine with no Windows.
+    """
+
+    def test_the_adapter_has_the_method_the_gate_calls(self):
+        from core.ui_windows import WindowsAdapter
+
+        self.assertTrue(callable(getattr(WindowsAdapter, "foreground", None)))
+
+    def test_reading_it_without_the_driver_raises_a_sentence(self):
+        from core.ui_windows import WindowsAdapter
+
+        adapter = WindowsAdapter()
+        try:
+            adapter.foreground()
+        except RuntimeError as error:
+            self.assertGreater(len(str(error)), 10)
+        except Exception as error:                              # noqa: BLE001
+            self.fail(f"it raised {type(error).__name__}, not RuntimeError")
+
+    def test_the_gate_compares_before_and_after(self):
+        gate = (Path(__file__).resolve().parents[1] / "scripts" / "proof_gate.py").read_text(encoding="utf-8")
+        self.assertIn("adapter.foreground()", gate)
+        self.assertIn("no-focus-theft", gate)
+        self.assertNotIn('c.skip("no-focus-theft"', gate)

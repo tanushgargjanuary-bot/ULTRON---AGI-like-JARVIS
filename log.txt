@@ -2062,7 +2062,7 @@ TWO DEFECTS THIS BUILD FOUND IN ITSELF
      been shipped. It lives in the state folder now; .gitignore names it too.
 
 SUITE AND GATE
-  224 files · 1,304 tests OK (skipped=6) · 32 of them in tests/test_shipping.py ·
+  224 files · 1,307 tests OK (skipped=6) · 32 of them in tests/test_shipping.py ·
   99 self-checks · verify.py exit 0 · module map regenerated.
   Proof gate: 14 PROVEN (shipping, self_update added) · 13 PARTIAL · 0 FAILED.
 
@@ -2127,7 +2127,7 @@ FIVE WINDOWS DEFECTS, ALL FOUND BY THE SUITE ON WINDOWS
      bridge's CLI path is unproven on Windows.
 
 THE LAST WINDOWS FAILURE WAS THE SHELL
-  The suite passed on Windows — 1,304 tests, OK, 6 skipped — and the step still
+  The suite passed on Windows — 1,307 tests, OK, 6 skipped — and the step still
   failed. The proof is a diff: the Linux artifact and the Windows artifact were
   byte-identical, 1,642 lines each. GitHub runs `run:` steps in PowerShell, and
   its `$ErrorActionPreference = 'stop'` turns a native command's STDERR into a
@@ -2142,6 +2142,22 @@ THE LAST WINDOWS FAILURE WAS THE SHELL
   the line under it was not. Both are resolved now, and the lesson is the one
   this project keeps relearning: a fix is finished when the failing thing passes,
   not when the first assertion does.
+
+A DEFECT ON THE ONLY PLATFORM THAT CAN REACH IT
+  With the suite green on Windows, the proof gate ran there for the first time and
+  answered: 17 PROVEN, 7 PARTIAL, 3 FAILED. Two of the three were the missing
+  microphone and speaker again, and they are SKIP now — same rule, applied in the
+  gate as well as in the instruments.
+
+  The third was real. focus_safe failed with:
+      AttributeError: 'WindowsAdapter' object has no attribute 'foreground'
+  `scripts/proof_gate.py` called a method that had never been written. The claim
+  it serves is "it works in the background without taking the keyboard from you",
+  so `WindowsAdapter.foreground()` now exists: it reads the window that has focus
+  and returns its title and handle, which takes no focus and sends no input. The
+  gate compares the handle before and after reading the tree, so the no-focus-theft
+  step is a check now and not a SKIP with instructions. tests/test_ui_bridge.py
+  keeps the method there and keeps the gate comparing.
 
 SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The
