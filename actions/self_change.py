@@ -17,7 +17,7 @@ would be a lie the owner could not see.
 
 from __future__ import annotations
 
-from core import failures, self_change
+from core import crash, failures, self_change
 
 
 def _say(lines: list[str]) -> str:
@@ -136,7 +136,39 @@ def _rules(_parameters=None) -> str:
     ])
 
 
+def _crashes(parameters: dict) -> str:
+    """What actually broke, newest first — the evidence a repair should start from.
+
+    Asked as "why did you crash", "what broke", "what went wrong lately". The answer
+    reads the reports on disk, not a memory of them, and offers to show the traceback
+    of the newest one, because the traceback is the part that names the fault.
+    """
+    try:
+        wanted = int(parameters.get("count") or 3)
+    except (TypeError, ValueError):
+        wanted = 3
+    rows = crash.history(limit=max(1, min(20, wanted)))
+    if not rows:
+        return ("I have no crash report on this machine. Either I have not crashed, or "
+                "I crashed before I could write one down — a native fault is recorded "
+                f"in {crash.folder()}/faulthandler.log if there is one.")
+    lines = [f"I have {len(crash.paths())} crash report(s) in {crash.folder()}. "
+             f"The newest {len(rows)}:"]
+    for row in rows:
+        lines.append(f"  {row.get('time', '?')} — {row.get('kind', '?')} at "
+                     f"{row.get('where', '?')}: {row.get('message', '')[:120]}")
+    if str(parameters.get("trace") or "").strip().lower() in ("1", "true", "yes"):
+        lines.append("")
+        lines.append(f"The newest traceback, from {rows[0]['path']}:")
+        lines.append(crash.last_trace(root=None) or "  (the report holds no traceback)")
+    else:
+        lines.append(f"Ask again with trace to read {rows[0]['path']}, or propose a "
+                     f"change with action=propose and I will start from this.")
+    return _say(lines)
+
+
 ACTIONS = {
+    "crashes": _crashes, "crash": _crashes, "broke": _crashes, "why": _crashes,
     "propose": _propose, "stage": _propose, "change": _propose,
     "rehearse": _rehearse, "test": _rehearse, "try": _rehearse,
     "confirm": _confirm, "approve": _confirm,
@@ -155,8 +187,8 @@ def self_modify(parameters: dict) -> str:
     action = str(parameters.get("action") or "pending").strip().lower()
     handler = ACTIONS.get(action)
     if handler is None:
-        return (f"I do not know the action '{action}'. I can: propose, rehearse, "
-                f"confirm, apply, revert, pending, show, history, rules.")
+        return (f"I do not know the action '{action}'. I can: crashes, propose, "
+                f"rehearse, confirm, apply, revert, pending, show, history, rules.")
     try:
         return handler(parameters)
     except ValueError as error:
@@ -171,7 +203,9 @@ TOOL = {
     "description": (
         "Change Ultron's own source code, safely and in the open. Use when the user asks "
         "you to change your own code, repair a fault in yourself, or add a "
-        "capability to yourself. Use 'propose' with a "
+        "capability to yourself. Use 'crashes' when the user asks why you crashed or "
+        "what broke lately: it reads the crash reports on disk, newest first, with the "
+        "traceback on request, so a repair starts from the fault. Use 'propose' with a "
         "path inside the project plus either 'text' (the whole new file) or 'find' and "
         "'replace' (one passage), and a 'reason'. Then 'rehearse' runs the change in a "
         "temporary copy of the project with the test harness, 'confirm' twice in two "
@@ -186,10 +220,11 @@ TOOL = {
         "properties": {
             "action": {
                 "type": "STRING",
-                "description": ("propose | rehearse | confirm | apply | revert | "
+                "description": ("crashes (what actually broke, newest first) | "
+                                "propose | rehearse | confirm | apply | revert | "
                                 "pending | show | history | rules"),
-                "enum": ["propose", "rehearse", "confirm", "apply", "revert",
-                         "pending", "show", "history", "rules"],
+                "enum": ["crashes", "propose", "rehearse", "confirm", "apply",
+                         "revert", "pending", "show", "history", "rules"],
             },
             "path": {"type": "STRING",
                      "description": "A file inside the project, e.g. actions/open_app.py"},
@@ -198,6 +233,10 @@ TOOL = {
             "replace": {"type": "STRING", "description": "What that passage becomes."},
             "text": {"type": "STRING", "description": "The whole new file, if replacing it."},
             "change": {"type": "STRING", "description": "The proposal id, e.g. c1a2b3c4d5e6f."},
+            "count": {"type": "INTEGER",
+                      "description": "For crashes: how many reports to list, 1 to 20."},
+            "trace": {"type": "BOOLEAN",
+                      "description": "For crashes: also show the newest traceback."},
             "channel": {"type": "STRING",
                         "description": "Where the confirmation came from: voice | panel | cli."},
             "full": {"type": "BOOLEAN",

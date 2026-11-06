@@ -86,6 +86,12 @@ from core import outcome
 from core import philosophy
 from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
+from core import crash as _crash
+
+# Before anything else that can fail: a crash from here on leaves a file.
+# Under `pythonw` there is no console, so without this the owner's experience
+# of a crash is a window that disappears and no way to say why.
+_crash.install()
 
 # One number for the starting delay, so main.py and the policy cannot drift
 # apart: two copies of "3 seconds" is how a retry loop ends up with a 0.
@@ -780,6 +786,13 @@ class JarvisLive:
         # said out loud instead, once, in the activity log.
         for _missing, _why in sorted(self._action_registry.failures().items()):
             self.ui.write_log(f"SYS: {_missing} is unavailable — {_why}")
+
+        # The last run's death, in one line, if there was one. Said in the activity
+        # log rather than as a question: the owner is starting their assistant, not
+        # opening a bug tracker. The offer to look is the sentence they choose next.
+        _crash_notice = _crash.startup_notice()
+        if _crash_notice:
+            self.ui.write_log(_crash_notice)
 
         # Plugins must not collide with either an inline tool or a discovered action.
         _core_names = _inline_names | self._action_registry.names()

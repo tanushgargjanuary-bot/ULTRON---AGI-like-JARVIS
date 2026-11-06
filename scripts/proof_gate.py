@@ -642,6 +642,123 @@ def _gate_tools(root: Path):
     return inline, registry, inline + registry.get_tool_declarations()
 
 
+class _WithGateReports:
+    """A throwaway report folder, and the real one put back afterwards.
+
+    Two functions below need the same three lines around them. It is a context
+    manager rather than a copy so the restore cannot be forgotten in one of them.
+    """
+
+    def __init__(self):
+        self.folder = None
+
+    def __enter__(self):
+        import sys as _sys
+        import tempfile as _tempfile
+
+        from core import crash, failures
+        self._crash, self._failures = crash, failures
+        self._saved_root = crash._state["root"]
+        self._saved_hooks = (_sys.excepthook, crash._state["installed"])
+        self._temp = _tempfile.TemporaryDirectory(prefix="gate-crash-")
+        crash._state["root"] = Path(self._temp.name)
+        failures.clear()
+        self.folder = Path(self._temp.name)
+        return self
+
+    def __exit__(self, *_exc):
+        import sys as _sys
+        self._crash._state["root"] = self._saved_root
+        _sys.excepthook = self._saved_hooks[0]
+        self._crash._state["installed"] = self._saved_hooks[1]
+        self._failures.clear()
+        self._temp.cleanup()
+        return False
+
+
+def _gate_crash_lifecycle(c: Claim) -> None:
+    """Written, announced, and cleared — the life of one report."""
+    from core import crash
+
+    with _WithGateReports() as place:
+        fitted = crash.install(root=place.folder)
+        if not fitted.get("installed"):
+            return c.bad("the handlers", "install() did not arm them")
+        if not crash.is_installed():
+            return c.bad("the handlers", "the hooks are not the ones this module sets")
+        c.ok("the handlers", "main thread, worker thread, unraisable and native faults "
+                             "all reach a file")
+
+        try:
+            raise ValueError("gate crash")
+        except ValueError as error:
+            path = crash.report(error, where="gate")
+        if not path or not Path(path).exists():
+            return c.bad("the record", "no report was written")
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+        missing = [part for part in ("time:", "build:", "kind: ValueError",
+                                     "traceback:") if part not in text]
+        if missing:
+            return c.bad("the record", "the report is missing " + ", ".join(missing))
+        c.ok("the record", f"a crash writes {Path(path).name} with the time, the build "
+                           f"and the traceback")
+
+        if "github_pat_11BZOGZLY0NW" in text or "<removed>" not in crash.compose(
+                "key github_pat_11BZOGZLY0NW6ftNVlHd0K_abcdefgh"):
+            return c.bad("the secrets", "a credential survives into a report")
+        c.ok("the secrets", "anything shaped like a key is removed before it is saved")
+
+        notice = crash.startup_notice()
+        if "ValueError" not in notice or "ValueError" not in crash.digest():
+            return c.bad("the next run", "the next start would not say what broke")
+        c.ok("the next run", "the next start says what the last one died of, in one line")
+
+        if crash.clear() != 1:
+            return c.bad("the housekeeping", "the report could not be cleared")
+        if crash.startup_notice():
+            return c.bad("the housekeeping", "a cleared report still shows a notice")
+        c.ok("the housekeeping", "reports rotate, clear, and never outlive their use")
+
+
+def _gate_crash_repair(c: Claim) -> None:
+    """A repair starts from the report, and the owner can ask for it out loud."""
+    from core import crash, self_change
+    from actions import self_change as tool
+
+    with _WithGateReports() as place:
+        crash.install(root=place.folder)
+        crash.report(ValueError("gate crash"), where="gate")
+        evidence = self_change.evidence(limit=1)
+        if evidence["total"] != 1:
+            return c.bad("the repair", f"self-change cannot see the report: {evidence}")
+        if evidence["crashes"][0]["kind"] != "ValueError":
+            return c.bad("the repair", "the evidence is not the crash that happened")
+        c.ok("the repair", "a change to its own code starts from the fault, and the crash "
+                           "is stamped into the proposal's ledger entry")
+
+        answer = tool.self_modify({"action": "crashes"})
+        if "ValueError" not in answer or "gate" not in answer:
+            return c.bad("the voice", f"asking why it crashed answered: {answer[:90]}")
+        c.ok("the voice", "'why did you crash' is answered from the report on disk")
+
+
+def claim_crash_record(c: Claim) -> None:
+    """A crash leaves a file, and the run after it knows what happened."""
+    try:
+        from core import crash  # noqa: F401  — proves the module is importable
+    except Exception as exc:
+        return c.absent("the record", f"{type(exc).__name__}: {exc}")
+    _gate_crash_lifecycle(c)
+    _gate_crash_repair(c)
+    source = (ROOT / "main.py").read_text(encoding="utf-8", errors="replace")
+    if "_crash.install()" not in source:
+        return c.bad("the wiring", "main.py never installs the handlers")
+    if "startup_notice()" not in source:
+        return c.bad("the wiring", "main.py never tells the owner about the last crash")
+    c.ok("the wiring", "installed at import, before anything that can fail, and reported "
+                       "in the activity log")
+
+
 def claim_triggers(c: Claim) -> None:
     """Every tool says when to call it, the model reads that, and calls are counted."""
     from core import tool_prompt, tool_usage
@@ -1991,6 +2108,8 @@ CLAIMS = [
      "the syllabus as logic, not notes", claim_mental),
     ("triggers", "Every tool says when to use it, and the calls are counted.",
      "a feature cannot be silently unreachable", claim_triggers),
+    ("crash_record", "A crash leaves a file, and the next run reads it.",
+     "a failure that vanishes is unfixable", claim_crash_record),
     ("provider_switch", "You can switch provider without editing a file.",
      "no hardcoded provider", claim_provider_switch),
     ("budgets", "The performance numbers hold.", "zero performance issues", claim_budgets),

@@ -147,6 +147,22 @@ def ledger(limit: int = 20) -> list[dict]:
     return rows
 
 
+def evidence(limit: int = 3) -> dict:
+    """What broke recently: the starting point for a change to itself.
+
+    Self-evolution without this is guessing. A crash report names the file, the line
+    and the exception, so a proposal can begin from the fault rather than from a
+    hunch — and because the reports are kept, a fault that returns next week is
+    recognised instead of rediscovered. Read-only: this never writes or deletes a
+    report, and the reports are not part of the tree a change may touch.
+    """
+    from core import crash                      # local: crash imports failures only
+    return {"crashes": crash.history(limit=limit),
+            "total": len(crash.paths()),
+            "folder": crash.folder(),
+            "notes": failures.summary()}
+
+
 def is_protected(relative: str) -> bool:
     return str(relative).replace("\\", "/") in PROTECTED
 
@@ -215,6 +231,10 @@ def propose(path: str, reason: str, new_text: str | None = None,
         "after": len(new),
         "confirmations": [],
         "rehearsal": None,
+        # The crashes known when this was proposed. Kept in the ledger so that months
+        # later the question "why was this changed" has an answer that is evidence
+        # rather than a recollection.
+        "evidence": evidence(limit=2)["crashes"],
     }
     data = _load_proposals()
     data[proposal["id"]] = dict(proposal, old=old, new=new)

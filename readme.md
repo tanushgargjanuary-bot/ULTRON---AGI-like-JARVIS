@@ -69,6 +69,21 @@ are listed and waiting. Details: **[docs/MENTAL.md](docs/MENTAL.md)**.
 
 The reading runs from basics to advanced for every subject — MIT OCW, CMU 15-445, CS229, CS231n, *d2l.ai*, the Red Book, MIT 6.854. **All 42 links were opened on 2026-11-06** and three that failed were replaced. Details: **[docs/CURRICULUM.md](docs/CURRICULUM.md)**.
 
+## It remembers how it died
+
+A crash used to leave nothing. The console is hidden, there was no crash handler, and
+the small-failure list lived in memory — so the process died and took the evidence with
+it. You saw a window disappear.
+
+Now four kinds of death reach a file in `logs/`: an uncaught error, an error in a worker
+thread, an error inside `__del__`, and a native fault in a Qt or audio library. The
+report holds the time, the build, the traceback, and **the small failures that came just
+before it** — which is usually where the cause is. Anything shaped like a key is removed
+before it is written. The next start says what happened, in one line, and
+*"why did you crash"* reads the report back. Every change it makes to its own code
+records the crashes known at the time, so a repair starts from the fault instead of a
+hunch. Details: **[docs/CRASHES.md](docs/CRASHES.md)**.
+
 ## Every skill has a reason to be used
 
 A tool that exists is not a tool that gets called. The instruction that lists them used
@@ -178,7 +193,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**247 Python files. 93,390 lines. 1,680 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **21 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**249 Python files. 94,269 lines. 1,717 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -241,6 +256,7 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | the eight AKTU subjects inside it, unit by unit, with the reading ladder |
 | [docs/MENTAL.md](docs/MENTAL.md) | which course topics run as Ultron's own algorithms, and where each one lives |
 | [docs/TRIGGERS.md](docs/TRIGGERS.md) | what makes each tool fire, and the count that shows a tool nothing calls |
+| [docs/CRASHES.md](docs/CRASHES.md) | what a crash leaves behind, and how self-repair starts from that report |
 | [docs/SELF-CHANGE.md](docs/SELF-CHANGE.md) | how it changes its own code: five stages, a rehearsal copy, and the referee it may not touch |
 | [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) | the seven minds, how to blend them by voice, and the three rules that hold them |
 | [docs/SPACE.md](docs/SPACE.md) | the folder stays under 100 MB: why it matters, and the two lines that keep it there |

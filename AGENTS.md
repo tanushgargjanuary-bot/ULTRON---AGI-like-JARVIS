@@ -113,6 +113,11 @@ a small built-in fallback — instead of crashing.
   for code that is not there, never cite a topic the unit does not contain, and never
   let the decorator change behaviour. The course is meant to run in the assistant, not
   sit on a shelf.
+- **A crash must leave a record, and a repair must start from it.** `core/crash.py` is
+  installed at the top of `main.py`, before anything that can fail. Never remove that
+  call, never let a report keep a credential, never delete the reports on the owner's
+  behalf, and never let self-change propose a fix without the crashes it is working
+  from. `logs/` is the owner's machine and is git-ignored on purpose.
 - **Every tool must say when to call it, and its calls are counted.** The condition is
   the sentence in the tool's own description that starts with a cue such as "Use it
   when"; `core/tool_prompt.py` puts it at the front of the line the model reads, because

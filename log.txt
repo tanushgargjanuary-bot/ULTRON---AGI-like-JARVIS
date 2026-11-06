@@ -1,3 +1,55 @@
+=== 2026-11-06 · build 1.2.34 · a crash that leaves a record, and a repair that starts there ===
+
+The owner asked for the crash trace, and for self-evolution to know about older crashes.
+Both, in one build.
+
+WHAT WAS WRONG. Nothing caught a crash. Ultron runs under `pythonw`, so `sys.stderr` is
+not a console; there was no `sys.excepthook`, no `threading.excepthook`, no `unraisable`
+hook and no `faulthandler` in 93,000 lines. `core/failures.py` keeps its trail in memory,
+so a process that died took the trail with it. The owner's experience of a bug was a
+window that disappeared, with no file, no message and no way to say why.
+
+  core/crash.py     four deaths, four hooks: uncaught (main thread), worker thread,
+                    unraisable (__del__, dying generators), and faulthandler for a
+                    native fault in a Qt or audio DLL, which Python never sees.
+                    A report holds the time, the build, the kind, the message, the
+                    traceback — and the last notes the assistant made before it fell,
+                    which is usually where the cause is. Secrets are removed before the
+                    file is written, because a report can hold the arguments of the call
+                    that died. 20 reports are kept; the 21st deletes the oldest.
+  main.py           `_crash.install()` sits at import, before anything that can fail.
+                    The next start says one line in the activity log: "I crashed on …
+                    Say 'why did you crash' to see it."
+  logs/             git-ignored. The owner's machine, not the repository.
+
+SELF-EVOLUTION KNOWS. Self-repair from a hunch is guessing; a report names the file, the
+line and the exception.
+
+  core/self_change.evidence()   the crashes and the failure counts, read from disk
+  propose()                     every proposal now carries the crashes known at the
+                                time in its ledger entry, so "why was this changed"
+                                has an answer that is evidence rather than a memory
+  self_modify action=crashes    "why did you crash" reads the reports, newest first, and
+                                returns the newest traceback when asked for it
+  core/prompt.txt               one line: answer that question from the report, not
+                                from memory
+
+BUGS FOUND WHILE TESTING, each one by a test rather than by reading:
+  - two crashes in the same second overwrote each other: the name is to the second, and
+    one in the main thread plus one in a worker is ordinary. A copy number was added.
+  - "newest first" sorted the copy first, because a dash sorts before a dot. Ordering is
+    by stamp, then copy number, then write time.
+  - `claim_crash_record` was 21 branches, past the complexity ceiling. It is three
+    functions now, with one context manager shared between them.
+
+  tests/test_crash.py      37 tests: the record, the redaction, the rotation, the four
+                           hooks, the notice, the digest, the traceback, the evidence in
+                           a proposal, the tool action, the wiring, the git-ignore.
+  proof_gate               new claim `crash_record` — 8 steps, all PROVEN.
+
+State: 1,717 tests OK (skipped=8), 10.3 MB / 510 files. Proof gate 22 PROVEN / 13
+PARTIAL / 0 FAILED.
+
 === 2026-11-06 · build 1.2.33 · every skill gets a reason to be used ===
 
 The owner asked the question that follows every feature ever added:
