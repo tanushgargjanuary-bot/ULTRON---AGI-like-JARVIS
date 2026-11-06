@@ -129,6 +129,12 @@ class ForegroundContract(unittest.TestCase):
         except Exception as error:                              # noqa: BLE001
             self.fail(f"it raised {type(error).__name__}, not RuntimeError")
 
+    def test_the_gate_counts_nodes_from_the_tree_it_was_given(self):
+        """`snapshot()` returns a Node. Asking it for `.refs` was the last defect."""
+        gate = (Path(__file__).resolve().parents[1] / "scripts" / "proof_gate.py").read_text(encoding="utf-8")
+        self.assertIn("list(tree.walk())", gate)
+        self.assertNotIn("snapshot.refs", gate)
+
     def test_the_gate_compares_before_and_after(self):
         gate = (Path(__file__).resolve().parents[1] / "scripts" / "proof_gate.py").read_text(encoding="utf-8")
         self.assertIn("adapter.foreground()", gate)

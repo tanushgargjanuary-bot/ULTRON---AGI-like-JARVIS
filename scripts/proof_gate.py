@@ -391,10 +391,15 @@ def claim_focus_safe(c: Claim) -> None:
     adapter = WindowsAdapter()
     try:
         before = adapter.foreground()
-        snapshot = adapter.snapshot()
-        if not snapshot.refs:
-            return c.bad("tree", "the foreground window produced no refs")
-        c.ok("tree", f"{len(snapshot.refs)} refs from '{snapshot.window.title[:40]}'")
+        # `snapshot()` returns the raw tree as a Node, not a Snapshot with refs;
+        # refs are assigned later, by the session. Counting the nodes it did
+        # produce is the honest measure of "the tree was really walked", and it
+        # was the last thing this gate got wrong on Windows.
+        tree = adapter.snapshot()
+        nodes = list(tree.walk())
+        if len(nodes) < 2:
+            return c.bad("tree", f"the foreground window produced {len(nodes)} node(s)")
+        c.ok("tree", f"{len(nodes)} nodes from '{str(tree.name)[:40]}'")
         after = adapter.foreground()
         if before.get("handle") != after.get("handle"):
             return c.bad("no-focus-theft", "reading the tree changed the foreground window")
