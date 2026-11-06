@@ -191,3 +191,32 @@ rewrite would cost weeks to re-prove, and it would make nothing faster.
 `.\sidecar\build.ps1`. Without it, everything still works — you lose only the
 crash-proof part.
 
+### 2026-11-06 — "why do I still see most of the code in Python?"
+
+Because line count is not time. I now have the measurement instead of an
+argument:
+
+| What Python does in one exchange | Time |
+|---|---|
+| Decide the risk tier of every tool you have | 0.009 ms |
+| Describe every tool to the model | 0.028 ms |
+| Fill the system prompt | 0.054 ms |
+| Read the prompt file | 0.024 ms |
+| Read your memory | 0.012 ms |
+| **Everything Python does in a turn** | **0.165 ms** |
+
+Your wait is 600–4000 ms of model. **Python is four thousandths of one percent to
+three hundredths of one percent of it.** If I rewrote all 84,000 lines in Go, the
+change you would feel is zero, and you would lose the files where every safety
+rule lives — the ones that stop a tool from writing outside your folder, and ask
+you twice before changing code.
+
+**What I did make faster instead:** the one place where a compiled language really
+wins, the supervisor that survives a crash (2 MB, 3 ms, 2.7 MB resident, in Go).
+And a bug in it that only the tests caught: the binary was built without the
+execute bit, so the app quietly used the slower fallback.
+
+**Where the remaining seconds are, honestly:** the model (600–4000 ms), speech
+recognition (300–1500 ms), and a connection handshake per turn (100–300 ms). The
+last one is ours, in Python, and it is the next thing I would fix.
+

@@ -2354,3 +2354,42 @@ State: 1364 tests OK (skipped=6), including 13 sidecar tests and 4 Go tests.
 Proof gate 16 PROVEN / 13 PARTIAL / 0 FAILED. Binaries are not committed; the
 source, the tests and build.ps1 / build.sh are.
 
+=== 2026-11-06 · 1.2.23 · the profile that answers "why is it still Python" ===
+
+The owner asked why most of the code is still Python when he wants the code to be
+the most performant it can be. The answer is a measurement, so here it is.
+
+1. scripts/profile_turn.py times the whole Python half of one exchange, stage by
+   stage, with no network and no model. Median of 100 runs each:
+
+     policy.decide for every tool      0.009 ms
+     _describe_tools, all tools        0.028 ms
+     _render_prompt, system prompt     0.054 ms
+     _load_system_prompt               0.024 ms
+     memory read                       0.012 ms
+     memory read + write               0.037 ms
+     _clean_transcript                 0.001 ms
+     -------------------------------------------------
+     total                             0.165 ms
+
+   Against a 600-4000 ms model round trip that is 0.004 % - 0.03 %. Rewriting it
+   in a compiled language would change the wait by nothing the owner can feel, and
+   would move every safety rule into a file nobody here can read quickly.
+
+2. docs/PERFORMANCE.md collects all four measurements in one place: the turn
+   (0.165 ms), the launch (244 ms, Qt 155 of it), the audio leaf (1.49 us in C
+   with no copy, 53.9 us in Python), the Go sidecar (3 ms, 2.7 MB).
+
+3. tests/test_performance_budget.py holds four ceilings at twenty times the
+   measured value, plus two structural checks: the policy tables are module
+   constants, and the transcript pattern is compiled once. The loose ceiling is
+   deliberate - it cannot catch 20 %, and is not for that; it catches a config
+   read per turn or a regex inside a loop.
+
+4. A real bug found by the sidecar tests: go build wrote the binary without the
+   executable bit, so Popen failed, try_start returned None, and the app fell back
+   to the Python watcher silently. The fallback working perfectly is what hid it.
+   Only the two tests that drive the real binary noticed.
+
+State: 1370 tests OK (skipped=6). Proof gate 16 PROVEN / 13 PARTIAL / 0 FAILED.
+
