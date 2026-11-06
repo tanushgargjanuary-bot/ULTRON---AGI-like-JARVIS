@@ -67,3 +67,17 @@ the rule. Two mistakes in the CI file itself were also found by the same run and
 18 PROVEN, 9 PARTIAL, 0 FAILED, and the suite runs 1,308 tests there. Four defects came out of the round, and every
 one of them was invisible from the machine the code was written on. That is the whole argument for running it on
 yours, made by the thing that ran on yours.
+
+## 2026-11-06 — session 18 (build 1.2.18)
+
+**Asked for.** A professional, compact repository; a better front page, in simple
+words, with a separate section for technical readers; good animations; and an
+answer on rewriting in a faster language. Also: one commit per improvement, and
+faster work.
+
+**Done.** The front page is one page for people plus one section for engineers.
+The HUD core colour fades between states instead of cutting. Line endings are
+recorded in `.gitattributes`. The faster-language question is answered with
+timings, not opinion: the waiting is the network and the recogniser, and both are
+already outside Python. Four separate commits, each with the reason in its
+message.

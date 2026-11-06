@@ -105,7 +105,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                1,308 tests, no network, no real hardware
 ```
 
-**Sizes:** 224 Python files, 82,317 lines. **Tests:** 1,308, six skipped here. **Gate:** `14 PROVEN / 13 PARTIAL / 0 FAILED` on Linux, `18 PROVEN / 9 PARTIAL / 0 FAILED` on the Windows runner.
+**Sizes:** 224 Python files, 82,317 lines. **Tests:** 1,311, six skipped here. **Gate:** `14 PROVEN / 13 PARTIAL / 0 FAILED` on Linux, `18 PROVEN / 9 PARTIAL / 0 FAILED` on the Windows runner.
 
 ## The five invariants that matter
 

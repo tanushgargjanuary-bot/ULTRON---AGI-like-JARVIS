@@ -2181,3 +2181,28 @@ SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   repository reports push: true, and PUT /contents answers 403 "Resource not
   accessible by personal access token". The owner must edit the token. Nothing was
   stored in this tree, and nothing will be.
+
+BUILD 1.2.18 — A FRONT PAGE, A FADE, AND ONE COMMIT PER CHANGE
+  The owner asked for four things and one of them was speed of delivery, so this
+  round is four small commits rather than one large one. That is now the rule.
+  1. readme.md — 16,354 words of release notes became one page for people, then a
+     separate section for engineers. What it is, how to install, what it can do,
+     what it cannot do, and privacy, in plain words. Every earlier release note
+     stays in this file and in HANDOFF.md, so shortening the front page lost
+     nothing.
+  2. The HUD core colour cross-fades instead of switching. A state change used to
+     cut the accent in one frame, which reads as a dropped frame. It settles in
+     about a sixth of a second now. An exponential approach never quite arrives,
+     and with whole colour channels it could stop one unit short for ever, so a
+     step that changes nothing finishes the fade. Three tests.
+  3. .gitattributes, because this project keeps asking whether a module is CRLF or
+     LF. Python and Markdown are LF; the Windows launchers are CRLF on purpose.
+  4. docs/LANGUAGE_DECISION.md answers the faster-language question a second time,
+     now with timings: audio classification 39.5 us per 30 ms frame (0.13 %), a
+     turn 8 ms in process, and the wait is the network and the recogniser, which
+     are outside Python already.
+
+SUITE AND GATE
+  224 files · 1,311 tests OK (skipped=6) · verify.py exit 0 · proof gate
+  14 PROVEN / 13 PARTIAL / 0 FAILED here, 18 PROVEN / 9 PARTIAL / 0 FAILED on the
+  Windows runner.
