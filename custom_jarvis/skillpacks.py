@@ -51,6 +51,23 @@ def _clean(value: Any, limit: int = 300) -> str:
     return str(value or "").strip()[:limit]
 
 
+def _escapes(text: str) -> bool:
+    """True when this path leaves the workspace, tested against both flavours.
+
+    `Path("_/etc/passwd")` is absolute on POSIX and *not* absolute on Windows,
+    because Windows also wants a drive. A pack validated on one machine must be
+    sound on the other, so the rule asks both: an anchor (a leading separator or
+    a drive) means the path starts somewhere that is not the workspace.
+    """
+    from pathlib import PureWindowsPath
+
+    for flavour in (Path, PureWindowsPath):
+        candidate = flavour(text)
+        if candidate.is_absolute() or candidate.anchor or ".." in candidate.parts:
+            return True
+    return False
+
+
 def validate(pack: Any, tool_names: Iterable[str] = ()) -> list[str]:
     """Every reason this pack must not be installed. Empty list means it is sound."""
     if not isinstance(pack, dict):
@@ -99,8 +116,7 @@ def validate(pack: Any, tool_names: Iterable[str] = ()) -> list[str]:
                 text = value.strip()
                 if text.startswith("@") and text not in ("@workspace", "@target"):
                     problems.append(f"step {index}: '{text}' is not @workspace or @target")
-                elif not text.startswith("@") and (
-                        Path(text).is_absolute() or ".." in Path(text).parts):
+                elif not text.startswith("@") and _escapes(text):
                     problems.append(f"step {index}: a path must stay inside the workspace")
     return problems
 

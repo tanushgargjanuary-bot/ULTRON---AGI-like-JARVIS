@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -181,9 +182,16 @@ class RefLifetimeTests(ToolTestCase):
 
 class HonestyTests(ToolTestCase):
     def test_with_no_bridge_it_says_so_instead_of_clicking(self):
+        # Windows CI has uiautomation installed, so clearing the cache is not
+        # enough: available() would hand back a real adapter on the next call.
+        # Both the cache and the answer are removed, which is the state the test
+        # is about.
         tool._ADAPTER = None
         tool._ADAPTER_REASON = "no bridge on this machine"
-        result = self.call(action="act", target="Save")
+        with mock.patch("core.ui_windows.available",
+                        return_value=(False, "no bridge on this machine")), \
+             mock.patch.object(tool, "_BROWSER_PAGE", None):
+            result = self.call(action="act", target="Save")
         self.assertTrue(result.startswith("status=ask"))
         self.assertIn("cannot read", result)
         self.assertEqual(self.adapter.performed, [])

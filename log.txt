@@ -2062,7 +2062,7 @@ TWO DEFECTS THIS BUILD FOUND IN ITSELF
      been shipped. It lives in the state folder now; .gitignore names it too.
 
 SUITE AND GATE
-  224 files · 1,299 tests OK (skipped=6) · 32 of them in tests/test_shipping.py ·
+  224 files · 1,304 tests OK (skipped=6) · 32 of them in tests/test_shipping.py ·
   99 self-checks · verify.py exit 0 · module map regenerated.
   Proof gate: 14 PROVEN (shipping, self_update added) · 13 PARTIAL · 0 FAILED.
 
@@ -2108,6 +2108,23 @@ THE FIRST REAL WINDOWS RUN (GitHub Actions, windows-2025)
     folder that does not exist on a fresh clone. The gate now creates the folder.
     tests/test_verifiers.py reads the workflow and asserts that every flag it
     passes is declared by the script it calls, so the two cannot drift again.
+
+FIVE WINDOWS DEFECTS, ALL FOUND BY THE SUITE ON WINDOWS
+  1. skillpacks: "/etc/passwd" is absolute on POSIX and NOT absolute on Windows,
+     which wants a drive too — so a pack that escapes the workspace was accepted
+     there. The rule now asks both path flavours: an anchor means outside. A test
+     asserts a pack sound on Linux is sound on Windows.
+  2. test_edge_cases: a read-only folder cannot be made on Windows, which ignores
+     that attribute, so the test proves nothing there. SKIP, with the reason.
+  3. test_mark_integration: the service stores a resolved path and the fixture
+     held an 8.3 short path (RUNNER~1), so the test compared two spellings of one
+     folder. Both sides are resolved now.
+  4. test_ui_control_action: Windows CI has uiautomation, so clearing the adapter
+     cache let available() hand back a real adapter and the "no bridge" case was
+     never reached. The test removes the answer as well as the cache.
+  5. test_bridges: the fake CLI is a POSIX shell script. On Windows a shim would
+     test the shim, so the test says SKIP and says why. This is a real gap: the
+     bridge's CLI path is unproven on Windows.
 
 SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The

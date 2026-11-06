@@ -136,6 +136,9 @@ class Http(unittest.TestCase):
 class FakeCli(unittest.TestCase):
     """A real script on PATH, so the CLI path is exercised end to end."""
 
+    @unittest.skipIf(os.name == "nt",
+                     "the fake CLI is a POSIX shell script; a Windows shim would "
+                     "test the shim rather than the bridge")
     def test_rea_bridge_calls_the_script(self):
         directory = Path(self._tmpdir())
         script = directory / "rea"

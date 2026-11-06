@@ -157,6 +157,9 @@ class ConfigWriteTests(unittest.TestCase):
             pass
         self._temp.cleanup()
 
+    @unittest.skipIf(os.name == "nt",
+                     "Windows ignores the read-only attribute on a folder, so a "
+                     "read-only folder cannot be made here")
     def test_a_read_only_folder_does_not_raise(self):
         self.cm.save_ui_scale(1.3)                      # create it first
         os.chmod(self.dir, 0o500)

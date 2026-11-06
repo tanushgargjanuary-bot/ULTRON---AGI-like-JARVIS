@@ -193,6 +193,16 @@ class Packs(unittest.TestCase):
         self.assertTrue(asked, "adding a skill must ask first")
 
 
+    def test_a_rooted_path_escapes_on_windows_as_well_as_here(self):
+        """A pack that is sound on Linux must be sound on Windows too."""
+        from custom_jarvis.skillpacks import _escapes
+
+        for text in ("/etc/passwd", "\\server\share", "C:\\Windows\\system.ini",
+                     "C:/Windows", "../above", "sub/../../above"):
+            self.assertTrue(_escapes(text), text)
+        for text in ("notes.txt", "sub/notes.txt", "@workspace", "."):
+            self.assertFalse(_escapes(text), text)
+
 class PackTools(unittest.TestCase):
     """pack_tools is the thin layer over skillpacks; it must not be clever."""
 
@@ -325,3 +335,4 @@ class Reminders(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

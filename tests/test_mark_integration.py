@@ -215,7 +215,10 @@ class ServiceTests(unittest.TestCase):
 
     def test_workspace_setting_persists_separately_from_mark_config(self):
         state = json.loads((self.base / "state" / "workspace.json").read_text())
-        self.assertEqual(state["path"], str(self.workspace))
+        # The service stores a resolved path. On Windows the fixture's temp
+        # folder arrives in 8.3 short form (RUNNER~1), so the comparison has to
+        # resolve both sides or it compares two spellings of one folder.
+        self.assertEqual(Path(state["path"]).resolve(), Path(self.workspace).resolve())
         second = CustomService(self.base / "state", approval=lambda *args: False)
         self.assertEqual(second.control.engine.workspace, self.workspace)
 
