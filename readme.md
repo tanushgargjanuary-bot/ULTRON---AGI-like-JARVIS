@@ -118,14 +118,14 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**241 Python files. 86,737 lines. 1,325 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**218 Python files. 86,619 lines. 1,410 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux: **16 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, packages 1, your voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
 | Invariant | Enforced by |
 |---|---|
 | A tool cannot leave the workspace | `addon_runtime.PATH_ARGUMENTS`, `prepare_args` |
-| A tool has a risk tier, or it asks | `tests/test_policy_new_tools.py` |
+| A tool has a risk tier, or it asks | `tests/test_suite_safety.py` |
 | A promise in a docstring needs a file | `scripts/proof_gate.py` — `NOT PRESENT` is a verdict |
 | A secret never reaches a commit | `ship.py:scan`, gate claim `shipping` |
 | A version that does not parse is put back | `selfupdate.py:apply`, gate claim `self_update` |
