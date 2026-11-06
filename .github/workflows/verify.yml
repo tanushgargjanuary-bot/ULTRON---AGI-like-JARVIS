@@ -90,16 +90,30 @@ jobs:
             "beautifulsoup4>=4.12,<5" "jsonschema>=4.23,<5" `
             "uiautomation" "pywinauto" "pyautogui" "pyperclip"
 
-      # This is the job that can close the Windows claims: native DPI, a real
-      # window, the accessibility tree, no console window flashing.
+      # The job that can close the Windows claims: native DPI, a real window, the
+      # accessibility tree, no console window flashing.
+      #
+      # `shell: bash`, deliberately. GitHub runs `run:` steps in PowerShell, whose
+      # `$ErrorActionPreference = 'stop'` turns a native command's STDERR into a
+      # step failure — and this suite writes tracebacks to stderr on purpose,
+      # because the tests check that an error is reported as a sentence. The first
+      # Windows run failed with byte-identical results to the passing Linux run,
+      # which is what "the shell failed the step, not the code" looks like. Bash is
+      # installed on every runner, and `tee` keeps the console in the artifact.
       - name: Native checks
-        run: python scripts/verify_all.py --report verification/capabilities.json
+        shell: bash
+        run: |
+          mkdir -p verification
+          python scripts/verify_all.py --report verification/capabilities.json 2>&1 | tee verification/console-native.txt
 
       - name: Suite and self-checks
-        run: python scripts/verify.py
+        shell: bash
+        run: python scripts/verify.py 2>&1 | tee verification/console-suite.txt
 
       - name: Proof gate
-        run: python scripts/proof_gate.py --json verification/proof-gate.json
+        shell: bash
+        run: |
+          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/console-gate.txt
 
       - name: Keep the reports
         if: always()

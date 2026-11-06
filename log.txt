@@ -2126,6 +2126,16 @@ FIVE WINDOWS DEFECTS, ALL FOUND BY THE SUITE ON WINDOWS
      test the shim, so the test says SKIP and says why. This is a real gap: the
      bridge's CLI path is unproven on Windows.
 
+THE LAST WINDOWS FAILURE WAS THE SHELL
+  The suite passed on Windows — 1,304 tests, OK, 6 skipped — and the step still
+  failed. The proof is a diff: the Linux artifact and the Windows artifact were
+  byte-identical, 1,642 lines each. GitHub runs `run:` steps in PowerShell, and
+  its `$ErrorActionPreference = 'stop'` turns a native command's STDERR into a
+  failed step. This suite writes tracebacks to stderr on purpose, because several
+  tests check that an error comes back as a sentence. The Windows steps now run
+  under bash, and `tee` keeps each console in the artifact, so the next red job
+  arrives with its own evidence.
+
 SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The
   repository reports push: true, and PUT /contents answers 403 "Resource not
