@@ -1334,7 +1334,23 @@ deep scan, then GitHub writes, then the push.
 1. `changed()` sliced `git status --porcelain` at a fixed offset. `git()` returns stripped output, so the first line lost its leading space and `app.py` became `pp.py`: the syntax check guarded a file that does not exist, and a broken module shipped. It is parsed by a pattern that accepts either shape now.
 2. The restart marker was written into the repository. Untracked file → dirty tree → the NEXT update refuses. It lives in the state folder now, and `.gitignore` names it.
 
-**Still open, and honestly blocked.** The push does not work yet, and the cause is not the code: the fine-grained token has `Contents: Read`, not `Contents: Read and write`, so `PUT /contents` answers 403 "Resource not accessible by personal access token" while the repository reports `push: true`. The owner must edit the token (Repository access: this repository; Permissions → Contents: Read and write). Do not store the token in the tree; use it in one command and revoke it when done. `config/api_keys.json` gains `github_token` for the app to use, and it is ignored.
+**Solved, and the rule that solved it (2026-11-06).** The push is live: `main` at the repository below carries
+the full history, seven commits. Three tokens were tried; the third worked:
+
+- a fine-grained token with `Contents: Read` — `GET` fine, `PUT contents` **403 "Resource not accessible by personal access token"**;
+- a fine-grained token with `Contents: Read and write` — writes fine, `git push` **refused: workflow
+  `.github/workflows/verify.yml` … without `workflow` scope**;
+- a **classic token with `repo` + `workflow`** — accepted.
+
+**The rule to remember:** GitHub checks the whole push for workflow files, so one `.github/workflows/*.yml`
+anywhere in the history makes the **Workflows** permission mandatory for every push. A fine-grained token needs
+`Contents` **and** `Workflows`, both Read and write; a classic token needs `repo` and `workflow`. A refusal names the
+file but not the permission, which is why this cost three attempts.
+
+Two probe commits were created on the remote by the write test (`4274c94`, `d7c02ac`) and removed by a
+`--force-with-lease` push pinned to the exact probe sha. No work of anyone else was touched, and the lease means the
+refusal would have been automatic if the remote had moved. `origin` is set **without** a token in the URL; the token
+comes from `GITHUB_TOKEN` or `config/api_keys.json: github_token`.
 
 **What the next person should not do.** Do not make the push automatic by default. Do not add a force path "just for recovery". Do not call a reload an update — imported modules keep their old code, so the honest contract is: files updated, data reloaded, restart asked for only when `.py` changed.
 

@@ -52,3 +52,10 @@ the next update. Both fixed, both tested, both in `log.txt`.
 **Blocked, and not by code.** The token carries Contents: Read but not Read and
 write, so GitHub answers 403 on every write while the repository reports
 `push: true`. The owner must edit the token. Nothing was stored in this tree.
+
+**Pushed.** `main` is live at GitHub with all seven commits. The blocker was not
+the code: a fine-grained token needs **Contents** and **Workflows**, both Read and
+write, because GitHub checks the whole push and one CI file has been in the
+history since the first commit. A classic token with `repo` and `workflow` worked
+at once. Two probe commits from the write test were removed with a lease-pinned
+force, and no other work was touched.

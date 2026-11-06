@@ -2066,7 +2066,17 @@ SUITE AND GATE
   99 self-checks · verify.py exit 0 · module map regenerated.
   Proof gate: 14 PROVEN (shipping, self_update added) · 13 PARTIAL · 0 FAILED.
 
-STILL BLOCKED, AND NOT BY THE CODE
+PUBLISHED
+  main at https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS
+  carries all seven commits. The push took three tokens and the lesson is worth
+  the space: GitHub checks the WHOLE push for workflow files, so one
+  .github/workflows/*.yml anywhere in the history makes the Workflows permission
+  mandatory. A fine-grained token needs Contents AND Workflows; a classic token
+  needs repo and workflow. The refusal names the file and not the permission.
+  Two probe commits from the write test were removed with a lease-pinned
+  --force-with-lease, which cannot overwrite anything that moved.
+
+SOLVED, WITH THE LESSON KEPT FOR THE RECORD
   The token is fine-grained and carries Contents: Read, not Read and write. The
   repository reports push: true, and PUT /contents answers 403 "Resource not
   accessible by personal access token". The owner must edit the token. Nothing was
