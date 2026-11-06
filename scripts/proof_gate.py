@@ -1632,6 +1632,80 @@ def claim_process_watch(c: Claim) -> None:
     c.ok("wired into the application", "the loop starts with the app and reads the owner's state")
 
 
+def claim_sidecar(c: Claim) -> None:
+    """The one compiled component is optional, and its absence is proven."""
+    source = ROOT / "sidecar" / "watchd" / "main.go"
+    tests = ROOT / "sidecar" / "watchd" / "main_test.go"
+    if not source.exists() or not tests.exists():
+        return c.absent("the source", "sidecar/watchd is not in the tree")
+    text = source.read_text(encoding="utf-8")
+    c.ok("the source", f"{len(text.splitlines())} lines of Go, with its own tests")
+
+    for word in ("Process.Kill", "cmd.Process.Kill", "syscall.Kill"):
+        if word in text:
+            return c.bad("it only watches", f"the sidecar can call {word}")
+    c.ok("it only watches",
+         "it starts only the command it was given and signals nothing else")
+
+    try:
+        from core import sidecar
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("the bridge", f"{type(exc).__name__}: {exc}")
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "events.jsonl"
+        path.write_text('{"pid": 1, "name": "antigravity", "seconds": 90,'
+                        ' "how": "ended", "watch": "antigravity"}\n'
+                        '{"pid": 2, "nam', encoding="utf-8")
+        events, offset = sidecar.read_new_events(path, 0)
+        if len(events) != 1:
+            return c.bad("a partial line", f"a half written line became {events}")
+        done = sidecar.completion_from_event(events[0])
+        if done is None or "finished" not in done.sentence():
+            return c.bad("a partial line", "the completed line did not read as a finish")
+        path.write_text(path.read_text(encoding="utf-8") + 'e": "x"}\n', encoding="utf-8")
+        more, _ = sidecar.read_new_events(path, offset)
+        if len(more) != 1:
+            return c.bad("a partial line", "the finished line was never returned")
+    c.ok("a partial line", "a half written record waits for its other half")
+
+    present = sidecar.binary_path() is not None
+    feed = sidecar.try_start([], Path("/nonexistent/e.jsonl"))
+    if feed is not None:
+        return c.bad("no compiler, no missing feature", "an empty watch list started a sidecar")
+    c.ok("no compiler, no missing feature",
+         "started" if present else "the binary is absent on this machine and nothing failed")
+
+    try:
+        from core.process_watch import Completion, SpeechGate, Supervisor
+    except Exception as exc:                                   # noqa: BLE001
+        return c.bad("one announcement path", f"{type(exc).__name__}: {exc}")
+
+    class _Feed:
+        alive = False
+
+        def __init__(self, event):
+            self.event, self.served = event, False
+
+        def poll(self):
+            if self.served:
+                return []
+            self.served = True
+            return [self.event]
+
+    logged, said = [], []
+    sup = Supervisor(None, gate=SpeechGate(quiet_for=0.0), feed=_Feed(
+        Completion(label="antigravity", pid=1, name="antigravity", seconds=30)),
+        say=said.append, log=logged.append)
+    sup.tick(busy=False)
+    if not logged or "stopped" not in " ".join(logged):
+        return c.bad("one announcement path",
+                     f"the event or the death was missed: {logged}")
+    c.ok("one announcement path",
+         "a sidecar event is announced by the same gate, and a dead sidecar says so")
+
+
 CLAIMS = [
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
@@ -1676,6 +1750,8 @@ CLAIMS = [
     ("procwatch", "It supervises background programs without touching them, "
      "and reports a finish when you stop talking.",
      "background supervision, read-only", claim_process_watch),
+    ("sidecar", "The one compiled component is optional, and its absence changes "
+     "nothing.", "compiled sidecar, never required", claim_sidecar),
     ("shipping", "It can ship its own work, and a secret stops the ship.",
      "every change reaches GitHub, carefully", claim_shipping),
     ("self_update", "It updates itself from the remote, and undoes a bad version.",

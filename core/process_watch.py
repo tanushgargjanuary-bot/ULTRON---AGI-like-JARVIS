@@ -428,10 +428,19 @@ class Supervisor:
       lands mid-sentence is a sentence that has to be repeated.
     """
 
-    def __init__(self, watcher: Watcher, gate: SpeechGate | None = None,
+    def __init__(self, watcher: Watcher | None, gate: SpeechGate | None = None,
                  say: Callable[[str], None] | None = None,
-                 log: Callable[[str], None] | None = None):
+                 log: Callable[[str], None] | None = None,
+                 feed=None):
+        """`watcher` and `feed` are both optional, and both are real.
+
+        The in-process watcher is the default. The feed is the compiled sidecar,
+        used when it exists because it keeps watching while the assistant is down.
+        A supervisor with neither is legal and does nothing, which is exactly what
+        should happen on a machine where neither source is available.
+        """
         self.watcher = watcher
+        self.feed = feed
         self.gate = gate or SpeechGate()
         self._say = say or (lambda text: None)
         self._log = log or (lambda text: None)
@@ -439,7 +448,18 @@ class Supervisor:
 
     def tick(self, busy: bool = False) -> list[str]:
         """One turn of the crank. Returns what was said, for tests and logs."""
-        for done in self.watcher.poll():
+        finished: list[Completion] = []
+        if self.watcher is not None:
+            finished.extend(self.watcher.poll())
+        if self.feed is not None:
+            finished.extend(self.feed.poll())
+            if not getattr(self.feed, "alive", True):
+                # It stopped. Say so once, then let the caller fall back rather
+                # than let a dead supervisor look like a quiet machine.
+                self._log("The compiled watcher stopped; the in-process one takes over.")
+                self.feed = None
+
+        for done in finished:
             self.completions.append(done)
             self._log(done.sentence())
             self.gate.hold(done.sentence())
@@ -451,6 +471,8 @@ class Supervisor:
 
     def status_line(self) -> str:
         """What is running, in one line. For the agent to answer from."""
+        if self.watcher is None:
+            return "The in-process watcher is not the one running."
         running = self.watcher.live()
         if not running:
             return "Nothing I am watching is running."

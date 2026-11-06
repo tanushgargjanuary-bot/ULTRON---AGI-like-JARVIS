@@ -316,3 +316,50 @@ class DefaultWatchList(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CompiledFeed(unittest.TestCase):
+    """The Go sidecar feeds the same gate; its death falls back to Python.
+
+    Two sources, one announcement path. These tests use a fake feed so they run on
+    a machine with no Go toolchain — which is most machines, and is exactly the
+    situation the fallback exists for.
+    """
+
+    class _Feed:
+        def __init__(self, events, alive=True):
+            self.events = list(events)
+            self.alive = alive
+
+        def poll(self):
+            out, self.events = self.events, []
+            return out
+
+    def _supervisor(self, feed):
+        logged, said = [], []
+        sup = Supervisor(None, gate=SpeechGate(quiet_for=0.0), feed=feed,
+                         say=said.append, log=logged.append)
+        return sup, logged, said
+
+    def test_a_sidecar_event_is_announced_like_any_other(self):
+        event = Completion(label="antigravity", pid=1, name="antigravity",
+                           seconds=90, exit_code=None, how="ended")
+        sup, logged, said = self._supervisor(self._Feed([event]))
+        sup.tick(busy=False)
+        self.assertEqual(len(logged), 1)
+        self.assertIn("finished", logged[0])
+        self.assertEqual(said, logged)
+
+    def test_a_dead_sidecar_says_so_once_and_stops_reading(self):
+        event = Completion(label="x", pid=2, name="x", seconds=1)
+        feed = self._Feed([event], alive=False)
+        sup, logged, _said = self._supervisor(feed)
+        sup.tick(busy=False)
+        self.assertTrue(any("stopped" in line for line in logged),
+                        "a dead sidecar passed for a quiet machine")
+        self.assertIsNone(sup.feed, "the dead feed was kept")
+
+    def test_no_watcher_and_no_feed_is_legal_and_quiet(self):
+        sup = Supervisor(None)
+        self.assertEqual(sup.tick(busy=False), [])
+        self.assertIn("not the one running", sup.status_line())

@@ -89,3 +89,4 @@ ship_pending.json
 # verification-results.txt above is the project record; this folder is one
 # machine's run of the instruments and changes on every invocation.
 verification/
+sidecar/bin/
