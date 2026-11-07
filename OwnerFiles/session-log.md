@@ -363,3 +363,12 @@ stopped being true several builds ago and was corrected rather than appended to.
 **Completion follow-through.** Added focused routing checks in `tests/test_capability_guide.py` for indirect compression wording, skill-name matching, generic requests, unavailable tools, and unsupported tasks. Refined the compression phrases to avoid treating every mention of a large item as compression, and made underscore-based internal skill names match normal user wording.
 
 **Execution status.** The tests were not executable in this environment: the workspace has no repo checkout, GitHub network cloning failed, and the available `python.exe` launcher could not start. The tests are committed for the next environment with Python and the project checkout. This means routing is source-reviewed, not runtime-verified.
+
+
+## 2026-11-07 — read-only branch review
+
+**Asked for.** Make the untested status clear in the docs and inspect other branches for useful capability ideas without editing them.
+
+**Reviewed.** Compared `chatgpt` with `antigravity` and `arena/4c973188-ultron-agi-like-jarvis`. The first has a context detector and a large repository-candidate catalog; the second has a read-only agent workspace report and a test-first playbook. Only read access was used on those branches.
+
+**Updated on `chatgpt`.** Added `docs/CAPABILITY_AWARENESS.md` with a prominent NOT TESTED status, scope and limitations, concrete verification steps, and the read-only inspiration review. Linked it from `docs/INDEX.md`. No files on other branches were changed.
