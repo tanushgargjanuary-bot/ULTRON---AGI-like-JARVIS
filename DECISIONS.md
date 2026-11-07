@@ -69,7 +69,7 @@ new visual language need to be asked for, not assumed.
 - **RAM warnings are disabled in Ultron.** A background assistant that nags about memory is
   worse than one that does not. (The *OS* is the opposite case, below.)
 
-| **`main` moves in small slices, only when you say so** | A long-lived branch is not caution, it is merge debt. `chatgpt` is about 20 commits ahead and `antigravity` is about 5,900 lines ahead; neither can be merged whole any more, and that happened by waiting. So the delivery branch stays small — 5 ahead, 0 behind `main` on 7 Nov — the pull request stays a draft, and `main` moves only on your word, one slice at a time. Keeping `main` red is the price of waiting; the draft PR is the receipt. | `docs/BRANCH_REVIEW.md`, PR #8, `docs/AGENT_NOTION.md` |
+| **`main` moves in small slices, only when you say so** | A long-lived branch is not caution, it is merge debt. `chatgpt` is about 20 commits ahead and `antigravity` is about 5,900 lines ahead; neither can be merged whole any more, and that happened by waiting. So the delivery branch stays small — run `python scripts/branch_report.py` for today's count; it was 8 ahead and 0 behind `main` when this was written — the pull request stays a draft, and `main` moves only on your word, one slice at a time. Keeping `main` red is the price of waiting; the draft PR is the receipt. | `docs/BRANCH_REVIEW.md`, PR #8, `docs/AGENT_NOTION.md` |
 
 ## 5. The interface (decided and corrected 2026-11-06)
 
