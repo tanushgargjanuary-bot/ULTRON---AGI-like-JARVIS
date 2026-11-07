@@ -344,4 +344,6 @@ stopped being true several builds ago and was corrected rather than appended to.
 
 **Harness² adaptation.** Use a bounded Propose–Probe–Compose cycle: identify the task and baseline; propose one change to tool guidance, prompt, skill, or script; rehearse and compare on the same task; adopt only an evidence-supported improvement; retain the lesson for later changes. Repository candidates are researched and reviewed before any native implementation. This adapts the principle; it does not import Google's benchmark framework or implement autonomous recursive optimization.
 
-**Still open.** Runtime discovery/callability and the before/after loop have not been verified; the guide currently ranks installed capabilities and describes repository research, but does not itself search GitHub. No tests were run in this session. Keep those limitations explicit until implemented and checked.
+**Follow-up built.** Added `actions/github_repo_scout.py`, a standard-library-only, read-only GitHub repository search that ranks a short public-project list by stars, maintenance recency, and metadata, reports licenses, and never downloads code. The prompt now routes a capability gap to this scout after checking native tools. Changes remain on `chatgpt` only.
+
+**Still open.** Runtime discovery/callability and an actual same-task before/after probe have not been verified. The scout ranks repository metadata, not source-code quality; a human-reviewed integration proposal and evidence-backed adoption loop are still needed. No tests were run in this session.
