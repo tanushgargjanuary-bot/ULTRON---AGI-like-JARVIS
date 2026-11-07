@@ -130,6 +130,8 @@ class WatchByPid(unittest.TestCase):
             self.wait_until(lambda: any(p.pid == child.pid for p in watcher.live())),
             "the child never appeared in the live list")
 
+        # Keep the child alive long enough for the duration assertion below.
+        time.sleep(0.6)
         if child.stdin:
             child.stdin.close()
         child.wait(timeout=30)
