@@ -68,3 +68,25 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
         "confirm in two different places, then apply. A source change takes effect "
         "after restart.")
     return "\n".join(lines)
+
+
+TOOL = {
+    "name": "capability_guide",
+    "description": (
+        "Map a task to Ultron's existing tools and skills. Use when the user is "
+        "unsure whether Ultron can do a task, seems stuck, asks what tool could help, "
+        "or asks how Ultron can improve itself. This reports capabilities and gaps; "
+        "it does not install code."
+    ),
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "request": {
+                "type": "STRING",
+                "description": "The task the user wants to accomplish or capability they need."
+            }
+        },
+        "required": ["request"],
+    },
+    "handler": run,
+}
