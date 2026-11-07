@@ -1,3 +1,26 @@
+=== 2026-11-07 · build 1.2.38 · later · LFM2, and the answer to "will this strain the laptop" ===
+
+The owner asked for a local model he can afford, and asked the right question: one model is
+already a load, so why more?
+
+The answer is that more was never the plan. Ollama keeps one model loaded and unloads it when
+idle; a loaded LFM2 1.2B costs under 900 MB, and the context costs more than the weights do.
+
+scripts/local_model.py now suggests LFM2 1.2B on a small machine (4 GB or less, or memory it
+cannot read) and gained a fourth command:
+
+    python scripts/local_model.py bench
+
+Three jobs — answer one word, fix one function, return one JSON object — each timed, each with
+a pass mark. That is the honest test of whether a model is worth giving work to, and it is
+cheap to run again after every change.
+
+The rules for using it are in docs/LOCAL_MODEL.md: one file, one instruction, one failing test
+written first. The test decides, not the model.
+
+Not checked: no model was pulled here and no server was reached. The bench has never run
+against a live LFM2 on this machine.
+
 === 2026-11-07 · build 1.2.38 · a local model you can point at, and the other two branches read honestly ===
 
 The owner was tired of two branches that looked busy and reported nothing. So this build does

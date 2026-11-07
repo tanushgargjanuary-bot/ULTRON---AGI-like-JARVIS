@@ -383,3 +383,14 @@ that file ran zero tests all day.
 writes nothing until told, and keeps a backup of the config it merges into.
 
 Not checked: no model was downloaded and no server was reached from this box.
+
+### 2026-11-07 · 1.2.38, later · LFM2 1.2B as the first local model
+
+Small machine, small model. LFM2 1.2B is under 900 MB, holds 32,000 tokens, and runs on a
+processor. Ollama keeps one model loaded and unloads it when idle, so "several models" was
+never the cost — context is.
+
+Added `python scripts/local_model.py bench`: three tiny jobs, each timed, each scored. Use it
+before trusting a model with a file, and again after every change.
+
+Not checked: no model pulled here, no server reached, bench never run live.

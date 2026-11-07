@@ -127,13 +127,13 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 86 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 53 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 29 modules, 14,587 lines
+## `actions/` — 29 modules, 14,604 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `background_monitor.py` | 159 | BackgroundMonitor — user-configured topic watching. | — |
 | `browser_control.py` | 1,310 | **no docstring** | test_policy, test_suite_providers, test_tool_contract |
-| `capability_guide.py` | 157 | Map a user's goal to existing tools and skills, including common synonyms. | test_capability_guide |
+| `capability_guide.py` | 175 | Map a user's goal to existing tools and skills, including common synonyms. | test_capability_guide |
 | `code_helper.py` | 636 | **no docstring** | test_tool_contract |
 | `computer_control.py` | 796 | **no docstring** | test_policy, test_tool_contract, test_ui_control_action |
 | `computer_settings.py` | 1,098 | **no docstring** | test_policy, test_tool_contract |
@@ -144,7 +144,7 @@ edit the module docstring instead and run it again.
 | `file_processor.py` | 938 | file_processor.py — JARVIS Universal File Processor | test_capability_guide |
 | `flight_finder.py` | 407 | **no docstring** | test_triggers |
 | `game_updater.py` | 1,101 | **no docstring** | test_policy |
-| `github_repo_scout.py` | 103 | Find public GitHub projects for a capability gap; inspect only, never install. | — |
+| `github_repo_scout.py` | 102 | Find public GitHub projects for a capability gap; inspect only, never install. | — |
 | `open_app.py` | 468 | JARVIS action — open an application, and know whether it actually opened. | test_app_resolver, test_collect_install, test_live_config, test_live_transport, test_policy, test_suite_safety |
 | `philosophy.py` | 270 | The minds Ultron thinks with, reachable by voice. | test_philosophy |
 | `proactive.py` | 130 | ProactiveEngine 2.0 — context-aware, time-aware, non-repetitive background prompting. | test_suite_assistant, test_suite_providers |
@@ -190,7 +190,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 916 | **no docstring** | test_bugfix_pass, test_curriculum, test_edge_cases, test_hud_fixes, test_mark_integration, test_philosophy, test_shipping, test_suite_assistant, test_triggers |
 | `memory_manager.py` | 499 | **no docstring** | test_edge_cases, test_proof_gate, test_suite_assistant, test_suite_safety |
 
-## `scripts/` — 29 modules, 8,518 lines
+## `scripts/` — 29 modules, 8,586 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -208,7 +208,7 @@ edit the module docstring instead and run it again.
 | `evolve.py` | 249 | scripts/evolve.py — the missing engine for core/selfimprove.py. | test_evolve_script |
 | `fake_provider.py` | 280 | A local stand-in for any OpenAI-compatible model server. | test_live_transport |
 | `inventory_data.py` | 213 | scripts/inventory_data.py — what data does this install actually hold? | test_suite_algorithms |
-| `local_model.py` | 220 | Pick a local model, fetch it, and prove it answers — without guessing. | test_local_model |
+| `local_model.py` | 288 | Pick a local model, fetch it, and prove it answers — without guessing. | test_local_model |
 | `make_banner.py` | 110 | scripts/make_banner.py — draw the animated picture at the top of the readme. | — |
 | `map.py` | 152 | scripts/map.py — write the module map from the code, not from memory. | test_mental, test_suite_providers |
 | `migrate_legacy.py` | 276 | scripts/migrate_legacy.py — carry a previous install's data into Ultron. | test_migrate_legacy |
@@ -224,7 +224,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 56 modules, 18,594 lines
+## `tests/` — 56 modules, 18,624 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -250,7 +250,7 @@ edit the module docstring instead and run it again.
 | `test_launchers.py` | 176 | tests/test_launchers.py — the PowerShell entry points. | test_launchers |
 | `test_live_config.py` | 400 | tests/test_live_config.py — can a session actually be configured, and does the | test_live_config |
 | `test_live_transport.py` | 286 | tests/test_live_transport.py — the provider path over a real socket. | test_live_transport |
-| `test_local_model.py` | 103 | Offline checks for the local-model helper. | — |
+| `test_local_model.py` | 133 | Offline checks for the local-model helper. | — |
 | `test_mark_integration.py` | 312 | Offline tests of actual MARK confirmation dispatch and the custom service. | — |
 | `test_mental.py` | 380 | The syllabus doing work: every citation true, every algorithm answering. | — |
 | `test_metacog.py` | 223 | tests/test_metacog.py — knowing what it knows, and learning how it learns. | test_metacog, test_metacog_service |

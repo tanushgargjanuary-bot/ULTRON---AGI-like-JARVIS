@@ -17,6 +17,11 @@ from scripts import local_model as lm
 class Recommendation(unittest.TestCase):
     """The suggested model must follow the memory, not the wish."""
 
+    def test_a_tiny_machine_gets_the_edge_model(self):
+        model, why = lm.recommend(4.0, 0.0)
+        self.assertEqual(model, "lfm2:1.2b")
+        self.assertIn("900 MB", why)
+
     def test_a_small_machine_gets_a_small_model(self):
         model, why = lm.recommend(8.0, 0.0)
         self.assertEqual(model, "llama3.2:3b")
@@ -32,14 +37,39 @@ class Recommendation(unittest.TestCase):
         self.assertNotEqual(small, large)
         self.assertIn("graphics card", why)
 
-    def test_an_unknown_machine_still_gets_an_answer(self):
+    def test_an_unknown_machine_gets_the_model_that_runs_anywhere(self):
         model, why = lm.recommend(0.0, 0.0)
-        self.assertEqual(model, "llama3.2:3b")
+        self.assertEqual(model, "lfm2:1.2b")
         self.assertIn("memory unknown", why)
 
     def test_an_enormous_machine_is_capped(self):
         model, _ = lm.recommend(256.0, 24.0)
         self.assertEqual(model, "qwen2.5-coder:32b")
+
+
+class Bench(unittest.TestCase):
+    """The bench must be readable, and a wrong answer must score as wrong."""
+
+    def test_a_marker_in_any_case_counts(self):
+        self.assertTrue(lm.score_reply(("ready",), "READY."))
+        self.assertFalse(lm.score_reply(("ready",), "I am not sure what you mean."))
+
+    def test_an_empty_answer_never_passes(self):
+        self.assertFalse(lm.score_reply(("ready",), ""))
+
+    def test_the_bench_has_three_jobs_and_each_has_a_marker(self):
+        self.assertEqual(len(lm.BENCH_TASKS), 3)
+        for name, prompt, expected in lm.BENCH_TASKS:
+            self.assertTrue(name and prompt and expected)
+
+    def test_the_summary_counts_passes_and_seconds(self):
+        rows = [
+            {"task": "chat", "ok": True, "seconds": 0.5, "text": "ready", "error": ""},
+            {"task": "edit", "ok": False, "seconds": 1.5, "text": "no", "error": ""},
+        ]
+        lines = lm.bench_lines(rows)
+        self.assertIn("1 of 2 passed", lines[-1])
+        self.assertIn("2.0s", lines[-1])
 
 
 class ServerAndConfig(unittest.TestCase):

@@ -36,10 +36,21 @@ TIMEOUT = 6
 # largest that fits: a 14B model on a laptop with no graphics card answers in minutes, and a
 # slow answer is worse than a small correct one.
 TIERS = (
-    (8, "llama3.2:3b", "8 GB or less of memory: small, fast, fine for chat and summaries."),
-    (16, "qwen2.5-coder:7b", "7B: the smallest model worth using for code edits."),
+    (4, "lfm2:1.2b", "LFM2 1.2B: under 900 MB, runs on a phone, two to three times faster "
+                    "on a processor than a transformer of the same size."),
+    (8, "llama3.2:3b", "3B: about 2 GB. Fine for chat and summaries, weak at code."),
+    (16, "qwen2.5-coder:7b", "7B: about 5 GB. The smallest model worth using for code edits."),
     (32, "qwen2.5-coder:14b", "14B: better judgement, still runs on a plain desktop."),
     (10**4, "qwen2.5-coder:32b", "32 GB or more: the strongest model that still runs at home."),
+)
+
+# Three tiny jobs, chosen to show speed rather than score. A model that is quick here is
+# worth giving work to; a model that is slow here is a model that will waste an evening.
+BENCH_TASKS = (
+    ("chat", "Reply with the single word: ready", ("ready",)),
+    ("edit", "Fix this function so it adds. Reply with the corrected code only.\n\n"
+             "def add(a, b):\n    return a - b", ("a + b",)),
+    ("json", 'Reply with only this object: {"ok": true}', ('"ok"',)),
 )
 
 
@@ -80,6 +91,39 @@ def recommend(memory_gb: float, graphics_gb: float = 0.0) -> tuple[str, str]:
                 note += f", {graphics_gb:.0f} GB on the graphics card"
             return model, f"{why} Chosen for {note}."
     return TIERS[-1][1], TIERS[-1][2]
+
+
+def score_reply(expected: tuple, text: str) -> bool:
+    """True when the answer contains any expected marker, ignoring case."""
+    lowered = (text or "").lower()
+    return any(marker.lower() in lowered for marker in expected)
+
+
+def bench(url: str, model: str) -> list[dict]:
+    """Run the three tiny jobs and report seconds and a pass mark for each."""
+    results = []
+    for name, prompt, expected in BENCH_TASKS:
+        answer = ask(url, model, prompt)
+        results.append({
+            "task": name,
+            "ok": bool(answer["ok"]) and score_reply(expected, answer["text"]),
+            "seconds": answer["seconds"],
+            "text": answer["text"],
+            "error": answer["error"],
+        })
+    return results
+
+
+def bench_lines(results: list[dict]) -> list[str]:
+    """The bench as lines a person can read: one row per job, then the total."""
+    lines = [f"  {'task':6} {'result':6} {'seconds':>7}"]
+    for row in results:
+        mark = "pass" if row["ok"] else "fail"
+        lines.append(f"  {row['task']:6} {mark:6} {row['seconds']:>7}")
+    total = round(sum(row["seconds"] for row in results), 2)
+    passed = sum(1 for row in results if row["ok"])
+    lines.append(f"  {passed} of {len(results)} passed, {total}s in total")
+    return lines
 
 
 def installed_models(url: str = DEFAULT_URL) -> list[str]:
@@ -164,12 +208,63 @@ def _print_state(url: str) -> tuple[str, str]:
     return model, why
 
 
+def _do_pull(model: str) -> int:
+    """Download through Ollama. The only slow step, and the only one that uses the network."""
+    if not ollama_present():
+        print("\nOllama is not installed. Get it from https://ollama.com, then run this again.")
+        return 1
+    print(f"\npulling {model} — a few hundred megabytes for LFM2, several gigabytes for a 7B")
+    return subprocess.run(["ollama", "pull", model]).returncode
+
+
+def _do_test(url: str, model: str) -> int:
+    """One question, timed. Proof the server and the model agree."""
+    answer = ask(url, model)
+    if answer["ok"]:
+        print(f'\n{model} answered in {answer["seconds"]}s: "{answer["text"][:120]}"')
+        return 0
+    print(f"\n{model} did not answer: {answer['error']}")
+    print("Is Ollama running, and is the model pulled?")
+    return 1
+
+
+def _do_bench(url: str, model: str) -> int:
+    """Three tiny jobs. Speed first, quality second."""
+    print(f"\nbenching {model} on three small jobs")
+    results = bench(url, model)
+    for line in bench_lines(results):
+        print(line)
+    if not any(row["ok"] for row in results):
+        print("No job passed. Check that the model is pulled and the server is up.")
+        return 1
+    print("A model that passes two of three here can take one-file edits. Slower is not fatal;")
+    print("failing every job is.")
+    return 0
+
+
+def _do_write(url: str, model: str, config: str, confirmed: bool) -> int:
+    """Point the application at the model, keeping a backup."""
+    target = Path(config)
+    if not confirmed:
+        print(f"\nabout to set llm_provider=ollama, llm_url={url}, llm_model={model}")
+        print(f"in {target} (a .bak copy is kept)")
+        if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
+            print("nothing written")
+            return 1
+    backup = write_config(target, url, model)
+    print(f"\nwrote {target}")
+    if backup.exists():
+        print(f"backup: {backup}")
+    print("restart the application for the change to take effect.")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Set up and check a local model.")
     parser.add_argument("command", nargs="?", default="check",
-                        choices=["check", "pull", "test", "write"])
+                        choices=["check", "pull", "test", "bench", "write"])
     parser.add_argument("--url", default=DEFAULT_URL, help="local server address")
-    parser.add_argument("--model", default="", help="override the recommended model")
+    parser.add_argument("--model", default="", help="override the recommended model, e.g. lfm2:1.2b")
     parser.add_argument("--config", default=str(CONFIG_PATH), help="config file to update")
     parser.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     args = parser.parse_args(argv)
@@ -180,40 +275,13 @@ def main(argv=None) -> int:
     if args.command == "check":
         print("\nnext: python scripts/local_model.py pull")
         return 0
-
     if args.command == "pull":
-        if not ollama_present():
-            print("\nOllama is not installed. Get it from https://ollama.com, then run this again.")
-            return 1
-        print(f"\npulling {model} — this downloads a few gigabytes and is the only slow step")
-        result = subprocess.run(["ollama", "pull", model])
-        return result.returncode
-
+        return _do_pull(model)
     if args.command == "test":
-        answer = ask(args.url, model)
-        if answer["ok"]:
-            print(f'\n{model} answered in {answer["seconds"]}s: "{answer["text"][:120]}"')
-            return 0
-        print(f"\n{model} did not answer: {answer['error']}")
-        print("Is Ollama running, and is the model pulled?")
-        return 1
-
-    if args.command == "write":
-        target = Path(args.config)
-        if not args.yes:
-            print(f"\nabout to set llm_provider=ollama, llm_url={args.url}, llm_model={model}")
-            print(f"in {target} (a .bak copy is kept)")
-            if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
-                print("nothing written")
-                return 1
-        backup = write_config(target, args.url, model)
-        print(f"\nwrote {target}")
-        if backup.exists():
-            print(f"backup: {backup}")
-        print("restart the application for the change to take effect.")
-        return 0
-
-    return 2
+        return _do_test(args.url, model)
+    if args.command == "bench":
+        return _do_bench(args.url, model)
+    return _do_write(args.url, model, args.config, args.yes)
 
 
 if __name__ == "__main__":

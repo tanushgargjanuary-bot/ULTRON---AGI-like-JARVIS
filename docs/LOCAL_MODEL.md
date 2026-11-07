@@ -18,8 +18,14 @@ and whether it answers. `scripts/local_model.py` answers that.
 python scripts\local_model.py          # what this machine can run, and what is installed
 python scripts\local_model.py pull     # download the recommended model
 python scripts\local_model.py test     # ask it one question and time the answer
+python scripts\local_model.py bench    # three tiny jobs, timed, with a pass mark
 python scripts\local_model.py write    # point the app at it, keeping a .bak copy
+python scripts\local_model.py pull --model lfm2:1.2b
 ```
+
+`bench` is the honest answer to "is this model worth using". Three jobs: answer one word, fix
+one function, return one JSON object. It prints seconds and a pass mark for each. A model that
+fails all three is a model that will waste an evening.
 
 `check` writes nothing. `write` merges three keys and never deletes one you pasted, so a cloud
 key survives a switch to a local model.
@@ -28,12 +34,16 @@ key survives a switch to a local model.
 
 The script reads memory and the graphics card, then picks the smallest model that does the job:
 
-| This machine | Model | Why |
-|---|---|---|
-| 8 GB or less | `llama3.2:3b` | fast, fine for chat and summaries |
-| 16 GB | `qwen2.5-coder:7b` | the smallest model worth using for code edits |
-| 32 GB | `qwen2.5-coder:14b` | better judgement, still runs on a desktop |
-| 32 GB and a big card | `qwen2.5-coder:32b` | the strongest model that still runs at home |
+| This machine | Model | Size on disk | Why |
+|---|---|---|---|
+| 4 GB or a phone | `lfm2:1.2b` | under 900 MB | Liquid AI's edge model. Runs on a processor at two to three times the speed of a transformer of the same size. |
+| 8 GB | `llama3.2:3b` | about 2 GB | fine for chat and summaries, weak at code |
+| 16 GB | `qwen2.5-coder:7b` | about 5 GB | the smallest model worth using for code edits |
+| 32 GB | `qwen2.5-coder:14b` | about 9 GB | better judgement, still runs on a desktop |
+| 32 GB and a big card | `qwen2.5-coder:32b` | about 20 GB | the strongest model that still runs at home |
+
+LFM2 is the one to try first on a laptop that is already busy. It is small enough that the
+model is not the thing that slows the machine down; the application is.
 
 Graphics memory counts, because a model that fits on the card runs ten to fifty times faster.
 
@@ -52,6 +62,30 @@ Graphics memory counts, because a model that fits on the card runs ten to fifty 
   a long answer takes minutes.
 
 Speed is measured, not guessed: `python scripts/local_model.py test` prints the seconds.
+
+## One model at a time, and the memory it costs
+
+- Ollama loads **one** model into memory and unloads it after a few minutes of no use. Two
+  models on disk do not mean two models in memory.
+- A loaded model costs its file size in memory: under 1 GB for LFM2 1.2B, about 5 GB for a 7B.
+- Idle, a loaded model costs almost no processor time. It is a parked car, not a running one.
+- The pressure comes from the **context**, not the weights: a long conversation costs more
+  memory than the model does. LFM2 1.2B holds 32,000 tokens.
+
+So one small model on a working laptop is not a strain. Three large ones at once would be,
+which is why the tool never starts a second one.
+
+## How this fits a bigger agent
+
+A small local model is good at **doing one thing to one file**. It is not good at planning.
+The split that works:
+
+1. The bigger agent writes the task as one file, one instruction, and one test that fails.
+2. The local model edits that one file.
+3. The test decides. Not the model's opinion of its own work.
+
+Without step 3 the loop produces confident wrong code. This repository's rule already says it:
+a claim needs evidence.
 
 ## Related
 
