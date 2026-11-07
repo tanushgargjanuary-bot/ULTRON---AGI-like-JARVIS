@@ -317,8 +317,13 @@ def create_file(path: str, name: str = "", content: str = "") -> str:
             except Exception:
                 previous = None
         target.write_text(content, encoding="utf-8")
-        push_undo(f"created {target.name}",
-                  _undo_write(target, previous) if existed else _undo_create(target))
+        is_plugin = target.parent.name == "plugins" and target.suffix == ".py"
+        label = f"deployed plugin {target.name}" if is_plugin else f"created {target.name}"
+        push_undo(
+            label,
+            _undo_write(target, previous) if existed else _undo_create(target),
+            metadata={"type": "plugin" if is_plugin else "file", "path": str(target)},
+        )
         return f"File created: {target.name}"
     except Exception as e:
         return f"Could not create file: {e}"
@@ -517,7 +522,13 @@ def write_file(path: str, name: str = "", content: str = "",
 
         action = "Appended to" if append else "Written to"
         if undoable:
-            push_undo(f"wrote to {target.name}", _undo_write(target, previous))
+            is_plugin = target.parent.name == "plugins" and target.suffix == ".py"
+            label = f"deployed plugin {target.name}" if is_plugin else f"wrote to {target.name}"
+            push_undo(
+                label,
+                _undo_write(target, previous),
+                metadata={"type": "plugin" if is_plugin else "file", "path": str(target)},
+            )
             return f"{action}: {target.name}"
         return (f"{action}: {target.name}. "
                 f"(Too large to keep a copy of the old contents, so this one "

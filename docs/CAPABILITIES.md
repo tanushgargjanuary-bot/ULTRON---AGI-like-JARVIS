@@ -88,3 +88,25 @@ What is deliberately not on this list: anything that needs a downloaded model
 (vision, local LLM) beyond what the user already approved; anything that phones
 home; and anything that would let the assistant confirm its own actions — the
 confirmation token stays issued by the UI, never by a tool.
+
+---
+
+## 6. Combinatorial Power & Workflow Chaining (Current Engine)
+
+Ultron is not a single-shot prompt responder; it is an autonomous workstation engine equipped with 56+ tools across 9 functional categories (`system`, `files`, `knowledge`, `media`, `security`, `memory`, `communication`, `developer`, `other`). These compose into thousands of deterministic and generative workflows.
+
+### Multi-Tool Chaining Mastery
+High-value goals are achieved by decomposing intents into ordered execution pipelines:
+- **Research & Ingestion -> Execution**: Scrape dynamic target pages via `crawler_bridge` -> analyze with local LLMs (`local_models`) -> extract code or documents from screen via `minicpm_ocr_bridge` -> write files with `file_controller` -> execute tests with `code_helper` -> surface results on HUD -> persist outcomes with `save_memory`.
+- **System Diagnostics -> Repair**: Detect performance spikes via `system_monitor` / `system_status` -> inspect logs in `logs/` -> query `self_modify` for recent crashes -> propose surgical repairs.
+- **Media Creation -> Presentation**: Process video with `hyperframes_bridge` / `youtube_video` -> generate audio via `voicestudio_bridge` -> control display via `manage_monitor` / `desktop_control`.
+
+### Self-Evolution & Safe Extensibility
+Ultron's hands and logic are designed to expand cleanly without breaking architectural invariants:
+- **5-Stage Self-Change**: `self_modify` stages alterations through `propose` -> `rehearse` (in isolated sandbox copy) -> `confirm` (two channels) -> `apply` -> `revert`.
+- **Zero-Config Hot Plugins**: Dropping a valid Python script into `plugins/` auto-enables the new tool instantly without restarting or editing `config/api_keys.json`.
+- **Grounded Crash Diagnostics**: When an unexpected error occurs, crash dumps in `logs/` serve as the deterministic starting point for repair proposals.
+
+### Grounded Native Competence
+Ultron operates natively on the user's workstation. With local and cloud model flexibility, deep OS hooks (UI tree, window management, process controls), and persistent memory, it speaks and acts with calm, unhurried, and decisive authority.
+

@@ -67,3 +67,4 @@ def get_clipboard_target() -> str:
     except Exception as exc:  # noqa: BLE001
         failures.note("context_detector.get_clipboard_target", exc)
     return ""
+

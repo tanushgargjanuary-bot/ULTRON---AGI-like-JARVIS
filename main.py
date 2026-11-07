@@ -604,22 +604,24 @@ TOOL_DECLARATIONS = [
     {
         "name": "undo",
         "description": (
-            "Reverse the last change YOU made to this computer — a file you "
-            "moved, renamed, created or wrote, or a setting you changed such as "
-            "volume, brightness, dark mode or WiFi. "
-            "Call this whenever the user says undo, revert, take it back, put it "
-            "back, cancel that, or tells you that you did the wrong thing, in ANY "
-            "language. "
-            "Use action='list' when they ask what can be undone. "
-            "This only covers your own actions — it is not the Ctrl+Z of whatever "
-            "application is on screen (that is computer_settings with action 'undo')."
+            "Reverse the last change YOU made to this computer — whether a file you "
+            "moved, renamed, created, or wrote, a self-modification or hot-plugin "
+            "you deployed, or a computer setting you adjusted (such as volume, brightness, "
+            "dark mode, or WiFi). "
+            "Call this whenever the user expresses ANY intent to reverse, undo, restore, "
+            "rollback, discard, or cancel your previous action or edit, or says that was "
+            "a mistake, go back, or that you did the wrong thing, in any phrasing, conversational "
+            "tone, or language. "
+            "Use action='list' when they ask what can be undone or want to see undo history. "
+            "This covers your own assistant operations — it is not the keyboard shortcut Ctrl+Z "
+            "for an active application on screen (that is computer_settings with action 'undo')."
         ),
         "parameters": {
             "type": "OBJECT",
             "properties": {
                 "action": {
                     "type": "STRING",
-                    "description": "undo (default) — reverse the last change | list — show what can be undone",
+                    "description": "undo (default) — reverse the last action or edit | list — show what can be undone or view history",
                 },
             },
             "required": [],
@@ -1620,7 +1622,8 @@ class JarvisLive:
                           + digest_mod.render_speech(report))
 
             elif name == "undo":
-                if str(args.get("action", "")).lower().strip() == "list":
+                action_str = str(args.get("action", "")).lower().strip()
+                if action_str in ("list", "history", "show", "pending", "view", "what", "what_can_be_undone"):
                     items = undo_stack.history()
                     result = ("Things I can undo, most recent first:\n"
                               + "\n".join(f"{i+1}. {t}" for i, t in enumerate(items))

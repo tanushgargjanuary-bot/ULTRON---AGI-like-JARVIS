@@ -328,3 +328,18 @@ stopped being true several builds ago and was corrected rather than appended to.
 - Native capabilities hardened: zero-delay system voice fallback in `core/tts.py`, active window Z-order resolution and Windows UIPI/elevation checks in `custom_jarvis/tools.py`, fuzzy window activation in `actions/computer_control.py`, and factual temporal session summary recall in `memory/memory_manager.py`.
 - Classified in `core/policy.py`, verified with 20 unit tests in `tests/test_native_plugin_bridges.py`, zero ceiling breaches in `tests/test_suite_assistant.py`, and all 71 safety tests green. All committed to `antigravity` and pushed to remote.
 
+
+
+### 2026-11-07 · 1.2.38 — hot-plugin forge, flexible semantic undo, caveman token saver, and combinatorial self-awareness
+
+**Asked for.** Make Ultron capable of self-coding and self-evolution with zero disadvantages so the owner can simply tell Jarvis to do the work. Activate #2 (Instant Hot-Plugin Creator) with isolated subprocess rehearsal and zero restarts. De-hardcode reversal triggers so "undo that", "put it back", "rollback", etc. work seamlessly with broad semantic understanding. Harden all 8 self-evolution points. Make Ultron deeply aware of its 56+ tools, system prompt, and thousands of multi-tool workflow combinations. Keep changes strictly on `antigravity`. Remind user when coding is done so they can transition to using the assistant.
+
+**Built.**
+- `actions/plugin_forge.py`: instant plugin creator with AST syntax validation, isolated subprocess sandbox rehearsal, thread-safe dynamic registry reload (`reload_or_register`, `unregister`), policy tier assignment, and push-to-undo integration.
+- `core/plugin_loader.py`: added thread-safe `reload_or_register(file_path)` and `unregister(name)` with RLock synchronization, automatic pycache invalidation, and module reload without app restart.
+- `core/policy.py`: dynamic policy tier registration (`register_policy`, `unregister_policy`, `get_dynamic_policy`).
+- `core/undo.py` and `actions/self_change.py`: flexible semantic reversal resolving broad undo synonyms (`undo`, `rollback`, `revert`, `discard`, `cancel`, `mistake`, `restore`, `put_back`, `unapply`) in any phrasing or language, pushing reversible closures.
+- `main.py`: updated undo tool declaration and dispatch to accept conversational semantic reversal.
+- `plugins/caveman.py`: deterministic token saver plugin brought into `antigravity`, registered under routine policy with zero LLM cost, verified with `tests/test_caveman.py`.
+- `core/prompt.txt`, `core/tool_catalog.py`, `docs/CAPABILITIES.md`: documented combinatorial workflow chaining (Crawl -> OCR -> Code -> Test -> Save -> HUD) and system prompt self-awareness.
+- Verification: 62 feature unit tests passed, 127/127 assistant suite tests passed with zero ceiling breaches, 71/71 safety suite tests passed, 8/8 readme tests passed, and 9/9 workspace budget tests passed. Regenerated `docs/MAP.md`.

@@ -12,6 +12,7 @@ import importlib.util
 import inspect
 import re
 import sys
+import threading
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,6 +23,19 @@ from memory.config_manager import get_plugin_enabled, get_plugin_config
 
 _NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$")
 _DEFAULT_PARAMS = {"type": "OBJECT", "properties": {}}
+
+_ACTIVE_REGISTRY: Optional[PluginRegistry] = None
+
+
+def get_active_registry() -> Optional[PluginRegistry]:
+    """Return the active PluginRegistry instance, if one has been initialized."""
+    return _ACTIVE_REGISTRY
+
+
+def set_active_registry(registry: Optional[PluginRegistry]) -> None:
+    """Set the active PluginRegistry instance."""
+    global _ACTIVE_REGISTRY
+    _ACTIVE_REGISTRY = registry
 
 # Optional, and the same contract actions use: a plugin that takes a moment can
 # say so, and the model carries on talking instead of waiting on it. See
@@ -74,7 +88,9 @@ class PluginRecord:
 
 class PluginRegistry:
     def __init__(self, plugins: dict[str, PluginRecord], logger: Callable[[str], None],
-                 notify: Callable[[str], None] | None = None):
+                 notify: Callable[[str], None] | None = None,
+                 core_tool_names: set[str] | None = None,
+                 plugins_dir: Path | None = None):
         self._plugins = plugins          # name -> PluginRecord, VALID entries only
         self._all_records: list[PluginRecord] = []   # valid + invalid, for UI listing
         self._logger = logger
@@ -83,40 +99,51 @@ class PluginRegistry:
         # the user has to know about are sent to it. Defaults to dropping them,
         # which keeps every existing single-sink caller working unchanged.
         self._notify = notify or (lambda _msg: None)
+        self._core_tool_names: set[str] = set(core_tool_names or ())
+        self._plugins_dir: Path = Path(plugins_dir) if plugins_dir else Path("plugins")
+        self._lock = threading.RLock()
+
+        global _ACTIVE_REGISTRY
+        if _ACTIVE_REGISTRY is None:
+            _ACTIVE_REGISTRY = self
 
     # -- called by main.py at LiveConnectConfig build time --
     def get_tool_declarations(self) -> list[dict]:
-        decls = []
-        for name, rec in self._plugins.items():
-            if get_plugin_enabled(name):
-                decl = {
-                    "name": rec.name,
-                    "description": rec.description,
-                    "parameters": rec.parameters,
-                }
-                if rec.behavior:
-                    decl["behavior"] = rec.behavior
-                # Budget metadata. NOT part of any API's schema — main.py calls
-                # providers.schema.strip_meta() before the Gemini config is
-                # built, and budget() consumes them on the local-engine path.
-                if rec.tier:
-                    decl["tier"] = rec.tier
-                if rec.brief:
-                    decl["brief"] = rec.brief
-                decls.append(decl)
-        return decls
+        with self._lock:
+            decls = []
+            for name, rec in self._plugins.items():
+                if get_plugin_enabled(name):
+                    decl = {
+                        "name": rec.name,
+                        "description": rec.description,
+                        "parameters": rec.parameters,
+                    }
+                    if rec.behavior:
+                        decl["behavior"] = rec.behavior
+                    # Budget metadata. NOT part of any API's schema — main.py calls
+                    # providers.schema.strip_meta() before the Gemini config is
+                    # built, and budget() consumes them on the local-engine path.
+                    if rec.tier:
+                        decl["tier"] = rec.tier
+                    if rec.brief:
+                        decl["brief"] = rec.brief
+                    decls.append(decl)
+            return decls
 
     def has(self, name: str) -> bool:
-        return name in self._plugins
+        with self._lock:
+            return name in self._plugins
 
     def scheduling(self, name: str) -> Optional[str]:
         """How this plugin's result should re-enter the conversation, if it said."""
-        rec = self._plugins.get(name)
-        return rec.scheduling if rec else None
+        with self._lock:
+            rec = self._plugins.get(name)
+            return rec.scheduling if rec else None
 
     # -- called by main.py from _execute_tool's else branch --
     def run(self, name: str, parameters: dict, player=None, session_memory=None) -> str:
-        rec = self._plugins.get(name)
+        with self._lock:
+            rec = self._plugins.get(name)
         if rec is None or not rec.valid:
             return f"Plugin '{name}' is not available."
         if not get_plugin_enabled(name):
@@ -143,7 +170,9 @@ class PluginRegistry:
         """
         seen: set[str] = set()
         out: list[dict] = []
-        for name, rec in self._plugins.items():
+        with self._lock:
+            items = list(self._plugins.items())
+        for name, rec in items:
             if not rec.settings or not get_plugin_enabled(name):
                 continue
             ns = rec.settings.get("namespace") or rec.name
@@ -162,8 +191,10 @@ class PluginRegistry:
 
     # -- called by ui.py's Plugin Manager overlay --
     def list_for_ui(self) -> list[dict]:
+        with self._lock:
+            records = list(self._all_records)
         out = []
-        for rec in self._all_records:
+        for rec in records:
             out.append({
                 "name": rec.name,
                 "description": rec.description,
@@ -173,6 +204,109 @@ class PluginRegistry:
                 "enabled": get_plugin_enabled(rec.name) if rec.valid else False,
             })
         return out
+
+    def reload_or_register(self, file_path: Path) -> PluginRecord:
+        """Thread-safe hot-load or re-registration of a plugin file into the running registry."""
+        path = Path(file_path).resolve()
+        if not path.is_file():
+            rec = PluginRecord(name=path.stem, file=path.name, valid=False, error=f"File not found: {path}")
+            self._store_plugin_record(rec, path)
+            return rec
+
+        if path.name.startswith("_"):
+            return PluginRecord(name=path.stem, file=path.name, valid=False, error=f"Skipping helper/private file '{path.name}'")
+
+        module, err_rec = _load_module_for_plugin(path, self._plugins_dir)
+        if err_rec is not None:
+            self._store_plugin_record(err_rec, path)
+            return err_rec
+
+        with self._lock:
+            existing = dict(self._plugins)
+        rec = _validate_plugin_record(module, path.name, self._core_tool_names, existing)
+        self._store_plugin_record(rec, path)
+        return rec
+
+    def _store_plugin_record(self, rec: PluginRecord, path: Path) -> None:
+        """Update internal records and notify under lock."""
+        with self._lock:
+            self._all_records = [r for r in self._all_records if r.file != path.name]
+            self._all_records.append(rec)
+            for old_name, old_rec in list(self._plugins.items()):
+                if old_rec.file == path.name and (not rec.valid or old_name != rec.name):
+                    self._plugins.pop(old_name, None)
+            if rec.valid:
+                self._plugins[rec.name] = rec
+                self._logger(f"Plugin loaded: {rec.name} ({path.name})")
+            else:
+                self._logger(f"Plugin rejected: {path.name} — {rec.error}")
+                self._notify(f"Plugin '{path.name}' failed to load: {rec.error}")
+
+    def unregister(self, name: str) -> bool:
+        """Thread-safe removal of a plugin from the registry and sys.modules."""
+        with self._lock:
+            found = False
+            rec = self._plugins.pop(name, None)
+            filename = rec.file if rec else f"{name}.py"
+            if rec:
+                found = True
+            initial_count = len(self._all_records)
+            self._all_records = [r for r in self._all_records if r.name != name and r.file != filename]
+            if len(self._all_records) < initial_count:
+                found = True
+            mod_name = f"plugins.{Path(filename).stem}"
+            sys.modules.pop(mod_name, None)
+            return found
+
+
+def _load_module_for_plugin(path: Path, plugins_dir: Path) -> tuple[Optional[Any], Optional[PluginRecord]]:
+    module_name = f"plugins.{path.stem}"
+    try:
+        pycache_dir = path.parent / "__pycache__"
+        if pycache_dir.is_dir():
+            for pyc in pycache_dir.glob(f"{path.stem}.*.pyc"):
+                try:
+                    pyc.unlink(missing_ok=True)
+                except OSError as e:
+                    failures.note("plugin_loader.clear_pycache", e)
+        importlib.invalidate_caches()
+        sys.modules.pop(module_name, None)
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Could not build import spec for {path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        try:
+            spec.loader.exec_module(module)
+        except Exception:
+            sys.modules.pop(module_name, None)
+            raise
+        return module, None
+    except Exception as e:
+        rec = PluginRecord(
+            name=path.stem, file=path.name, valid=False,
+            error=_load_error(path, plugins_dir, e)
+        )
+        failures.note("plugin_loader.reload", e)
+        return None, rec
+
+
+def _validate_plugin_record(
+    module: Any, filename: str, core_tools: set[str], existing: dict[str, PluginRecord]
+) -> PluginRecord:
+    rec = _validate(module, filename)
+    if rec.valid and rec.name in core_tools:
+        return PluginRecord(
+            name=rec.name, file=filename, valid=False,
+            error=f"Name '{rec.name}' collides with a core tool — rejected."
+        )
+    if rec.valid and rec.name in existing and existing[rec.name].file != filename:
+        other = existing[rec.name].file
+        return PluginRecord(
+            name=rec.name, file=filename, valid=False,
+            error=f"Name '{rec.name}' already used by plugin '{other}' — rejected."
+        )
+    return rec
 
 
 def _clean_parameters(parameters):
@@ -352,8 +486,11 @@ def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
             logger(f"Plugin rejected: {path.name} — {rec.error}")
 
     notify = notify or (lambda _msg: None)
-    registry = PluginRegistry(valid, logger, notify)
+    registry = PluginRegistry(
+        valid, logger, notify, core_tool_names=core_tool_names, plugins_dir=plugins_dir
+    )
     registry._all_records = all_records
+    set_active_registry(registry)
     rejected = len(all_records) - len(valid)
     logger(f"Plugin discovery complete: {len(valid)} active, "
            f"{rejected} rejected, {len(all_records)} total.")

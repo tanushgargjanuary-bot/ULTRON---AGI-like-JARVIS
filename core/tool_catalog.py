@@ -38,18 +38,25 @@ CATEGORIES: dict[str, str] = {
     "system_status": "system", "computer_settings": "system", "computer_control": "system",
     "open_app": "system", "desktop_control": "system", "shutdown_jarvis": "system",
     "manage_monitor": "system", "ui_control": "system", "game_updater": "system",
+    "browser_control": "system", "tools_status": "system", "undo": "system",
     # files and documents
     "file_controller": "files", "file_processor": "files", "code_helper": "files",
     "dev_agent": "files",
     # knowledge and time
     "web_search": "knowledge", "weather_report": "knowledge", "recall_memory": "knowledge",
     "save_memory": "knowledge", "daily_digest": "knowledge", "reminder": "knowledge",
-    "flight_finder": "knowledge", "system_monitor": "knowledge",
+    "flight_finder": "knowledge", "system_monitor": "knowledge", "reasoning": "knowledge",
+    "curriculum": "knowledge", "philosophy": "knowledge", "crawler_bridge": "knowledge",
     # media
     "video_player": "media", "youtube_video": "media", "screen_process": "media",
-    "close_camera": "media",
+    "close_camera": "media", "minicpm_ocr_bridge": "media",
     # communication
     "send_message": "communication",
+    # developer and self-evolution
+    "self_modify": "developer", "prompt_editor": "developer", "system_prompt": "developer",
+    "local_models": "developer", "github_tool": "developer", "custom_jarvis": "developer",
+    "agent_monitor_bridge": "developer", "tech_platforms": "developer", "caveman": "developer",
+    "plugin_forge": "developer",
     # external tools (bridges)
     "rea_bridge": "security", "hyperframes_bridge": "media",
     "hindsight_bridge": "memory", "voicestudio_bridge": "media", "hypit_bridge": "media",
@@ -239,6 +246,8 @@ def render_text(entries: list[Entry] | None = None) -> str:
         lines.append(f"{CATEGORY_TITLES.get(category, category.upper())}:")
         for entry in items:
             lines.append("  " + entry.line())
+    lines.append("")
+    lines.append("Combinatorial capability: tools compose into multi-step pipelines (e.g. scrape with crawler_bridge -> analyze with local LLM -> extract with minicpm_ocr_bridge -> write with file_controller -> test with code_helper -> report to HUD -> persist to memory).")
     return "\n".join(lines)
 
 

@@ -38,7 +38,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Any, Callable
 
 # How many reversible operations we keep. Ten is roughly "this conversation":
 # far enough back to catch a mistake you noticed a few commands later, short
@@ -48,16 +48,17 @@ MAX_DEPTH = 10
 
 @dataclass
 class _Entry:
-    label:   str                    # human sentence, spoken back to the user
-    undo:    Callable[[], str]      # returns a short result string
-    at:      float = field(default_factory=time.monotonic)
+    label:    str                           # human sentence, spoken back to the user
+    undo:     Callable[[], str | Any]       # returns a short result string
+    metadata: dict = field(default_factory=dict)
+    at:       float = field(default_factory=time.monotonic)
 
 
 _stack: list[_Entry] = []
 _lock = threading.Lock()
 
 
-def push_undo(label: str, undo_fn: Callable[[], str]) -> None:
+def push_undo(label: str, undo_fn: Callable[[], Any], metadata: dict | None = None) -> None:
     """Record that `label` just happened and `undo_fn()` reverses it.
 
     Called from action handlers, which run in executor threads — hence the
@@ -67,7 +68,11 @@ def push_undo(label: str, undo_fn: Callable[[], str]) -> None:
         return
     try:
         with _lock:
-            _stack.append(_Entry(label=str(label)[:120], undo=undo_fn))
+            _stack.append(_Entry(
+                label=str(label).strip()[:120],
+                undo=undo_fn,
+                metadata=dict(metadata or {}),
+            ))
             # Drop the oldest rather than refusing the newest: the recent past
             # is what people ask to undo.
             while len(_stack) > MAX_DEPTH:
@@ -93,6 +98,52 @@ def history() -> list[str]:
         return [e.label for e in reversed(_stack)]
 
 
+def entries() -> list[dict]:
+    """Read-only view of current stack entries with metadata (most recent first)."""
+    with _lock:
+        return [
+            {"label": e.label, "at": e.at, "metadata": dict(e.metadata)}
+            for e in reversed(_stack)
+        ]
+
+
+def undo_matching(filter_fn: Callable[[_Entry], bool]) -> str | None:
+    """Find and undo the newest entry matching filter_fn.
+    Returns the result string, or None if no entry matched."""
+    if not callable(filter_fn):
+        return None
+    with _lock:
+        for i in range(len(_stack) - 1, -1, -1):
+            if filter_fn(_stack[i]):
+                entry = _stack.pop(i)
+                break
+        else:
+            return None
+
+    try:
+        res = entry.undo()
+        detail = str(res) if res is not None else ""
+    except Exception as e:
+        return f"Could not undo '{entry.label}': {e}"
+
+    return f"Undone: {entry.label}." + (f" {detail}" if detail else "")
+
+
+def remove_matching(predicate: Callable[[_Entry], bool]) -> bool:
+    """Remove matching entries from the undo stack without running them.
+    Thread-safe. Returns True if any entries were removed."""
+    if not callable(predicate):
+        return False
+    try:
+        with _lock:
+            initial = len(_stack)
+            _stack[:] = [e for e in _stack if not predicate(e)]
+            return len(_stack) < initial
+    except Exception as e:
+        print(f"[Undo] remove_matching failed: {e}")
+        return False
+
+
 def undo_last() -> str:
     """Reverse the most recent reversible operation.
 
@@ -107,7 +158,8 @@ def undo_last() -> str:
                 "files I moved or wrote, and settings I adjusted.")
 
     try:
-        detail = entry.undo() or ""
+        res = entry.undo()
+        detail = str(res) if res is not None else ""
     except Exception as e:
         return f"Could not undo '{entry.label}': {e}"
 

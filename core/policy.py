@@ -116,6 +116,7 @@ ROUTINE_TOOLS: frozenset[str] = frozenset(
         "dev_cron",
         "crawler_bridge",
         "minicpm_ocr_bridge",
+        "caveman",
         "crypto_ident",
         # Two read-only readers of public technical data. Neither changes an
         # account, a file or a device; both return what a browser would show.
@@ -135,6 +136,7 @@ GUARDED_TOOLS: frozenset[str] = frozenset(
         "code_helper",
         "file_controller",
         "computer_settings",
+        "plugin_forge",
         # Not `screen_processor`: that name belongs to no tool. The screen tool
         # is `screen_process`, and it is in SENSOR_TOOLS below — it was falling
         # through to "unclassified", so the sensor tier's grant ("this task may
@@ -158,6 +160,7 @@ _GUARDED_REASONS: dict[str, str] = {
     "save_memory": "memory is permanent — remembering is approval-gated",
     "forget_memory": "memory is permanent — forgetting is approval-gated",
     "shutdown_jarvis": "turns the assistant off",
+    "plugin_forge": "creates, tests in a sandbox, and hot-loads executable plugin code",
     # net_check with no action is not one of its three verbs, so it must not fall
     # through to "unclassified": it is a network tool, and the answer stays ask.
     "net_check": "probes a host the user named — say what to check",
@@ -347,6 +350,29 @@ def grants() -> dict[str, float]:
         return {s: round(until - now, 3) for s, until in _grants.items()}
 
 
+_DYNAMIC_TIERS: dict[str, Tier] = {}
+
+
+def register_policy(name: str, tier: Tier | str = Tier.GUARDED) -> None:
+    """Register or update a tool/plugin risk policy tier at runtime."""
+    if isinstance(tier, str):
+        tier = Tier(tier.strip().lower())
+    with _lock:
+        _DYNAMIC_TIERS[str(name)] = tier
+
+
+def unregister_policy(name: str) -> None:
+    """Unregister a dynamic tool/plugin risk policy tier."""
+    with _lock:
+        _DYNAMIC_TIERS.pop(str(name), None)
+
+
+def get_dynamic_policy(name: str) -> Optional[Tier]:
+    """Retrieve dynamic tier if registered."""
+    with _lock:
+        return _DYNAMIC_TIERS.get(str(name))
+
+
 # The two platform readers are routine as a whole. If a writing action is ever
 # added to either, it is listed here and it asks first — the default for a name
 # that is not in the table stays "guarded", so forgetting an entry fails safe.
@@ -449,6 +475,17 @@ def classify(name: str, args: dict[str, Any] | None = None) -> Decision:
         return Decision(Tier.GUARDED, False, _GUARDED_REASONS[name])
     if name in GUARDED_TOOLS:
         return Decision(Tier.GUARDED, False, "can destroy, publish or reconfigure")
+
+    with _lock:
+        dyn_tier = _DYNAMIC_TIERS.get(name)
+    if dyn_tier is not None:
+        if dyn_tier in (Tier.OBSERVE, Tier.ROUTINE):
+            return Decision(dyn_tier, True, f"dynamically registered as {dyn_tier.value}")
+        if dyn_tier is Tier.SENSOR:
+            if _granted(Tier.SENSOR):
+                return Decision(dyn_tier, True, "sensor within a granted scope")
+            return Decision(dyn_tier, False, "sensor captures the screen or camera")
+        return Decision(Tier.GUARDED, False, f"dynamically registered as {dyn_tier.value}")
 
     # Unknown tools are not trusted because they are new.
     return Decision(Tier.GUARDED, False, "unclassified tool — treated conservatively")

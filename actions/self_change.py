@@ -17,6 +17,9 @@ would be a lie the owner could not see.
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 from core import crash, failures, self_change
 
 
@@ -84,15 +87,69 @@ def _apply(parameters: dict) -> str:
     marker = self_change.restart_required()
     if marker and marker.get("change") == proposal_id:
         lines.append(f"To run it: {self_change.restart_command()}")
+
+    # Automatically push a reversible closure to shared undo stack
+    try:
+        from core.undo import push_undo
+        path_str = str(result.get("path") or proposal_id)
+        is_plugin = "plugins" in Path(path_str).parts or path_str.startswith("plugins/")
+        if is_plugin:
+            label = f"deployed plugin {Path(path_str).name}"
+        else:
+            label = f"self-modification to {path_str}"
+
+        def _undo_self_modify(pid=proposal_id):
+            return self_change.revert(pid)
+
+        push_undo(
+            label,
+            _undo_self_modify,
+            metadata={"type": "self_change", "proposal_id": proposal_id, "path": path_str},
+        )
+    except Exception as err:
+        failures.note("self_change._apply_undo_push", err)
+
     return _say(lines)
+
+
+def _latest_applied_proposal() -> str | None:
+    """Find ID of the most recently applied proposal that hasn't been reverted."""
+    reverted = set()
+    for row in self_change.ledger():
+        event = row.get("event")
+        pid = row.get("id")
+        if not pid:
+            continue
+        if event == "reverted":
+            reverted.add(pid)
+        elif event == "applied" and pid not in reverted:
+            return pid
+    return None
 
 
 def _revert(parameters: dict) -> str:
     proposal_id = str(parameters.get("change") or parameters.get("proposal") or "").strip()
-    if not proposal_id:
-        return ("Which change? Ask for 'history' and I will name them. Putting one "
-                "back is not a guess I will make.")
-    return self_change.revert(proposal_id)
+    if not proposal_id or proposal_id.lower() in ("last", "latest", "recent", "last_change", "last change", "previous", "prev", "newest"):
+        latest = _latest_applied_proposal()
+        if latest:
+            proposal_id = latest
+        else:
+            return ("Which change? Ask for 'history' and I will name them. Putting one "
+                    "back is not a guess I will make.")
+
+    # Revert via self_change
+    result_msg = self_change.revert(proposal_id)
+
+    # Clean up corresponding entry in core.undo so general undo doesn't duplicate
+    try:
+        from core import undo as undo_mod
+        undo_mod.remove_matching(
+            lambda e: e.metadata.get("proposal_id") == proposal_id or proposal_id in e.label
+        )
+    except Exception:
+        pass
+
+    return result_msg
 
 
 def _pending(_parameters=None) -> str:
@@ -174,20 +231,44 @@ ACTIONS = {
     "confirm": _confirm, "approve": _confirm,
     "apply": _apply, "commit": _apply,
     "revert": _revert, "undo": _revert, "restore": _revert,
+    "rollback": _revert, "roll_back": _revert, "discard": _revert,
+    "cancel": _revert, "mistake": _revert, "put_back": _revert,
+    "put back": _revert, "take_back": _revert, "take back": _revert,
+    "unapply": _revert,
     "pending": _pending, "list": _pending,
     "show": _show, "diff": _show,
     "history": _history, "ledger": _history,
     "rules": _rules, "limits": _rules,
 }
 
+_REVERSAL_KEYWORDS = {
+    "revert", "undo", "restore", "rollback", "discard", "cancel",
+    "mistake", "unapply", "back", "previous",
+}
+
+
+def _resolve_action(raw_action: str) -> str:
+    cleaned = str(raw_action or "pending").strip().lower()
+    if cleaned in ACTIONS:
+        return cleaned
+    normalized = re.sub(r"[\s\-]+", "_", cleaned)
+    if normalized in ACTIONS:
+        return normalized
+    # Broad semantic reversal matching: phrases or keywords
+    tokens = set(re.findall(r"[a-z]+", cleaned))
+    if tokens & _REVERSAL_KEYWORDS or "put back" in cleaned or "take back" in cleaned or "go back" in cleaned:
+        return "revert"
+    return normalized
+
 
 def self_modify(parameters: dict) -> str:
     """Stage, rehearse, confirm, apply or revert a change to Ultron's own source."""
     parameters = dict(parameters or {})
-    action = str(parameters.get("action") or "pending").strip().lower()
+    raw_action = str(parameters.get("action") or "pending").strip()
+    action = _resolve_action(raw_action)
     handler = ACTIONS.get(action)
     if handler is None:
-        return (f"I do not know the action '{action}'. I can: crashes, propose, "
+        return (f"I do not know the action '{raw_action}'. I can: crashes, propose, "
                 f"rehearse, confirm, apply, revert, pending, show, history, rules.")
     try:
         return handler(parameters)
@@ -209,11 +290,14 @@ TOOL = {
         "path inside the project plus either 'text' (the whole new file) or 'find' and "
         "'replace' (one passage), and a 'reason'. Then 'rehearse' runs the change in a "
         "temporary copy of the project with the test harness, 'confirm' twice in two "
-        "different channels (voice, panel, cli), and only then 'apply'. 'revert' puts "
-        "back the exact bytes that were replaced. Never say a change is active before "
-        "'apply' has returned the applied message, and never say it is running if the "
-        "answer says a restart is required. Files that decide permissions or record "
-        "changes are refused on purpose."
+        "different channels (voice, panel, cli), and only then 'apply'. Use 'revert' "
+        "whenever the user expresses ANY intent to reverse, undo, restore, rollback, "
+        "discard, or cancel an applied self-modification or code change, or indicates "
+        "that an edit was a mistake, undesirable, or should return to its previous state, "
+        "in any phrasing, conversational tone, or language. 'revert' puts back the exact "
+        "bytes that were replaced. Never say a change is active before 'apply' has returned "
+        "the applied message, and never say it is running if the answer says a restart is "
+        "required. Files that decide permissions or record changes are refused on purpose."
     ),
     "parameters": {
         "type": "OBJECT",
