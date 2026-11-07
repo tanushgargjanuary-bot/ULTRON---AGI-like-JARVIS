@@ -322,4 +322,4 @@ stopped being true several builds ago and was corrected rather than appended to.
 
 **Built so far.** Added `actions/capability_guide.py` on `chatgpt`. It reads the live tool catalog and installed skill recipes, ranks text matches, reports availability, and explains the existing `self_modify` workflow. It does not install or execute repository code.
 
-**Still open.** Register the new action with the action loader, add reliable GitHub repository research and tests, and update prompt/capability wording. The initial action file has not yet been verified as discoverable or callable.
+**Still open.** The tool descriptor now exposes the guide to the action loader, but discovery/callability has not been verified. GitHub repository research, tests, and explicit prompt wording about self-evolution remain to be completed.
