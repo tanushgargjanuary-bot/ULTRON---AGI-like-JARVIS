@@ -314,3 +314,12 @@ stands, what is open, the first three commands, and the ten traps that already c
 
 `GATEKEEPERS.md` was saying *"there is no CI, so nothing has ever run on Windows"*. That
 stopped being true several builds ago and was corrected rather than appended to.
+
+
+## 2026-11-07 — capability awareness work
+
+**Asked for.** Find relevant native tools and skills from a user's goal, improve awareness when a needed capability is unknown, clarify self-evolution, and investigate useful GitHub repositories for possible native additions.
+
+**Built so far.** Added `actions/capability_guide.py` on `chatgpt`. It reads the live tool catalog and installed skill recipes, ranks text matches, reports availability, and explains the existing `self_modify` workflow. It does not install or execute repository code.
+
+**Still open.** Register the new action with the action loader, add reliable GitHub repository research and tests, and update prompt/capability wording. The initial action file has not yet been verified as discoverable or callable.
