@@ -13,12 +13,12 @@ repository. Everything else is referenced from there.
 
 | Item | State |
 |---|---|
-| Build | **1.2.36** (`packaging/version.txt`) |
-| Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `main` |
+| Build | **1.2.39** (`packaging/version.txt`) |
+| Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `antigravity` (tip `60c43b5`) |
 | CI | `.github/workflows/verify.yml`, two jobs: `linux` and `windows`. Both green |
-| Tests | 1,737 passed, 8 skipped, on Linux with the optional packages installed |
-| Proof gate | 35 claims: 22 PROVEN, 13 PARTIAL, 0 FAILED on Linux without hardware |
-| Workspace | about 11 MB and 575 files, inside the 100 MB and 5,000 file ceiling |
+| Tests | 1,808 passed, 8 skipped (100% green) |
+| Proof gate | 35 claims: 22 PROVEN, 13 PARTIAL, 0 FAILED on Windows |
+| Workspace | 271 Python files, 99,063 lines |
 | Machine | Windows is the primary target; Linux is where the work is built |
 
 The 13 open claims are open for a reason the gate prints: Windows-only, audio or display,
@@ -27,13 +27,11 @@ lists them. None of them can be closed from a Linux build machine.
 
 ## 2. What was finished most recently
 
-- **1.2.33** every tool states when to call it, and every call is counted.
-- **1.2.34** a crash writes a file, and self-repair starts from that file.
-- **1.2.35** one malformed plugin field used to stop the session and blame the API key.
-  Fixed, guarded, and proved.
-- **1.2.36** the documents a new agent needs, brought up to date (this pass).
+- **1.2.37** local model auto-detection (`core/local_detector.py`, `core/local_router.py`), token-saving protocol (`SKILLS.md`), @GithubAwesome mining (`docs/GITHUB_AWESOME_CATALOG.md`), and native bridges (Crawl4AI, MiniCPM-OCR, agent monitor).
+- **1.2.38** instant hot-plugin forge (`actions/plugin_forge.py`, `core/plugin_loader.py` with zero-restart hot-loading), de-hardcoded semantic undo (`core/undo.py`), window-aware context detection (`core/context_detector.py`), and caveman token compressor (`plugins/caveman.py`).
+- **1.2.39** Issue #3 intent routing engine (`core/intent_router.py`, `tests/test_routing.py`) and Issue #4 local OCR ladder rung (`core/ocr.py`, `core/ui_ladder.py`, `actions/ui_control.py`, `tests/test_ocr.py`).
 
-`log.txt` has the detail of each. `HANDOFF.md` has the phase record.
+`sessionlog.md` has the detail of each. `OwnerFiles/session-log.md` has the phase record.
 
 ## 3. The first three things to run
 
