@@ -9,6 +9,20 @@ passed a syntax check and did nothing when used.
 this project runs on, how work is done, what is never allowed, and the checklist before a
 push. This file is the rule book for the code; that page is the thinking underneath it.
 
+**Write to Notion the way [`docs/AGENT_NOTION.md`](docs/AGENT_NOTION.md) says.** Several agents work
+on this project at once. One page per project, a fixed section order, dates and numbers,
+update instead of appending, one checkbox per task, and say what you did not check. A page
+another agent cannot read in ten seconds is a page that gets redone.
+
+**Three GitHub rules, no more.** Every task is an issue, and you assign it to claim it.
+Every change is a pull request, and the PR is the gate. Every PR carries evidence: the run
+ID, the numbers, and what you did not check. Issues, pull requests, actions. Ten rules
+nobody reads is the same as none.
+
+**Claim work before you start it.** An unassigned task is unclaimed. Assign the GitHub issue
+to yourself, or comment `claim: <branch> <what> <files>` on **issue #7**. Two agents on one
+branch is the same defect as two agents editing one file, and it is silent until the merge.
+
 **Before planning a task, read [`docs/AGENT_WORKSPACE.md`](docs/AGENT_WORKSPACE.md) and run `python scripts/agent_workspace.py`.** Review its commit/path and uncommitted-work report, then inspect the relevant full diffs and files. The script does not fetch or merge. Use `--ack` only after you have actually reviewed the report. Preserve unrelated work from other agents.
 
 ## How the app runs
@@ -136,11 +150,13 @@ a small built-in fallback — instead of crashing.
   into the instruction with the maxim. Never give a voice a code path, never let one
   add a permission, and never remove the ceiling on the adversary voice (40%) without
   the owner saying so in his own words.
-- **The workspace stays under 100 MB and 5,000 files, and the number is checked.**
-  Install packages with `--target` to a temporary folder and set `PIP_CACHE_DIR`
-  outside the project. The save after a message keeps about 128 MB and silently drops
-  the rest: this already cost us 6,352 files once. `python scripts/workspace_budget.py`
-  reports it, `scripts/verify.py` fails on it, and `docs/SPACE.md` explains it.
+- **There is no workspace size budget.** The owner withdrew it on 2026-11-07: this
+  repository is on GitHub, and a 100 MB / 5,000-file ceiling was stopping work it never
+  protected. The script, its test and its gate step were deleted rather than left to
+  fail. The habit worth keeping is the rest of that rule: install packages with
+  `--target` to a temporary folder and set `PIP_CACHE_DIR` outside the project so
+  `git status` stays readable, and keep build artifacts out of the tree because nobody
+  can audit one. `docs/SPACE.md` says why.
 
 ## Read these first, in this order
 

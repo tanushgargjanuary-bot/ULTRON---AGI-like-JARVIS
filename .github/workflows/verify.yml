@@ -6,7 +6,9 @@ name: verify
 
 on:
   push:
-    branches: [main, master]
+    # ArenaAi is the branch this work is delivered on. Without it here, a push to it
+    # started no job and a green tick meant only that nothing had run.
+    branches: [main, master, ArenaAi]
   pull_request:
   workflow_dispatch:
 
@@ -51,8 +53,19 @@ jobs:
       - name: Suite, self-checks, migration and mutation gates
         run: python scripts/verify.py
 
+      # The numbers belong on the run page, not inside a zip. Until now a green
+      # tick said "something passed"; the PROVEN / PARTIAL / FAILED counts, which
+      # are the actual claim, lived in an artifact nobody opened.
       - name: Proof gate
-        run: python scripts/proof_gate.py --json verification/proof-gate.json
+        run: |
+          mkdir -p verification
+          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/proof-gate.txt
+          {
+            echo "### Proof gate — linux"
+            echo '```'
+            tail -n 20 verification/proof-gate.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Instrument report (never blocks; it reports what this box cannot answer)
         run: python scripts/verify_all.py || true
@@ -114,6 +127,12 @@ jobs:
         shell: bash
         run: |
           python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/console-gate.txt
+          {
+            echo "### Proof gate — windows"
+            echo '```'
+            tail -n 20 verification/console-gate.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Keep the reports
         if: always()

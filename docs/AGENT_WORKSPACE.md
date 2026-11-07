@@ -4,7 +4,7 @@ This guide and `scripts/agent_workspace.py` help an agent establish what changed
 
 ## Start each task
 
-1. Read `WORKING-PHILOSOPHY.md`, `AGENTS.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`. Read `docs/AGENT_PLAYBOOK.md` and `docs/COPILOT_RECOMMENDATIONS.md` when relevant.
+1. Read `WORKING-PHILOSOPHY.md`, `AGENTS.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`. Read `docs/AGENT_PLAYBOOK.md` and `docs/BRANCH_REVIEW.md` when relevant.
 2. In PowerShell, update remote-tracking refs only if appropriate: `git fetch origin main`. The report script is deliberately read-only unless `--ack` is supplied.
 3. Run `python scripts/agent_workspace.py` from any folder in the repository. Set the comparison base when needed: `python scripts/agent_workspace.py --base origin/main`.
 4. Review the report's **new commits**, **changed paths**, **incoming base changes**, and **uncommitted work**. Read the actual diffs and source/tests for relevant paths; the summary is a map, not a substitute for review.

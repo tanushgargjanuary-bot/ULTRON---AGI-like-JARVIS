@@ -205,7 +205,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**251 Python files. 94,825 lines. 1,737 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**258 Python files. 95,648 lines. 1,609 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display and no graphics libraries attached: **21 PROVEN / 14 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, packages 2, unclassified 2` — because a bare count is not an explanation. One claim returns here as PARTIAL because Qt cannot import without `libGL.so.1`; the CI job installs it and reads 22 / 13 on the same code. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
@@ -254,7 +254,6 @@ python scripts\bench_hybrid.py  # the table above, on your hardware
 python scripts\bench_startup.py # what a launch costs, layer by layer
 python scripts\profile_turn.py   # the Python half of a turn, stage by stage
 python scripts\bench_connection.py # handshakes per call, removed
-python scripts\workspace_budget.py # how big the folder is, against its ceiling
 ```
 
 A `SKIP` is never counted as a pass and never as a failure. CI runs all three on `ubuntu-latest` and `windows-latest`: [`.github/workflows/verify.yml`](.github/workflows/verify.yml).

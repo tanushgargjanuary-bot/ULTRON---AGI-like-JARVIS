@@ -1,3 +1,100 @@
+=== 2026-11-07 · build 1.2.38 · a local model you can point at, and the other two branches read honestly ===
+
+The owner was tired of two branches that looked busy and reported nothing. So this build does
+two things in order: it reads what they actually finished, and it makes a local model one
+command away.
+
+WHAT WAS TAKEN FROM chatgpt
+  actions/capability_guide.py — maps a request to a live tool, and says "no strong match"
+  instead of guessing. actions/github_repo_scout.py — searches GitHub's public index and
+  returns a ranked shortlist. Read-only: no install, no clone, six second timeout.
+
+  Their five tests were written pytest-style with a monkeypatch fixture. This suite runs
+  unittest discover, so the file collected ZERO tests and the five checks had never run.
+  Rewritten in unittest shape. All five pass now. That is the whole value of running a
+  branch instead of reading it.
+
+WHAT WAS NOT TAKEN
+  antigravity moved four times while this was written (857f3dc -> ad53e69 -> 60c43b5 ->
+  b8e9334) and is still moving. Taking half of a moving branch is how one merge becomes two.
+  Its own claim, "context-aware prompt elevation", passes a new argument that no caller
+  supplies, on either branch. Recorded in docs/BRANCH_REVIEW.md rather than repeated.
+
+LOCAL MODELS, ONE COMMAND
+  scripts/local_model.py reads memory and the graphics card, picks the smallest model that
+  does the job, and can fetch it, time it, and point the app at it:
+
+      python scripts\local_model.py check | pull | test | write
+
+  check writes nothing. write merges three keys into config/api_keys.json and keeps a .bak,
+  so a key the owner pasted for a cloud provider survives the switch. docs/LOCAL_MODEL.md
+  says what a small model is good for and what it is not.
+
+NOT CHECKED
+  No model was downloaded here, and no server was reached: this box has neither. The tests
+  cover the decision and the file it writes, not the download. First real proof is the
+  owner running `pull` and `test` on his own machine.
+
+=== 2026-11-07 · build 1.2.37 · the instruments were actually run, and three of them had something to say ===
+
+The owner asked for two things this build started from: run the instruments instead of
+describing them, and stop pretending there is a workspace budget. Both are done, and the
+first one immediately found three defects that had been sitting in the branch.
+
+FOUND BY RUNNING IT, NOT BY READING IT
+  1. tests/test_agent_workspace.py failed: _parse_name_status("M\0") returned an entry
+     with an empty path. Truncated output was being read as a file named "".
+  2. The tree was one function over both of its own ceilings — 98 long functions against
+     97, 109 complex against 108. scripts/agent_workspace.py main() was 86 lines and
+     branched 21 ways, added after the ceiling was set. Fixed by splitting it into
+     _parser, _print_header, _last_acknowledgement, _print_changes_since_ack,
+     _print_incoming and _write_acknowledgement. The ceiling was not raised.
+  3. scripts/agent_workspace.py died in any shallow clone with
+     "fatal: origin/main...HEAD: no merge base", which is every CI checkout and every
+     agent sandbox. It now detects that, compares the two tips, prints one sentence
+     saying so, and labels the sections "Files that differ from the base tip" instead of
+     claiming a branch point that does not exist.
+
+REMOVED, BY THE OWNER'S DECISION
+  The 100 MB / 5,000-file workspace budget. It was justified by a platform save limit,
+  but the repository lives on GitHub, and the ceiling was stopping work. Deleted, not
+  silenced: scripts/workspace_budget.py, tests/test_workspace_budget.py, the gate step in
+  scripts/verify.py, and every page that stated the number. docs/SPACE.md now says the
+  budget is gone, keeps the two habits worth keeping (generated files stay out of the
+  tree, packages install outside the project), and claims no number that nothing enforces.
+
+NEW
+  scripts/branch_report.py     every branch, its tip, its subject, and which names point at
+                               the same commit — the question a branch picker cannot answer.
+                               Read-only. 5 tests, pure functions, no network.
+  .github/workflows/verify.yml now also runs on a push to ArenaAi. Before this, a push to
+                               the delivery branch started no job at all, so a green tick
+                               meant only that nothing had run.
+
+RENAMED
+  docs/COPILOT_RECOMMENDATIONS.md -> docs/BRANCH_REVIEW.md, with the four real branch tips
+  measured, the dead `opencode` reference removed, and every link (INDEX, AGENT_PLAYBOOK,
+  AGENT_WORKSPACE) updated in the same change.
+
+MEASURED ON THIS MACHINE
+  scripts/verify.py          1,577 tests run, 15 skipped, 1 error (libGL missing here, see
+                             below), 1,000 stress scenarios, 15/15 seeded mutations, module
+                             map clean.
+  scripts/proof_gate.py      35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED. Unproven because:
+                             Windows 4, audio or display 3, keys 3, packages 2,
+                             unclassified 2. The `ui` claim is PARTIAL here only because Qt
+                             cannot import without libGL.so.1; CI installs it and reads
+                             22 / 13 on the same code.
+
+WHAT IS NOT PROVEN, SAID PLAINLY
+  One test error is environmental: tests/test_expression.py cannot import core.avatar
+  without libGL.so.1, and this box has no package manager. The CI Linux job installs
+  libgl1 and runs it. Nothing here was measured on Windows, with a microphone, or with a
+  real provider key.
+
+State: 1,577 tests run / 15 skipped / 1 environmental error, proof gate 21 PROVEN / 14
+PARTIAL / 0 FAILED, no size budget.
+
 === 2026-11-07 · build 1.2.36 · the pages a new agent needs ===
 
 The owner is handing this project to other tools, and asked for the documents to be brought

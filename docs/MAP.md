@@ -31,9 +31,9 @@ edit the module docstring instead and run it again.
 | `gemini.py` | 812 | One place where the assistant's one-shot Gemini calls are made. | test_suite_assistant, test_suite_providers |
 | `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_schedule_packs, test_suite_algorithms, test_suite_safety, test_web_platforms |
 | `hotkey.py` | 174 | Push-to-talk — hold a key, speak, release. | test_ui_ladder |
-| `identity.py` | 74 | core/identity.py — who this assistant is. | test_app_resolver, test_autonomy_upgrades, test_collect_install, test_launchers, test_metacog_service, test_migrate_legacy, test_process_watch, test_schedule_packs, test_shipping, test_suite_algorithms, test_suite_assistant, test_suite_providers |
+| `identity.py` | 74 | core/identity.py — who this assistant is. | test_app_resolver, test_autonomy_upgrades, test_capability_guide, test_collect_install, test_launchers, test_metacog_service, test_migrate_legacy, test_process_watch, test_schedule_packs, test_shipping, test_suite_algorithms, test_suite_assistant, test_suite_providers |
 | `insights.py` | 249 | Consent-first, local preference insights. No model calls, recording or self-rewrites. | test_migrate_legacy, test_suite_algorithms, test_suite_assistant |
-| `installer.py` | 142 | MARK XL — Dependency auto-installer. | test_bootstrap, test_installer, test_workspace_budget |
+| `installer.py` | 142 | MARK XL — Dependency auto-installer. | test_bootstrap, test_installer |
 | `knapsack.py` | 189 | core/knapsack.py — filling a context budget by value rather than by order. | test_suite_algorithms |
 | `lazyimport.py` | 148 | core/lazyimport.py — third-party imports that are paid only if they are used. | test_suite_providers |
 | `llm_client.py` | 587 | Local LLM client for MARK XL. | — |
@@ -50,12 +50,12 @@ edit the module docstring instead and run it again.
 | `prompt_store.py` | 365 | The system prompt, as a thing the owner can read and the assistant can edit. | test_prompt_editor |
 | `reconnect_policy.py` | 152 | core/reconnect_policy.py — why the session dropped, and what to do about it. | test_suite_providers |
 | `reputation.py` | 202 | core/reputation.py — how much to trust a tool, as a number with an error bar. | test_suite_algorithms |
-| `routing.py` | 433 | core/routing.py — which provider and model answers which kind of request. | test_routing, test_self_healing |
+| `routing.py` | 433 | core/routing.py — which provider and model answers which kind of request. | test_branch_report, test_routing, test_self_healing |
 | `self_change.py` | 459 | core/self_change.py — Ultron changing its own body, one shown step at a time. | test_crash, test_self_change |
 | `selfimprove.py` | 392 | core/selfimprove.py — self-improvement that has to prove itself first. | test_selfimprove |
-| `sidecar.py` | 192 | core/sidecar.py — the compiled supervisor, seen from the Python side. | test_process_watch, test_sidecar, test_suite_assistant, test_workspace_budget |
+| `sidecar.py` | 192 | core/sidecar.py — the compiled supervisor, seen from the Python side. | test_process_watch, test_sidecar, test_suite_assistant |
 | `stt.py` | 93 | Speech-to-Text engines for MARK XL. | — |
-| `tool_catalog.py` | 254 | core/tool_catalog.py — Ultron's knowledge of its own hands. | test_suite_safety |
+| `tool_catalog.py` | 254 | core/tool_catalog.py — Ultron's knowledge of its own hands. | test_capability_guide, test_suite_safety |
 | `tool_prompt.py` | 120 | How a tool is described to the model — and what makes it ever get called. | test_triggers |
 | `tool_usage.py` | 108 | Which tools are actually called — the other half of a trigger. | test_triggers |
 | `trie.py` | 137 | core/trie.py — a prefix tree for "what could they be about to say?". | test_suite_algorithms |
@@ -80,7 +80,7 @@ edit the module docstring instead and run it again.
 | `autonomy_governor.py` | 99 | One shared, lock-protected session budget; never authorizes a tool. | test_autonomy_upgrades, test_decision_layers |
 | `brain.py` | 1,359 | Jarvis Brain - LLM reasoning, intent classification, and skill routing. | test_autonomy_upgrades |
 | `compat.py` | 166 | Optional-dependency adapters; importing this module needs only Python. | test_autonomy_upgrades |
-| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_decision_layers, test_policy, test_repair_judgment, test_suite_algorithms, test_suite_assistant, test_suite_safety, test_tool_contract |
+| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_decision_layers, test_local_model, test_policy, test_repair_judgment, test_suite_algorithms, test_suite_assistant, test_suite_safety, test_tool_contract |
 | `evidence.py` | 172 | Bounded file verification and conflict-aware write backups. | test_autonomy_upgrades, test_crash, test_evolve_script, test_proof_gate, test_provider_schema, test_repair_judgment, test_suite_algorithms, test_suite_assistant |
 | `failure_memory.py` | 146 | Bounded local incident signatures and cooldowns, not an authorization policy. | test_autonomy_upgrades |
 | `goal_verifier.py` | 132 | Deterministic, workspace-confined assertions; never executes project code. | test_autonomy_upgrades |
@@ -99,11 +99,11 @@ edit the module docstring instead and run it again.
 | `selfupdate.py` | 194 | custom_jarvis/selfupdate.py — update from GitHub without losing the session. | test_shipping |
 | `service.py` | 629 | MARK-hosted service: deterministic skills and evidence-scoped repair. | test_autonomy_upgrades, test_decision_layers, test_hud_fixes, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping, test_suite_assistant |
 | `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_curriculum, test_fuzzy, test_migrate_legacy, test_repair_judgment, test_triggers |
-| `ship.py` | 406 | custom_jarvis/ship.py — sending the work to GitHub without sending a secret. | test_installer, test_readme, test_shipping, test_workspace_budget |
+| `ship.py` | 406 | custom_jarvis/ship.py — sending the work to GitHub without sending a secret. | test_installer, test_readme, test_shipping |
 | `ship_tools.py` | 142 | custom_jarvis/ship_tools.py — the four handles for shipping and updating. | test_shipping |
 | `shortlist.py` | 132 | BM25 ranking: pick the few stored rules that match what was just said. | test_decision_layers |
 | `skillpacks.py` | 218 | custom_jarvis/skillpacks.py — Ultron writes new skills itself, as data. | test_schedule_packs |
-| `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_autonomy_upgrades, test_curriculum, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
+| `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_autonomy_upgrades, test_capability_guide, test_curriculum, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
 | `telemetry.py` | 98 | Notice when Ultron itself gets slower, without a threshold that goes stale. | test_decision_layers |
 | `tools.py` | 1,754 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_metacog_service, test_provider_schema, test_repair_judgment, test_schedule_packs, test_shipping, test_suite_assistant, test_suite_safety, test_tool_contract, test_triggers |
 | `vision.py` | 121 | Optional OpenAI-compatible vision transport; disabled until explicitly configured. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_ui_bridge, test_ui_ladder |
@@ -127,12 +127,13 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 86 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 53 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 27 modules, 14,327 lines
+## `actions/` — 29 modules, 14,587 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `background_monitor.py` | 159 | BackgroundMonitor — user-configured topic watching. | — |
 | `browser_control.py` | 1,310 | **no docstring** | test_policy, test_suite_providers, test_tool_contract |
+| `capability_guide.py` | 157 | Map a user's goal to existing tools and skills, including common synonyms. | test_capability_guide |
 | `code_helper.py` | 636 | **no docstring** | test_tool_contract |
 | `computer_control.py` | 796 | **no docstring** | test_policy, test_tool_contract, test_ui_control_action |
 | `computer_settings.py` | 1,098 | **no docstring** | test_policy, test_tool_contract |
@@ -140,9 +141,10 @@ edit the module docstring instead and run it again.
 | `desktop.py` | 527 | **no docstring** | test_autonomy_upgrades, test_edge_cases |
 | `dev_agent.py` | 1,665 | **no docstring** | test_policy |
 | `file_controller.py` | 848 | **no docstring** | test_edge_cases, test_mental, test_policy, test_suite_safety, test_tool_contract |
-| `file_processor.py` | 938 | file_processor.py — JARVIS Universal File Processor | — |
+| `file_processor.py` | 938 | file_processor.py — JARVIS Universal File Processor | test_capability_guide |
 | `flight_finder.py` | 407 | **no docstring** | test_triggers |
 | `game_updater.py` | 1,101 | **no docstring** | test_policy |
+| `github_repo_scout.py` | 103 | Find public GitHub projects for a capability gap; inspect only, never install. | — |
 | `open_app.py` | 468 | JARVIS action — open an application, and know whether it actually opened. | test_app_resolver, test_collect_install, test_live_config, test_live_transport, test_policy, test_suite_safety |
 | `philosophy.py` | 270 | The minds Ultron thinks with, reachable by voice. | test_philosophy |
 | `proactive.py` | 130 | ProactiveEngine 2.0 — context-aware, time-aware, non-repetitive background prompting. | test_suite_assistant, test_suite_providers |
@@ -179,7 +181,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_edge_cases, test_live_config, test_live_transport, test_schedule_packs, test_suite_algorithms, test_suite_providers, test_suite_safety |
+| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_edge_cases, test_live_config, test_live_transport, test_local_model, test_schedule_packs, test_suite_algorithms, test_suite_providers, test_suite_safety |
 
 ## `memory/` — 2 modules, 1,415 lines
 
@@ -188,22 +190,25 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 916 | **no docstring** | test_bugfix_pass, test_curriculum, test_edge_cases, test_hud_fixes, test_mark_integration, test_philosophy, test_shipping, test_suite_assistant, test_triggers |
 | `memory_manager.py` | 499 | **no docstring** | test_edge_cases, test_proof_gate, test_suite_assistant, test_suite_safety |
 
-## `scripts/` — 27 modules, 8,099 lines
+## `scripts/` — 29 modules, 8,518 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
+| `agent_workspace.py` | 276 | Report repository changes so agents can orient before planning work. | test_agent_workspace |
 | `bench_algorithms.py` | 265 | scripts/bench_algorithms.py — numbers for the algorithms in core/. | — |
 | `bench_connection.py` | 162 | scripts/bench_connection.py — the cost of opening a connection per call. | — |
 | `bench_hybrid.py` | 178 | scripts/bench_hybrid.py — what a faster language buys, measured, not argued. | — |
 | `bench_sidecar.py` | 154 | scripts/bench_sidecar.py — is the Go sidecar actually smaller and faster? | — |
 | `bench_startup.py` | 217 | scripts/bench_startup.py — what the launch actually costs, measured. | test_suite_providers |
 | `bootstrap.py` | 360 | Local setup for the Ultron launcher — everything lands inside .venv. | test_bootstrap, test_launchers |
+| `branch_report.py` | 118 | Which branches exist, where each one points, and which names are the same commit. | test_branch_report |
 | `check_mutations.py` | 216 | Targeted seeded mutation checks; not a comprehensive mutation score. | — |
 | `collect_install.py` | 412 | scripts/collect_install.py — find the DATA in an install folder, and prove it. | test_collect_install, test_launchers |
 | `deep_scan.py` | 512 | Read the whole tree and report what a reviewer would complain about. | test_suite_assistant |
 | `evolve.py` | 249 | scripts/evolve.py — the missing engine for core/selfimprove.py. | test_evolve_script |
 | `fake_provider.py` | 280 | A local stand-in for any OpenAI-compatible model server. | test_live_transport |
 | `inventory_data.py` | 213 | scripts/inventory_data.py — what data does this install actually hold? | test_suite_algorithms |
+| `local_model.py` | 220 | Pick a local model, fetch it, and prove it answers — without guessing. | test_local_model |
 | `make_banner.py` | 110 | scripts/make_banner.py — draw the animated picture at the top of the readme. | — |
 | `map.py` | 152 | scripts/map.py — write the module map from the code, not from memory. | test_mental, test_suite_providers |
 | `migrate_legacy.py` | 276 | scripts/migrate_legacy.py — carry a previous install's data into Ultron. | test_migrate_legacy |
@@ -211,25 +216,27 @@ edit the module docstring instead and run it again.
 | `proof_gate.py` | 2,304 | PROOF GATE — does the claim hold, end to end, on this machine? | test_proof_gate, test_suite_safety, test_ui_bridge |
 | `show_prompt.py` | 110 | Print the instruction Ultron gives the model — from a terminal, no app needed. | — |
 | `stress_custom.py` | 195 | Reproducible local repair stress checks; no real model/provider calls. | — |
-| `verify.py` | 187 | Offline migration verification; never starts a voice session or contacts a provider. | test_mental, test_metacog, test_schedule_packs, test_shipping, test_suite_algorithms, test_suite_safety, test_web_platforms |
+| `verify.py` | 184 | Offline migration verification; never starts a voice session or contacts a provider. | test_mental, test_metacog, test_schedule_packs, test_shipping, test_suite_algorithms, test_suite_safety, test_web_platforms |
 | `verify_all.py` | 128 | Every capability check, one table, one verdict. | test_suite_algorithms, test_suite_safety |
 | `verify_audio.py` | 135 | Microphone and speaker, driven the way the app drives them. | test_suite_algorithms |
 | `verify_browser.py` | 209 | A real browser, on a real page, through the real engine. | test_suite_algorithms |
 | `verify_capture.py` | 99 | Can this machine see, hear and speak? Ask it, do not assume. | test_suite_algorithms |
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
-| `workspace_budget.py` | 192 | Keep the workspace under the size it is allowed to be. | test_workspace_budget |
 
-## `tests/` — 53 modules, 18,467 lines
+## `tests/` — 56 modules, 18,594 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `tempconfig.py` | 49 | A throwaway settings file, shared by the tests that need one. | test_curriculum, test_philosophy, test_triggers |
+| `test_agent_workspace.py` | 26 | Tests for the read-only agent workspace report helpers. | — |
 | `test_app_resolver.py` | 213 | Offline tests for capability-based application resolution (core/app_resolver.py) | — |
 | `test_audio_features.py` | 275 | tests/test_audio_features.py — speech vs noise, with signals we can control. | test_audio_features |
 | `test_autonomy_upgrades.py` | 725 | Offline engineering invariants; no live providers, commands or network requests. | — |
 | `test_bootstrap.py` | 260 | tests/test_bootstrap.py — the double-click path. | test_bootstrap, test_suite_safety |
+| `test_branch_report.py` | 53 | Tests for the branch report: parsing, grouping, and the shallow-clone note. | — |
 | `test_bugfix_pass.py` | 657 | tests/test_bugfix_pass.py — defects found by reading the code, not by looking. | test_bugfix_pass |
+| `test_capability_guide.py` | 82 | Routing checks for the capability guide. | — |
 | `test_collect_install.py` | 206 | Offline tests for scripts/collect_install.py. | — |
 | `test_crash.py` | 328 | A crash leaves a record, and the next run reads it. | test_crash |
 | `test_curriculum.py` | 247 | The syllabus Ultron holds, and the four things that make it usable. | test_curriculum |
@@ -243,6 +250,7 @@ edit the module docstring instead and run it again.
 | `test_launchers.py` | 176 | tests/test_launchers.py — the PowerShell entry points. | test_launchers |
 | `test_live_config.py` | 400 | tests/test_live_config.py — can a session actually be configured, and does the | test_live_config |
 | `test_live_transport.py` | 286 | tests/test_live_transport.py — the provider path over a real socket. | test_live_transport |
+| `test_local_model.py` | 103 | Offline checks for the local-model helper. | — |
 | `test_mark_integration.py` | 312 | Offline tests of actual MARK confirmation dispatch and the custom service. | — |
 | `test_mental.py` | 380 | The syllabus doing work: every citation true, every algorithm answering. | — |
 | `test_metacog.py` | 223 | tests/test_metacog.py — knowing what it knows, and learning how it learns. | test_metacog, test_metacog_service |
@@ -276,7 +284,6 @@ edit the module docstring instead and run it again.
 | `test_ui_ladder.py` | 221 | tests/test_ui_ladder.py — the answer to "what if there is no button tree". | test_ui_ladder |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_web_platforms.py` | 280 | tests/test_web_platforms.py — the web layer, with no network in the room. | test_web_platforms |
-| `test_workspace_budget.py` | 137 | The workspace has a size, and the size is a number somebody looks at. | — |
 
 ## Inherited, and reported not fixed
 
@@ -299,9 +306,9 @@ Upstream MARK modules with no docstring or no test here. They are listed so the 
 - actions/desktop.py: no docstring
 - actions/dev_agent.py: no docstring
 - actions/file_controller.py: no docstring
-- actions/file_processor.py: no test that names it
 - actions/flight_finder.py: no docstring
 - actions/game_updater.py: no docstring
+- actions/github_repo_scout.py: no test that names it
 - actions/reminder.py: no docstring
 - actions/send_message.py: no docstring
 - actions/video_player.py: no test that names it

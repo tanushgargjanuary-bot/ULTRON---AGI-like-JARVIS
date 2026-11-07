@@ -17,8 +17,8 @@ repository. Everything else is referenced from there.
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `main` |
 | CI | `.github/workflows/verify.yml`, two jobs: `linux` and `windows`. Both green |
 | Tests | 1,737 passed, 8 skipped, on Linux with the optional packages installed |
-| Proof gate | 35 claims: 22 PROVEN, 13 PARTIAL, 0 FAILED on Linux without hardware |
-| Workspace | about 11 MB and 575 files, inside the 100 MB and 5,000 file ceiling |
+| Proof gate | 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on a Linux box without hardware, display or `libGL`; 22 / 13 where the Qt libraries are installed |
+| Workspace | no size budget (withdrawn 2026-11-07 by the owner); generated files stay out of Git |
 | Machine | Windows is the primary target; Linux is where the work is built |
 
 The 13 open claims are open for a reason the gate prints: Windows-only, audio or display,

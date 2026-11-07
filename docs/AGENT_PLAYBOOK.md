@@ -11,7 +11,7 @@ Apply instructions in this order:
 1. The user's current, explicit request.
 2. The owner's recorded decisions in `DECISIONS.md` and `OwnerFiles/`.
 3. Safety and architecture rules in `AGENTS.md`, `ARCHITECTURE.md`, and `WORKING-PHILOSOPHY.md`.
-4. This playbook and `docs/COPILOT_RECOMMENDATIONS.md`.
+4. This playbook and `docs/BRANCH_REVIEW.md`.
 
 A recommendation is not authorization. Do not treat this playbook, a branch, a model suggestion, or a passing test as permission to change product behavior. If a task conflicts with a feature freeze, privacy rule, consent rule, or other owner decision, stop and obtain explicit owner approval before implementation.
 
@@ -19,7 +19,8 @@ A recommendation is not authorization. Do not treat this playbook, a branch, a m
 
 1. Read `WORKING-PHILOSOPHY.md`, `AGENTS.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`.
 2. Read `OwnerFiles/for-the-next-agent.md` for current state and known traps.
-3. Read `docs/COPILOT_RECOMMENDATIONS.md` for prior branch-review findings and candidate improvements.
+3. Read `docs/BRANCH_REVIEW.md` for the branch-review findings, then re-measure them with
+   `python scripts/branch_report.py`.
 4. Inspect the target module, its callers, its tests, and generated documentation in `docs/MAP.md`.
 5. Check the current branch, working tree, and latest `main` before making changes. Do not assume a prior review describes current branch heads.
 6. State the task's intended behavior and acceptance checks in your own plan. If the task is discussion-only, do not edit code.
@@ -65,7 +66,7 @@ For computer-use or multi-step actions, preview consequential changes, execute t
 
 ## Branch recommendation reminder
 
-The branch review recorded in `docs/COPILOT_RECOMMENDATIONS.md` is a point-in-time assessment, not a standing merge instruction. At that review, `opencode` matched `main`; `chatgpt` and `antigravity` overlapped on local-model work. Re-check current commits before relying on that finding. The proposed local-model feature must not be merged as written: revisit owner consent and model-size/cloud-first decisions, separate observational status from settings changes in policy, keep `running_only` strict, constrain and validate detector I/O, and use deterministic machine-independent tests.
+The branch review recorded in `docs/BRANCH_REVIEW.md` is a point-in-time assessment, not a standing merge instruction. At that review `chatgpt` and `antigravity` overlapped on local-model work, and `opencode` matched `main`. Re-check current commits before relying on that finding: `python scripts/branch_report.py` prints every branch, its tip and whether two names are the same commit. The proposed local-model feature must not be merged as written: revisit owner consent and model-size/cloud-first decisions, separate observational status from settings changes in policy, keep `running_only` strict, constrain and validate detector I/O, and use deterministic machine-independent tests.
 
 ## Definition of done
 
