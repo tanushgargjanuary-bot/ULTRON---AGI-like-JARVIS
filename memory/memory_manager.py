@@ -78,7 +78,7 @@ def load_memory() -> dict:
                 return data
             return _empty_memory()
         except Exception as e:
-            print(f"[Memory] ⚠️ Load error: {e}")
+            print(f"[Memory] Warning: Load error: {e}")
             return _empty_memory()
 
 def _all_entries(memory: dict) -> list[tuple]:
@@ -114,7 +114,7 @@ def _trim_to_limit(memory: dict) -> dict:
             break
         del memory[cat][key]
         dropped.append(f"{cat}/{key}")
-        print(f"[Memory] 🗑️  Trimmed {cat}/{key}")
+        print(f"[Memory] Trimmed {cat}/{key}")
     if dropped and _trim_notifier:
         try:
             _trim_notifier(
@@ -163,7 +163,7 @@ def _recursive_update(target: dict, updates: dict) -> bool:
                 # turn {"notes": {"dentist": {...}}} into {"notes": "not a dict"}
                 # and every entry in the category would be gone — measured, this
                 # is exactly what a malformed update did to a live store.
-                print(f"[Memory] ⚠️ Refusing to replace the '{key}' group with a "
+                print(f"[Memory] Warning: Refusing to replace the '{key}' group with a "
                       f"single value — entries would be lost.")
                 continue
             new_val  = _truncate_value(str(value["value"] if isinstance(value, dict) else value))
@@ -182,7 +182,7 @@ def update_memory(memory_update: dict) -> dict:
         memory = load_memory()
         if _recursive_update(memory, memory_update):
             save_memory(memory)
-            print(f"[Memory] 💾 Saved: {list(memory_update.keys())}")
+            print(f"[Memory] Saved: {list(memory_update.keys())}")
         return memory
 
 def _entry_value(entry) -> str:
@@ -471,7 +471,7 @@ def save_session_summary(summary: str, language: str = "") -> None:
             json.dumps(memory, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-    print(f"[Memory] 📝 Session saved ({entry['date']}): {summary[:60]}…")
+    print(f"[Memory] Session saved ({entry['date']}): {summary[:60]}...")
 
 
 def pop_last_session() -> dict | None:
@@ -495,5 +495,5 @@ def pop_last_session() -> dict | None:
             )
             return entry
         except Exception as e:
-            print(f"[Memory] ⚠️ pop_last_session error: {e}")
+            print(f"[Memory] Warning: pop_last_session error: {e}")
             return None

@@ -15,6 +15,7 @@ because "I could not test half of it" is not "it works".
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 import unittest
@@ -103,8 +104,10 @@ class ClaimTableTests(unittest.TestCase):
                 self.assertIn(required, keys)
 
     def test_a_subset_run_exits_zero_and_says_a_verdict(self):
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
         done = subprocess.run([sys.executable, str(SCRIPTS / "proof_gate.py"),
                                "--only", "persona"], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", env=env,
                               timeout=300, cwd=str(ROOT))
         self.assertEqual(done.returncode, 0, done.stderr[-600:])
         self.assertIn("PROOF GATE", done.stdout)

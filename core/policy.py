@@ -80,6 +80,7 @@ OBSERVE_TOOLS: frozenset[str] = frozenset(
         "system_status",
         "web_search",
         "weather_report",
+        "local_models",
         # `system_monitor` used to be listed here and is not a tool in this
         # build — a name in these tables is a claim about the app, and a claim
         # about a tool that does not exist is how the tables drift out of step
