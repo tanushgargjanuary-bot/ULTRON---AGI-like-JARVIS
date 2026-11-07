@@ -63,48 +63,48 @@ def _score(query: set[str], text: str) -> int:
     return 3 * len(matched)
 
 
-def run(parameters: dict, player=None, session_memory=None) -> str:
-    """Match a stated goal to live tools and skills; never installs or edits code."""
-    request = str(parameters.get("request") or "").strip()
-    if not request:
-        return "Tell me what you are trying to get done, and I will map it to my tools."
-
+def _query_for(request: str) -> set:
+    """The search terms for a request, with the phrases that hide their own meaning."""
+    lowered = request.lower()
     query = _expand(_terms(request))
-    lowered_request = request.lower()
-    if any(phrase in lowered_request for phrase in (
+    if any(phrase in lowered for phrase in (
         "too big to send", "too large to send", "file is too big", "file is too large",
         "make the file smaller", "make this file smaller",
     )):
         query.update(ALIASES["compress"])
-    try:
-        entries = tool_catalog.build()
-    except Exception as exc:
-        return f"I could not read my live tool catalog: {exc}"
+    return query
 
-    tool_hits = []
-    expanded = _expand(query)
+
+def _tool_hits(query: set, expanded: set, entries) -> list:
+    """Live tools that match, scored, with a family cue worth six points."""
+    hits = []
     for entry in entries:
         score = _score(query, f"{entry.name} {entry.category} {entry.summary}")
         for family, names in TASK_TOOL_CUES.items():
             if expanded.intersection(ALIASES.get(family, {family})) and entry.name in names:
                 score += 6
         if score:
-            tool_hits.append((score, entry))
-    tool_hits.sort(key=lambda item: (-item[0], not item[1].available, item[1].name))
+            hits.append((score, entry))
+    hits.sort(key=lambda item: (-item[0], not item[1].available, item[1].name))
+    return hits
 
-    skill_hits = []
+
+def _skill_hits(query: set) -> list:
+    """Installed skill recipes that match, scored."""
+    hits = []
     for skill in SKILLS:
         score = _score(query, f"{skill.identity} {skill.title} {skill.purpose}")
         if score:
-            skill_hits.append((score, skill))
-    skill_hits.sort(key=lambda item: (-item[0], item[1].identity))
+            hits.append((score, skill))
+    hits.sort(key=lambda item: (-item[0], item[1].identity))
+    return hits
 
+
+def _report(request: str, tool_hits: list, skill_hits: list) -> str:
+    """The answer: what matched, what did not, and the honest next step."""
     lines = [f"For “{request}”:"]
-    # A single shared generic term is not enough to recommend an ability.
-    tool_hits = [hit for hit in tool_hits if hit[0] >= 3]
-    skill_hits = [hit for hit in skill_hits if hit[0] >= 3]
-
     ready_hits = [hit for hit in tool_hits if hit[1].available]
+
     if tool_hits:
         lines.append("Tools: " + "; ".join(
             f"{entry.name} ({'ready' if entry.available else 'unavailable: ' + entry.reason})"
@@ -133,6 +133,24 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
         "restart before claiming the change is active."
     )
     return "\n".join(lines)
+
+
+def run(parameters: dict, player=None, session_memory=None) -> str:
+    """Match a stated goal to live tools and skills; never installs or edits code."""
+    request = str(parameters.get("request") or "").strip()
+    if not request:
+        return "Tell me what you are trying to get done, and I will map it to my tools."
+
+    query = _query_for(request)
+    try:
+        entries = tool_catalog.build()
+    except Exception as exc:
+        return f"I could not read my live tool catalog: {exc}"
+
+    # A single shared generic term is not enough to recommend an ability.
+    tool_hits = [hit for hit in _tool_hits(query, _expand(query), entries) if hit[0] >= 3]
+    skill_hits = [hit for hit in _skill_hits(query) if hit[0] >= 3]
+    return _report(request, tool_hits, skill_hits)
 
 
 TOOL = {

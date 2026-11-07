@@ -9,8 +9,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from core.github import SEARCH
 
-API = "https://api.github.com/search/repositories"
 TIMEOUT_SECONDS = 6
 
 
@@ -40,7 +40,7 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
     if not query:
         return "Name the missing capability or describe what the project should do."
 
-    url = API + "?" + urlencode({"q": query, "sort": "stars", "order": "desc", "per_page": 10})
+    url = SEARCH + "?" + urlencode({"q": query, "sort": "stars", "order": "desc", "per_page": 10})
     request = Request(url, headers={
         "Accept": "application/vnd.github+json",
         "User-Agent": "ULTRON-capability-scout",
@@ -84,10 +84,9 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
 TOOL = {
     "name": "github_repo_scout",
     "description": (
-        "Find and rank public GitHub repositories for a missing Ultron skill or tool. "
-        "Use after capability_guide finds no ready match, or when the user asks for "
-        "candidate projects to add natively. It reviews public metadata only and never "
-        "downloads or installs code."
+        "Use when no ready tool matches, or the user asks for candidate projects. "
+        "Ranks public GitHub repositories for a missing Ultron skill. Reviews public "
+        "metadata only; never downloads or installs code."
     ),
     "parameters": {
         "type": "OBJECT",

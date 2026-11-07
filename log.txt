@@ -1,3 +1,40 @@
+=== 2026-11-07 · build 1.2.38 · a local model you can point at, and the other two branches read honestly ===
+
+The owner was tired of two branches that looked busy and reported nothing. So this build does
+two things in order: it reads what they actually finished, and it makes a local model one
+command away.
+
+WHAT WAS TAKEN FROM chatgpt
+  actions/capability_guide.py — maps a request to a live tool, and says "no strong match"
+  instead of guessing. actions/github_repo_scout.py — searches GitHub's public index and
+  returns a ranked shortlist. Read-only: no install, no clone, six second timeout.
+
+  Their five tests were written pytest-style with a monkeypatch fixture. This suite runs
+  unittest discover, so the file collected ZERO tests and the five checks had never run.
+  Rewritten in unittest shape. All five pass now. That is the whole value of running a
+  branch instead of reading it.
+
+WHAT WAS NOT TAKEN
+  antigravity moved four times while this was written (857f3dc -> ad53e69 -> 60c43b5 ->
+  b8e9334) and is still moving. Taking half of a moving branch is how one merge becomes two.
+  Its own claim, "context-aware prompt elevation", passes a new argument that no caller
+  supplies, on either branch. Recorded in docs/BRANCH_REVIEW.md rather than repeated.
+
+LOCAL MODELS, ONE COMMAND
+  scripts/local_model.py reads memory and the graphics card, picks the smallest model that
+  does the job, and can fetch it, time it, and point the app at it:
+
+      python scripts\local_model.py check | pull | test | write
+
+  check writes nothing. write merges three keys into config/api_keys.json and keeps a .bak,
+  so a key the owner pasted for a cloud provider survives the switch. docs/LOCAL_MODEL.md
+  says what a small model is good for and what it is not.
+
+NOT CHECKED
+  No model was downloaded here, and no server was reached: this box has neither. The tests
+  cover the decision and the file it writes, not the download. First real proof is the
+  owner running `pull` and `test` on his own machine.
+
 === 2026-11-07 · build 1.2.37 · the instruments were actually run, and three of them had something to say ===
 
 The owner asked for two things this build started from: run the instruments instead of

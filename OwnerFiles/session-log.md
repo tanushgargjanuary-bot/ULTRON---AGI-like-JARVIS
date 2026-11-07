@@ -369,3 +369,17 @@ index) and **Ultron — handover and next moves** (the state, the tasks, the tra
 The rule is also a file, because agents read code before they read notes: `docs/AGENT_NOTION.md`,
 pointed at from `AGENTS.md`, so it travels with every branch at merge. The other branches were
 told through a repository issue, not a push, because this session does not write to them.
+
+### 2026-11-07 · 1.2.38 · what the other two branches ended on
+
+`chatgpt` is idle at `c98ea0f`. Its capability guide and GitHub scout were taken (`5f576d8`),
+with their tests rewritten so the suite actually collects them — under `unittest discover`
+that file ran zero tests all day.
+
+`antigravity` is not stopped. It moved four times during the session and claimed issues #3 and
+#4 within the hour. Its work stays on its own branch until it stops moving.
+
+`scripts/local_model.py` is the setup path for a local model: check, pull, test, write. It
+writes nothing until told, and keeps a backup of the config it merges into.
+
+Not checked: no model was downloaded and no server was reached from this box.

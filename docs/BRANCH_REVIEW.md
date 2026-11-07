@@ -12,8 +12,12 @@ This document collects recommendations from a review of every branch that exists
 |---|---|---|
 | `main` (default) | `44ec6db` | the stable base |
 | `arena/4c973188-ultron-agi-like-jarvis` | this session's branch | documentation, then the defect pass: the workspace report, the two red tests, the size budget withdrawn, CI on this branch |
-| `chatgpt` | `49ff63f` | capability routing, a read-only GitHub scout, local-model detection |
-| `antigravity` | `857f3dc` | a repository miner and a 2,438-repo catalog, native plugin bridges, voice and UI work |
+| `chatgpt` | `c98ea0f` | capability routing, a read-only GitHub scout, three doc commits. **Idle since the afternoon.** |
+| `antigravity` | `b8e9334` | a repository miner and a 2,438-repo catalog, plugin bridges, an undo pass, and — late in the day — its own attempt at issues #3 and #4. **Moving while this was written.** |
+
+Measured again at 21:30 IST on 7 Nov. `antigravity` moved four times during this session
+(`857f3dc` → `ad53e69` → `60c43b5` → `b8e9334`), so any row here is a photograph, not a fact.
+`python scripts/branch_report.py` is the live answer.
 
 The branch called `copilot` no longer exists: it was renamed, then folded into one branch.
 `opencode`, which an earlier version of this page reviewed, is not on the remote. **Re-run
@@ -161,3 +165,24 @@ Expose recent actions, approvals, files changed, undo options, sensors currently
   Two-dot comparisons, because this checkout is shallow and has no merge base.
 
 These recommendations reflect the tree and branch heads available during review on 2026-11-07. Re-check current branch heads and governing decisions before implementation.
+
+## What the two branches actually held (measured 7 Nov, after reading them)
+
+Not opinions. Each line below was produced by running the check named beside it.
+
+| Finding | How it was checked | What it means |
+|---|---|---|
+| `chatgpt`'s five tests had **never run** | `python -m unittest tests.test_capability_guide` → *Ran 0 tests* under the suite's `unittest discover` | The file was written pytest-style, with a `monkeypatch` fixture. In this repository that is a file the suite skips. Rewritten in unittest shape on `ArenaAi`; all five pass now. |
+| `antigravity`'s "context-aware prompt elevation" elevates nothing | `git grep 'describe('` on both branches | The new `priority_categories` argument is never passed by a caller — not on their branch, not on mine. The parameter is real; the feature is not connected. |
+| `core/routing.py` is called by nothing in the application | `git grep 'core.routing'` | Only `tests/test_routing.py` imports it. Issue #3 names this. `antigravity`'s `60c43b5` wires it through a `core/intent_router.py` that does not exist here, so the claim cannot be checked from this branch. |
+| `main`'s tip is a **revert** | `git show --stat 44ec6db` | 793 lines removed, including `core/local_detector.py`, `core/local_router.py` and `plugins/local_models.py`. The local-model plumbing that remains is the three config keys read by `core/llm_client.py`. |
+| A size or "the branch is big" claim is not a reason to refuse it | `chatgpt` is 17 commits over 5 files (+392); `antigravity` is 37 files (+5,108) | Small branches rot too. `chatgpt`'s work went stale for hours while its tests could not run. |
+
+### What was taken, and what was left
+
+**Taken** (`5f576d8`): `actions/capability_guide.py`, `actions/github_repo_scout.py`, the
+`core/prompt.txt` line, and the doc `docs/CAPABILITY_AWARENESS.md` — with the tests rewritten
+so they execute.
+
+**Left, deliberately:** everything else on both branches. `antigravity` is mid-flight; taking
+half of a moving branch is how a merge becomes a second merge.
