@@ -13,6 +13,8 @@ import queue as _queue
 import threading
 from typing import Callable, Optional
 
+from core import failures
+
 import numpy as np
 import sounddevice as sd
 
@@ -409,7 +411,15 @@ class TTSPlayer:
                 on_start()
             self._engine.speak(text)
         except Exception as e:
-            print(f"[TTS] Error: {e}")
+            failures.note("tts.primary", e)
+            try:
+                from providers import tts_system
+                sys_tts = tts_system.SystemTTS({})
+                wav_bytes = sys_tts._synth_blocking(text)
+                if wav_bytes:
+                    _play_audio_bytes(wav_bytes)
+            except Exception as e2:
+                failures.note("tts.fallback", e2)
         finally:
             with self._lock:
                 self._playing = False

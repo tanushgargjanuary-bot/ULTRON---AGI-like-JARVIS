@@ -15,7 +15,7 @@ import time
 import random
 from pathlib import Path
 
-from core import appidentity, outcome
+from core import appidentity, failures, outcome
 from core.lazyimport import LazyModule, installed
 
 # pyautogui and pyperclip are imported on first USE, not at launch — see
@@ -279,14 +279,31 @@ def _focus_window(title: str) -> str:
 
     if os_name == "windows":
         try:
-            script = f'(New-Object -ComObject WScript.Shell).AppActivate("{title}")'
-            subprocess.run(
+            target = title.strip()
+            if not target or target.lower() in ("current", "active"):
+                from custom_jarvis import tools
+                info = tools.get_active_window()
+                return f"Current active window: {info.data.get('title', 'Unknown')}"
+
+            # 1. Try native AppActivate
+            script = f'(New-Object -ComObject WScript.Shell).AppActivate("{target}")'
+            proc = subprocess.run(
                 ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
-                capture_output=True, timeout=5, **_WIN_HIDE,
+                capture_output=True, text=True, timeout=5, **_WIN_HIDE,
             )
-            time.sleep(0.3)
-            return f"Focused window: {title}"
+            if proc.stdout.strip() == "True":
+                time.sleep(0.3)
+                return f"Focused window: {target}"
+
+            # 2. Adaptive fallback via appidentity
+            match = appidentity.resolve(target)
+            if match and appidentity.focus(match):
+                time.sleep(0.3)
+                return f"Focused window: {match.name}"
+
+            return f"Window '{target}' could not be brought to front (may be minimized or requires manual focus)."
         except Exception as e:
+            failures.note("computer_control.focus_window", e)
             return f"focus_window (Windows) failed: {e}"
 
     if os_name == "mac":

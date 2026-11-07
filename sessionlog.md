@@ -143,3 +143,25 @@ To immediately empower Ultron with the top-scoring capabilities from the mined c
 1. **Diff Audit:** Perform side-by-side diff between `antigravity` and `opencode` to inspect any parallel fixes.
 2. **Harmonization:** Integrate OpenCode's contributions into `antigravity` using surgical, non-destructive cherry-picks.
 3. **Master Verification:** Run the full `scripts/verify.py` across all 6 verification stages before submitting the unified PR into `main`.
+
+---
+
+### 6. Native Capabilities Hardening (Battle-Tested Plan Execution)
+Following adversarial review by the Skeptical Systems Critic and user confirmation, four high-leverage native capabilities were implemented and hardened:
+1. **Zero-Latency Native Voice Fallback (`core/tts.py`)**:
+   - `TTSPlayer.speak()` now wraps cloud/engine synthesis with an immediate fallback to `providers.tts_system.SystemTTS` (Windows SAPI5 / OS native).
+   - Eliminates silence/freezes when EdgeTTS/ElevenLabs encounters timeouts, rate limits, or network loss.
+2. **Context-Aware Active Window & UIPI Admin Elevation Grounding (`custom_jarvis/tools.py`)**:
+   - `get_active_window()` automatically detects if the foreground window belongs to Ultron itself, the desktop, or the taskbar, and traverses the Z-order to resolve the actual target application window.
+   - Added `_is_process_elevated(pid)` to inspect Win32 token elevation (`TokenElevation`). Honestly advises the user if target application is running as Administrator (UIPI barrier) rather than reporting false click successes.
+3. **Resilient Window Focus & App Resolution (`actions/computer_control.py`)**:
+   - `_focus_window()` now accepts `"current"` and `"active"` to focus and inspect the current workspace context.
+   - Replaced silent return code assumptions with a two-tier strategy: native `AppActivate` with automatic fallback to `core.appidentity.resolve()` and `focus()` using Win32 `SetForegroundWindow` and `AttachThreadInput`.
+4. **Fact-Anchored Long-Term Session Recall (`memory/memory_manager.py`)**:
+   - `search_memory()` now indexes `memory['sessions']` alongside standard categories.
+   - Detects temporal cues (`"yesterday"`, `"last"`, `"previous"`, `"earlier"`, `"history"`) and returns genuine timestamped summaries from past sessions without LLM hallucination.
+5. **Static Ceilings Verification**:
+   - Decomposed helper functions to ensure zero growth in complex functions or nesting.
+   - `TheCeilings` in `tests/test_suite_assistant.py` passed 4/4 OK. All 24 unit tests in `test_native_plugin_bridges` and `test_local_detector` passed.
+
+

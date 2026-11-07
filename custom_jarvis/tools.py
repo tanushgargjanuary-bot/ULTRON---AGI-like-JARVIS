@@ -50,6 +50,7 @@ import requests
 
 from custom_jarvis import settings as config
 from custom_jarvis.compat import HAS_PSUTIL, extract_webpage_text
+from core import failures
 
 try:
     from bs4 import BeautifulSoup
@@ -1114,6 +1115,72 @@ def launch_app(
 registry.register_alias("open_application", "launch_app")
 
 
+def _is_process_elevated(pid: int) -> bool:
+    """Check if process has Administrator / elevated token under Windows."""
+    if not pid or os.name != "nt":
+        return False
+    try:
+        process_query = 0x1000
+        token_query = 0x0008
+        token_elevation = 20
+        h_proc = ctypes.windll.kernel32.OpenProcess(process_query, False, pid)
+        if not h_proc:
+            return False
+        h_token = ctypes.wintypes.HANDLE()
+        if not ctypes.windll.advapi32.OpenProcessToken(h_proc, token_query, ctypes.byref(h_token)):
+            ctypes.windll.kernel32.CloseHandle(h_proc)
+            return False
+
+        class _TokenElevation(ctypes.Structure):
+            _fields_ = [("TokenIsElevated", ctypes.wintypes.DWORD)]
+
+        elev = _TokenElevation()
+        ret_len = ctypes.wintypes.DWORD()
+        success = ctypes.windll.advapi32.GetTokenInformation(
+            h_token, token_elevation, ctypes.byref(elev), ctypes.sizeof(elev), ctypes.byref(ret_len)
+        )
+        ctypes.windll.kernel32.CloseHandle(h_token)
+        ctypes.windll.kernel32.CloseHandle(h_proc)
+        return bool(success and elev.TokenIsElevated != 0)
+    except Exception as exc:
+        failures.note("tools.process_elevation", exc)
+        return False
+
+
+def _find_top_application_window() -> int:
+    """Find the top-most visible application window in Z-order excluding Ultron/Taskbar."""
+    if os.name != "nt":
+        return 0
+    found_hwnd = 0
+    my_pid = os.getpid()
+
+    def enum_cb(h, _lparam):
+        nonlocal found_hwnd
+        if not ctypes.windll.user32.IsWindowVisible(h):
+            return True
+        length = ctypes.windll.user32.GetWindowTextLengthW(h)
+        if length == 0:
+            return True
+        buff = ctypes.create_unicode_buffer(length + 1)
+        ctypes.windll.user32.GetWindowTextW(h, buff, length + 1)
+        win_title = buff.value.strip()
+        if not win_title or win_title in ("Program Manager", "Task Switching", "Windows Input Experience"):
+            return True
+        h_pid = ctypes.wintypes.DWORD()
+        ctypes.windll.user32.GetWindowThreadProcessId(h, ctypes.byref(h_pid))
+        if h_pid.value == my_pid:
+            return True
+        found_hwnd = h
+        return False
+
+    enum_proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
+    try:
+        ctypes.windll.user32.EnumWindows(enum_proc(enum_cb), 0)
+    except Exception as exc:
+        failures.note("tools.find_top_window", exc)
+    return found_hwnd
+
+
 @registry.register(
     name="get_active_window",
     category="desktop",
@@ -1124,9 +1191,11 @@ registry.register_alias("open_application", "launch_app")
     },
 )
 def get_active_window() -> ToolResult:
-    """Get information about the currently active foreground window."""
+    """Get information about the currently active foreground window with elevation and focus awareness."""
     try:
         hwnd = ctypes.windll.user32.GetForegroundWindow()
+        if not hwnd:
+            hwnd = _find_top_application_window()
         if not hwnd:
             return ToolResult(
                 success=True,
@@ -1136,27 +1205,44 @@ def get_active_window() -> ToolResult:
                     "title": "Desktop / No Active Window",
                     "pid": None,
                     "process_name": "Unknown",
+                    "is_elevated": False,
                 },
             )
 
         length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
-        title = ""
+        buff = ctypes.create_unicode_buffer(length + 1) if length > 0 else ctypes.create_unicode_buffer(1)
         if length > 0:
-            buff = ctypes.create_unicode_buffer(length + 1)
             ctypes.windll.user32.GetWindowTextW(hwnd, buff, length + 1)
-            title = buff.value
+        title = buff.value
 
         pid = ctypes.wintypes.DWORD()
         ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        my_pid = os.getpid()
+
+        # If current foreground is Ultron itself or desktop, resolve top application in Z-order
+        if pid.value == my_pid or title in ("Program Manager", "Shell_TrayWnd", ""):
+            fallback_h = _find_top_application_window()
+            if fallback_h:
+                hwnd = fallback_h
+                length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
+                buff = ctypes.create_unicode_buffer(length + 1) if length > 0 else ctypes.create_unicode_buffer(1)
+                if length > 0:
+                    ctypes.windll.user32.GetWindowTextW(hwnd, buff, length + 1)
+                title = buff.value
+                ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+
         proc_name = "Unknown"
         if pid.value:
             try:
                 proc_name = psutil.Process(pid.value).name()
-            except Exception:
-                pass
+            except Exception as exc:
+                failures.note("tools.process_name", exc)
 
+        is_elevated = _is_process_elevated(pid.value) if pid.value else False
         resolved_title = title or "Untitled Window"
-        msg = f"Active Window: '{resolved_title}' (Process: {proc_name}, PID: {pid.value})"
+        elevation_note = " [ADMIN/ELEVATED — UIPI active]" if is_elevated else ""
+        msg = f"Active Window: '{resolved_title}' (Process: {proc_name}, PID: {pid.value}){elevation_note}"
+
         return ToolResult(
             success=True,
             output=msg,
@@ -1165,8 +1251,9 @@ def get_active_window() -> ToolResult:
                 "title": resolved_title,
                 "pid": pid.value if pid.value else None,
                 "process_name": proc_name,
+                "is_elevated": is_elevated,
             },
-            metadata={"pid": pid.value, "title": resolved_title, "process": proc_name},
+            metadata={"pid": pid.value, "title": resolved_title, "process": proc_name, "is_elevated": is_elevated},
         )
     except Exception as e:
         return ToolResult(
