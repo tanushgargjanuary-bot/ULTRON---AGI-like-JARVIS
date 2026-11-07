@@ -279,7 +279,13 @@ def _crawl_via_service(url: str, selector: str, max_chars: int, player) -> str |
 
 def _handle_crawl(url: str, selector: str, max_chars: int, player) -> str:
     if not url:
-        return "Sir, please specify a valid URL to crawl."
+        from core import context_detector
+        clip_url = context_detector.get_clipboard_target()
+        if clip_url and clip_url.startswith(("http://", "https://")):
+            url = clip_url
+            _safe_call(player, "write_log", f"CRAWLER: Auto-detected URL from clipboard: {url}")
+        else:
+            return "Sir, please specify a valid URL to crawl, or copy a link to your clipboard."
     clean_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
     parsed = urllib.parse.urlparse(clean_url)
     if not parsed.netloc:
@@ -308,7 +314,14 @@ def _handle_crawl(url: str, selector: str, max_chars: int, player) -> str:
     if len(md) > max_chars:
         md = md[:max_chars] + f"\n\n… [Truncated at {max_chars} characters]"
 
-    _safe_call(player, "show_content", f"PAGE CONTENT ({parsed.netloc})", md)
+    actions_card = (
+        f"{md}\n\n"
+        "── QUICK ACTIONS ──\n"
+        "• Say 'Summarize this page'\n"
+        "• Say 'Extract key code from this'\n"
+        "• Say 'Save these notes to memory'"
+    )
+    _safe_call(player, "show_content", f"PAGE CONTENT ({parsed.netloc})", actions_card)
     _safe_call(player, "write_log", f"CRAWLER: Extracted {len(md)} chars from {parsed.netloc}")
     return f"Successfully extracted {len(md)} characters of markdown from {clean_url}:\n\n{md}"
 

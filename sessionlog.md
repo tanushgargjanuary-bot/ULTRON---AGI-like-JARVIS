@@ -181,13 +181,33 @@ Documented the 4-pillar architectural foundation ensuring every capability in Ul
 
 ---
 
-### 8. Next-Gen Adaptive Voice & UI Intelligence Architecture
-Upgraded the 4-pillar foundation into an **Adaptive, Proactive, Self-Optimizing 5-Layer Engine**:
-1. **Context-Aware Dynamic Prompt Elevation**: Active window (`get_active_window()`) dynamically re-ranks tool trigger declarations, placing IDE tools first when coding, web tools first when browsing.
-2. **Zero-Latency Colloquial Voice Pre-Router**: Normalizes natural speech and slang (*"tldr"*, *"what's on screen"*, *"kill that"*) to map directly to tool actions with zero network lag.
-3. **Multi-Modal Parameter Disambiguation**: Self-heals incomplete voice commands by inspecting clipboard and window titles before asking targeted 1-sentence voice follow-ups.
-4. **Action Pills & Progressive Disclosure**: UI cards under the avatar provide interactive 1-click / voice-triggered next-step pills (`[Summarize]`, `[Copy Diff]`, `[Save to Memory]`).
-5. **Closed-Loop Bandit Self-Optimization**: Feeds tool success and refusal telemetry into `core/bandit.py` to auto-tune prompt priority and trigger conditions dynamically over time.
+### 8. Next-Gen Adaptive Voice & UI Intelligence (Built & Verified)
+Implemented and verified Parts 1 & 2 of the adaptive voice and interface structure:
+1. **Window-Aware Dynamic Tool Elevation (`core/context_detector.py` & `core/tool_prompt.py`)**:
+   - Built `core/context_detector.py` to safely inspect the active foreground window process/title.
+   - Tools matching foreground application (IDE/terminals -> `["developer", "files"]`, browsers -> `["knowledge"]`, media players -> `["media"]`) are stably elevated to the top of prompt declarations without adding tokens or altering text length.
+2. **Smart Clipboard Fallback & Parameter Disambiguation (`plugins/crawler_bridge.py`)**:
+   - `crawler_bridge` now automatically pulls target URLs directly from the system clipboard when the spoken command lacks an explicit link.
+3. **Interactive Quick Actions & Progressive Disclosure**:
+   - Web crawler cards now include quick next-step prompts (`[Summarize]`, `[Code]`, `[Save]`) readable at a glance.
+4. **Verification**:
+   - Created `tests/test_context_detector.py` (7 tests, all passing).
+   - Regenerated `docs/MAP.md` and updated `readme.md` (263 Python files, 97,299 lines, 1,771 tests).
+   - Verified: `test_readme.py` (8/8 PASS), `test_triggers.py` (30/30 PASS), `test_suite_assistant.py` (127/127 PASS), `test_suite_safety.py` (71/71 PASS), `test_workspace_budget.py` (9/9 PASS).
+
+---
+
+### 9. Frictionless Self-Evolution & Self-Editing Implementation Plan
+Architected the 8-pillar blueprint to make Ultron fully autonomous in writing, testing, repairing, and evolving its own capabilities with zero risk:
+1. **Safe Sandbox Playground**: Code changes run and verify inside isolated temporary scratch trees before touching production files.
+2. **Hot-Plugin Instant Capability Spawning**: New abilities are created directly in `plugins/`, turning on instantly without restarting the application.
+3. **Self-Healing from Crash Receipts**: Autonomous bug-fix loops reading `logs/crash_*.json` and verifying fixes against unit tests.
+4. **Visual One-Click Diff Approval**: Transparent HUD change card showing what changed with a single approval button.
+5. **Instant One-Word Rollback**: Revert any change in `<1s` on voice command (`"undo change"`).
+6. **Untouchable Referee Guards**: Core security policies, key vaults, and confirmation gates remain strictly read-only.
+7. **Conversational Skill Compilation**: Automatically packages repetitive multi-step actions into reusable skill packs (`skills/`).
+8. **Automated Quality Benchmarking**: Prohibits self-modifications that degrade latency, memory, or token budgets.
+
 
 
 

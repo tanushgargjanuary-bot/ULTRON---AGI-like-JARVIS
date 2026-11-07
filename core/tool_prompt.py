@@ -94,10 +94,25 @@ def line(name: str, description: str) -> str:
     return rendered[:LINE_CHARS]
 
 
-def describe(declarations) -> str:
-    """Every declared tool, one line each, condition first."""
+def describe(declarations, priority_categories: list[str] | None = None) -> str:
+    """Every declared tool, one line each, condition first.
+
+    If priority_categories is supplied, tools belonging to those categories are
+    stably re-ordered to appear first in the prompt block.
+    """
+    decl_list = list(declarations or ())
+    if priority_categories:
+        from core import tool_catalog
+        prio_set = set(priority_categories)
+
+        def _rank(d):
+            n = (d.get("name") if isinstance(d, dict) else getattr(d, "name", None)) or ""
+            return 0 if tool_catalog.CATEGORIES.get(n, "other") in prio_set else 1
+
+        decl_list = sorted(decl_list, key=_rank)
+
     lines = []
-    for declaration in declarations or ():
+    for declaration in decl_list:
         try:
             name = (declaration.get("name") if isinstance(declaration, dict)
                     else getattr(declaration, "name", None))
