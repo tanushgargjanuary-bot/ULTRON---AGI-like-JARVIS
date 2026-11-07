@@ -1,30 +1,54 @@
-"""Point a user's goal at tools and skills Ultron already has."""
+"""Map a user's goal to existing tools and skills, including common synonyms."""
 
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 from core import tool_catalog
 from custom_jarvis.skills import SKILLS
 
 
+# Small deterministic vocabulary keeps this lookup fast and useful when the user
+# describes an outcome instead of knowing the tool's name.
+ALIASES = {
+    "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller"},
+    "convert": {"convert", "conversion", "transform", "format"},
+    "search": {"search", "find", "look", "locate"},
+    "summarize": {"summarize", "summary", "digest", "overview"},
+    "screenshot": {"screenshot", "capture", "screen", "snapshot"},
+    "transcribe": {"transcribe", "transcription", "speech", "audio"},
+    "evolve": {"evolve", "evolution", "self_modify", "self_change", "improve", "upgrade"},
+}
+
+
 def _terms(text: str) -> set[str]:
-    return {word for word in re.findall(r"[a-z0-9_+#.-]+", text.lower())
-            if len(word) > 2}
+    return {
+        word for word in re.findall(r"[a-z0-9_+#.-]+", text.lower())
+        if len(word) > 2
+    }
+
+
+def _expand(query: set[str]) -> set[str]:
+    expanded = set(query)
+    for family, terms in ALIASES.items():
+        if query.intersection(terms):
+            expanded.update(terms)
+            expanded.add(family)
+    return expanded
 
 
 def _score(query: set[str], text: str) -> int:
     words = _terms(text)
-    return sum(3 if word in words else 0 for word in query)
+    return 3 * len(query.intersection(words))
 
 
 def run(parameters: dict, player=None, session_memory=None) -> str:
-    """Match a stated goal to current tools/skills; never installs or edits code."""
+    """Match a stated goal to live tools and skills; never installs or edits code."""
     request = str(parameters.get("request") or "").strip()
     if not request:
         return "Tell me what you are trying to get done, and I will map it to my tools."
-    query = _terms(request)
+
+    query = _expand(_terms(request))
     try:
         entries = tool_catalog.build()
     except Exception as exc:
@@ -44,46 +68,51 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
             skill_hits.append((score, skill))
     skill_hits.sort(key=lambda item: (-item[0], item[1].identity))
 
-    lines = [f"For “{request}”:"] 
+    lines = [f"For “{request}”:"]
     if tool_hits:
         lines.append("Tools: " + "; ".join(
-            f"{e.name} ({'ready' if e.available else 'unavailable: ' + e.reason})"
-            for _, e in tool_hits[:5]) + ".")
+            f"{entry.name} ({'ready' if entry.available else 'unavailable: ' + entry.reason})"
+            for _, entry in tool_hits[:5]
+        ) + ".")
     else:
-        lines.append("No strong tool-name match. I checked the live tool catalog.")
+        lines.append("No strong tool match. I checked the live tool catalog.")
 
     if skill_hits:
         lines.append("Skills: " + "; ".join(
-            f"{s.title} [{s.identity}]" for _, s in skill_hits[:5]) + ".")
+            f"{skill.title} [{skill.identity}]" for _, skill in skill_hits[:5]
+        ) + ".")
     else:
         lines.append("No strong skill match in my installed skill recipes.")
 
     if not tool_hits:
         lines.append(
-            "I can investigate a GitHub repository for a missing capability, then "
-            "propose a native implementation. I do not download or install repository "
-            "code automatically.")
+            "The next step is to research candidate GitHub projects, inspect their "
+            "fit and risks, then propose one bounded native change. I do not install "
+            "repository code automatically."
+        )
     lines.append(
-        "I can evolve my own source through self_modify: propose, rehearse in a copy, "
-        "confirm in two different places, then apply. A source change takes effect "
-        "after restart.")
+        "I can evolve my own source through self_modify: propose a change, rehearse "
+        "it in a copy, confirm in two different places, then apply. I should compare "
+        "the same task before and after, keep only a demonstrated improvement, and "
+        "restart before claiming the change is active."
+    )
     return "\n".join(lines)
 
 
 TOOL = {
     "name": "capability_guide",
     "description": (
-        "Map a task to Ultron's existing tools and skills. Use when the user is "
-        "unsure whether Ultron can do a task, seems stuck, asks what tool could help, "
-        "or asks how Ultron can improve itself. This reports capabilities and gaps; "
-        "it does not install code."
+        "Map a task to Ultron's live tools and installed skills. Use when the user "
+        "does not know which ability could help, describes being stuck, asks whether "
+        "Ultron can do something, or asks how Ultron can improve itself. This reports "
+        "capabilities and gaps; it does not install code."
     ),
     "parameters": {
         "type": "OBJECT",
         "properties": {
             "request": {
                 "type": "STRING",
-                "description": "The task the user wants to accomplish or capability they need."
+                "description": "The task or capability the user wants to accomplish."
             }
         },
         "required": ["request"],
