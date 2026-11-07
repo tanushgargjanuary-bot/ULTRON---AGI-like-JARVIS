@@ -358,3 +358,8 @@ stopped being true several builds ago and was corrected rather than appended to.
 **Baseline inspection.** The file processor declares image compression and video compression. The capability catalog intentionally shortens tool descriptions, so a literal search for “compress” could miss that ability. The new task cue addresses this mismatch. The plan's representative cases are: compression (should suggest file_processor), workspace review (should use review_changes), and an unsupported task (should show no ready match and offer repository research).
 
 **Verification limit.** Source inspection supports those expected routes, but I could not execute the app or its tests because this workspace has no repository checkout. Runtime discovery, actual routing, and availability on the owner's machine remain unverified. Do not describe those as verified until run in the app. The scout evaluates public metadata only, not source safety or suitability.
+
+
+**Completion follow-through.** Added focused routing checks in `tests/test_capability_guide.py` for indirect compression wording, skill-name matching, generic requests, unavailable tools, and unsupported tasks. Refined the compression phrases to avoid treating every mention of a large item as compression, and made underscore-based internal skill names match normal user wording.
+
+**Execution status.** The tests were not executable in this environment: the workspace has no repo checkout, GitHub network cloning failed, and the available `python.exe` launcher could not start. The tests are committed for the next environment with Python and the project checkout. This means routing is source-reviewed, not runtime-verified.
