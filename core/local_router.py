@@ -79,8 +79,8 @@ def choose_wise_local_model(
         return None
 
     candidates = [m for m in models if (not running_only or m.running)]
-    if not candidates and running_only:
-        candidates = models
+    if not candidates:
+        return None
 
     specialized = _pick_specialized(candidates, need_vision, need_code)
     if specialized:
