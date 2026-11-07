@@ -592,7 +592,18 @@ def _provider_rungs(tier: str) -> tuple[str, ...]:
     if tier == SEARCH:
         return ()
     pid, _ = _provider_settings()
-    return (PROVIDER_PREFIX + pid,) if pid else ()
+    if pid:
+        return (PROVIDER_PREFIX + pid,)
+
+    # Fallback to auto-detected local model when no provider is explicitly configured
+    try:
+        from core.local_router import choose_wise_local_model
+        wise = choose_wise_local_model(tier=tier)
+        if wise:
+            return (f"{PROVIDER_PREFIX}auto:{wise.provider_id}:{wise.name}",)
+    except Exception:
+        pass
+    return ()
 
 
 def _provider_first() -> bool:
@@ -637,10 +648,18 @@ def _provider_call(model: str, contents, config, timeout_ms: int):
     from providers import registry
 
     pid = model[len(PROVIDER_PREFIX):]
-    cfg = get_provider_config(pid)
-    missing = registry.missing_fields(pid, cfg)
-    if missing:
-        raise RuntimeError(f"404 not configured: {', '.join(missing)}")
+    if pid.startswith("auto:"):
+        _, prov_id, model_name = pid.split(":", 2)
+        from core.local_detector import LOCAL_ENDPOINTS
+        endpoint_map = {p[0]: f"{p[1]}{p[3]}" for p in LOCAL_ENDPOINTS}
+        base_url = endpoint_map.get(prov_id, "http://127.0.0.1:11434/v1")
+        cfg = {"base_url": base_url, "model": model_name, "local": True}
+        pid = f"openai_compat@{prov_id}"
+    else:
+        cfg = get_provider_config(pid)
+        missing = registry.missing_fields(pid, cfg)
+        if missing:
+            raise RuntimeError(f"404 not configured: {', '.join(missing)}")
 
     llm = registry.build(pid, cfg)
     messages, temperature = _to_openai_messages(contents, config)
