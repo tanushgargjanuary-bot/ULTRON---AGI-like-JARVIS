@@ -4,6 +4,27 @@ Three ways, from easiest to most involved. Most people want the first one.
 
 ---
 
+## Starting it, all the ways it starts
+
+Three entry points, and only one of them needs care.
+
+| How | Works? | What it does |
+|---|---|---|
+| Double-click **`run.bat`** | Yes, always | Finds a supported Python, builds `.venv` if needed, installs what is missing, starts the app. |
+| **`.venv\Scripts\python.exe main.py`** | Yes | The same Python `run.bat` uses, without the checks. Fastest once the folder is set up. |
+| **`python main.py`** with the system Python | Only if that Python is 3.11–3.13 **and** has the packages | Usually neither. It now says so in two sentences instead of a traceback. |
+
+`run.bat` is the answer to "it will not start". It repairs its own environment: a `.venv`
+built by a Python that has since been removed is moved aside and rebuilt.
+
+The same rule applies to the repository's own scripts. Run them on the folder's Python:
+
+```powershell
+.venv\Scripts\python.exe scripts\local_model.py check
+```
+
+---
+
 ## 1. The installer (one file)
 
 1. Run **`UltronSetup-1.2.27.exe`**.

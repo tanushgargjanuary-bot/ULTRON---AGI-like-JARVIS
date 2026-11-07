@@ -1,3 +1,19 @@
+=== 2026-11-07 · build 1.2.38 · later still · "python main.py" answers in sentences ===
+
+The owner ran the local-model command on Windows and got three failures at once: no Python on
+PATH, a command mangled by a chat window into a link, and a folder that was not the repository.
+
+His Python, when found, was 3.14 — which this project refuses on purpose — and the packages
+live in the folder's own .venv, so `python main.py` could not work either way. It failed with a
+traceback, and a traceback reads as "Ultron is broken".
+
+core/launch_guard.py now checks the interpreter before the heavy imports and stops with two
+sentences naming both commands that work. It prints nothing itself: SystemExit carries the
+message, so a library stays quiet. Ten tests, none of which import main.py.
+
+docs/INSTALL.md gained the table this needed: run.bat always works, .venv\Scripts\python.exe
+main.py works, and `python main.py` works only on 3.11-3.13 with the packages present.
+
 === 2026-11-07 · build 1.2.38 · later · LFM2, and the answer to "will this strain the laptop" ===
 
 The owner asked for a local model he can afford, and asked the right question: one model is

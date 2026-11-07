@@ -34,6 +34,18 @@ for _stream in ("stdout", "stderr"):
 
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── Refuse a startup that cannot work, in words instead of a traceback ─────
+# run.bat is the supported path. This is for the other one: 'python main.py' with a
+# system interpreter that is too new, or that does not have the folder's packages.
+try:
+    from core import launch_guard
+
+    launch_guard.stop_early()
+except SystemExit:
+    raise
+except Exception:
+    pass          # a broken guard must never be the reason the app will not start
+
 import asyncio
 import re
 import threading

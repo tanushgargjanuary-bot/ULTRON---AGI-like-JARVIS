@@ -38,7 +38,7 @@ Three failures look the same and are not:
 |---|---|---|
 | `Python was not found; run without arguments to install from the Microsoft Store` | Windows is showing a placeholder, not a Python. | Install 3.11–3.13 from python.org and **tick "Add python.exe to PATH"**. Then close and reopen the terminal. |
 | `can't open file ... No such file or directory` | The terminal is in the wrong folder. | `cd` into the repository first. `dir scripts\local_model.py` must list the file. |
-| `No module named 'requests'` | The Python you called is not the one the application uses. | Use the same interpreter that starts Ultron, or `py -3.12 -m pip install -r requirements.txt`. |
+| `No module named 'requests'` | The Python you called is not the one the application uses. | Use the folder's own Python: `.venv\Scripts\python.exe scripts\local_model.py check`. |
 
 Two shortcuts that avoid the problem: the Windows launcher `py` instead of `python`, and
 `cd` into the repository before any `python scripts\...` command.
