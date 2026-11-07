@@ -17,7 +17,7 @@ ALIASES = {
     "screenshot": {"screenshot", "capture", "screen", "snapshot"},
     "transcribe": {"transcribe", "transcription", "speech", "audio"},
     "evolve": {"evolve", "evolution", "self_modify", "self_change", "improve", "upgrade"},
-    "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller", "large"},
+    "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller", "oversized", "big"},
 }
 
 
@@ -52,6 +52,11 @@ def _expand(query: set[str]) -> set[str]:
 
 def _score(query: set[str], text: str) -> int:
     words = _terms(text)
+    # Tool and skill identifiers use underscores; let ordinary user wording
+    # match those names without requiring users to know the internal spelling.
+    for word in tuple(words):
+        if "_" in word:
+            words.update(_terms(word.replace("_", " ")))
     matched = query.intersection(words)
     # Ignore generic request words so a weak match is not presented as a fit.
     matched.difference_update({"file", "document", "help", "need", "want", "make", "please"})
@@ -65,6 +70,12 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
         return "Tell me what you are trying to get done, and I will map it to my tools."
 
     query = _expand(_terms(request))
+    lowered_request = request.lower()
+    if any(phrase in lowered_request for phrase in (
+        "too big to send", "too large to send", "file is too big", "file is too large",
+        "make the file smaller", "make this file smaller",
+    )):
+        query.update(ALIASES["compress"])
     try:
         entries = tool_catalog.build()
     except Exception as exc:
