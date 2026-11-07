@@ -18,6 +18,13 @@ cheap to run again after every change.
 The rules for using it are in docs/LOCAL_MODEL.md: one file, one instruction, one failing test
 written first. The test decides, not the model.
 
+AUDIT FROM THE OTHER BRANCH, CHECKED
+  Antigravity's swarm report named four P0 faults. Three were true when read against the code.
+  Two are on code this branch does not have. One was here and is fixed: find_files walked into
+  key stores, because _is_safe_path guards the starting folder and nothing below it. It now
+  refuses every sensitive entry it reaches, with five tests. The third, core/policy.py's
+  _granted(), is a referee file; it is issue #9 and it waits for the owner.
+
 Not checked: no model was pulled here and no server was reached. The bench has never run
 against a live LFM2 on this machine.
 

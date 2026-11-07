@@ -528,6 +528,11 @@ def find_files(name: str = "", extension: str = "",
         max_dirs   = 500  # performance + safety limit
 
         for item in search_path.rglob("*"):
+            # A search may start in a safe folder and still walk into a key store.
+            # _is_safe_path guards the starting point, not what lies below it, so the
+            # refusal has to be repeated for every entry the walk reaches.
+            if _is_sensitive(item):
+                continue
             if item.is_dir():
                 dir_count += 1
                 if dir_count > max_dirs:
