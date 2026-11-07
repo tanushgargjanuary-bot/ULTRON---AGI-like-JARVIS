@@ -14,6 +14,11 @@ on this project at once. One page per project, a fixed section order, dates and 
 update instead of appending, one checkbox per task, and say what you did not check. A page
 another agent cannot read in ten seconds is a page that gets redone.
 
+**Three GitHub rules, no more.** Every task is an issue, and you assign it to claim it.
+Every change is a pull request, and the PR is the gate. Every PR carries evidence: the run
+ID, the numbers, and what you did not check. Issues, pull requests, actions. Ten rules
+nobody reads is the same as none.
+
 **Claim work before you start it.** An unassigned task is unclaimed. Assign the GitHub issue
 to yourself, or comment `claim: <branch> <what> <files>` on **issue #7**. Two agents on one
 branch is the same defect as two agents editing one file, and it is silent until the merge.

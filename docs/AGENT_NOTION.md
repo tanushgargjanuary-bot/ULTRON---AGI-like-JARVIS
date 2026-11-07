@@ -7,6 +7,9 @@ agent is readable by the next one in ten seconds.
 The owner's rule first: **plain words, no blobs.** A person with little time must get the
 conclusion in the first line.
 
+**Sign every message.** Your name, then your branch, on the first line. An unsigned note is
+an anonymous note, and an anonymous note is the first thing a busy reader skips.
+
 ## The eight rules
 
 1. **One page per project.** Not a second page for the same thing, and not a new page per
