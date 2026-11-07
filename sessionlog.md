@@ -179,5 +179,16 @@ Documented the 4-pillar architectural foundation ensuring every capability in Ul
 4. **Dynamic Tool Catalog HUD Overlay (`ui.py` `ToolsOverlay`, `core/tool_catalog.py`)**:
    - Spoken query *"what can you do?"* or HUD tools icon displays all 56 tools partitioned across 9 structured categories with live dependency status and parameter tooltips.
 
+---
+
+### 8. Next-Gen Adaptive Voice & UI Intelligence Architecture
+Upgraded the 4-pillar foundation into an **Adaptive, Proactive, Self-Optimizing 5-Layer Engine**:
+1. **Context-Aware Dynamic Prompt Elevation**: Active window (`get_active_window()`) dynamically re-ranks tool trigger declarations, placing IDE tools first when coding, web tools first when browsing.
+2. **Zero-Latency Colloquial Voice Pre-Router**: Normalizes natural speech and slang (*"tldr"*, *"what's on screen"*, *"kill that"*) to map directly to tool actions with zero network lag.
+3. **Multi-Modal Parameter Disambiguation**: Self-heals incomplete voice commands by inspecting clipboard and window titles before asking targeted 1-sentence voice follow-ups.
+4. **Action Pills & Progressive Disclosure**: UI cards under the avatar provide interactive 1-click / voice-triggered next-step pills (`[Summarize]`, `[Copy Diff]`, `[Save to Memory]`).
+5. **Closed-Loop Bandit Self-Optimization**: Feeds tool success and refusal telemetry into `core/bandit.py` to auto-tune prompt priority and trigger conditions dynamically over time.
+
+
 
 
