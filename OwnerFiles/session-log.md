@@ -334,3 +334,14 @@ stopped being true several builds ago and was corrected rather than appended to.
 **Direction.** Adapt the loop, not the framework: capability-match the user's goal against the live tool and skill catalogs; if a gap remains, research candidate repositories without installing them; propose one bounded change to a prompt, skill, or tool guide; probe the same task before and after; retain only evidence-backed lessons. Keep source changes behind the existing self_modify rehearsal and two-channel confirmation. No self-install or unattended source changes.
 
 **State.** The capability guide is present on `chatgpt`, but still needs runtime verification, repository research integration, explicit prompt routing, and tests. This entry records design guidance; it does not claim Harness² recursion is implemented.
+
+
+## 2026-11-07 — capability awareness and Harness² design
+
+**Asked for.** Make Jarvis recognize unstated tool needs, help when the user is stuck, know and state its self-evolution ability, find promising native skills/tools and GitHub projects, and apply Google's Harness² recursive-improvement principle.
+
+**Built.** Improved `actions/capability_guide.py` with deterministic outcome synonyms (including compress/zip/archive), live tool availability, skill matches, and explicit safe next steps for missing capabilities. Updated `core/prompt.txt` to route uncertain or stuck requests through the guide and accurately describe controlled self-change plus a same-task probe. Changes are on `chatgpt` only.
+
+**Harness² adaptation.** Use a bounded Propose–Probe–Compose cycle: identify the task and baseline; propose one change to tool guidance, prompt, skill, or script; rehearse and compare on the same task; adopt only an evidence-supported improvement; retain the lesson for later changes. Repository candidates are researched and reviewed before any native implementation. This adapts the principle; it does not import Google's benchmark framework or implement autonomous recursive optimization.
+
+**Still open.** Runtime discovery/callability and the before/after loop have not been verified; the guide currently ranks installed capabilities and describes repository research, but does not itself search GitHub. No tests were run in this session. Keep those limitations explicit until implemented and checked.
