@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
+from core import failures
 from memory.config_manager import get_plugin_enabled, get_plugin_config
 
 _NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$")
@@ -121,11 +122,16 @@ class PluginRegistry:
         if not get_plugin_enabled(name):
             return f"The '{name}' plugin is currently disabled."
         try:
-            return _call_run(rec.run, parameters, player, session_memory) or "Done."
+            cleaned = _clean_parameters(parameters)
+            return _call_run(rec.run, cleaned, player, session_memory) or "Done."
         except Exception as e:
             self._logger(f"Plugin '{name}' crashed during run(): {e}")
             self._notify(f"Plugin '{name}' failed — see the console for details.")
-            traceback.print_exc()
+            if sys.stderr is not None:
+                try:
+                    traceback.print_exc()
+                except Exception as error:
+                    failures.note("plugin_loader.run", error)
             return f"Sir, the '{name}' plugin failed: {e}"
 
     # -- called by ui.py's settings tab to render per-plugin config forms --
@@ -167,6 +173,13 @@ class PluginRegistry:
                 "enabled": get_plugin_enabled(rec.name) if rec.valid else False,
             })
         return out
+
+
+def _clean_parameters(parameters):
+    """Strip explicit None values before a handler sees them."""
+    if not isinstance(parameters, dict):
+        return {} if parameters is None else parameters
+    return {k: v for k, v in parameters.items() if v is not None}
 
 
 def _call_run(run_fn, parameters, player, session_memory):

@@ -22,3 +22,4 @@ Activate whenever token efficiency, context window preservation, or maximum spee
 5. **Context Window Stewardship**:
    - Avoid echoing back user prompts.
    - Use surgical search/replace or targeted diffs instead of full file reprints.
+

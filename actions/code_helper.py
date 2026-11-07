@@ -223,8 +223,16 @@ def _run_file(path: Path, args: list, timeout: int) -> str:
         return f"No interpreter for {path.suffix}."
 
     try:
+        if isinstance(args, str):
+            import shlex
+            arg_list = shlex.split(args)
+        elif isinstance(args, (list, tuple)):
+            arg_list = list(args)
+        else:
+            arg_list = []
+
         result = subprocess.run(
-            interp + [str(path)] + (args or []),
+            interp + [str(path)] + arg_list,
             capture_output=True, text=True,
             encoding="utf-8", errors="replace",
             timeout=timeout, cwd=str(path.parent)

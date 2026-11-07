@@ -115,3 +115,4 @@ When pair programming across branches (`antigravity` vs `opencode`):
 2. **Concise Review Artifacts**:
    - Format feedback as: `[SEVERITY] File:Line — Invariant breached — Proposed Fix`.
    - Keep reviews dense, actionable, and free of conversational padding.
+

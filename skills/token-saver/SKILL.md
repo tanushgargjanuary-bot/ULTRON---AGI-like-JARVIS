@@ -20,3 +20,4 @@ Preserve context window capacity, minimize inference costs, and reduce turn late
 4. **Information Packing**:
    - Use compact Markdown tables and key-value summaries over verbose narrative paragraphs.
    - Use standard status indicators: `[PASS]`, `[FAIL]`, `[SKIP]`.
+

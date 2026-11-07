@@ -27,3 +27,4 @@ Designed for developers and agents needing maximum clarity, immediate scanabilit
 5. **Anti-Rabbit-Hole / Focus Boundary**:
    - Stay strictly on the current task.
    - Note side-issues in a 1-line **Side Quest** bullet at the end rather than derailing the active response.
+

@@ -78,6 +78,9 @@ screenshots/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.system_generated/
+scratch/
+data/
 
 # ── Shipping and updating, if they ever land in the tree ────────────────────
 # The restart marker belongs in the state folder; this is belt and braces

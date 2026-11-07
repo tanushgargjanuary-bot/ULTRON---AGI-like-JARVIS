@@ -189,7 +189,12 @@ class Ledger:
 
         buckets = []
         for low in (0.5, 0.6, 0.7, 0.8, 0.9):
-            members = [row for row in rows if low <= _clamp(row["confidence"]) < low + 0.1]
+            upper = round(low + 0.1, 1)
+            members = [
+                row for row in rows
+                if (low <= _clamp(row["confidence"]) < upper)
+                or (low >= 0.89 and _clamp(row["confidence"]) <= 1.0)
+            ]
             if not members:
                 continue
             buckets.append({
@@ -342,7 +347,7 @@ class Ledger:
                     age_days = max(0.0, (time.time() - float(attempt.get("at", 0.0)))
                                    / 86400.0)
                     weight = 0.5 ** (age_days / HALF_LIFE_DAYS)
-                    bandit.update(name, (1.0 if attempt.get("ok") else 0.0) * weight)
+                    bandit.update(name, 1.0 if attempt.get("ok") else 0.0, weight=weight)
             else:
                 for _ in range(int(row["wins"])):
                     bandit.update(name, 1.0)

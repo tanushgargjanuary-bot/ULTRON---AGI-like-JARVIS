@@ -80,6 +80,13 @@ class CredentialStoreTests(unittest.TestCase):
                     "~/.config/google-chrome/Default/Cookies"):
             self.assert_refused(raw)
 
+    def test_package_credentials_and_history_are_refused(self):
+        for raw in ("~/.npmrc", "~/.pypirc", "~/.bash_history", "~/ConsoleHost_history.txt"):
+            self.assert_refused(raw)
+
+    def test_alternate_data_streams_are_refused(self):
+        self.assertFalse(fc._is_safe_path(Path("~/Desktop/file.txt:hidden.txt")))
+
     def test_ordinary_home_files_are_still_allowed(self):
         for raw in ("~/notes.txt", "~/Documents/report.docx", "~/Downloads/x.pdf",
                     "~/Pictures/holiday.jpg", "~/Desktop/todo.md"):

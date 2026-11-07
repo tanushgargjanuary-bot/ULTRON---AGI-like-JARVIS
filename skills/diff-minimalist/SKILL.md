@@ -16,3 +16,4 @@ Prevent conversational bloat, eliminate hallucinated regressions in unchanged co
    - Provide direct file and line range links: `[function_name](file:///path/to/file.py#L10-L25)`.
 3. **No Redundant Commentary**:
    - Let clean diffs explain themselves; do not explain line-by-line what the diff already shows.
+

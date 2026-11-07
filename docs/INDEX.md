@@ -7,6 +7,7 @@ Every document in the repository, one line each, and who it is for.
 | Document | Who it is for | What it answers |
 |---|---|---|
 | [`readme.md`](../readme.md) | everyone | what Ultron is, how to install it, and what changed in the last build |
+| [`docs/INSTALL.md`](INSTALL.md) | users and developers | three ways to install Ultron, from installer to source |
 | [`WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | any agent picking this up | the one rule, how we talk, how a change is made, what is never allowed, and the checklist before a push |
 | [`OwnerFiles/for-the-next-agent.md`](../OwnerFiles/for-the-next-agent.md) | any agent picking this up | what stands today, what is open, the first three commands, and the traps |
 | [`ARCHITECTURE.md`](../ARCHITECTURE.md) | anyone changing code | the six layers, one turn end to end, where a change belongs |
@@ -28,10 +29,11 @@ Every document in the repository, one line each, and who it is for.
 | Document | What it holds |
 |---|---|
 | [`docs/CURRICULUM.md`](CURRICULUM.md) | the eight AKTU subjects it holds, where each syllabus came from, and the reading at three levels |
-- [The syllabus as logic](MENTAL.md) — which course topics run as Ultron's own algorithms, and where.
-- [How a skill gets used](TRIGGERS.md) — the condition that triggers each tool, and the count that shows a dead one.
-- [When it falls over](CRASHES.md) — crash reports, redaction, and how self-repair starts from them.
-- [When it will not connect](CONNECTION.md) — close codes, and the schema fault that looked like a bad API key.
+| [`docs/MENTAL.md`](MENTAL.md) | which course topics run as Ultron's own algorithms, and where |
+| [`docs/TRIGGERS.md`](TRIGGERS.md) | the condition that triggers each tool, and the count that shows a dead one |
+| [`docs/CRASHES.md`](CRASHES.md) | crash reports, redaction, and how self-repair starts from them |
+| [`docs/CONNECTION.md`](CONNECTION.md) | close codes, and the schema fault that looked like a bad API key |
+| [`docs/DEEP-SCAN.md`](DEEP-SCAN.md) | codebase static analysis facts, AST scan metrics, and rule violations |
 | [`docs/SELF-CHANGE.md`](SELF-CHANGE.md) | the five stages of changing its own source, the rehearsal copy, and the referee that is off limits |
 | [`docs/PHILOSOPHY.md`](PHILOSOPHY.md) | the seven minds Ultron blends, their methods, and why a voice can never add a permission |
 | [`docs/SPACE.md`](SPACE.md) | how big the folder may get, what is counted, and why a save once lost 6,352 files |
@@ -55,6 +57,8 @@ Every document in the repository, one line each, and who it is for.
 | [`docs/PROMPT.md`](PROMPT.md) | the owner, and anyone who wants to know what the assistant was told | the system prompt: where it lives, how to read it, how to change it, and why a change needs two confirmations |
 | [`docs/LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | the owner, and anyone tempted by a rewrite | all 46 candidate languages, filtered: seven keepers, four laters, and the reason each of the rest lost |
 | [`docs/CAPABILITIES.md`](CAPABILITIES.md) | the menu of capabilities that were designed but not built |
+| [`docs/GITHUB_AWESOME_CATALOG.md`](GITHUB_AWESOME_CATALOG.md) | 2,438 curated repositories extracted from @GithubAwesome with Ultron synergy scoring |
+| [`docs/ULTRON_INTEGRATION_CANDIDATES.md`](ULTRON_INTEGRATION_CANDIDATES.md) | 505 architectural integration candidates mapped to Ultron's 6 layers |
 
 ## Shipping and updating
 
@@ -71,8 +75,10 @@ Every document in the repository, one line each, and who it is for.
 |---|---|
 | `scripts/verify.py` | the full suite, the self-checks, the migration checks (`verification-results.txt`) |
 | `scripts/proof_gate.py` | the claim table: `PROVEN`, `PARTIAL`, `FAILED`, `NOT PRESENT` |
+| `scripts/deep_scan.py` | `docs/DEEP-SCAN.md` — codebase facts and rule counts |
 | `scripts/verify_all.py` | the same questions on the target machine, where Windows, a microphone and a display exist |
 | `scripts/map.py` | `docs/MAP.md`, and exit code 1 when a new module has no docstring or no test |
+| `scripts/github_awesome_miner.py` | `docs/GITHUB_AWESOME_CATALOG.md` and `docs/ULTRON_INTEGRATION_CANDIDATES.md` |
 | `scripts/bench_algorithms.py` | timings for the algorithm modules |
 
 ## The rule for this folder

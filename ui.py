@@ -5025,6 +5025,7 @@ class MainWindow(QMainWindow):
     _quiz_sig       = pyqtSignal(str, object, object)  # (topic, questions, grader)
     _quiz_hide_sig  = pyqtSignal()
     _review_sig     = pyqtSignal(str, str, object, object)  # document review payload
+    _phone_connected_sig = pyqtSignal()
 
     def __init__(self, face_path: str):
         super().__init__()
@@ -5321,6 +5322,7 @@ class MainWindow(QMainWindow):
         self._quiz_sig.connect(self._show_quiz)
         self._quiz_hide_sig.connect(self._hide_quiz)
         self._review_sig.connect(self._show_review)
+        self._phone_connected_sig.connect(self._on_phone_connected)
         self._cam_stop = threading.Event()
 
         # Camera preview overlay (child of central widget, positioned in resizeEvent)
@@ -7221,6 +7223,9 @@ class MainWindow(QMainWindow):
             threading.Thread(target=self.on_text_command, args=(msg,), daemon=True).start()
 
     def notify_phone_connected(self) -> None:
+        self._phone_connected_sig.emit()
+
+    def _on_phone_connected(self) -> None:
         if self._remote_overlay and self._remote_overlay.isVisible():
             self._remote_overlay.mark_connected()
 
@@ -8251,8 +8256,8 @@ class JarvisUI:
     def glance(self, dx: float, dy: float, hold: float = 1.1) -> None:
         """Ask the avatar to look somewhere for a moment (see HoloAvatar.glance)."""
         try:
-            if self._avatar is not None:
-                self._avatar.glance(dx, dy, hold)
+            if hasattr(self, "_win") and self._win and hasattr(self._win, "hud") and self._win.hud:
+                self._win.hud.glance(dx, dy, hold)
         except Exception:
             pass
 

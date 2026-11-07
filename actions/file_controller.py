@@ -127,6 +127,7 @@ _SENSITIVE_FILE_NAMES = {
     ".env", ".netrc", ".git-credentials", ".pgpass", "credentials",
     "login data", "cookies", "key4.db", "logins.json", "wallet.dat", "ntds.dit",
     "secrets.json", "secret.json",
+    ".npmrc", ".pypirc", ".bash_history", "consolehost_history.txt",
 }
 _SENSITIVE_SUFFIXES = (".pem", ".key", ".pfx", ".p12", ".kdbx", ".keystore", ".jks")
 
@@ -168,6 +169,8 @@ def _denial_message(target: Path) -> str:
 def _is_safe_path(target: Path) -> bool:
     """Is the given path inside _SAFE_ROOTS and not a credential store?"""
     try:
+        if ":" in target.name:
+            return False
         resolved = target.resolve()
         if _is_sensitive(resolved):
             return False

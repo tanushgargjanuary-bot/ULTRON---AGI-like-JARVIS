@@ -1,7 +1,13 @@
 """tests/test_local_detector.py — Unit tests for local model autodetection and wise routing."""
 
+import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core import local_detector, local_router, policy
 from plugins import local_models

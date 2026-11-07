@@ -81,6 +81,7 @@ OBSERVE_TOOLS: frozenset[str] = frozenset(
         "web_search",
         "weather_report",
         "local_models",
+        "agent_monitor_bridge",
         # `system_monitor` used to be listed here and is not a tool in this
         # build — a name in these tables is a claim about the app, and a claim
         # about a tool that does not exist is how the tables drift out of step
@@ -113,6 +114,8 @@ ROUTINE_TOOLS: frozenset[str] = frozenset(
         "dev_regex",
         "dev_hash",
         "dev_cron",
+        "crawler_bridge",
+        "minicpm_ocr_bridge",
         "crypto_ident",
         # Two read-only readers of public technical data. Neither changes an
         # account, a file or a device; both return what a browser would show.

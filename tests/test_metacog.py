@@ -116,6 +116,14 @@ class Calibration(Temp):
         self.ledger.resolve_prediction(row["id"], "partly")
         self.assertAlmostEqual(self.ledger.calibration()["brier"], 0.25, places=3)
 
+    def test_maximum_confidence_1_0_is_included_in_top_bucket(self):
+        row = self.ledger.record_prediction("x", 1.0)
+        self.ledger.resolve_prediction(row["id"], "correct")
+        report = self.ledger.calibration()
+        self.assertEqual(len(report["buckets"]), 1)
+        self.assertEqual(report["buckets"][0]["range"], "90-100%")
+        self.assertEqual(report["buckets"][0]["n"], 1)
+
 
 class Lessons(Temp):
     def test_a_lesson_without_a_rule_is_refused(self):

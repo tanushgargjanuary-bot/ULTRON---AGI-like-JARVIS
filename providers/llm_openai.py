@@ -475,6 +475,9 @@ class OpenAICompatLLM:
             # `complete()` feeds background requests that have no such filter —
             # so it is moved out of the answer at the source.
             body["reasoning_split"] = True
+        if _is_loopback(self.base) and "11434" in self.base:
+            # Keep Ollama models loaded in memory instead of unloading after 5m idle
+            body["keep_alive"] = -1
         return body
 
     # -- one-shot, synchronous: this is what core/gemini.py's ladder uses ----

@@ -453,25 +453,26 @@ def save_session_summary(summary: str, language: str = "") -> None:
     summary = (summary or "").strip()
     if not summary:
         return
-    memory   = load_memory()
-    sessions = memory.get("sessions", [])
-    if not isinstance(sessions, list):
-        sessions = []
-    entry: dict = {
-        "date":    datetime.now().strftime("%Y-%m-%d"),
-        "summary": summary[:280],
-    }
-    if language:
-        entry["language"] = language
-    sessions.append(entry)
-    memory["sessions"] = sessions[-_SESSION_MAX:]
-    with _lock:
-        MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-        MEMORY_PATH.write_text(
-            json.dumps(memory, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-    print(f"[Memory] Session saved ({entry['date']}): {summary[:60]}...")
+    with _write_lock:
+        memory   = load_memory()
+        sessions = memory.get("sessions", [])
+        if not isinstance(sessions, list):
+            sessions = []
+        entry: dict = {
+            "date":    datetime.now().strftime("%Y-%m-%d"),
+            "summary": summary[:280],
+        }
+        if language:
+            entry["language"] = language
+        sessions.append(entry)
+        memory["sessions"] = sessions[-_SESSION_MAX:]
+        with _lock:
+            MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+            MEMORY_PATH.write_text(
+                json.dumps(memory, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+        print(f"[Memory] Session saved ({entry['date']}): {summary[:60]}...")
 
 
 def pop_last_session() -> dict | None:
