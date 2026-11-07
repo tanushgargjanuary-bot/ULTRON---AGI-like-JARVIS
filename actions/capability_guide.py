@@ -11,7 +11,6 @@ from custom_jarvis.skills import SKILLS
 # Small deterministic vocabulary keeps this lookup fast and useful when the user
 # describes an outcome instead of knowing the tool's name.
 ALIASES = {
-    "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller"},
     "convert": {"convert", "conversion", "transform", "format"},
     "search": {"search", "find", "look", "locate"},
     "summarize": {"summarize", "summary", "digest", "overview"},
@@ -19,7 +18,19 @@ ALIASES = {
     "transcribe": {"transcribe", "transcription", "speech", "audio"},
     "evolve": {"evolve", "evolution", "self_modify", "self_change", "improve", "upgrade"},
     "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller", "large"},
-    "document": {"document", "pdf", "word", "text", "file"},
+}
+
+
+# Task cues bridge user outcomes to broad tool families. Availability always comes
+# from the live catalog, so a cue cannot invent a capability.
+TASK_TOOL_CUES = {
+    "compress": {"file_processor"},
+    "convert": {"file_processor"},
+    "summarize": {"file_processor"},
+    "transcribe": {"file_processor"},
+    "screenshot": {"screen_process"},
+    "search": {"web_search", "file_controller"},
+    "evolve": {"self_modify"},
 }
 
 
@@ -60,8 +71,12 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
         return f"I could not read my live tool catalog: {exc}"
 
     tool_hits = []
+    expanded = _expand(query)
     for entry in entries:
         score = _score(query, f"{entry.name} {entry.category} {entry.summary}")
+        for family, names in TASK_TOOL_CUES.items():
+            if expanded.intersection(ALIASES.get(family, {family})) and entry.name in names:
+                score += 6
         if score:
             tool_hits.append((score, entry))
     tool_hits.sort(key=lambda item: (-item[0], not item[1].available, item[1].name))
@@ -78,6 +93,7 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
     tool_hits = [hit for hit in tool_hits if hit[0] >= 3]
     skill_hits = [hit for hit in skill_hits if hit[0] >= 3]
 
+    ready_hits = [hit for hit in tool_hits if hit[1].available]
     if tool_hits:
         lines.append("Tools: " + "; ".join(
             f"{entry.name} ({'ready' if entry.available else 'unavailable: ' + entry.reason})"
@@ -93,7 +109,7 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
     else:
         lines.append("No strong skill match in my installed skill recipes.")
 
-    if not tool_hits:
+    if not ready_hits:
         lines.append(
             "The next step is to research candidate GitHub projects, inspect their "
             "fit and risks, then propose one bounded native change. I do not install "
