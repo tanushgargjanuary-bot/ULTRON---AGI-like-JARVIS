@@ -18,6 +18,8 @@ ALIASES = {
     "screenshot": {"screenshot", "capture", "screen", "snapshot"},
     "transcribe": {"transcribe", "transcription", "speech", "audio"},
     "evolve": {"evolve", "evolution", "self_modify", "self_change", "improve", "upgrade"},
+    "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller", "large"},
+    "document": {"document", "pdf", "word", "text", "file"},
 }
 
 
@@ -39,7 +41,10 @@ def _expand(query: set[str]) -> set[str]:
 
 def _score(query: set[str], text: str) -> int:
     words = _terms(text)
-    return 3 * len(query.intersection(words))
+    matched = query.intersection(words)
+    # Ignore generic request words so a weak match is not presented as a fit.
+    matched.difference_update({"file", "document", "help", "need", "want", "make", "please"})
+    return 3 * len(matched)
 
 
 def run(parameters: dict, player=None, session_memory=None) -> str:
@@ -69,6 +74,10 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
     skill_hits.sort(key=lambda item: (-item[0], item[1].identity))
 
     lines = [f"For “{request}”:"]
+    # A single shared generic term is not enough to recommend an ability.
+    tool_hits = [hit for hit in tool_hits if hit[0] >= 3]
+    skill_hits = [hit for hit in skill_hits if hit[0] >= 3]
+
     if tool_hits:
         lines.append("Tools: " + "; ".join(
             f"{entry.name} ({'ready' if entry.available else 'unavailable: ' + entry.reason})"
