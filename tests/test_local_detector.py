@@ -76,6 +76,20 @@ class TestLocalDetector(unittest.TestCase):
             self.assertIsNotNone(vision)
             self.assertEqual(vision.name, "vision-model:2b")
 
+    def test_running_only_excludes_offline_models(self):
+        offline = local_detector.LocalModelInfo(
+            name="offline-model:4b",
+            provider_id="ollama",
+            base_url="http://127.0.0.1:11434/v1",
+            running=False,
+            param_size_b=4.0,
+            tier="smart",
+        )
+
+        with patch("core.local_router.detect_all_local_models", return_value=[offline]):
+            self.assertIsNone(local_router.choose_wise_local_model(running_only=True))
+            self.assertEqual(local_router.choose_wise_local_model(running_only=False), offline)
+
     def test_policy_includes_local_models(self):
         self.assertIn("local_models", policy.OBSERVE_TOOLS)
         dec = policy.decide("local_models")
