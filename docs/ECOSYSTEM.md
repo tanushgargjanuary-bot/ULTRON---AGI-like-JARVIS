@@ -41,7 +41,25 @@ exists and when it is the wrong tool.
 a tool with a name, a schema and a permission boundary. That is the "teach Ultron to work with
 them" answer at protocol level, and it is the only item on this page that changes the ceiling.
 
-It is not built yet. Issue #10.
+**Built.** `custom_jarvis/mcp_client.py`, one file, with the four rules written into it:
+
+- **You list the server; the app does not install it.** `config/mcp_servers.json` holds a
+  `command` and an `args` list. Nothing is downloaded, fetched or installed.
+- **Local process only.** An entry with a `url`, `host`, `port`, `socket` or `transport` is
+  refused by name, with the reason — not ignored, and not quietly dialled.
+- **No shell.** A command with a space in it is refused and told to split itself into
+  `command` + `args`. `shell=True` is not a shortcut; it is the door.
+- **No exemption from policy.** A tool arrives as `mcp_<server>_<tool>`; `core/policy.py` has
+  never seen that name, and its fail-closed default is `guarded` — **the owner is asked.**
+  The client cannot classify its own tools. A test reads the source and fails if it tries.
+
+The server's schema is translated once: lower-case JSON Schema to the upper-case form the
+provider accepts, and a `required` list that only names arguments that exist. A server that
+dies is one sentence, a server that hangs times out, and closing the app closes the child's
+input so a well-behaved server exits on its own.
+
+What it does not do: install anything, reach a network endpoint, run a command through a
+shell, or approve its own tools. Issue #10.
 
 ## The five that earn their place this quarter
 

@@ -1,0 +1,4 @@
+{
+  "_note": "Servers you already run. 'command' is a program on this machine and 'args' is a list of words — no shell, no URL. This app installs nothing. Format: docs/ECOSYSTEM.md",
+  "servers": []
+}

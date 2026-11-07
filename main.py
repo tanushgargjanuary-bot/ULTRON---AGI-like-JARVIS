@@ -99,6 +99,7 @@ from core import philosophy
 from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
 from core import crash as _crash
+from custom_jarvis import mcp_client as _mcp
 from custom_jarvis import plan_state as _plan_state
 
 # Before anything else that can fail: a crash from here on leaves a file.
@@ -819,6 +820,32 @@ class JarvisLive:
             logger=lambda msg: print(f"[Plugins] {msg}"),
             notify=lambda msg: self.ui.write_log(f"SYS: {msg}"),
         )
+        # MCP: one adaptor for the tools the owner already runs. The list is read from
+        # config/mcp_servers.json — nothing is installed, nothing is fetched, and a
+        # server that is not listed is a server this app does not know. A broken entry
+        # is one line in the log; it does not stop the other servers or this start.
+        self._mcp_tools = {}
+        try:
+            self._mcp_clients, _mcp_notes = _mcp.connect_all(_base_dir)
+        except Exception as _mcp_error:      # a bad file here must not cost a start
+            self._mcp_clients, _mcp_notes = [], [f"MCP: {_mcp_error}"]
+        for _client in self._mcp_clients:
+            try:
+                for _declaration in _client.declarations():
+                    self._mcp_tools[_declaration["name"]] = _declaration
+            except Exception as _mcp_error:
+                _mcp_notes.append(f"MCP server '{_client.name}': {_mcp_error}")
+        for _note in _mcp_notes:
+            self.ui.write_log(f"SYS: {_note}")
+        if self._mcp_tools:
+            self.ui.write_log(f"SYS: {len(self._mcp_tools)} MCP tool(s) connected — "
+                              "each one asks before it runs.")
+        # The app dies in more than one way, including os._exit in the shutdown path.
+        # Closing the child's input is what a well-behaved server notices; atexit is
+        # the polite version for the exits that still run handlers.
+        import atexit as _atexit
+        _atexit.register(_mcp.close_all, self._mcp_clients)
+
         self.ui.get_plugins = self._plugin_registry.list_for_ui
         self.ui.get_plugin_settings = self._plugin_registry.settings_schemas  # ⚙ settings tab
         self.ui.request_say = self.plugin_say   # plugins: mid-task speech channel
@@ -1379,7 +1406,10 @@ class JarvisLive:
         # and this follows without anyone editing a prompt.
         _all_decls = (TOOL_DECLARATIONS
                       + self._action_registry.get_tool_declarations()
-                      + self._plugin_registry.get_tool_declarations())
+                      + self._plugin_registry.get_tool_declarations()
+                      + [{"name": row["name"], "description": row["description"],
+                          "parameters": row["parameters"]}
+                         for row in getattr(self, "_mcp_tools", {}).values()])
 
         # One malformed field fails the WHOLE session, not one tool: the Live API
         # answers 1007 and names the index, and the assistant cannot connect at
@@ -1714,6 +1744,14 @@ class JarvisLive:
                     import os as _os
                     _os._exit(0)
                 asyncio.create_task(_do_shutdown())
+
+            elif name in getattr(self, "_mcp_tools", {}):
+                # A server on this machine, called through the policy gate like any
+                # other tool: its name is unknown to the policy tables, so the answer
+                # is "ask" and this branch is only reached after the owner said yes.
+                _row = self._mcp_tools[name]
+                r = await loop.run_in_executor(None, lambda: _row["handler"](args))
+                result = r or "Done."
 
             elif self._action_registry.has(name):
                 # file_processor: fall back to the currently-uploaded file when none is given
