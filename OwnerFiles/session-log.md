@@ -314,3 +314,19 @@ stands, what is open, the first three commands, and the ten traps that already c
 
 `GATEKEEPERS.md` was saying *"there is no CI, so nothing has ever run on Windows"*. That
 stopped being true several builds ago and was corrected rather than appended to.
+
+### 2026-11-07 · repository — the `copilot` branch is now `ArenaAi`
+
+The owner asked for the branch called `copilot` to be renamed `ArenaAi`, and for all work to
+stay on one branch. Nothing was rewritten and no commit was lost: `ArenaAi` was created at
+the exact commit `copilot` pointed at (`8f3f33b`, *docs: organize documentation and
+repository navigation*), the two were compared, and only then was the old name deleted.
+`main`, `chatgpt` and `antigravity` were not touched.
+
+The branch this session works on is `arena/4c973188-ultron-agi-like-jarvis`, which sits at
+that same commit. Its name is fixed by the tool that carries the session, so it is recorded
+here rather than renamed.
+
+One thing to know before relying on a green tick: `.github/workflows/verify.yml` runs on a
+push to `main` and on a pull request, so a push to `ArenaAi` starts no job until it is
+opened as a pull request. That was already true of `copilot`; the rename did not change it.
