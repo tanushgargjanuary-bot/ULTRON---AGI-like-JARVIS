@@ -54,6 +54,36 @@ It is not built yet. Issue #10.
 
 Five. Not two hundred. Each one has to survive the checklist below before it is sixth.
 
+## A second list, measured against the code
+
+A longer list arrived the same day, with its own priority shortlist. The instruction at the
+end of it was the right one: *extract specific capabilities, integrate only where they solve a
+measured weakness*. So each item was checked against this repository. A weakness counts only
+if a file and a line can be shown.
+
+| Measured weakness | Evidence | What fixes it | What does **not** |
+|---|---|---|---|
+| Memory has no time. Facts are stored, changes are not. | `memory/memory_manager.py` — six dictionaries (identity, preferences, projects, relationships, wishes, notes) with no timestamp and no history | date every write, keep the previous value, answer "what changed and when" | a graph database. One person's memory fits in SQLite |
+| A plan does not survive a restart. | `custom_jarvis/planner.py` keeps `_resume_verified` in memory only; nothing writes plan state to disk. `core/crash.py` records the fall but does not resume it | write the step list and the confirmed steps to disk; on start, offer to continue | Temporal, Restate, DBOS, Hatchet, Inngest — all servers |
+| The rehearsal is not isolated. | `plugin_forge.rehearse_in_sandbox` runs a child with the host environment in the project root, and trusts a printed sentinel | temp folder, scrubbed environment, no network, kill the tree, and judge by exit code plus a file diff | gVisor, Firecracker, youki, runc — Linux kernel features. A Windows desktop app cannot use them |
+| Ultron cannot see the tools a person already runs. | no MCP client anywhere in the tree | one local MCP client, issue #10 | Composio — a cloud hub; it sends the work out, which is the one thing this app promises not to do |
+
+And the reverse — things that look like gaps and are not:
+
+- **A second agent framework** (LangGraph, AutoGen, CrewAI, MetaGPT, ADK, smolagents, pydantic-ai,
+  openai-agents). `providers/engine_pipeline.py` and the action loader already are that runtime.
+  A second one is two brains and one set of hands.
+- **A second computer-use stack** (Cua, UI-TARS Desktop, Agent Desktop, Skyvern, Stagehand).
+  `core/ui_ladder.py` already orders five rungs — tree, keyboard, OCR, vision, ask. Study the
+  pattern; do not add the stack.
+- **A second scoreboard** (Langfuse, MLflow, Opik, Phoenix, promptfoo, deepeval, ragas).
+  `scripts/proof_gate.py` and `scripts/verify.py` are the scoreboard, and they run in CI.
+- **A guardrail library** (guardrails-ai, rebuff, garak, ps-fuzz). The tiers in `core/policy.py`
+  and the two-channel confirmation are the guardrail. Red-teaming is worth an hour of review,
+  which is what the swarm did; it is not worth a shipped dependency.
+- **A vector database** (Milvus, Qdrant, Weaviate, Chroma, LanceDB, pgvecto.rs, Neo4j, AGE).
+  One user's files fit in SQLite with FTS5.
+
 ## The checklist, before anything becomes native
 
 - [ ] Can Ultron do this job without it? If yes, it is knowledge.

@@ -1,3 +1,26 @@
+=== 2026-11-07 · build 1.2.38 · later still · a longer list, measured against the code ===
+
+A second list arrived with its own priority shortlist, and it ended with the right instruction:
+extract specific capabilities, integrate only where they solve a measured weakness. So each
+item was checked against a file and a line.
+
+FOUR WEAKNESSES THE CODE SHOWS
+  1. Memory has no time. Six dictionaries, no timestamp, no history, no supersession. A changed
+     fact overwrites the old one. Fix: date every write and keep the previous value.
+  2. A plan dies with the process. planner.py keeps _resume_verified in memory; crash.py records
+     the fall and does not resume it. Issue #11: one JSON file, one prompt on start.
+  3. The rehearsal is not isolated. Host environment, project root, and a sentinel any code can
+     print. Fix: temp folder, scrubbed environment, no network, judge by exit code and file diff.
+  4. Ultron cannot see the tools a person already runs. No MCP client. Issue #10.
+
+WHAT WAS REFUSED, WITH REASONS
+  A second agent framework, a second computer-use stack, a second scoreboard, a guardrail
+  library, a vector database. Each already exists here under another name, and two of anything
+  is one too many.
+
+Not checked: none of the listed repositories was cloned or run. The verdicts are about this
+repository's gaps, not about the quality of those projects.
+
 === 2026-11-07 · build 1.2.38 · later still · 200 repos, three tiers, five choices ===
 
 A list of two hundred projects arrived, with the question: build them in, or teach Ultron to
