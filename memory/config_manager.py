@@ -29,7 +29,7 @@ def ensure_config_dir() -> bool:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         return True
     except OSError as e:
-        print(f"[Config] Cannot use the config folder {CONFIG_DIR}: {e}")
+        print(f"❌ Cannot use the config folder {CONFIG_DIR}: {e}")
         return False
 
 def config_exists() -> bool:
@@ -59,7 +59,7 @@ def load_api_keys() -> dict:
     try:
         data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except Exception as e:
-        print(f"[Config] Failed to load api_keys.json: {e}")
+        print(f"❌ Failed to load api_keys.json: {e}")
         return {}
     return data if isinstance(data, dict) else {}
 
@@ -488,7 +488,7 @@ def _write_config(data: dict) -> bool:
         os.replace(tmp, CONFIG_FILE)
         return True
     except OSError as e:
-        print(f"[Config] Could not save settings to {CONFIG_FILE}: {e}")
+        print(f"❌ Could not save settings to {CONFIG_FILE}: {e}")
         try:
             tmp.unlink(missing_ok=True)
         except OSError:

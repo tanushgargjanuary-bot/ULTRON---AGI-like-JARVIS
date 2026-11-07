@@ -170,8 +170,8 @@ def _search_page(query: str) -> str:
 def video_player(parameters: dict = None, response=None, player=None,
                  session_memory=None) -> str:
     params = parameters or {}
-    action = str(params.get("action") or "play").strip().lower()
-    source = str(params.get("source") or "").strip()
+    action = (params.get("action") or "play").strip().lower()
+    source = (params.get("source") or "").strip()
 
     if player is None:
         return "There is no display to play a video on."

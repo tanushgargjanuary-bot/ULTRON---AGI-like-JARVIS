@@ -90,18 +90,9 @@ def _restore_from_trash(original: Path) -> str:
             f"automatically, but it is there and can be restored by hand.")
 
 
-def _default_safe_roots() -> list[Path]:
-    roots = [Path.home()]
-    for name in ("Desktop", "Downloads", "Documents", "Pictures", "Videos", "Music"):
-        candidate = Path.home() / name
-        if candidate.exists():
-            resolved = candidate.resolve()
-            if resolved not in roots:
-                roots.append(resolved)
-    return roots
-
-
-_SAFE_ROOTS: list[Path] = _default_safe_roots()
+_SAFE_ROOTS: list[Path] = [
+    Path.home(),
+]
 
 # ── the parts of home that are not "your files" ──────────────────────────────
 #

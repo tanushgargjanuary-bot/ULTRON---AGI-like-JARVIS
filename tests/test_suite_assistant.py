@@ -769,7 +769,7 @@ class InsightTests(unittest.TestCase):
         self.assertFalse(self.path.exists())
 
     def test_automatic_session_summary_storage_is_disabled(self):
-        tree = ast.parse((Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8"))
+        tree = ast.parse((Path(__file__).resolve().parents[1] / "main.py").read_text())
         method = next(
             n
             for n in ast.walk(tree)

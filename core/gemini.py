@@ -580,17 +580,6 @@ def _provider_settings() -> tuple[str, bool]:
     return pid, first
 
 
-def _auto_local_rung(tier: str) -> str | None:
-    try:
-        from core.local_router import choose_wise_local_model
-        wise = choose_wise_local_model(tier=tier, running_only=True)
-        if wise:
-            return f"{PROVIDER_PREFIX}auto:{wise.provider_id}:{wise.name}"
-    except Exception as exc:
-        failures.note("gemini._auto_local_rung", exc)
-    return None
-
-
 def _provider_rungs(tier: str) -> tuple[str, ...]:
     """The configured side-call provider, as a ladder rung — or nothing.
 
@@ -603,9 +592,7 @@ def _provider_rungs(tier: str) -> tuple[str, ...]:
     if tier == SEARCH:
         return ()
     pid, _ = _provider_settings()
-    if pid:
-        return (PROVIDER_PREFIX + pid,)
-    return ()
+    return (PROVIDER_PREFIX + pid,) if pid else ()
 
 
 def _provider_first() -> bool:
@@ -650,18 +637,10 @@ def _provider_call(model: str, contents, config, timeout_ms: int):
     from providers import registry
 
     pid = model[len(PROVIDER_PREFIX):]
-    if pid.startswith("auto:"):
-        _, prov_id, model_name = pid.split(":", 2)
-        from core.local_detector import LOCAL_ENDPOINTS
-        endpoint_map = {p[0]: f"{p[1]}{p[3]}" for p in LOCAL_ENDPOINTS}
-        base_url = endpoint_map.get(prov_id, "http://127.0.0.1:11434/v1")
-        cfg = {"base_url": base_url, "model": model_name, "local": True}
-        pid = f"openai_compat@{prov_id}"
-    else:
-        cfg = get_provider_config(pid)
-        missing = registry.missing_fields(pid, cfg)
-        if missing:
-            raise RuntimeError(f"404 not configured: {', '.join(missing)}")
+    cfg = get_provider_config(pid)
+    missing = registry.missing_fields(pid, cfg)
+    if missing:
+        raise RuntimeError(f"404 not configured: {', '.join(missing)}")
 
     llm = registry.build(pid, cfg)
     messages, temperature = _to_openai_messages(contents, config)
@@ -717,14 +696,9 @@ def call(contents, tier: str = FAST, config=None,
         # meant every one-shot call in the app failed — which is exactly the
         # situation somebody configuring another provider is trying to leave.
         if not rungs:
-            wise_local = _auto_local_rung(tier)
-            if wise_local:
-                ladder = (wise_local,)
-            else:
-                print("[Gemini] no Gemini API key is configured")
-                return None
-        else:
-            ladder = rungs
+            print("[Gemini] no Gemini API key is configured")
+            return None
+        ladder = rungs
 
     # A recording can only be read by the REST models. Dropping the two rungs
     # that cannot take one is not a fallback — it is declining to make a request
@@ -770,13 +744,6 @@ def call(contents, tier: str = FAST, config=None,
                       f"{_UNAVAILABLE_SECONDS // 60} minutes")
             else:
                 print(f"[Gemini] {model}: {type(e).__name__}: {msg[:140]}")
-
-    wise_local = _auto_local_rung(tier)
-    if wise_local and wise_local not in tried:
-        try:
-            return _provider_call(wise_local, contents, config, timeout_ms)
-        except Exception as e:
-            failures.note("gemini._auto_local_fallback", e)
     return None
 
 

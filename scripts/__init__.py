@@ -1,2 +1,0 @@
-"""Ultron scripts package."""
-
