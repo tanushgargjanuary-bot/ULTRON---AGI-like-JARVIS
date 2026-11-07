@@ -6,7 +6,9 @@ name: verify
 
 on:
   push:
-    branches: [main, master]
+    # ArenaAi is the branch this work is delivered on. Without it here, a push to it
+    # started no job and a green tick meant only that nothing had run.
+    branches: [main, master, ArenaAi]
   pull_request:
   workflow_dispatch:
 

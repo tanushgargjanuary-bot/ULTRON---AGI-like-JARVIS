@@ -50,7 +50,7 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | [`PERFORMANCE.md`](PERFORMANCE.md) | Measured launch, turn, audio, and connection performance |
 | [`LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | Why the current implementation language is retained |
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
-| [`COPILOT_RECOMMENDATIONS.md`](COPILOT_RECOMMENDATIONS.md) | Branch review and improvement suggestions; recommendations are not authorization |
+| [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | What each branch holds, what is worth taking; recommendations are not authorization |
 | [`../ALGORITHMS.md`](../ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
 | [`../CUSTOM_ULTRON.md`](../CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
 | [`../PUBLISH.md`](../PUBLISH.md) | Publishing steps, attribution, and license requirements |
@@ -71,11 +71,11 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | Command | Purpose |
 |---|---|
 | `python scripts/agent_workspace.py --base origin/main` | Report local branch changes, incoming base commits, and uncommitted edits |
+| `python scripts/branch_report.py` | Every branch, its tip, and which names point at the same commit — read-only |
 | `python scripts/verify.py` | Offline tests, stress checks, mutation checks, and module organization |
 | `python scripts/proof_gate.py` | Verify capability claims and report `PROVEN`, `PARTIAL`, `FAILED`, or `NOT PRESENT` |
 | `python scripts/verify_all.py` | Check capabilities on the current machine; hardware/platform gaps remain explicit |
 | `python scripts/map.py --write` | Regenerate `docs/MAP.md` from source modules and tests |
-| `python scripts/workspace_budget.py` | Check repository workspace size and file count |
 | `python scripts/profile_turn.py` / `python scripts/bench_startup.py` | Measure turn and startup costs before optimization |
 
 ## Repository layout

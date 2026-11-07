@@ -1,10 +1,23 @@
-# Copilot Recommendations: Ultron Improvements and Scope
+# Branch review: what each branch holds, and what is worth taking
 
 **Status:** Recommendations only; no implementation is authorized by this document.
-**Prepared:** 2026-11-07
+**Prepared:** 2026-11-07 · **Re-measured:** 2026-11-07, after the `copilot` branch was renamed
 **Audience:** Human owner and coding agents working on this repository.
 
-This document collects recommendations from a review of `main`, `chatgpt`, `antigravity`, and `opencode`, plus product-level ideas for making Ultron more useful, reliable, safe, and powerful. It is not a change to the project's governing decisions. Read `DECISIONS.md`, `ARCHITECTURE.md`, `AGENTS.md`, and the relevant tests before acting.
+This document collects recommendations from a review of every branch that exists on the remote, plus product-level ideas for making Ultron more useful, reliable, safe, and powerful.
+
+## Where the branches actually point (measured 2026-11-07)
+
+| Branch | Tip | What it is |
+|---|---|---|
+| `main` (default) | `44ec6db` | the stable base |
+| `arena/4c973188-ultron-agi-like-jarvis` | this session's branch | documentation, then the defect pass: the workspace report, the two red tests, the size budget withdrawn, CI on this branch |
+| `chatgpt` | `49ff63f` | capability routing, a read-only GitHub scout, local-model detection |
+| `antigravity` | `857f3dc` | a repository miner and a 2,438-repo catalog, native plugin bridges, voice and UI work |
+
+The branch called `copilot` no longer exists: it was renamed, then folded into one branch.
+`opencode`, which an earlier version of this page reviewed, is not on the remote. **Re-run
+`python scripts/branch_report.py` before relying on any row here.** It is not a change to the project's governing decisions. Read `DECISIONS.md`, `ARCHITECTURE.md`, `AGENTS.md`, and the relevant tests before acting.
 
 ## Executive recommendation
 
@@ -16,10 +29,11 @@ The highest-value product direction is not adding the largest number of tools. I
 
 ## Competing branches: review and merge guidance
 
-### `main` and `opencode`
+### `main`
 
-- At review time, `opencode` pointed to the same commit as `main`; no separate changes needed to be brought over.
 - Continue using `main` as the integration baseline.
+- The renamed `copilot` branch was `main` plus one documentation commit; that commit is on the
+  session branch, so nothing is stranded by the rename.
 
 ### `chatgpt` and `antigravity`
 
@@ -143,6 +157,7 @@ Expose recent actions, approvals, files changed, undo options, sensors currently
 - `providers/registry.py`
 - `tests/test_suite_safety.py`
 - `tests/test_process_watch.py`
-- Branch comparisons: `main...chatgpt`, `main...antigravity`, `main...opencode`
+- Branch comparisons: `main..chatgpt`, `main..antigravity`, `main..` the session branch.
+  Two-dot comparisons, because this checkout is shallow and has no merge base.
 
 These recommendations reflect the tree and branch heads available during review on 2026-11-07. Re-check current branch heads and governing decisions before implementation.

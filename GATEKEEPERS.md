@@ -64,7 +64,9 @@ python scripts\proof_gate.py --json proof.json
 Thirty-five **claims**, each a chain rather than a checklist, because a microphone that
 records and a model that answers have not, together, heard and answered anything
 until the sentence has come out of the speaker. The last count on Linux, with no display
-and no hardware attached: **22 PROVEN, 13 PARTIAL, 0 FAILED**. Four verdicts:
+and no hardware attached: **21 PROVEN, 14 PARTIAL, 0 FAILED** — and 22 / 13 on the CI
+machine, which installs `libGL.so.1`. One claim moves between those two numbers because
+Qt cannot import without it, and the gate says so instead of guessing. Four verdicts:
 
 | verdict | means | what to do |
 | --- | --- | --- |

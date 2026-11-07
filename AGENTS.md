@@ -136,11 +136,13 @@ a small built-in fallback — instead of crashing.
   into the instruction with the maxim. Never give a voice a code path, never let one
   add a permission, and never remove the ceiling on the adversary voice (40%) without
   the owner saying so in his own words.
-- **The workspace stays under 100 MB and 5,000 files, and the number is checked.**
-  Install packages with `--target` to a temporary folder and set `PIP_CACHE_DIR`
-  outside the project. The save after a message keeps about 128 MB and silently drops
-  the rest: this already cost us 6,352 files once. `python scripts/workspace_budget.py`
-  reports it, `scripts/verify.py` fails on it, and `docs/SPACE.md` explains it.
+- **There is no workspace size budget.** The owner withdrew it on 2026-11-07: this
+  repository is on GitHub, and a 100 MB / 5,000-file ceiling was stopping work it never
+  protected. The script, its test and its gate step were deleted rather than left to
+  fail. The habit worth keeping is the rest of that rule: install packages with
+  `--target` to a temporary folder and set `PIP_CACHE_DIR` outside the project so
+  `git status` stays readable, and keep build artifacts out of the tree because nobody
+  can audit one. `docs/SPACE.md` says why.
 
 ## Read these first, in this order
 

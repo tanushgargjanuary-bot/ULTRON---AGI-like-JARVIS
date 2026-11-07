@@ -118,6 +118,7 @@ new visual language need to be asked for, not assumed.
 | Adjustable scale | `ui.py` `CustomizeOverlay`, `memory/config_manager.save_ui_scale` |
 | Multi-provider first run | `ui.SetupOverlay`, `config_manager.apply_first_run` |
 | No hardcoded model names | `providers/*` declarations and `_gemini` model lists |
+| **There is no repository size budget** | Withdrawn by the owner on 2026-11-07: the repository is on GitHub, and a 100 MB / 5,000-file ceiling was blocking work it never protected. The script, its test and its step in `scripts/verify.py` were deleted in the same change, so nothing claims a number that nothing enforces. | `scripts/verify.py` (no budget step), `docs/SPACE.md` |
 
 ## Open questions (deliberately unanswered)
 

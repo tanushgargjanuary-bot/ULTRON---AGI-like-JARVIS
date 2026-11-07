@@ -188,7 +188,8 @@ Three habits keep that shape:
 3. Any new claim or capability has a gate step or a test, not just a paragraph.
 4. `log.txt` has an entry. The version is bumped. `HANDOFF.md` names the phase.
 5. The readme numbers are the numbers the last run printed, not remembered ones.
-6. `python scripts/workspace_budget.py` - inside 100 MB and 5,000 files.
+6. No size budget is checked any more (withdrawn 2026-11-07); keep generated files out
+   of the tree, as `docs/SPACE.md` explains.
 7. `git status` - no key, no token, no personal file, no stray log.
 8. One commit, a message that says what changed and why.
 9. Push, then read both CI jobs. Fix the Windows failure; do not explain it.

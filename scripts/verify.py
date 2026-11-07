@@ -141,9 +141,6 @@ def main():
     environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
     stray_before = set(_stray_host_files())
     checks = [
-        # First, because a workspace that is over budget loses files on the next save,
-        # and a lost file makes every check below a test of a tree that no longer exists.
-        ("Workspace size and file count", ["scripts/workspace_budget.py"]),
         (
             "Custom and ported regression suite",
             ["-m", "unittest", "discover", "-s", "tests"],

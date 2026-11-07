@@ -330,3 +330,32 @@ old `copilot` content is on this branch, at `8f3f33b` and its parent `44ec6db`. 
 One thing to know before relying on a green tick: `.github/workflows/verify.yml` runs on a push
 to `main` and on a pull request. A push to this branch starts no job until it is opened as a
 pull request.
+
+### 2026-11-07 · 1.2.37 — the instruments were run, and three of them complained
+
+The owner asked for the two scripts to be dealt with instead of described. Done: the
+dependency set was installed into `/tmp` (never into the project), and then
+`scripts/verify.py` and `scripts/proof_gate.py` were actually run on this branch.
+
+**Three defects, all of them in the branch before this build.** A truncated
+`git diff --name-status` was read as a file with an empty name. One function in
+`scripts/agent_workspace.py` was over both of the project's own size ceilings, so the
+ceiling test was red — the function was split, the ceiling was not raised. And the same
+script died in any shallow clone with *"no merge base"*, which is every CI checkout and
+every agent sandbox; it now compares the two tips and says so.
+
+**The size budget is gone**, by his decision. Deleted rather than silenced: the script, its
+test, the gate step, and every page that stated the number. `docs/SPACE.md` says why, and
+keeps the two habits worth keeping.
+
+**Two smaller things.** CI now runs on a push to the delivery branch, so a green tick means
+something. `docs/COPILOT_RECOMMENDATIONS.md` became `docs/BRANCH_REVIEW.md`, with the four
+real branch tips measured and the dead `opencode` reference removed.
+
+**New tool:** `scripts/branch_report.py` — every branch, its tip, and which names are the
+same commit. It answers the question a branch picker cannot.
+
+What this run measured: 1,577 tests, 15 skipped, 1 error that is the machine and not the
+code (`libGL.so.1` is absent here and there is no package manager), the 1,000 stress
+scenarios, 15/15 mutations, and a proof gate of **21 PROVEN / 14 PARTIAL / 0 FAILED**. The
+`ui` claim is PARTIAL here for the same missing library; CI installs it and reads 22 / 13.
