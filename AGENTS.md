@@ -9,6 +9,11 @@ passed a syntax check and did nothing when used.
 this project runs on, how work is done, what is never allowed, and the checklist before a
 push. This file is the rule book for the code; that page is the thinking underneath it.
 
+**Write to Notion the way [`docs/AGENT_NOTION.md`](docs/AGENT_NOTION.md) says.** Several agents work
+on this project at once. One page per project, a fixed section order, dates and numbers,
+update instead of appending, one checkbox per task, and say what you did not check. A page
+another agent cannot read in ten seconds is a page that gets redone.
+
 **Before planning a task, read [`docs/AGENT_WORKSPACE.md`](docs/AGENT_WORKSPACE.md) and run `python scripts/agent_workspace.py`.** Review its commit/path and uncommitted-work report, then inspect the relevant full diffs and files. The script does not fetch or merge. Use `--ack` only after you have actually reviewed the report. Preserve unrelated work from other agents.
 
 ## How the app runs

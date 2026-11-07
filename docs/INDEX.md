@@ -12,6 +12,7 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | [`../AGENTS.md`](../AGENTS.md) | Coding agents | Hard coding, threading, plugin, and safety rules |
 | [`AGENT_WORKSPACE.md`](AGENT_WORKSPACE.md) | Agents resuming work | How to inspect commits, branch differences, and local edits |
 | [`AGENT_PLAYBOOK.md`](AGENT_PLAYBOOK.md) | Coding agents | Safe task planning, implementation, testing, and reporting |
+| [`AGENT_NOTION.md`](AGENT_NOTION.md) | Every agent | How to write a Notion page another agent can use in ten seconds |
 | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) | Developers | System layers, one request end-to-end, and extension points |
 | [`../DECISIONS.md`](../DECISIONS.md) | Anyone proposing a change | Owner decisions and where they are enforced |
 | [`../GATEKEEPERS.md`](../GATEKEEPERS.md) | Anyone making a claim | What is proven, partial, missing, or machine-dependent |

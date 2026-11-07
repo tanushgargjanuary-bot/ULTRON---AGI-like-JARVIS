@@ -359,3 +359,13 @@ What this run measured: 1,577 tests, 15 skipped, 1 error that is the machine and
 code (`libGL.so.1` is absent here and there is no package manager), the 1,000 stress
 scenarios, 15/15 mutations, and a proof gate of **21 PROVEN / 14 PARTIAL / 0 FAILED**. The
 `ui` claim is PARTIAL here for the same missing library; CI installs it and reads 22 / 13.
+
+### 2026-11-07 · the Notion space, and the rule for writing in it
+
+The owner attached Notion and asked for it to stay clean and for every agent to write there
+the same way. Two pages, and no more: **Agents — one place, one format** (the rules and the
+index) and **Ultron — handover and next moves** (the state, the tasks, the traps).
+
+The rule is also a file, because agents read code before they read notes: `docs/AGENT_NOTION.md`,
+pointed at from `AGENTS.md`, so it travels with every branch at merge. The other branches were
+told through a repository issue, not a push, because this session does not write to them.
