@@ -323,3 +323,14 @@ stopped being true several builds ago and was corrected rather than appended to.
 **Built so far.** Added `actions/capability_guide.py` on `chatgpt`. It reads the live tool catalog and installed skill recipes, ranks text matches, reports availability, and explains the existing `self_modify` workflow. It does not install or execute repository code.
 
 **Still open.** The tool descriptor now exposes the guide to the action loader, but discovery/callability has not been verified. GitHub repository research, tests, and explicit prompt wording about self-evolution remain to be completed.
+
+
+### 2026-11-07 — Harness² follow-up
+
+**Asked for.** Apply Harness²'s recursive-harnessing principle to Ultron, close the gap between its actual self-change abilities and what it says about itself, and explain a practical path for detecting useful tools when the user is stuck.
+
+**Reviewed.** The Harness² README describes task-level Propose–Probe–Compose edits to prompts, guardrails, memory, tool guidance, subagents, skills, scripts, and plugins, plus a persistent improvement harness that retains adopted harnesses and evidence-supported lessons. It is a research/benchmark framework, not a drop-in runtime for Ultron.
+
+**Direction.** Adapt the loop, not the framework: capability-match the user's goal against the live tool and skill catalogs; if a gap remains, research candidate repositories without installing them; propose one bounded change to a prompt, skill, or tool guide; probe the same task before and after; retain only evidence-backed lessons. Keep source changes behind the existing self_modify rehearsal and two-channel confirmation. No self-install or unattended source changes.
+
+**State.** The capability guide is present on `chatgpt`, but still needs runtime verification, repository research integration, explicit prompt routing, and tests. This entry records design guidance; it does not claim Harness² recursion is implemented.
