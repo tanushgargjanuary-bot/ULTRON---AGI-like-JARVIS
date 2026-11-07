@@ -14,6 +14,10 @@ on this project at once. One page per project, a fixed section order, dates and 
 update instead of appending, one checkbox per task, and say what you did not check. A page
 another agent cannot read in ten seconds is a page that gets redone.
 
+**Claim work before you start it.** An unassigned task is unclaimed. Assign the GitHub issue
+to yourself, or comment `claim: <branch> <what> <files>` on **issue #7**. Two agents on one
+branch is the same defect as two agents editing one file, and it is silent until the merge.
+
 **Before planning a task, read [`docs/AGENT_WORKSPACE.md`](docs/AGENT_WORKSPACE.md) and run `python scripts/agent_workspace.py`.** Review its commit/path and uncommitted-work report, then inspect the relevant full diffs and files. The script does not fetch or merge. Use `--ack` only after you have actually reviewed the report. Preserve unrelated work from other agents.
 
 ## How the app runs
