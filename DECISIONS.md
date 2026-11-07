@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-07** (build 1.2.36).
+Last updated: **2026-11-07** (build 1.2.37).
 
 ---
 
@@ -68,6 +68,8 @@ new visual language need to be asked for, not assumed.
 - **Keep Windows and Ultron intact.** Nothing in either project may require giving them up.
 - **RAM warnings are disabled in Ultron.** A background assistant that nags about memory is
   worse than one that does not. (The *OS* is the opposite case, below.)
+
+| **`main` moves in small slices, only when you say so** | A long-lived branch is not caution, it is merge debt. `chatgpt` is about 20 commits ahead and `antigravity` is about 5,900 lines ahead; neither can be merged whole any more, and that happened by waiting. So the delivery branch stays small — 5 ahead, 0 behind `main` on 7 Nov — the pull request stays a draft, and `main` moves only on your word, one slice at a time. Keeping `main` red is the price of waiting; the draft PR is the receipt. | `docs/BRANCH_REVIEW.md`, PR #8, `docs/AGENT_NOTION.md` |
 
 ## 5. The interface (decided and corrected 2026-11-06)
 
