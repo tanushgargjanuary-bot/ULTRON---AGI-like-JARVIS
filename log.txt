@@ -1,3 +1,26 @@
+=== 2026-11-07 · build 1.2.38 · later still · 200 repos, three tiers, five choices ===
+
+A list of two hundred projects arrived, with the question: build them in, or teach Ultron to
+work with them? The answer is neither, and the distinction is now a file.
+
+docs/ECOSYSTEM.md sets the rule. Native only when Ultron cannot do the job without it and it
+must work offline. An adaptor when the program is already on the machine. Knowledge otherwise:
+a name, a purpose, a licence, a way to get it.
+
+Why not two hundred natives: most of that list is a server, not a library; each dependency
+costs startup time, licence work, an update watch, and a new way to crash. find_files already
+taught that once.
+
+The one adaptor that changes the ceiling is MCP: one client, and every MCP server becomes a
+tool with a schema and a permission boundary. Issue #10, with acceptance criteria and four
+things deliberately out of scope.
+
+Five things earn a place this quarter: MCP, the OCR rung, a file index, faster-whisper,
+Piper or Kokoro. Five, not two hundred.
+
+Decided and written down: security and OSINT scanners stay catalogue-only. They act on systems
+nobody here owns, and a desktop assistant that ships them is a different product.
+
 === 2026-11-07 · build 1.2.38 · later still · "python main.py" answers in sentences ===
 
 The owner ran the local-model command on Windows and got three failures at once: no Python on

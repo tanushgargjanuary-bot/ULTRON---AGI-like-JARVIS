@@ -1,0 +1,77 @@
+# The ecosystem: what becomes part of Ultron, and what stays a name
+
+A list of 200 projects arrived on 7 Nov 2026 with one question: build them in, or teach Ultron
+to work with them?
+
+**Neither, and the distinction is the whole answer.** Three tiers, one rule for choosing
+between them.
+
+## The rule
+
+> If Ultron cannot do the job without it, and it must work offline, make it **native**.
+> If it is already a program on the machine, make it an **adaptor**.
+> If neither is true, it is **knowledge**: a name, a purpose, and a way to get it.
+
+## The three tiers
+
+| Tier | What it means | How many | Example |
+|---|---|---|---|
+| **Native** | Code inside this repository, imported, tested, shipped in the installer | Very few | the HUD, the voice loop, the OCR rung, memory |
+| **Adaptor** | Ultron drives a program that is already installed, or its local API | About ten, ever | Ollama, ffmpeg, git, yt-dlp, Playwright, Everything |
+| **Knowledge** | A catalogue entry: what it does, when to reach for it, its licence, its cost | Everything else | n8n, Milvus, CrewAI, LangGraph, Home Assistant |
+
+A knowledge entry is not a lesser thing. Half of Ultron's usefulness is knowing that a tool
+exists and when it is the wrong tool.
+
+## Why not 200 native integrations
+
+- **Startup and size.** Every native dependency is imported at launch or installed with the
+  package. Ultron starts in seconds and must keep doing so.
+- **Most of the list is a server, not a library.** n8n, Milvus, Kestra, Windmill, Uptime Kuma
+  and Home Assistant are services with their own databases and ports. Shipping them inside a
+  desktop assistant is shipping a data centre to a laptop.
+- **Licence and update debt.** Each one needs a licence check, a version pin, a security
+  watch, and a person to update it. Two hundred of those is a second job.
+- **Surface area.** Every vendored project is a new way for the app to crash and a new place
+  for a secret to leak. `find_files` already taught that lesson once (see `log.txt`).
+
+## The one adaptor worth more than a hundred integrations
+
+**MCP** — the Model Context Protocol. One client, and every MCP server on the machine becomes
+a tool with a name, a schema and a permission boundary. That is the "teach Ultron to work with
+them" answer at protocol level, and it is the only item on this page that changes the ceiling.
+
+It is not built yet. Issue #10.
+
+## The five that earn their place this quarter
+
+1. **MCP client** — one adaptor, hundreds of tools, nothing vendored.
+2. **OCR rung** — offline screen reading, already written on `antigravity` (issue #4).
+3. **A file index** — SQLite FTS5, or Everything on Windows. Fast, and safer than walking the
+   filesystem on every question.
+4. **faster-whisper** — better offline speech recognition than the current path. One package.
+5. **Piper or Kokoro** — a voice that never leaves the machine and costs nothing per sentence.
+
+Five. Not two hundred. Each one has to survive the checklist below before it is sixth.
+
+## The checklist, before anything becomes native
+
+- [ ] Can Ultron do this job without it? If yes, it is knowledge.
+- [ ] Does it work offline? If no, it is an adaptor at most.
+- [ ] What does it weigh, in megabytes and in seconds at startup?
+- [ ] Which licence, and does it allow shipping?
+- [ ] Is there one test that fails when it breaks?
+- [ ] Can it be removed again in one commit?
+
+## What stays a name, always
+
+Security scanners, OSINT tools, and scanners of other people's systems — Nuclei, Amass,
+Sherlock, Subfinder, theHarvester, SpiderFoot. They are dual-use, they act on systems nobody
+here owns, and a desktop assistant that ships them becomes a different product with a
+different legal posture. They may appear in the catalogue. They do not ship in the installer.
+
+## Related
+
+- `docs/CAPABILITIES.md` — what the machine can do today.
+- `docs/GITHUB_AWESOME_CATALOG.md` — the wider catalogue, on the `antigravity` branch.
+- `core/tool_catalog.py` — the live list of tools Ultron can actually call.

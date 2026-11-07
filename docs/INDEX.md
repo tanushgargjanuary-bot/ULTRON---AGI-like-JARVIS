@@ -15,6 +15,7 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | [`AGENT_NOTION.md`](AGENT_NOTION.md) | Every agent | How to write a Notion page another agent can use in ten seconds |
 | [`LOCAL_MODEL.md`](LOCAL_MODEL.md) | Owner, agent | Which local model this machine can run, and the four commands that set it up |
 | `docs/CAPABILITY_AWARENESS.md` | Owner, agent | The capability guide and the GitHub scout, what is tested, and what is not |
+| [`ECOSYSTEM.md`](ECOSYSTEM.md) | Owner, agent | Native, adaptor or knowledge: which outside project becomes part of Ultron, and the rule |
 | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) | Developers | System layers, one request end-to-end, and extension points |
 | [`../DECISIONS.md`](../DECISIONS.md) | Anyone proposing a change | Owner decisions and where they are enforced |
 | [`../GATEKEEPERS.md`](../GATEKEEPERS.md) | Anyone making a claim | What is proven, partial, missing, or machine-dependent |
