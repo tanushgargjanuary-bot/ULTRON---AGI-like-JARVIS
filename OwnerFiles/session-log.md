@@ -347,3 +347,14 @@ stopped being true several builds ago and was corrected rather than appended to.
 **Follow-up built.** Added `actions/github_repo_scout.py`, a standard-library-only, read-only GitHub repository search that ranks a short public-project list by stars, maintenance recency, and metadata, reports licenses, and never downloads code. The prompt now routes a capability gap to this scout after checking native tools. Changes remain on `chatgpt` only.
 
 **Still open.** Runtime discovery/callability and an actual same-task before/after probe have not been verified. The scout ranks repository metadata, not source-code quality; a human-reviewed integration proposal and evidence-backed adoption loop are still needed. No tests were run in this session.
+
+
+## 2026-11-07 — native capability routing follow-through
+
+**Asked for.** Make existing native abilities easier to find and more reliable, with flexible wording, and keep changes easy to take selectively into a future branch.
+
+**Built.** The capability guide now filters generic-only matches and applies a small task-cue map (compression, conversion, summarizing, transcription, search, screenshots, and self-change) to the live tool catalog. The catalog remains the source of truth for whether a named tool exists and is currently available. The GitHub scout and prompt routing remain separate changes, so they can be selected independently. All edits are on `chatgpt`.
+
+**Baseline inspection.** The file processor declares image compression and video compression. The capability catalog intentionally shortens tool descriptions, so a literal search for “compress” could miss that ability. The new task cue addresses this mismatch. The plan's representative cases are: compression (should suggest file_processor), workspace review (should use review_changes), and an unsupported task (should show no ready match and offer repository research).
+
+**Verification limit.** Source inspection supports those expected routes, but I could not execute the app or its tests because this workspace has no repository checkout. Runtime discovery, actual routing, and availability on the owner's machine remain unverified. Do not describe those as verified until run in the app. The scout evaluates public metadata only, not source safety or suitability.
