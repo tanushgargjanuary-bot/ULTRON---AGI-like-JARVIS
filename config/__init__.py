@@ -1,6 +1,12 @@
 # config/__init__.py
-import json, os, platform
+import json, os, platform, sys
 from pathlib import Path
+
+for _stream_name in ("stdout", "stderr"):
+    _stream = getattr(sys, _stream_name, None)
+    _reconfig = getattr(_stream, "reconfigure", None)
+    if callable(_reconfig):
+        _reconfig(encoding="utf-8", errors="replace")
 
 _CONFIG_PATH = Path(__file__).parent / "api_keys.json"
 

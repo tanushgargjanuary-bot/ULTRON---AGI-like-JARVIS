@@ -23,6 +23,40 @@ from typing import Optional
 from core.local_detector import LocalModelInfo, detect_all_local_models
 
 
+def _pick_specialized(
+    candidates: list[LocalModelInfo],
+    need_vision: bool,
+    need_code: bool,
+) -> Optional[LocalModelInfo]:
+    """Pick specialized model if vision or code capability is explicitly required."""
+    if need_vision:
+        vision_candidates = [m for m in candidates if m.has_vision]
+        if vision_candidates:
+            vision_candidates.sort(key=lambda m: (not m.running, m.param_size_b or 999.0))
+            return vision_candidates[0]
+
+    if need_code:
+        code_candidates = [m for m in candidates if m.has_code]
+        if code_candidates:
+            code_candidates.sort(key=lambda m: (not m.running, -(m.param_size_b or 0.0)))
+            return code_candidates[0]
+    return None
+
+
+def _pick_by_tier(candidates: list[LocalModelInfo], target_tier: str) -> LocalModelInfo:
+    """Pick the best model for the requested tier or fallback."""
+    tier_matches = [m for m in candidates if m.tier == target_tier]
+    pool = tier_matches if tier_matches else candidates
+
+    if target_tier == "fast":
+        # For fast tier or fallback: prefer running, then smallest model
+        pool.sort(key=lambda m: (not m.running, m.param_size_b or 999.0))
+    else:
+        # For smart or heavy: prefer running, then largest model
+        pool.sort(key=lambda m: (not m.running, -(m.param_size_b or 0.0)))
+    return pool[0]
+
+
 def choose_wise_local_model(
     tier: str = "fast",
     need_vision: bool = False,
@@ -46,46 +80,13 @@ def choose_wise_local_model(
 
     candidates = [m for m in models if (not running_only or m.running)]
     if not candidates and running_only:
-        # Fall back to any detected candidate if none running
         candidates = models
 
-    # 1. Vision requirement filter
-    if need_vision:
-        vision_candidates = [m for m in candidates if m.has_vision]
-        if vision_candidates:
-            # Prefer smallest vision model for speed, or running one
-            vision_candidates.sort(key=lambda m: (not m.running, m.param_size_b or 999.0))
-            return vision_candidates[0]
+    specialized = _pick_specialized(candidates, need_vision, need_code)
+    if specialized:
+        return specialized
 
-    # 2. Code requirement filter
-    if need_code:
-        code_candidates = [m for m in candidates if m.has_code]
-        if code_candidates:
-            code_candidates.sort(key=lambda m: (not m.running, -(m.param_size_b or 0.0)))
-            return code_candidates[0]
-
-    # 3. Tier matching
-    target_tier = tier.lower()
-    tier_matches = [m for m in candidates if m.tier == target_tier]
-
-    if tier_matches:
-        # For 'fast', choose smallest parameter size (lowest latency)
-        if target_tier == "fast":
-            tier_matches.sort(key=lambda m: (not m.running, m.param_size_b or 999.0))
-        # For 'smart' or 'heavy', choose highest parameter size within tier
-        else:
-            tier_matches.sort(key=lambda m: (not m.running, -(m.param_size_b or 0.0)))
-        return tier_matches[0]
-
-    # 4. Graceful fallback ladder if exact tier match isn't available
-    if target_tier == "fast":
-        # If no fast model, pick the smallest available model
-        candidates.sort(key=lambda m: (not m.running, m.param_size_b or 999.0))
-        return candidates[0]
-    else:
-        # If smart/heavy requested, pick the largest available model
-        candidates.sort(key=lambda m: (not m.running, -(m.param_size_b or 0.0)))
-        return candidates[0]
+    return _pick_by_tier(candidates, tier.lower())
 
 
 def get_local_summary() -> dict:

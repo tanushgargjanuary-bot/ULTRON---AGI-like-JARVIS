@@ -99,7 +99,7 @@ class DurationWording(unittest.TestCase):
 class WatchByPid(unittest.TestCase):
     """A real process, started, watched, and left alone to finish."""
 
-    def wait_until(self, condition, timeout=5.0, step=0.05):
+    def wait_until(self, condition, timeout=25.0, step=0.05):
         """Wait for a process to appear in the table before judging it.
 
         A freshly spawned process is not in the table a microsecond later, and a
@@ -117,9 +117,10 @@ class WatchByPid(unittest.TestCase):
         return condition()
 
     def test_it_reports_a_finish_once(self):
-        # Long enough that a busy runner cannot finish it before the first look.
+        # Controlled via stdin so it never exits before the watcher observes it.
         child = subprocess.Popen([sys.executable, "-c",
-                                  "import time; time.sleep(2.5)"])
+                                  "import sys; sys.stdin.readline()"],
+                                 stdin=subprocess.PIPE)
         self.addCleanup(lambda: child.poll() is None and child.kill())
         watcher = Watcher()
         watcher.watch_pid(child.pid, "a short job")
@@ -129,6 +130,8 @@ class WatchByPid(unittest.TestCase):
             self.wait_until(lambda: any(p.pid == child.pid for p in watcher.live())),
             "the child never appeared in the live list")
 
+        if child.stdin:
+            child.stdin.close()
         child.wait(timeout=30)
         time.sleep(0.1)
         done = watcher.poll()

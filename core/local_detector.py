@@ -17,6 +17,7 @@ INVARIANTS & CONSTRAINTS
 
 from __future__ import annotations
 
+from core import failures
 import json
 import os
 import re
@@ -76,8 +77,8 @@ def _quick_http_get(url: str, timeout: float = 0.5) -> Optional[dict]:
             if resp.status == 200:
                 body = resp.read().decode("utf-8", errors="replace")
                 return json.loads(body)
-    except Exception:
-        pass
+    except Exception as exc:
+        failures.note("local_detector._quick_http_get", exc)
     return None
 
 
@@ -184,117 +185,108 @@ def scan_running_servers() -> list[LocalModelInfo]:
     return detected
 
 
+def _parse_manifest_entry(manifest_file: Path, base_dir: Path) -> tuple[str, int]:
+    rel = manifest_file.relative_to(base_dir)
+    parts = rel.parts
+    if len(parts) >= 3:
+        if parts[0] == "registry.ollama.ai" and parts[1] == "library":
+            model_name = f"{parts[2]}:{parts[3]}"
+        else:
+            model_name = f"{'/'.join(parts[1:-1])}:{parts[-1]}"
+    else:
+        model_name = ":".join(parts)
+
+    data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    layers = data.get("layers", [])
+    total_bytes = sum(
+        int(l.get("size", 0))
+        for l in layers
+        if "model" in str(l.get("mediaType", "")).lower()
+    )
+    return model_name, total_bytes
+
+
+def _scan_ollama_manifests(seen: set[str]) -> list[LocalModelInfo]:
+    detected = []
+    base_dir = Path.home() / ".ollama" / "models" / "manifests"
+    if not base_dir.is_dir():
+        return detected
+
+    for path in base_dir.glob("**/*"):
+        if not path.is_file():
+            continue
+        try:
+            name, size = _parse_manifest_entry(path, base_dir)
+            if name in seen:
+                continue
+            seen.add(name)
+            p_size, is_vis, is_code, tier = _estimate_params_and_tier(name, size)
+            detected.append(
+                LocalModelInfo(
+                    name=name,
+                    provider_id="ollama",
+                    base_url="http://127.0.0.1:11434/v1",
+                    running=False,
+                    size_bytes=size,
+                    param_size_b=p_size,
+                    has_vision=is_vis,
+                    has_code=is_code,
+                    tier=tier,
+                    location=str(path.parent),
+                )
+            )
+        except Exception as exc:
+            failures.note("local_detector.scan_manifest", exc)
+    return detected
+
+
+def _scan_gguf_folder(folder: Path, pid: str, base_url: str, seen: set[str]) -> list[LocalModelInfo]:
+    detected = []
+    if not folder.is_dir():
+        return detected
+    for f in folder.glob("**/*.gguf"):
+        name = f.stem
+        if name in seen:
+            continue
+        seen.add(name)
+        size = f.stat().st_size
+        p_size, is_vis, is_code, tier = _estimate_params_and_tier(name, size)
+        detected.append(
+            LocalModelInfo(
+                name=name,
+                provider_id=pid,
+                base_url=base_url,
+                running=False,
+                size_bytes=size,
+                param_size_b=p_size,
+                has_vision=is_vis,
+                has_code=is_code,
+                tier=tier,
+                location=str(f.parent),
+            )
+        )
+    return detected
+
+
 def scan_disk_models() -> list[LocalModelInfo]:
     """Inspect local storage paths for offline downloaded models."""
-    detected: list[LocalModelInfo] = []
     seen_names: set[str] = set()
+    detected = _scan_ollama_manifests(seen_names)
 
-    # 1. Ollama manifests (~/.ollama/models/manifests)
-    ollama_manifests = Path.home() / ".ollama" / "models" / "manifests"
-    if ollama_manifests.is_dir():
-        for manifest_file in ollama_manifests.glob("**/*"):
-            if manifest_file.is_file():
-                try:
-                    rel = manifest_file.relative_to(ollama_manifests)
-                    parts = rel.parts
-                    if len(parts) >= 3:
-                        # e.g. registry.ollama.ai/library/qwen3/4b -> qwen3:4b
-                        # or hf.co/LiquidAI/LFM3-Omni-2B-GGUF/latest
-                        if parts[0] == "registry.ollama.ai" and parts[1] == "library":
-                            model_name = f"{parts[2]}:{parts[3]}"
-                        else:
-                            model_name = f"{'/'.join(parts[1:-1])}:{parts[-1]}"
-                    else:
-                        model_name = ":".join(parts)
-
-                    if model_name in seen_names:
-                        continue
-                    seen_names.add(model_name)
-
-                    # Read manifest for exact layer size
-                    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-                    layers = manifest_data.get("layers", [])
-                    total_bytes = sum(
-                        int(l.get("size", 0))
-                        for l in layers
-                        if "model" in str(l.get("mediaType", "")).lower()
-                    )
-
-                    p_size, is_vis, is_code, tier = _estimate_params_and_tier(model_name, total_bytes)
-                    detected.append(
-                        LocalModelInfo(
-                            name=model_name,
-                            provider_id="ollama",
-                            base_url="http://127.0.0.1:11434/v1",
-                            running=False,
-                            size_bytes=total_bytes,
-                            param_size_b=p_size,
-                            has_vision=is_vis,
-                            has_code=is_code,
-                            tier=tier,
-                            location=str(manifest_file.parent),
-                        )
-                    )
-                except Exception:
-                    continue
-
-    # 2. LM Studio downloaded models (~/.cache/lm-studio/models or ~/.lmstudio/models)
+    # LM Studio
     for lm_path in (
         Path.home() / ".cache" / "lm-studio" / "models",
         Path.home() / ".lmstudio" / "models",
     ):
-        if lm_path.is_dir():
-            for f in lm_path.glob("**/*.gguf"):
-                name = f.stem
-                if name in seen_names:
-                    continue
-                seen_names.add(name)
-                size = f.stat().st_size
-                p_size, is_vis, is_code, tier = _estimate_params_and_tier(name, size)
-                detected.append(
-                    LocalModelInfo(
-                        name=name,
-                        provider_id="lmstudio",
-                        base_url="http://127.0.0.1:1234/v1",
-                        running=False,
-                        size_bytes=size,
-                        param_size_b=p_size,
-                        has_vision=is_vis,
-                        has_code=is_code,
-                        tier=tier,
-                        location=str(f.parent),
-                    )
-                )
+        detected.extend(_scan_gguf_folder(lm_path, "lmstudio", "http://127.0.0.1:1234/v1", seen_names))
 
-    # 3. Jan models (%APPDATA%/Jan/models or ~/.jan/models)
+    # Jan
     appdata = os.getenv("APPDATA", "")
     jan_paths = [Path.home() / ".jan" / "models"]
     if appdata:
         jan_paths.append(Path(appdata) / "Jan" / "models")
-        
     for jp in jan_paths:
-        if jp.is_dir():
-            for f in jp.glob("**/*.gguf"):
-                name = f.stem
-                if name in seen_names:
-                    continue
-                seen_names.add(name)
-                size = f.stat().st_size
-                p_size, is_vis, is_code, tier = _estimate_params_and_tier(name, size)
-                detected.append(
-                    LocalModelInfo(
-                        name=name,
-                        provider_id="jan",
-                        base_url="http://127.0.0.1:1337/v1",
-                        running=False,
-                        size_bytes=size,
-                        param_size_b=p_size,
-                        has_vision=is_vis,
-                        has_code=is_code,
-                        tier=tier,
-                        location=str(f.parent),
-                    )
-                )
+        detected.extend(_scan_gguf_folder(jp, "jan", "http://127.0.0.1:1337/v1", seen_names))
 
     return detected
 

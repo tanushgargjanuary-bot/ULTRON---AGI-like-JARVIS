@@ -580,6 +580,17 @@ def _provider_settings() -> tuple[str, bool]:
     return pid, first
 
 
+def _auto_local_rung(tier: str) -> str | None:
+    try:
+        from core.local_router import choose_wise_local_model
+        wise = choose_wise_local_model(tier=tier, running_only=True)
+        if wise:
+            return f"{PROVIDER_PREFIX}auto:{wise.provider_id}:{wise.name}"
+    except Exception as exc:
+        failures.note("gemini._auto_local_rung", exc)
+    return None
+
+
 def _provider_rungs(tier: str) -> tuple[str, ...]:
     """The configured side-call provider, as a ladder rung — or nothing.
 
@@ -594,15 +605,6 @@ def _provider_rungs(tier: str) -> tuple[str, ...]:
     pid, _ = _provider_settings()
     if pid:
         return (PROVIDER_PREFIX + pid,)
-
-    # Fallback to auto-detected local model when no provider is explicitly configured
-    try:
-        from core.local_router import choose_wise_local_model
-        wise = choose_wise_local_model(tier=tier)
-        if wise:
-            return (f"{PROVIDER_PREFIX}auto:{wise.provider_id}:{wise.name}",)
-    except Exception:
-        pass
     return ()
 
 
@@ -715,9 +717,14 @@ def call(contents, tier: str = FAST, config=None,
         # meant every one-shot call in the app failed — which is exactly the
         # situation somebody configuring another provider is trying to leave.
         if not rungs:
-            print("[Gemini] no Gemini API key is configured")
-            return None
-        ladder = rungs
+            wise_local = _auto_local_rung(tier)
+            if wise_local:
+                ladder = (wise_local,)
+            else:
+                print("[Gemini] no Gemini API key is configured")
+                return None
+        else:
+            ladder = rungs
 
     # A recording can only be read by the REST models. Dropping the two rungs
     # that cannot take one is not a fallback — it is declining to make a request
@@ -763,6 +770,13 @@ def call(contents, tier: str = FAST, config=None,
                       f"{_UNAVAILABLE_SECONDS // 60} minutes")
             else:
                 print(f"[Gemini] {model}: {type(e).__name__}: {msg[:140]}")
+
+    wise_local = _auto_local_rung(tier)
+    if wise_local and wise_local not in tried:
+        try:
+            return _provider_call(wise_local, contents, config, timeout_ms)
+        except Exception as e:
+            failures.note("gemini._auto_local_fallback", e)
     return None
 
 

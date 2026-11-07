@@ -19,6 +19,10 @@ import re
 import sys
 from pathlib import Path
 
+for _s in (getattr(sys, "stdout", None), getattr(sys, "stderr", None)):
+    if _s is not None and hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = ("core", "custom_jarvis", "plugins", "actions", "providers", "dashboard",
             "memory", "scripts", "tests")
