@@ -79,3 +79,5 @@ Every document in the repository, one line each, and who it is for.
 
 A document that is not linked here is a document nobody will read. When you add
 one, add its line.
+
+| `docs/CAPABILITY_AWARENESS.md` | capability guide, GitHub scout, limits, and explicit untested status |
