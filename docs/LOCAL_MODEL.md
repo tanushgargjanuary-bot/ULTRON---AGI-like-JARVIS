@@ -30,6 +30,23 @@ fails all three is a model that will waste an evening.
 `check` writes nothing. `write` merges three keys and never deletes one you pasted, so a cloud
 key survives a switch to a local model.
 
+## If the command is not found
+
+Three failures look the same and are not:
+
+| What you see | What it means | Fix |
+|---|---|---|
+| `Python was not found; run without arguments to install from the Microsoft Store` | Windows is showing a placeholder, not a Python. | Install 3.11–3.13 from python.org and **tick "Add python.exe to PATH"**. Then close and reopen the terminal. |
+| `can't open file ... No such file or directory` | The terminal is in the wrong folder. | `cd` into the repository first. `dir scripts\local_model.py` must list the file. |
+| `No module named 'requests'` | The Python you called is not the one the application uses. | Use the same interpreter that starts Ultron, or `py -3.12 -m pip install -r requirements.txt`. |
+
+Two shortcuts that avoid the problem: the Windows launcher `py` instead of `python`, and
+`cd` into the repository before any `python scripts\...` command.
+
+Copy the command from a web page with care: a chat window can turn `local_model.py` into a
+link, and pasting the link text gives `local_[model.py](http://model.py)` and an error that
+says nothing about the real cause.
+
 ## Which model, and why that one
 
 The script reads memory and the graphics card, then picks the smallest model that does the job:

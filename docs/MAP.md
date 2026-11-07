@@ -127,7 +127,7 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 86 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 53 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 29 modules, 14,604 lines
+## `actions/` — 29 modules, 14,609 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -140,7 +140,7 @@ edit the module docstring instead and run it again.
 | `curriculum.py` | 280 | core/curriculum.py — the syllabus Ultron holds, reachable by voice. | test_curriculum, test_mental |
 | `desktop.py` | 527 | **no docstring** | test_autonomy_upgrades, test_edge_cases |
 | `dev_agent.py` | 1,665 | **no docstring** | test_policy |
-| `file_controller.py` | 848 | **no docstring** | test_edge_cases, test_mental, test_policy, test_suite_safety, test_tool_contract |
+| `file_controller.py` | 853 | **no docstring** | test_edge_cases, test_find_files_sensitive, test_mental, test_policy, test_suite_safety, test_tool_contract |
 | `file_processor.py` | 938 | file_processor.py — JARVIS Universal File Processor | test_capability_guide |
 | `flight_finder.py` | 407 | **no docstring** | test_triggers |
 | `game_updater.py` | 1,101 | **no docstring** | test_policy |
@@ -181,7 +181,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_edge_cases, test_live_config, test_live_transport, test_local_model, test_schedule_packs, test_suite_algorithms, test_suite_providers, test_suite_safety |
+| `server.py` | 1,323 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_edge_cases, test_find_files_sensitive, test_live_config, test_live_transport, test_local_model, test_schedule_packs, test_suite_algorithms, test_suite_providers, test_suite_safety |
 
 ## `memory/` — 2 modules, 1,415 lines
 
@@ -224,7 +224,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 56 modules, 18,624 lines
+## `tests/` — 57 modules, 18,686 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -244,6 +244,7 @@ edit the module docstring instead and run it again.
 | `test_edge_cases.py` | 321 | tests/test_edge_cases.py — the inputs nobody types on purpose. | test_edge_cases |
 | `test_evolve_script.py` | 163 | tests/test_evolve_script.py — the engine that turns the loop. | test_evolve_script |
 | `test_expression.py` | 214 | Offline tests for facial expression (core/expression.py + core/avatar.py). | — |
+| `test_find_files_sensitive.py` | 62 | A folder search must not walk into a key store. | — |
 | `test_fuzzy.py` | 365 | tests/test_fuzzy.py — the matcher, measured as an accuracy, not a vibe. | test_fuzzy |
 | `test_hud_fixes.py` | 347 | tests/test_hud_fixes.py — the three things the owner could see were wrong. | test_bugfix_pass, test_hud_fixes |
 | `test_installer.py` | 212 | The installer, checked from a machine that cannot run it. | — |
