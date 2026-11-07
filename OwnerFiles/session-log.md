@@ -343,3 +343,16 @@ stopped being true several builds ago and was corrected rather than appended to.
 - `plugins/caveman.py`: deterministic token saver plugin brought into `antigravity`, registered under routine policy with zero LLM cost, verified with `tests/test_caveman.py`.
 - `core/prompt.txt`, `core/tool_catalog.py`, `docs/CAPABILITIES.md`: documented combinatorial workflow chaining (Crawl -> OCR -> Code -> Test -> Save -> HUD) and system prompt self-awareness.
 - Verification: 62 feature unit tests passed, 127/127 assistant suite tests passed with zero ceiling breaches, 71/71 safety suite tests passed, 8/8 readme tests passed, and 9/9 workspace budget tests passed. Regenerated `docs/MAP.md`.
+
+
+### 2026-11-07 · 1.2.39 — Issue #3 (model routing engine) & Issue #4 (local OCR ladder rung)
+
+**Asked for.** Work on open GitHub issues and Notion directives. Wire `core/routing.py` into the engine (Issue #3) so cheap requests take cheap models. Add an OCR rung to `core/ui_ladder.py` (Issue #4) to read screen words locally before cloud vision.
+
+**Built.**
+- `core/intent_router.py`: classifies user intent into conversation, evolution, or critic, and routes through `core/routing.py` `RoutingTable`. Writes audit trail to `verification/routing.log`.
+- `core/ocr.py`: privacy-first local OCR extraction using `importlib.util.find_spec` for optional engines (pytesseract/easyocr), returning bounding boxes and text without cloud uploads.
+- `core/ui_ladder.py` and `actions/ui_control.py`: added `Rung.OCR` directly preceding `Rung.VISION`, enabling local UI text targeting on windows lacking accessibility trees.
+- `tests/test_routing.py`: added `IntentRouterTests` demonstrating 3 distinct request intents correctly routed and logged.
+- `tests/test_ocr.py` and `tests/test_ui_ladder.py`: added tests verifying engine availability, parsing, rung priority, and fallthrough.
+- Verification: 271 Python files, 99,063 lines, 1,808 tests passed cleanly. `TheCeilings` 0 breaches, 0 HIGH findings, `test_readme.py` 8/8 PASS. Synced `docs/MAP.md` and `readme.md`.

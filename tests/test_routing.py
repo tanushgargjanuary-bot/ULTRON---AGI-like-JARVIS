@@ -270,5 +270,48 @@ class SwitchApplyingTests(unittest.TestCase):
         self.assertEqual(applied[0][0], Purpose.CONVERSATION)
 
 
+class IntentRouterTests(unittest.TestCase):
+    def setUp(self):
+        from core import intent_router
+        self.router = intent_router
+        self.table = RoutingTable()
+        self.table.add_provider(Provider("Google AI Studio", quota_group="google"))
+        self.table.add_provider(Provider("Groq", quota_group="groq"))
+        self.table.add_provider(Provider("Ollama", quota_group="ollama", local=True))
+
+        self.table.set_route(Purpose.CONVERSATION, "Google AI Studio", "gemini-2.5-flash-lite")
+        self.table.set_route(Purpose.EVOLUTION, "Groq", "qwen-2.5-coder-32b")
+        self.table.set_route(Purpose.CRITIC, "Google AI Studio", "gemini-2.5-flash")
+
+    def test_classify_intent(self):
+        self.assertEqual(self.router.classify_intent("How are you today?"), Purpose.CONVERSATION)
+        self.assertEqual(self.router.classify_intent("Refactor this python module and debug"), Purpose.EVOLUTION)
+        self.assertEqual(self.router.classify_intent("Audit this diff and critique the security"), Purpose.CRITIC)
+
+    def test_route_request_chooses_for_three_different_requests(self):
+        # 1. Simple conversation request -> routes to cheap/fast model
+        r1 = self.router.route_request("Tell me a quick joke", table=self.table)
+        self.assertEqual(r1.provider, "Google AI Studio")
+        self.assertEqual(r1.model, "gemini-2.5-flash-lite")
+
+        # 2. Code evolution request -> routes to coding model
+        r2 = self.router.route_request("Build a plugin and refactor tests", table=self.table)
+        self.assertEqual(r2.provider, "Groq")
+        self.assertEqual(r2.model, "qwen-2.5-coder-32b")
+
+        # 3. Adversarial critique request -> routes to critic model
+        r3 = self.router.route_request("Review this PR and verify invariant checks", table=self.table)
+        self.assertEqual(r3.provider, "Google AI Studio")
+        self.assertEqual(r3.model, "gemini-2.5-flash")
+
+        # Verify receipt log exists and has entries
+        log_file = self.router._VERIFY_FILE
+        self.assertTrue(log_file.exists())
+        content = log_file.read_text(encoding="utf-8")
+        self.assertIn("gemini-2.5-flash-lite", content)
+        self.assertIn("qwen-2.5-coder-32b", content)
+        self.assertIn("gemini-2.5-flash", content)
+
+
 if __name__ == "__main__":
     unittest.main()

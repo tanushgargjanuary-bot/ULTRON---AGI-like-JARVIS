@@ -196,6 +196,32 @@ class DescribeTests(unittest.TestCase):
         self.assertIn("Windows", describe(Context(), platform_name="Windows"))
 
 
+class OcrRungTests(unittest.TestCase):
+    def test_ocr_is_preferred_before_vision_when_no_tree(self):
+        ctx = Context(ocr_ready=True, vision_ready=True)
+        step = next_step(err("NO_TREE"), ctx)
+        self.assertEqual(step.rung, Rung.OCR)
+        self.assertIn("local OCR", step.reason)
+
+    def test_missing_ocr_falls_through_to_vision(self):
+        ctx = Context(ocr_ready=False, vision_ready=True)
+        step = next_step(err("NO_TREE"), ctx)
+        self.assertEqual(step.rung, Rung.VISION)
+
+    def test_unsupported_action_tries_ocr_before_vision(self):
+        ctx = Context(has_tree=True, ocr_ready=True, vision_ready=True)
+        step = next_step(err("UNSUPPORTED_ACTION"), ctx)
+        self.assertEqual(step.rung, Rung.OCR)
+
+    def test_tried_ocr_falls_through_to_vision(self):
+        ctx = Context(has_tree=True, ocr_ready=True, vision_ready=True, tried=(Rung.OCR,))
+        step = next_step(err("UNSUPPORTED_ACTION"), ctx)
+        self.assertEqual(step.rung, Rung.VISION)
+
+    def test_describe_reports_local_ocr(self):
+        self.assertIn("local OCR available", describe(Context(ocr_ready=True)))
+
+
 class CandidateTests(unittest.TestCase):
     def test_adapters_without_capabilities_are_dropped(self):
         class Dead:

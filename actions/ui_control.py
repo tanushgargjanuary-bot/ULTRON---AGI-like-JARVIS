@@ -107,10 +107,21 @@ def _context(session: Session, **kwargs) -> Context:
         "has_tree": "uia" in caps or "ax" in caps or "atspi" in caps,
         "has_dom": "dom" in caps,
         "keyboard_ready": "keyboard" in caps or bool(caps),
+        "ocr_ready": _ocr_ready(),
         "vision_ready": False,
     }
     base.update(kwargs)
     return Context(**base)
+
+
+def _ocr_ready() -> bool:
+    """True when a local OCR engine is available without cloud dependency."""
+    try:
+        from core.ocr import ocr_available
+        usable, _ = ocr_available()
+        return usable
+    except Exception:
+        return False
 
 
 def _vision_ready() -> bool:
@@ -260,6 +271,13 @@ def _ladder_refusal(step, error, app: str) -> str:
         return outcome.ask(
             _TOOL_NAME,
             f"{detail}. Ask the user before trying anything else.".strip(),
+            ladder=step.rung.value,
+            why=step.reason,
+        )
+    if step.rung is Rung.OCR:
+        return outcome.unverified(
+            _TOOL_NAME,
+            "There is no structural tree; try local OCR on screenshot to find text before resorting to vision.",
             ladder=step.rung.value,
             why=step.reason,
         )

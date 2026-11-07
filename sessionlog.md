@@ -229,3 +229,21 @@ Architected the 8-pillar blueprint to make Ultron fully autonomous in writing, t
 5. **Quality Verification**:
    - All tests passing: `test_triggers.py` (30/30), `test_undo_semantic.py` (12/12), `test_plugin_forge.py` (9/9), `test_context_detector.py` (7/7), `test_caveman.py` (4/4), `test_suite_assistant.py` (127/127), `test_suite_safety.py` (71/71), `test_readme.py` (8/8), `test_workspace_budget.py` (9/9).
    - Zero debt increase, zero HIGH findings. Clean `docs/MAP.md` and `readme.md`.
+
+
+---
+
+### 11. Delivery of Issues #3 & #4: Model Intent Router and Local OCR Rung
+1. **Issue #3: Wire `core/routing.py` via `core/intent_router.py`**:
+   - Built `core/intent_router.py` classifying request intent into `Purpose.CONVERSATION`, `Purpose.EVOLUTION`, and `Purpose.CRITIC`.
+   - Connected directly to `core/routing.py` `RoutingTable` to route simple queries to fast models, code/repair to evolution models, and reviews to critic models.
+   - Audit trail recorded in `verification/routing.log`.
+   - Verified in `tests/test_routing.py` (37/37 PASS).
+2. **Issue #4: Add Local OCR Rung to `core/ui_ladder.py`**:
+   - Built `core/ocr.py` providing local screen OCR with optional library detection (pytesseract/easyocr) and zero data egress.
+   - Placed `Rung.OCR` directly ahead of `Rung.VISION` in `core/ui_ladder.py` and `actions/ui_control.py`.
+   - If an interface lacks an accessibility tree, Ultron reads screen words locally before resorting to cloud vision screenshots.
+   - Verified in `tests/test_ui_ladder.py` and `tests/test_ocr.py` (45/45 PASS).
+3. **Verification**:
+   - 271 Python files, 99,063 lines, 1,808 tests passing.
+   - `TheCeilings` clean with 0 debt growth and 0 HIGH findings. Synced `docs/MAP.md` and `readme.md`.

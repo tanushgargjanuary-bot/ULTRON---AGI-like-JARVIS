@@ -65,6 +65,7 @@ class Rung(str, Enum):
     DRILL = "drill"
     DOM = "dom"
     KEYBOARD = "keyboard"
+    OCR = "ocr"
     VISION = "vision"
     ASK = "ask"
     STOP = "stop"
@@ -93,6 +94,7 @@ class Context:
     has_dom: bool = False
     dom_only: bool = False              # the window IS a browser page
     keyboard_ready: bool = False
+    ocr_ready: bool = False             # local OCR available (pytesseract/easyocr/etc)
     vision_ready: bool = False
     attempts: int = 0
     tried: tuple[Rung, ...] = ()
@@ -144,6 +146,8 @@ def next_step(error: object | None = None, context: Context | None = None) -> St
                         hotkey=ctx.hotkey)
         if ctx.has_dom and not ctx.tried_already(Rung.DOM):
             return pick(Rung.DOM, "the page can be addressed directly")
+        if ctx.ocr_ready and not ctx.tried_already(Rung.OCR):
+            return pick(Rung.OCR, "no structural route; local OCR on screenshot before trying vision")
         if ctx.vision_ready and not ctx.tried_already(Rung.VISION):
             return pick(Rung.VISION, "no structural route; a look at the screen is the last resort")
         return pick(Rung.ASK, "this window offers no way to do that without guessing")
@@ -163,6 +167,11 @@ def next_step(error: object | None = None, context: Context | None = None) -> St
             return pick(Rung.DOM, reason)
         if ctx.keyboard_ready and not ctx.tried_already(Rung.KEYBOARD):
             return pick(Rung.KEYBOARD, "no tree; the keyboard can still reach it")
+        if ctx.ocr_ready and not ctx.tried_already(Rung.OCR):
+            return pick(
+                Rung.OCR,
+                "no tree and no keyboard route; local OCR reads screen text without uploading images",
+            )
         if ctx.vision_ready and not ctx.tried_already(Rung.VISION):
             return pick(
                 Rung.VISION,
@@ -211,6 +220,8 @@ def describe(context: Context | None = None, *, platform_name: str = "") -> str:
         parts.append("page DOM available")
     if ctx.keyboard_ready:
         parts.append("keyboard shortcuts available")
+    if ctx.ocr_ready:
+        parts.append("local OCR available (no model, private)")
     if ctx.vision_ready:
         parts.append("vision configured — used last, and it sends a screenshot")
     else:
