@@ -164,4 +164,20 @@ Following adversarial review by the Skeptical Systems Critic and user confirmati
    - Decomposed helper functions to ensure zero growth in complex functions or nesting.
    - `TheCeilings` in `tests/test_suite_assistant.py` passed 4/4 OK. All 24 unit tests in `test_native_plugin_bridges` and `test_local_detector` passed.
 
+---
+
+### 7. Voice Accessibility & Interface Usability Architecture
+Documented the 4-pillar architectural foundation ensuring every capability in Ultron is accessible via voice and intuitive in the UI:
+1. **Trigger Condition Cues at Tool Prompt Prefix (`core/tool_prompt.py`, `docs/TRIGGERS.md`)**:
+   - Every tool description begins with `WHEN — <intent>` or `Use it when <intent>`. `tool_prompt.py` puts this trigger first, enabling semantic voice routing even under token truncation.
+2. **Dual-Channel Return Separation (Speech vs. UI Display)**:
+   - Worker tools return a concise 1-sentence string for instant TTS playback via `core/tts.py`.
+   - Rich payloads, tables, and interactive quizzes route asynchronously through thread-safe `player.show_content()`, `player.show_quiz()`, and `player.show_review()`.
+3. **Three-Tier Policy Engine (`core/policy.py`)**:
+   - Zero-interruption execution for `OBSERVE_TOOLS` and `ROUTINE_TOOLS`.
+   - Guarded destructive actions trigger a single confirmation card rather than crashing the speech loop.
+4. **Dynamic Tool Catalog HUD Overlay (`ui.py` `ToolsOverlay`, `core/tool_catalog.py`)**:
+   - Spoken query *"what can you do?"* or HUD tools icon displays all 56 tools partitioned across 9 structured categories with live dependency status and parameter tooltips.
+
+
 
