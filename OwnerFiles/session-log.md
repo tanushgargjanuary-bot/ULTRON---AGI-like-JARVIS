@@ -314,3 +314,16 @@ stands, what is open, the first three commands, and the ten traps that already c
 
 `GATEKEEPERS.md` was saying *"there is no CI, so nothing has ever run on Windows"*. That
 stopped being true several builds ago and was corrected rather than appended to.
+
+### 2026-11-07 · 1.2.37 — local model auto-detection, token-saving skills, @GithubAwesome mining, and 3 native plugin bridges
+
+**Asked for.** Auto-detect all locally downloaded models (Ollama, LM Studio, on-disk GGUF weights) with wise routing. Install the best token-saving skills (Caveman, ADHD Focus, Diff Minimalist, Token Saver) with universal protocol `SKILLS.md`. Work strictly on branch `antigravity`, cross-reviewing `opencode` and never touching `main`. Audit and fix bugs across the codebase. Extract open-source GitHub repositories from `@GithubAwesome` on YouTube (80+ videos), catalog them cleanly, and natively integrate standout tools into Ultron.
+
+**Built.**
+- `core/local_detector.py` and `core/local_router.py`: detects local models via loopback Ollama and disk caches, categorizing into reasoning, coding, vision, fast, and smart tiers.
+- `SKILLS.md` and `skills/` packs: established repository-wide token-efficiency and ADHD cognitive clarity standards.
+- Hardening fixes: NTFS ADS path evasion fix in `actions/file_controller.py`, D-UCB weighted arm calibration in `core/bandit.py`, metacognitive boundary fix in `custom_jarvis/metacog.py`, safe argument parsing in `actions/code_helper.py`, thread-safe phone signals and HUD glance in `ui.py`, and session summary lock in `memory/memory_manager.py`.
+- `scripts/github_awesome_miner.py`: automated YouTube extraction engine mining 80 channel videos, extracting 2,694 raw mentions into 2,438 deduplicated open-source repos (`docs/GITHUB_AWESOME_CATALOG.md`), with 505 high-impact candidates analyzed in `docs/ULTRON_INTEGRATION_CANDIDATES.md`.
+- 3 native plugins: `plugins/crawler_bridge.py` (Crawl4AI web/markdown scraper), `plugins/minicpm_ocr_bridge.py` (MiniCPM-OCR multimodal edge document parser), and `plugins/agent_monitor_bridge.py` (live agent thread and task observability).
+- Classified in `core/policy.py`, verified with 20 unit tests in `tests/test_native_plugin_bridges.py`, zero ceiling breaches in `tests/test_suite_assistant.py`, and all 71 safety tests green. All committed to `antigravity` (`2f2eb56`) and pushed to remote.
+
