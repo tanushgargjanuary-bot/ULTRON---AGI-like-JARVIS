@@ -43,6 +43,12 @@ Three failures look the same and are not:
 Two shortcuts that avoid the problem: the Windows launcher `py` instead of `python`, and
 `cd` into the repository before any `python scripts\...` command.
 
+Better still, name the folder's own interpreter, which always has the packages:
+
+```powershell
+.venv\Scripts\python.exe scripts\local_model.py check
+```
+
 Copy the command from a web page with care: a chat window can turn `local_model.py` into a
 link, and pasting the link text gives `local_[model.py](http://model.py)` and an error that
 says nothing about the real cause.

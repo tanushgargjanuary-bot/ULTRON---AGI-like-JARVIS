@@ -12,7 +12,7 @@ Three entry points, and only one of them needs care.
 |---|---|---|
 | Double-click **`run.bat`** | Yes, always | Finds a supported Python, builds `.venv` if needed, installs what is missing, starts the app. |
 | **`.venv\Scripts\python.exe main.py`** | Yes | The same Python `run.bat` uses, without the checks. Fastest once the folder is set up. |
-| **`python main.py`** with the system Python | Only if that Python is 3.11–3.13 **and** has the packages | Usually neither. It now says so in two sentences instead of a traceback. |
+| **`python main.py`** with any Python | Yes, once `.venv` exists | A guard notices the wrong interpreter or the missing packages and restarts the same command on `.venv\Scripts\python.exe`. If there is no `.venv`, it says so in two sentences instead of a traceback. |
 
 `run.bat` is the answer to "it will not start". It repairs its own environment: a `.venv`
 built by a Python that has since been removed is moved aside and rebuilt.

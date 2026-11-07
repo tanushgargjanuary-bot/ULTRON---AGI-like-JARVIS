@@ -13,9 +13,19 @@ application; it only chooses the words for a refusal.
 
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
+
 SUPPORTED = ((3, 11), (3, 12), (3, 13))
 SUPPORTED_TEXT = "3.11, 3.12 or 3.13"
 PACKAGE = "PyQt6"
+
+# Set before handing the process to the folder's own Python. If it is already set, the handover
+# has been tried once and the refusal is final, which is what stops a loop between two
+# interpreters that both believe the other one is right.
+MARKER = "ULTRON_RELAUNCHED"
+FOLDER = Path(__file__).resolve().parent.parent
 
 
 def supported(version: tuple) -> bool:
@@ -52,6 +62,37 @@ def missing_package_message(package: str = PACKAGE) -> str:
     )
 
 
+def venv_python(folder: Path | None = None) -> str | None:
+    """The interpreter inside this folder's .venv, or None when there is not one."""
+    base = FOLDER if folder is None else Path(folder)
+    for candidate in (base / ".venv" / "Scripts" / "python.exe", base / ".venv" / "bin" / "python"):
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+def relaunch_target(current: str, venv: str | None, marker: str = "") -> str | None:
+    """The interpreter to hand over to, or None when handing over would be pointless.
+
+    None for three reasons, and each one matters: no .venv, a .venv that is the interpreter
+    already running, and a handover that has already happened once.
+    """
+    if marker or not venv:
+        return None
+    try:
+        if Path(venv).resolve() == Path(current).resolve():
+            return None
+    except OSError:
+        return None
+    return venv
+
+
+def hand_over(python: str, argv: list | None = None) -> None:
+    """Replace this process with the folder's Python, keeping the same arguments."""
+    os.environ[MARKER] = "1"
+    os.execv(python, [python, *(sys.argv if argv is None else argv)])
+
+
 def refuse(message: str) -> None:
     """Stop, with the message as the reason.
 
@@ -68,11 +109,9 @@ def stop_early(version: tuple | None = None, has_package: bool | None = None) ->
     Both arguments exist so the behaviour can be tested without changing the interpreter
     the test suite runs on.
     """
-    import sys
-
     version = sys.version_info if version is None else version
     if not supported(version):
-        refuse(version_message(version))
+        _hand_over_or_refuse(version_message(version))
     if has_package is None:
         try:
             __import__(PACKAGE)
@@ -80,4 +119,12 @@ def stop_early(version: tuple | None = None, has_package: bool | None = None) ->
         except Exception:
             has_package = False
     if not has_package:
-        refuse(missing_package_message())
+        _hand_over_or_refuse(missing_package_message())
+
+
+def _hand_over_or_refuse(message: str) -> None:
+    """Start again on the folder's Python if there is one; otherwise say why not."""
+    target = relaunch_target(sys.executable, venv_python(), os.environ.get(MARKER, ""))
+    if target:
+        hand_over(target)
+    refuse(message)

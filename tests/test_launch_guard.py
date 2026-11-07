@@ -5,7 +5,9 @@ starts a window and installs crash hooks. The guard lives in its own module so t
 the decision can be checked on their own.
 """
 
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from core import launch_guard
@@ -69,6 +71,49 @@ class TheRefusal(unittest.TestCase):
 
     def test_a_good_interpreter_with_the_package_continues(self):
         self.assertIsNone(launch_guard.stop_early(version=(3, 12, 0), has_package=True))
+
+
+class TheHandover(unittest.TestCase):
+    """A wrong interpreter is handed to the folder's Python, once, and never in a loop."""
+
+    def test_a_missing_venv_means_no_handover(self):
+        self.assertIsNone(launch_guard.relaunch_target("/usr/bin/python3", None))
+
+    def test_a_venv_that_is_already_running_is_not_used_again(self):
+        target = launch_guard.relaunch_target("/x/.venv/bin/python", "/x/.venv/bin/python")
+        self.assertIsNone(target)
+
+    def test_a_second_attempt_is_refused_not_repeated(self):
+        target = launch_guard.relaunch_target("/usr/bin/python3", "/x/.venv/bin/python", marker="1")
+        self.assertIsNone(target)
+
+    def test_a_different_interpreter_is_used(self):
+        target = launch_guard.relaunch_target("/usr/bin/python3.14", "/x/.venv/bin/python")
+        self.assertEqual(target, "/x/.venv/bin/python")
+
+    def test_the_venv_is_found_by_shape_not_by_guess(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertIsNone(launch_guard.venv_python(folder))
+            scripts = Path(folder) / ".venv" / "Scripts"
+            scripts.mkdir(parents=True)
+            (scripts / "python.exe").write_text("", encoding="utf-8")
+            self.assertEqual(launch_guard.venv_python(folder), str(scripts / "python.exe"))
+
+    def test_a_failing_check_hands_over_when_the_venv_exists(self):
+        # The real hand_over replaces this process and never returns. The stand-in returns,
+        # so the refusal that follows it is what this test sees - and the call is the point.
+        with patch.object(launch_guard, "venv_python", return_value="/x/.venv/bin/python"), \
+             patch.object(launch_guard, "hand_over") as handed, \
+             patch.dict("os.environ", {}, clear=True):
+            with self.assertRaises(SystemExit):
+                launch_guard.stop_early(version=(3, 14, 0), has_package=True)
+        handed.assert_called_once_with("/x/.venv/bin/python")
+
+    def test_with_no_venv_the_refusal_still_happens(self):
+        with patch.object(launch_guard, "venv_python", return_value=None), \
+             patch.dict("os.environ", {}, clear=True):
+            with self.assertRaises(SystemExit):
+                launch_guard.stop_early(version=(3, 14, 0), has_package=True)
 
 
 if __name__ == "__main__":
