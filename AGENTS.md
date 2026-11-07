@@ -9,6 +9,8 @@ passed a syntax check and did nothing when used.
 this project runs on, how work is done, what is never allowed, and the checklist before a
 push. This file is the rule book for the code; that page is the thinking underneath it.
 
+**Before planning a task, read [`docs/AGENT_WORKSPACE.md`](docs/AGENT_WORKSPACE.md) and run `python scripts/agent_workspace.py`.** Review its commit/path and uncommitted-work report, then inspect the relevant full diffs and files. The script does not fetch or merge. Use `--ack` only after you have actually reviewed the report. Preserve unrelated work from other agents.
+
 ## How the app runs
 
 - `main.py` holds the voice session on an asyncio event loop in a background
@@ -89,9 +91,9 @@ a small built-in fallback — instead of crashing.
 
 - Widgets are created and changed only on the Qt thread.
 - To let other threads trigger a change: add a `pyqtSignal` to `MainWindow`,
-  connect it to a slot in `__init__`, and add a thin public method on
-  `JarvisUI` that only emits the signal. `show_content` / `_content_sig` /
-  `_show_content` is the pattern to copy.
+  connect it to a slot in `__init__`, and add a thin public method on `JarvisUI`
+  that only emits the signal. `show_content` / `_content_sig` / `_show_content`
+  is the pattern to copy.
 - Colours come from the `C` palette class; fonts are `QFont("Courier New", size)`.
 
 ## General
