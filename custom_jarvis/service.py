@@ -28,6 +28,7 @@ from custom_jarvis.failure_memory import RepairCircuitBreaker
 from custom_jarvis.goal_verifier import GoalAssertion, verify_goal
 from custom_jarvis.hot_repair import ContractCase, HotRepairManager
 from custom_jarvis.knowledge import KnowledgeStore
+from custom_jarvis import plan_state
 from custom_jarvis.planner import AutonomousPlanner
 from custom_jarvis.preflight import PreflightDoctor
 from custom_jarvis.self_healing import FailureIncident, RepairLoop
@@ -576,15 +577,23 @@ class CustomService:
             self.breaker.reset()
             return {"breaker_reset": True}
         if operation == "resume_checkpoint":
+            # The payload is optional: with no checkpoint given, the plan this machine
+            # was running when it stopped is the one meant. That file is written by the
+            # planner on every step and removed when the plan ends.
+            checkpoint = p.get("checkpoint") or plan_state.load()
+            if not checkpoint:
+                raise ValueError(
+                    "No saved plan to resume. The file is state/active_plan.json."
+                )
             self._require_approval(
                 operation,
                 {
-                    "goal": p["checkpoint"].get("goal", ""),
+                    "goal": checkpoint.get("goal", ""),
                     "warning": "Only independently reverified file artifacts are skipped; remaining mutations require separate approval.",
                 },
             )
             return self.planner.resume_from_checkpoint(
-                p["checkpoint"], approve_resume=True
+                checkpoint, approve_resume=True
             ).to_dict()
         if operation == "procedure_propose":
             self._require_approval(operation, p)

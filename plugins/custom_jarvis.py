@@ -19,7 +19,8 @@ PLUGIN = {
         "procedure_propose, procedure_approve, procedures, run_procedure, forget. "
         'payload_json examples: set_workspace {"path":"C:/Projects/MyApp"}; '
         'tool {"name":"read_file","arguments":{"path":"README.md"}}; '
-        'run_skill {"id":"ID_FROM_LIST","target":"README.md"}. '
+        'run_skill {"id":"ID_FROM_LIST","target":"README.md"}; '
+        'resume_checkpoint {} continues the plan this machine was running when it stopped. '
         "Never use this as a general Python execution or automatic self-rewrite tool."
     ),
     "parameters": {

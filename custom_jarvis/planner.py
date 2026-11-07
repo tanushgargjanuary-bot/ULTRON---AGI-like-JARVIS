@@ -19,6 +19,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from custom_jarvis import plan_state
 from custom_jarvis import settings as config
 from custom_jarvis.brain import (
     CorrectionDecision,
@@ -189,6 +190,18 @@ class AutonomousPlanner:
         self.on_checkpoint: Optional[Callable[[Dict[str, Any]], None]] = None
 
     def _checkpoint(self, plan: Plan) -> None:
+        # Two records, two lifetimes. `on_checkpoint` is opt-in, holds outputs, and is
+        # gated by an approval. The file is not: it holds steps and never outputs, so a
+        # restart can offer to continue without asking permission to write a plan down.
+        try:
+            if plan.is_completed:
+                plan_state.clear()
+            else:
+                plan_state.save(plan.to_dict())
+        except Exception:
+            # A plan that cannot be written down is still a plan. Losing the resume
+            # is a smaller loss than losing the run that was making it.
+            logger.exception("Could not record the running plan")
         if self.on_checkpoint:
             try:
                 self.on_checkpoint(plan.to_dict())

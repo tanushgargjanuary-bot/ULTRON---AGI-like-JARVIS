@@ -99,6 +99,7 @@ from core import philosophy
 from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
 from core import crash as _crash
+from custom_jarvis import plan_state as _plan_state
 
 # Before anything else that can fail: a crash from here on leaves a file.
 # Under `pythonw` there is no console, so without this the owner's experience
