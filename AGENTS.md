@@ -134,11 +134,26 @@ a small built-in fallback — instead of crashing.
   into the instruction with the maxim. Never give a voice a code path, never let one
   add a permission, and never remove the ceiling on the adversary voice (40%) without
   the owner saying so in his own words.
-- **The workspace stays under 100 MB and 5,000 files, and the number is checked.**
-  Install packages with `--target` to a temporary folder and set `PIP_CACHE_DIR`
-  outside the project. The save after a message keeps about 128 MB and silently drops
-  the rest: this already cost us 6,352 files once. `python scripts/workspace_budget.py`
-  reports it, `scripts/verify.py` fails on it, and `docs/SPACE.md` explains it.
+- **Repository and workspace hygiene is maintained.** While the project is hosted
+  on GitHub and no longer constrained by local ZIP limits, keep file hygiene clean:
+  install packages with `--target` to a temporary folder or virtualenv, keep generated
+  caches ignored, and verify clean workspace boundaries via `scripts/workspace_budget.py`.
+
+## Token efficiency & agent skills (Mandatory for all coding agents)
+
+All AI coding agents (Antigravity, OpenCode, Claude Code, Cursor, Copilot, Cline)
+must read and enforce [`SKILLS.md`](SKILLS.md):
+
+- **Caveman Mode**: Zero conversational filler, pleasantries, or preamble. Start directly
+  with the answer, diff, or action. Retain 100% technical and typed precision.
+- **ADHD Focus Mode**: Zero walls of text (max 2-3 sentences per block). Use bold keywords,
+  clean visual hierarchy, and atomic task chunking (3-5 steps max) for instant 3-second scanability.
+- **Diff Minimalist**: Never reprint untouched code. Use surgical replacements targeting only
+  the modified lines.
+- **Context Economy**: Never dump unbounded terminal logs into the conversation context;
+  use shell-level filtering (`grep`, `Select-String`, `-Tail`). Offload heavy dumps to `scratch/`.
+- **Cross-Branch Pair Review**: When reviewing between `antigravity` and `opencode`, provide
+  dense, objective, invariant-based reviews without conversational padding.
 
 ## Read these first, in this order
 
