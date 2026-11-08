@@ -52,6 +52,7 @@ _SECRETS = (
     re.compile(r"ghp_[A-Za-z0-9]{10,}"),
     re.compile(r"AIza[0-9A-Za-z_\-]{10,}"),
     re.compile(r"sk-[A-Za-z0-9_\-]{10,}"),
+    re.compile(r"(?i)(authorization\s*[:=]\s*bearer)(\s+)([A-Za-z0-9._~+/=-]+)"),
     re.compile(r"(?i)(api[_-]?key|token|password|secret)([\"']?\s*[:=]\s*[\"']?)([^\s\"',}]{6,})"),
 )
 

@@ -94,6 +94,12 @@ class ARecordIsWritten(WithAFolder):
         self.assertNotIn("github_pat_11BZOG", Path(path).read_text())
         self.assertIn("<removed>", Path(path).read_text())
 
+    def test_bearer_authorization_token_is_removed(self):
+        token = "abcdef.fedcba-123456"
+        cleaned = crash.redact(f"Authorization: Bearer {token}")
+        self.assertNotIn(token, cleaned)
+        self.assertIn("Authorization: Bearer <removed>", cleaned)
+
     def test_a_key_named_in_a_dictionary_is_removed(self):
         text = crash.compose('{"api_key": "abcdef1234567890"}')
         self.assertNotIn("abcdef1234567890", text)
