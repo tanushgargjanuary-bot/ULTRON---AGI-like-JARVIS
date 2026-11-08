@@ -10,7 +10,7 @@ This is the current entry point for a new agent. It replaces the old top-level h
 - OwnerFiles organization commit: `aa2f1b0`; PR #12 remains open. Check `git log` for the current final tip because the ZIP refresh may add a follow-up artifact commit.
 - Latest observed CI run for the pushed code: `42529553481`. Linux suite/self-checks and Windows native checks failed. Exact causes have not yet been read from runner logs. Do not say the branch is green; check the live PR for a newer run.
 - Focused tests at `da01db7`: 102 passed, 1 skipped. This is not a full suite result. The skipped test needs real local OCR dependencies.
-- The handoff bundle is being refreshed to include the organized OwnerFiles tree; its source revision and SHA-256 will be listed below after the build.
+- The handoff bundle now includes the organized OwnerFiles tree. Its embedded source snapshot is `d7abf40`; a later artifact/metadata commit updates this archive without embedding itself.
 
 ## Immediate next steps
 
@@ -52,8 +52,10 @@ Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $out
 Get-FileHash -LiteralPath $out -Algorithm SHA256
 ```
 
-- Archive source revision: recorded in the live copy of this page after the bundle is built.
-- ZIP SHA-256: recorded in the live copy of this page. The embedded project snapshot intentionally omits its own final checksum to avoid a self-referential archive.
+- Archive source revision: `d7abf40` (387 project files; `.git` and the ZIP itself excluded).
+- ZIP size: `2,181,523` bytes.
+- ZIP SHA-256: `a8148157085c7155ace212f68dc0980151845e0d73da9d7f4745a86f38c6ef1b`.
+- The embedded project snapshot omits the final archive hash to avoid a self-referential ZIP.
 
 ## Bundle contents and maintenance
 
