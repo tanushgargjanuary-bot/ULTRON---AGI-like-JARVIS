@@ -15,9 +15,9 @@ repository. Everything else is referenced from there.
 |---|---|
 | Build | **1.2.38** (`packaging/version.txt`) |
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
-| Branch/PR | Arena head `ae838e2`; PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both were last confirmed open |
-| CI | PR #12 run `42465596629` passed Linux and Windows on `657b73b`; follow-up run `42467967280` is queued. Kilo review needs account credits; manually triggered CodeRabbit review is still pending |
-| Tests | Prior configured broad run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`. Current focused reload/self-change run: 51 passed. Bare system-Python discovery is incomplete due missing NumPy, psutil, requests and Playwright. README now reports 1,731 discovered cases |
+| Branch/PR | Latest code commit `983a9f6` on `arena/4c973188-ultron-agi-like-jarvis`; PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both were last confirmed open |
+| CI | PR #12 run `42469609070` passed Linux and Windows on `983a9f6`. Kilo review needs account credits; CodeRabbit completed a review of `657b73b` but has not reviewed the follow-up commits |
+| Tests | Prior configured broad run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`. Current focused reload/self-change run: 52 passed; updater tests: 8 passed. Bare system-Python discovery is incomplete due missing third-party packages. README reports 1,732 discovered cases |
 | Static scan | Latest deep scan: 0 high findings, 108 complex functions, 254 library prints, 82 discarded typed exceptions |
 | Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
 | Workspace | no size budget (owner decision, 2026-11-07); generated data stays out of Git |
@@ -42,13 +42,12 @@ lists them. None of them can be closed from a Linux build machine.
   refusal. Self-update defers action/plugin leaves to that boundary but still requires
   restart for core/application code. CI passed on Linux and Windows. This is not a separate
   worker process and does not provide test-carrying proposals.
-- **Reload review follow-up (`ae838e2`):** manual reproduction found stale parent-package
-  attributes and duplicate sibling module identities across a forced reload. The loaders now
-  detach/reattach package attributes and reuse candidate-loaded sibling modules. Added two
-  regressions; 51 focused reload/self-change tests passed. The bare system-Python full-suite
-  attempt is incomplete due missing third-party dependencies. See
-  `OwnerFiles/reload-review-follow-up.md`; run `42467967280` is queued. CodeRabbit has not
-  returned completed findings.
+- **Reload review follow-up (`ae838e2`, `983a9f6`):** manual reproduction found stale
+  parent-package attributes and split sibling module identities; those are fixed. CodeRabbit
+  completed its review of `657b73b`: in-scope startup-scan, mixed-update deferral, and test
+  coverage findings are addressed in `983a9f6`; broader unrelated PR comments remain for
+  owner triage. Focused reload/self-change tests: 52 passed; updater tests: 8 passed. See
+  `OwnerFiles/reload-review-follow-up.md`; CI run `42469609070` is pending.
 - **Still unfinished:** supervisor/worker split, test-carrying proposals, evolution-ledger
   integration, and OCR. Recheck branch tips and open PRs before cleanup or promotion.
 
