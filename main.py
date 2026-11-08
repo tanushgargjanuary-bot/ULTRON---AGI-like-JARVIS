@@ -99,6 +99,7 @@ from core import philosophy
 from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
 from core import crash as _crash
+from custom_jarvis import local_fallback as _local
 from custom_jarvis import mcp_client as _mcp
 from custom_jarvis import plan_state as _plan_state
 
@@ -705,6 +706,9 @@ class JarvisLive:
         # branch below that reads it treats None as "everything is available",
         # so the Live path is exactly what it was.
         self._engine_caps          = None
+        self._local_plan           = None   # set only when the cloud quota is gone
+        self._local_fallback_until = 0.0    # re-check cloud after its daily reset
+        self._local_scan_after     = 0.0    # avoid restarting Ollama on every retry
         # Set only when a local pipeline is running, so push-to-talk can tell it
         # the turn is over. Live decides that on the server; nothing does here.
         self._engine               = None
@@ -2613,11 +2617,21 @@ class JarvisLive:
     # "providers are not installed" — the assistant then runs exactly as it did
     # before any of this existed.
     def _engine_mode(self) -> str:
+        if getattr(self, "_local_plan", None) is not None:
+            return "pipeline"
         try:
             from memory.config_manager import get_provider_mode
             return get_provider_mode()
         except Exception:
             return "gemini"
+
+    def _local_engine_failed(self, plan):
+        """Forget a temporary engine that failed to build; never loop on it."""
+        if plan is None:
+            return
+        self._local_plan = None
+        self._local_fallback_until = 0.0
+        self._local_scan_after = time.monotonic() + 60.0
 
     def _resolve_engine_caps(self):
         """What the chosen engine can do — or None for Gemini Live.
@@ -2628,6 +2642,7 @@ class JarvisLive:
         the same ones the engine gets a moment later, and a misconfiguration is
         reported while there is still a Gemini session to fall back to.
         """
+        local = getattr(self, "_local_plan", None)
         if self._engine_mode() != "pipeline":
             self._pipeline_error = ""
             return None
@@ -2638,25 +2653,22 @@ class JarvisLive:
             from memory.config_manager import get_pipeline, get_provider_config
             from providers import registry
 
-            pipe = get_pipeline()
+            pipe = dict(local["pipeline"]) if local else get_pipeline()
+
+            def settings(pid: str) -> dict:
+                return dict(local["creds"].get(pid) or {}) if local else get_provider_config(pid)
+
             llm_id = str(pipe.get("llm") or "").strip()
             if not llm_id:
                 raise RuntimeError("no language model is chosen")
-            missing = registry.missing_fields(llm_id, get_provider_config(llm_id))
+            missing = registry.missing_fields(llm_id, settings(llm_id))
             if missing:
                 raise RuntimeError(f"{llm_id} needs: {', '.join(missing)}")
-            llm = registry.build(llm_id, get_provider_config(llm_id))
+            llm = registry.build(llm_id, settings(llm_id))
 
-            # Ask the model whether it can see, once, and remember the answer.
-            #
-            # This decides whether `screen_process` is declared at all, so it
-            # has to be settled BEFORE the config is built. Leaving it to the
-            # panel's TEST button meant that anybody who never pressed it ran a
-            # vision model with its eyes switched off — silently, and for every
-            # session. Measured once per model, in about a second, then read
-            # from the settings for ever after.
+            # Vision detection writes settings, so skip it for a temporary local plan.
             from memory.config_manager import save_provider_config
-            ensure = getattr(llm, "ensure_vision_known", None)
+            ensure = None if local else getattr(llm, "ensure_vision_known", None)
             if ensure is not None:
                 try:
                     seen = ensure(lambda v, _id=llm_id: save_provider_config(_id, v))
@@ -2670,6 +2682,7 @@ class JarvisLive:
             caps["audio_out"] = bool(str(pipe.get("tts") or "").strip())
             return caps
         except Exception as e:
+            self._local_engine_failed(local)
             # A local engine that will not start must never mean no assistant —
             # but the fallback has to be one that exists. With no Gemini key,
             # "using Gemini Live" was a promise the next attempt could not keep:
@@ -2692,6 +2705,40 @@ class JarvisLive:
                     )
             print(f"[JARVIS] Pipeline engine unavailable: {e}")
             return None
+
+    async def _switch_to_local(self):
+        """Move the conversation to Ollama on this machine, or say why not.
+
+        Run in an executor: finding a model, starting `ollama serve` and loading the
+        weights are disk and network work, and this is the middle of a conversation.
+        """
+        try:
+            from memory.config_manager import get_pipeline, get_provider_config
+            current = get_pipeline()
+            stt = str(current.get("stt") or "").strip()
+            current["provider_config"] = {stt: get_provider_config(stt)} if stt else {}
+        except Exception:
+            current = {}
+        try:
+            plan = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: _local.plan(current=current)
+            )
+        except Exception as error:                       # a fallback must never crash a turn
+            self.ui.write_log(f"ERR: could not look for a local model — {error}")
+            return None
+        if not plan.get("ok"):
+            self.ui.write_log(f"ERR: {plan.get('note', 'no local model is available')}")
+            return None
+        # Load it now, off the event loop, so the first sentence is the answer and not
+        # the sound of 2 GB coming off the disk.
+        self.ui.write_log(f"SYS: Loading {plan['model']} from Ollama…")
+        warmed = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: _local.warm(plan.get("url") or _local.DEFAULT_URL, plan["model"])
+        )
+        if not warmed:
+            self.ui.write_log(f"ERR: Ollama did not load {plan['model']}; staying on the cloud retry.")
+            return None
+        return plan
 
     @asynccontextmanager
     async def _open_session(self, live_model: str, config):
@@ -2717,7 +2764,8 @@ class JarvisLive:
         from providers import registry
         from providers.engine_pipeline import PipelineEngine
 
-        pipe = get_pipeline()
+        local = getattr(self, "_local_plan", None)
+        pipe = dict(local["pipeline"]) if local else get_pipeline()
 
         def part(slot):
             pid = str(pipe.get(slot) or "").strip()
@@ -2726,7 +2774,7 @@ class JarvisLive:
             # `log` so a provider can say what it is doing — downloading a
             # voice, loading a model — in the activity log rather than only on a
             # console the user may not be watching.
-            cfg = dict(get_provider_config(pid))
+            cfg = dict(local["creds"].get(pid) or {}) if local else dict(get_provider_config(pid))
             cfg["log"] = self.ui.write_log
             return registry.build(pid, cfg)
 
@@ -2757,6 +2805,10 @@ class JarvisLive:
             log  = self.ui.write_log,
         )
         set_trim_notifier(self.ui.write_log)
+        pending_plan = _plan_state.startup_notice()
+        if pending_plan:
+            # Offer the checkpoint; never resume work without the owner's request.
+            self.ui.write_log(pending_plan)
 
         # Tell the device picker the exact rates the streams open at, from the
         # constants that actually open them — so it can never list a device that
@@ -2785,6 +2837,14 @@ class JarvisLive:
         while True:
             try:
                 self._ensure_executor()
+                if (self._local_plan is not None and self._local_fallback_until
+                        and time.monotonic() >= self._local_fallback_until):
+                    # A local switch is not permanent. After a day, give the cloud
+                    # one clean attempt; if quota is still gone, the ladder brings
+                    # us straight back here. Settings were never changed.
+                    self._local_plan = None
+                    self._local_fallback_until = 0.0
+                    self.ui.write_log("SYS: Checking whether the cloud quota has reset.")
                 print("[JARVIS] Connecting...")
                 self.ui.set_state("THINKING")
                 # Pick the rung to open the conversation on. A model resting
@@ -3013,6 +3073,28 @@ class JarvisLive:
                 # limit always arrives mid-conversation.
                 if _gemini.note_live_failure(live_model, err_str):
                     nxt = _gemini.live_model()
+                    # The rung after the last cloud model: this machine.
+                    #
+                    # The ladder steps down through the live models and then retries
+                    # for ever, which is honest but useless — the quota returns
+                    # tomorrow. Ollama is on this laptop and the pipeline engine
+                    # already exists for exactly this day, so the conversation moves
+                    # there instead of stopping. Nothing is written to the settings
+                    # file: the switch retries the cloud after one day.
+                    # When the last rung cools, the picker wraps to the first rung.
+                    exhausted = nxt == live_model or nxt == _gemini.LIVE_MODELS[0]
+                    if (exhausted and self._local_plan is None
+                            and close_codes.kind(err_str) == "quota"
+                            and time.monotonic() >= self._local_scan_after):
+                        self._local_scan_after = time.monotonic() + 60.0
+                        self._local_plan = await self._switch_to_local()
+                        if self._local_plan is not None:
+                            self._local_fallback_until = time.monotonic() + 24 * 60 * 60
+                    if getattr(self, "_local_plan", None):
+                        self.ui.write_log(f"SYS: {self._local_plan['note']}")
+                        self._conn_backoff = _RECONNECT_BASE
+                        self._conn_streak = 0
+                        continue
                     self.ui.write_log(
                         f"SYS: Switching to {nxt.split('/')[-1]} — the previous "
                         f"model is out of quota."
