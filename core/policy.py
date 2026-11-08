@@ -370,10 +370,9 @@ _ACTION_TIERS["tech_platforms"].update({
 
 def _granted(tier: Tier) -> bool:
     """Only an unexpired grant for this exact tier can authorize it."""
-    now = _now()
     with _lock:
         expiry = _grants.get(tier.value)
-        return expiry is not None and expiry > now
+        return expiry is not None and expiry > _now()
 
 
 def _path_inside_workspace(value: Any) -> bool:
