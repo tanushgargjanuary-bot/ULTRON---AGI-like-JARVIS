@@ -394,3 +394,48 @@ Added `python scripts/local_model.py bench`: three tiny jobs, each timed, each s
 before trusting a model with a file, and again after every change.
 
 Not checked: no model pulled here, no server reached, bench never run live.
+
+## 2026-11-07 — local quota fallback, memory recency, and owner handover
+
+**Asked for.** Start coding on the arena branch, take both the small wins and the hard ones,
+and when Gemini reaches its daily limit, find the owner's installed Ollama models and keep
+speaking through one. Also keep a durable project trace in `OwnerFiles/`, so a new chat can
+continue from the repository rather than from a temporary workspace.
+
+**Decision.** Gemini's model ladder remains first. Only a quota-classified error after the
+ladder wraps triggers Ollama. Do not switch on bad keys, bad tool schemas, network failures,
+or model-not-found errors. Do not save a temporary fallback into provider settings: that
+would make tomorrow's normal configuration wrong. Keep the previous value and exact update
+time when a memory fact changes, but keep that history outside the fact store and bound it
+at 50 records.
+
+**Built in the worktree.** `custom_jarvis/local_fallback.py` queries Ollama's loopback
+`/api/tags`, prefers Qwen 4B and then LFM 2B, rejects embedding-only models, starts `ollama
+serve` without a shell if needed, and warms the chosen model before the app changes engines.
+The pipeline uses an available local Whisper recognizer or the configured STT provider. It
+says when STT is still cloud-based, and refuses to claim voice continuity if no recognizer
+exists. It limits small-model tools to 12. The switch lives in memory, retries Gemini after
+24 hours, and throttles failed local scans to once a minute. It does not download a model or
+use elevation.
+
+`memory/memory_manager.py` now stores ISO `updated_at` values beside the old date field,
+shows the timestamp in recall, and writes bounded `{time, path, from, to}` history under
+ignored `state/`. A history write failure does not lose the memory fact. Startup offers an
+existing planner checkpoint; it never resumes a plan without the owner's request.
+
+**Proof.** After the final branch-count refactor, the targeted fallback, memory, plan-state,
+and existing pipeline-fallback tests ran **50 tests successfully**. Deep scan reports **0 high
+findings**; the tracked debts are unchanged at 108 complex functions, 254 library prints,
+and 82 discarded typed exceptions. The latest full suite ran **1,695 tests**, 15 skipped,
+with one Qt setup error because this Linux environment lacks `libGL.so.1`; no other failures
+were reported. README's measured test count is 1,710. No live Gemini key, Ollama server,
+microphone, or Windows machine was available for this session. This is not a green full-suite
+run.
+
+**Not done yet.** This is not all the approved self-evolution work. The generation swap and
+safe leaf reload, worker/supervisor split, test-carrying proposals, evolution ledger, OCR
+rung, and a dedicated after-action risk line remain future slices. Existing `core/outcome.py`
+labels done/unverified/failed/ask results; do not claim that it is a complete risk line.
+**Commits.** Local quota fallback: `59c6cfb`. Memory recency/history: `5763c8d`. Both are
+on `arena/4c973188-ultron-agi-like-jarvis`. They are committed locally but not pushed yet.
+Record the push and PR CI result here after they are sent.

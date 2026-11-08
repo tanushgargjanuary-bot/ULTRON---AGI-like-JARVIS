@@ -141,6 +141,30 @@ commit behind it.
     `OwnerFiles/for-the-next-agent.md`, plus every stale page corrected — including
     one that still said there was no CI.
 
+
+
+## 2026-11-07 — the cloud can run out; the laptop should keep talking
+
+The owner corrected a central assumption: Ollama is already on his PC, with LFM 2B and
+Qwen 4B installed. The fallback therefore belongs on that laptop, not on an Oracle server.
+The cloud ladder stays first. When Gemini reports quota and the ladder is exhausted, Ultron
+checks Ollama's local model list, prefers the known small models, warms one, then moves the
+conversation into the existing speech → model → speech pipeline. It does not alter saved
+provider settings, download a model, or request administrator rights. If speech recognition
+is not available, it says so; an LLM alone cannot hear a voice. The local path is slower than
+Live, and the project record must keep that difference visible.
+
+The same session made memory more temporal: a fact now has an exact update time, and an
+edit records what it replaced in a bounded history under ignored `state/`. That gives a
+future answer a trail instead of pretending the old fact never existed. A saved planner
+checkpoint is offered at startup, but still waits for the owner's explicit request.
+
+This slice is now in two local commits: fallback `59c6cfb`, memory recency `5763c8d`. It is
+not pushed yet. The sandbox cannot import Qt because `libGL.so.1` is missing, and it has no
+live Ollama/Gemini/microphone with which to prove the owner's actual hardware path. The large
+self-evolution steps remain open: safe generation swaps, supervisor/worker, test-carrying
+proposals, the dedicated after-action risk line, and OCR.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered

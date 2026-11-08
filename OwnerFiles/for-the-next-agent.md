@@ -13,13 +13,14 @@ repository. Everything else is referenced from there.
 
 | Item | State |
 |---|---|
-| Build | **1.2.36** (`packaging/version.txt`) |
-| Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `main` |
-| CI | `.github/workflows/verify.yml`, two jobs: `linux` and `windows`. Both green |
-| Tests | 1,737 passed, 8 skipped, on Linux with the optional packages installed |
-| Proof gate | 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on a Linux box without hardware, display or `libGL`; 22 / 13 where the Qt libraries are installed |
-| Workspace | no size budget (withdrawn 2026-11-07 by the owner); generated files stay out of Git |
-| Machine | Windows is the primary target; Linux is where the work is built |
+| Build | **1.2.38** (`packaging/version.txt`) |
+| Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
+| Branch/PR | `59c6cfb` + `5763c8d` are committed locally on the arena branch; PR #12 is open. Owner-file updates are pending commit; code is not pushed yet |
+| CI | `.github/workflows/verify.yml`; recheck PR #12 after the next push. Linux passed on run `42407968327`; Windows was pending at last check |
+| Tests | Latest full run: 1,695 tests, 15 skipped, 1 Qt setup error from missing `libGL.so.1`; no other failures. README count is 1,710 collected test cases |
+| Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
+| Workspace | no size budget (owner decision, 2026-11-07); generated data stays out of Git |
+| Machine | Windows is the primary target; Linux is where work is built |
 
 The 13 open claims are open for a reason the gate prints: Windows-only, audio or display,
 a real key, real hardware, one unclassified, and the owner's own voice. `GATEKEEPERS.md`
@@ -31,9 +32,18 @@ lists them. None of them can be closed from a Linux build machine.
 - **1.2.34** a crash writes a file, and self-repair starts from that file.
 - **1.2.35** one malformed plugin field used to stop the session and blame the API key.
   Fixed, guarded, and proved.
-- **1.2.36** the documents a new agent needs, brought up to date (this pass).
+- **1.2.36** the documents a new agent needs, brought up to date.
+- **1.2.38 / arena worktree:** MCP and the local-model setup path are on branch commit
+  `505e334`. The current uncommitted slice adds Gemini-quota → Ollama fallback, exact
+  memory timestamps/change history, and a startup offer for saved planner work. Read
+  `OwnerFiles/session-log.md` for design decisions and test evidence. This work has not
+  been committed or pushed yet.
+- **Not finished:** safe generation swaps, worker/supervisor split, test-carrying
+  proposals, evolution ledger integration, OCR rung, and a dedicated after-action risk
+  line. Do not mark these done based on the current fallback work.
 
-`log.txt` has the detail of each. `HANDOFF.md` has the phase record.
+`OwnerFiles/session-log.md` has the dated detail. `OwnerFiles/journey.md` has the longer
+project history. `log.txt` and `HANDOFF.md` retain the older phase record.
 
 ## 3. The first three things to run
 
