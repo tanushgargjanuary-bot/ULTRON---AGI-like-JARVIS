@@ -15,9 +15,9 @@ repository. Everything else is referenced from there.
 |---|---|
 | Build | **1.2.38** (`packaging/version.txt`) |
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
-| Branch/PR | Arena head `f5a090b` (generation reload `e763747`, README count correction `f5a090b`); PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both are open |
-| CI | PR #12 run `42464882412` passed Linux and Windows on `f5a090b`. Kilo review needs account credits; CodeRabbit skipped |
-| Tests | Latest broad local run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`; focused leaf run: 134 passed, updater tests: 8 passed. README reports 1,729 discovered test cases |
+| Branch/PR | Arena head `ae838e2`; PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both were last confirmed open |
+| CI | PR #12 run `42465596629` passed Linux and Windows on `657b73b`; follow-up run `42467967280` is queued. Kilo review needs account credits; manually triggered CodeRabbit review is still pending |
+| Tests | Prior configured broad run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`. Current focused reload/self-change run: 51 passed. Bare system-Python discovery is incomplete due missing NumPy, psutil, requests and Playwright. README now reports 1,731 discovered cases |
 | Static scan | Latest deep scan: 0 high findings, 108 complex functions, 254 library prints, 82 discarded typed exceptions |
 | Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
 | Workspace | no size budget (owner decision, 2026-11-07); generated data stays out of Git |
@@ -42,6 +42,13 @@ lists them. None of them can be closed from a Linux build machine.
   refusal. Self-update defers action/plugin leaves to that boundary but still requires
   restart for core/application code. CI passed on Linux and Windows. This is not a separate
   worker process and does not provide test-carrying proposals.
+- **Reload review follow-up (`ae838e2`):** manual reproduction found stale parent-package
+  attributes and duplicate sibling module identities across a forced reload. The loaders now
+  detach/reattach package attributes and reuse candidate-loaded sibling modules. Added two
+  regressions; 51 focused reload/self-change tests passed. The bare system-Python full-suite
+  attempt is incomplete due missing third-party dependencies. See
+  `OwnerFiles/reload-review-follow-up.md`; run `42467967280` is queued. CodeRabbit has not
+  returned completed findings.
 - **Still unfinished:** supervisor/worker split, test-carrying proposals, evolution-ledger
   integration, and OCR. Recheck branch tips and open PRs before cleanup or promotion.
 
