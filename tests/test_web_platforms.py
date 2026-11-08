@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import gzip
 import json
+import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 import urllib.error
 from pathlib import Path
@@ -249,6 +251,49 @@ class OtherPlatforms(Base):
         self.assertFalse(result["ok"])
         for name in platforms.SOURCES:
             self.assertIn(name, result["note"])
+
+
+class WebPageTlsTests(unittest.TestCase):
+    def test_ssl_validation_failure_is_returned_without_insecure_retry(self):
+        script = textwrap.dedent(
+            """
+            import sys
+            from types import ModuleType, SimpleNamespace
+            from unittest.mock import Mock
+
+            class RequestException(Exception):
+                pass
+
+            class SSLError(RequestException):
+                pass
+
+            class Timeout(RequestException):
+                pass
+
+            requests = ModuleType("requests")
+            requests.exceptions = SimpleNamespace(
+                RequestException=RequestException, SSLError=SSLError, Timeout=Timeout
+            )
+            requests.utils = SimpleNamespace(quote=lambda value: value)
+            requests.get = Mock(side_effect=SSLError("certificate verify failed"))
+            sys.modules["requests"] = requests
+
+            from custom_jarvis import tools
+            result = tools.fetch_web_page("https://example.test")
+            assert not result.success, result
+            assert "SSL certificate validation failed" in result.error, result.error
+            assert requests.get.call_count == 1, requests.get.call_count
+            assert "verify" not in requests.get.call_args.kwargs
+            """
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class Plugins(Base):

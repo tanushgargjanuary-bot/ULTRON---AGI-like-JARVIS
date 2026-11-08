@@ -1517,24 +1517,11 @@ def fetch_web_page(
             resp = requests.get(clean_url, headers=headers, timeout=timeout)
             resp.raise_for_status()
         except requests.exceptions.SSLError as ssl_err:
-            # Fallback for development servers with self-signed SSL or corporate proxies
-            logger.warning(
-                f"SSL certificate verification failed for '{clean_url}': {ssl_err}. Retrying with verify=False..."
+            return ToolResult(
+                success=False,
+                output="",
+                error=f"SSL certificate validation failed for '{clean_url}': {ssl_err}",
             )
-            try:
-                import urllib3
-
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                resp = requests.get(
-                    clean_url, headers=headers, timeout=timeout, verify=False
-                )
-                resp.raise_for_status()
-            except Exception as e_verify:
-                return ToolResult(
-                    success=False,
-                    output="",
-                    error=f"SSL certificate validation failed for '{clean_url}': {ssl_err}; insecure fallback failed: {e_verify}",
-                )
         except requests.exceptions.Timeout:
             return ToolResult(
                 success=False,
