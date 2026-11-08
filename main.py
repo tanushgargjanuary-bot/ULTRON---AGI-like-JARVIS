@@ -99,6 +99,7 @@ from core import philosophy
 from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
 from core import crash as _crash
+from core import action_audit as _action_audit
 from custom_jarvis import local_fallback as _local
 from custom_jarvis import mcp_client as _mcp
 from custom_jarvis import plan_state as _plan_state
@@ -1815,6 +1816,9 @@ class JarvisLive:
         # without it the two look identical from the outside.
         print(f"[JARVIS] 📤 {name} ({(time.monotonic() - _t_tool) * 1000:.0f} ms) "
               f"→ {str(result)[:80]}")
+        _audit_line = _action_audit.after_action(name, args, result)
+        if _audit_line:
+            self.ui.write_log(_audit_line)
 
         # A tool that declared itself NON_BLOCKING also says when its answer may
         # re-enter the conversation. Without this the model finishes whatever it
