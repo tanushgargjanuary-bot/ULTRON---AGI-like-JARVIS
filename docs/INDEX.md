@@ -1,6 +1,6 @@
 # Documentation map
 
-Ultron's source is split by responsibility. Use this page to find the right guide without moving files or breaking links that tools, releases, and older notes may rely on.
+Ultron's source is split by responsibility. This page groups guides by task; the long-form reference guides live in `docs/reference/`, while small root pointers preserve older links and packaging paths.
 
 ## Start here
 
@@ -56,9 +56,9 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | [`LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | Why the current implementation language is retained |
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | What each branch holds, what is worth taking; recommendations are not authorization |
-| [`../ALGORITHMS.md`](../ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
-| [`../CUSTOM_ULTRON.md`](../CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
-| [`../PUBLISH.md`](../PUBLISH.md) | Publishing steps, attribution, and license requirements |
+| [`reference/ALGORITHMS.md`](reference/ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
+| [`reference/CUSTOM_ULTRON.md`](reference/CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
+| [`reference/PUBLISH.md`](reference/PUBLISH.md) | Publishing steps, attribution, and license requirements |
 
 ## Project records
 

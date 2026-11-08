@@ -24,6 +24,7 @@ This guide explains where code and project records belong. The current package l
 ├── packaging/                     Release metadata and packaging assets
 ├── .github/                       CI workflows and issue templates
 ├── docs/                          Guides, maps, and technical records
+│   └── reference/                 Long-form algorithms, user, and publishing guides
 ├── OwnerFiles/                    Owner-authored project context and history
 └── run.bat, run.ps1, setup.py, requirements*.txt
                                   Install and launch contracts
@@ -49,6 +50,7 @@ This guide explains where code and project records belong. The current package l
 - `run.bat` and `run.ps1` are the supported launchers. Do not add another launcher or move these files.
 - `AGENTS.md`, `WORKING-PHILOSOPHY.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md` are prominent contributor and safety references; current instructions and links use their root paths.
 - `readme.md`, `LICENSE`, `setup.py`, and the requirements files are standard repository entry points.
+- `ALGORITHMS.md`, `CUSTOM_ULTRON.md`, and `PUBLISH.md` remain as short pointers for old links; the first two also remain in the installer manifest. Their full guides live in `docs/reference/`.
 - `HANDOFF.md` and `log.txt` are project records. Keep the log append-only and update the handoff rather than creating competing status files.
 
 ## Why this pass does not move source files

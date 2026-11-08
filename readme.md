@@ -146,7 +146,7 @@ Then add **one key**: open `config/api_keys.json` and paste a key for the model 
 | Problem | Fix |
 |---|---|
 | "Python 3.14 is not supported" | Install Python 3.12 from python.org. Ultron refuses 3.14 on purpose rather than half-install. |
-| PowerShell refuses `run.ps1` | That is the execution policy, not the file. See **Using PowerShell** in [CUSTOM_ULTRON.md](CUSTOM_ULTRON.md#using-powershell). |
+| PowerShell refuses `run.ps1` | That is the execution policy, not the file. See **Using PowerShell** in [docs/reference/CUSTOM_ULTRON.md](docs/reference/CUSTOM_ULTRON.md#using-powershell). |
 | A package failed | The rest still installs. That one feature is off, and the full pip output is in `setup-log.txt`. |
 | Want to skip the browser engines | Set `ULTRON_SKIP_BROWSERS=1` before the first run. |
 
@@ -205,7 +205,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**273 Python files. 1,732 tests discovered locally; 1,737 tests in the last recorded verification.** Both Python-file and test counts are checked against the tree or recorded run; optional packages can change the test count between machines. The latest full sandbox run after the leaf-generation changes ran 1,714 tests, skipped 15, and exposed an environment-only Qt setup error because `libGL.so.1` is absent. Proof gate, Linux without hardware, display or Qt graphics libraries: **21 PROVEN / 14 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, packages 2, unclassified 2` — because a bare count is not an explanation. One claim returns here as PARTIAL because Qt cannot import without `libGL.so.1`; the CI job installs it and reads 22 / 13 on the previously tested code. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**274 Python files. 1,732 tests discovered locally; 1,737 tests in the last recorded verification.** Both Python-file and test counts are checked against the tree or recorded run; optional packages can change the test count between machines. The latest full sandbox run after the leaf-generation changes ran 1,714 tests, skipped 15, and exposed an environment-only Qt setup error because `libGL.so.1` is absent. Proof gate, Linux without hardware, display or Qt graphics libraries: **21 PROVEN / 14 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, packages 2, unclassified 2` — because a bare count is not an explanation. One claim returns here as PARTIAL because Qt cannot import without `libGL.so.1`; the CI job installs it and reads 22 / 13 on the previously tested code. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
