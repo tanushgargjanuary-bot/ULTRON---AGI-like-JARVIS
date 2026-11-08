@@ -8,7 +8,7 @@ This is the current entry point for a new agent. It replaces the old top-level h
 - Working branch: `arena/4c973188-ultron-agi-like-jarvis` (lowercase suffix)
 - PR #12 is open to `ArenaAi`. Do not merge it or modify `main` without the owner's explicit instruction.
 - OwnerFiles organization commit: `aa2f1b0`; PR #12 remains open. Check `git log` for the current final tip because the ZIP refresh may add a follow-up artifact commit.
-- Latest observed CI run for the pushed code: `42529553481`. Linux suite/self-checks and Windows native checks failed. Exact causes have not yet been read from runner logs. Do not say the branch is green; check the live PR for a newer run.
+- Latest completed CI observed before this metadata update: `42530446726`. Linux suite/self-checks and Windows native checks failed. Exact causes are not available from the sandbox's log summary. Do not say the branch is green; check the live PR for any newer run triggered by this docs update.
 - Focused tests at `da01db7`: 102 passed, 1 skipped. This is not a full suite result. The skipped test needs real local OCR dependencies.
 - The handoff bundle now includes the organized OwnerFiles tree. Its embedded source snapshot is `d7abf40`; a later artifact/metadata commit updates this archive without embedding itself.
 
