@@ -7,10 +7,10 @@ This is the current entry point for a new agent. It replaces the old top-level h
 - Repository: `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - Working branch: `arena/4c973188-ultron-agi-like-jarvis` (lowercase suffix)
 - PR #12 is open to `ArenaAi`. Do not merge it or modify `main` without the owner's explicit instruction.
-- Latest known commit before this folder cleanup: `b2b9bbd` (context archive added). The PR remains open.
-- Latest known CI run: `42529553481`. Linux suite/self-checks and Windows native checks failed. Exact causes have not yet been read from the runner logs. Do not say the current branch is green.
+- OwnerFiles organization commit: `aa2f1b0`; PR #12 remains open. Check `git log` for the current final tip because the ZIP refresh may add a follow-up artifact commit.
+- Latest observed CI run for the pushed code: `42529553481`. Linux suite/self-checks and Windows native checks failed. Exact causes have not yet been read from runner logs. Do not say the branch is green; check the live PR for a newer run.
 - Focused tests at `da01db7`: 102 passed, 1 skipped. This is not a full suite result. The skipped test needs real local OCR dependencies.
-- The latest handoff bundle is `ULTIMATE_Context.zip`; its archive-source revision and SHA-256 are listed below after the bundle is built.
+- The handoff bundle is being refreshed to include the organized OwnerFiles tree; its source revision and SHA-256 will be listed below after the build.
 
 ## Immediate next steps
 
