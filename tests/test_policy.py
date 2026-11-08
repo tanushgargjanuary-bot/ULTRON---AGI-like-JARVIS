@@ -6,6 +6,7 @@ These assert the two directions that matter:
     tool is treated as dangerous rather than trusted.
 """
 
+import ast
 import asyncio
 import tempfile
 import unittest
@@ -16,9 +17,50 @@ from unittest.mock import patch
 from core import confirm, policy
 from core.custom_gate import dispatch
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def args(**kwargs):
     return kwargs
+
+
+class SubprocessSafetyRegressionTests(unittest.TestCase):
+    def test_application_launchers_do_not_enable_a_shell(self):
+        for relative in ("actions/open_app.py", "actions/dev_agent.py"):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            tree = ast.parse(source, filename=relative)
+            offenders = [
+                node.lineno
+                for node in ast.walk(tree)
+                if isinstance(node, ast.Call)
+                and any(
+                    keyword.arg == "shell"
+                    and isinstance(keyword.value, ast.Constant)
+                    and keyword.value.value is True
+                    for keyword in node.keywords
+                )
+            ]
+            self.assertEqual(offenders, [], f"{relative} enables a shell on lines {offenders}")
+
+    def test_vscode_launcher_invokes_the_resolved_executable_directly(self):
+        from actions import dev_agent
+
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = Path(temporary) / "Code.exe"
+            executable.touch()
+            project = Path(temporary) / "project"
+            with (
+                patch.object(dev_agent.shutil, "which", return_value=str(executable)),
+                patch.object(dev_agent.subprocess, "Popen") as popen,
+                patch.object(dev_agent.time, "sleep"),
+                patch("builtins.print"),
+            ):
+                self.assertTrue(dev_agent._open_vscode(project))
+
+        popen.assert_called_once()
+        args, kwargs = popen.call_args
+        self.assertEqual(args[0], [str(executable), str(project)])
+        self.assertFalse(kwargs["shell"])
 
 
 class PolicyClassificationTests(unittest.TestCase):
