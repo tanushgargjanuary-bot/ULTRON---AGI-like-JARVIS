@@ -28,6 +28,8 @@ So the rule for this folder is one sentence:
 | `journey.md` | the build history in plain language: what was asked, what was built, what broke | the assistant, from the build record |
 | `session-log.md` | short dated entries, newest last: what each session did | the assistant, and the owner can append |
 | `owner-notes.md` | the owner's own words: goals, preferences, things he does not want | the owner |
+| `ULTIMATE_Context.zip` | portable source snapshot plus current OpenMausBot handoff, evidence, decisions, and backlog; see `ULTIMATE_Context.md` for hash and download/update instructions | the assistant, from tracked source and session evidence |
+| `ULTIMATE_Context.md` | ZIP provenance, SHA-256, PowerShell download command, and rules for refreshing the snapshot | the assistant, from verifiable bundle facts |
 
 The working philosophy the whole project follows is one level up, in
 [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md): the one rule, how we talk, how a
