@@ -263,6 +263,7 @@ A `SKIP` is never counted as a pass and never as a failure. CI runs all three on
 | Document | What it answers |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | the six layers, one turn end to end, where a change belongs |
+| [docs/STRUCTURE.md](docs/STRUCTURE.md) | the repository map, package responsibilities, and paths that stay stable |
 | [docs/PROMPT.md](docs/PROMPT.md) | your system prompt: read it, change it, go back — and why a change needs two confirmations |
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | the eight AKTU subjects inside it, unit by unit, with the reading ladder |
 | [docs/MENTAL.md](docs/MENTAL.md) | which course topics run as Ultron's own algorithms, and where each one lives |

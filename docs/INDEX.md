@@ -7,6 +7,7 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 | Read | For | Answers |
 |---|---|---|
 | [`../readme.md`](../readme.md) | Everyone | What Ultron does, setup, privacy, and supported capabilities |
+| [`STRUCTURE.md`](STRUCTURE.md) | Contributors | Repository map, package responsibilities, and paths that must stay stable |
 | [`../OwnerFiles/for-the-next-agent.md`](../OwnerFiles/for-the-next-agent.md) | New agents | Current state, first verification commands, and known traps |
 | [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | Contributors | Evidence-first work, debugging, and contribution process |
 | [`../AGENTS.md`](../AGENTS.md) | Coding agents | Hard coding, threading, plugin, and safety rules |
@@ -84,14 +85,7 @@ Ultron's source is split by responsibility. Use this page to find the right guid
 
 ## Repository layout
 
-- `actions/`, `plugins/` — user-facing capabilities. Tools must follow the policy and worker-thread rules.
-- `core/` — shared policy, providers' orchestration, safety, UI/accessibility helpers, and utilities.
-- `providers/` — model, audio, speech, and transport implementations.
-- `custom_jarvis/` — planner, evidence, bounded skills, state, and guarded automation.
-- `memory/`, `config/` — user-approved memory and managed configuration. Never commit private state or keys.
-- `tests/` — regression and contract tests; `scripts/` — verification, packaging, diagnostics, and benchmarks.
-- `dashboard/`, `curriculum/`, `native/`, `sidecar/`, `packaging/` — focused application assets and support components.
-- `OwnerFiles/` — owner context and project history; read before changing behavior or scope.
+The package-level map and its path-stability rules live in [`STRUCTURE.md`](STRUCTURE.md). In brief: `actions/` and `plugins/` hold capabilities; `core/` holds shared runtime and safety; `providers/` and `custom_jarvis/` hold integrations and planning; `memory/` and `config/` hold managed state; `scripts/` and `tests/` hold verification; and `dashboard/`, `curriculum/`, `native/`, `sidecar/`, and `packaging/` hold focused assets. `OwnerFiles/` contains owner context. Do not move private state or keys into source control.
 
 ## Organization rule
 
