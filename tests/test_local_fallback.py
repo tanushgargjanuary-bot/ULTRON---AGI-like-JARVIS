@@ -7,6 +7,7 @@ Ollama answer is the thing most likely to change and the thing a mock cannot tel
 import json
 import threading
 import unittest
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
@@ -144,7 +145,7 @@ class ThePlan(_Server):
         self.assertIn("Speech recognition still uses whisper@groq", plan["note"])
 
     def test_the_plan_writes_nothing(self):
-        source = open(local_fallback.__file__, encoding="utf-8").read()
+        source = Path(local_fallback.__file__).read_text(encoding="utf-8")
         for forbidden in ("save_providers(", "save_provider_config(", "CONFIG_FILE"):
             self.assertNotIn(forbidden, source,
                              "a fallback must not rewrite the settings file")

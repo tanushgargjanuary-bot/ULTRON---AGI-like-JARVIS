@@ -9,10 +9,11 @@
     "Put that back."   -> action "revert"
 
 The rules live in `core/self_change.py`. This file carries the conversation, and it
-never claims a stage that has not happened: a proposal is not a change, a rehearsal
-is not an application, and an applied `.py` file is not running until the process
-starts again. Every one of those three sentences exists because saying otherwise
-would be a lie the owner could not see.
+never claims a stage that has not happened: a proposal is not a change, and a
+rehearsal is not an application. Action/plugin leaves can be staged only at the
+next provider reconnect boundary; other code still requires a process restart.
+Every one of those sentences exists because saying otherwise would be a lie the
+owner could not see.
 """
 
 from __future__ import annotations
@@ -80,10 +81,22 @@ def _apply(parameters: dict) -> str:
     if not proposal_id:
         return "Which change? Ask for 'pending' and I will name them."
     result = self_change.apply(proposal_id)
-    lines = [f"Applied: {result['path']}.", result["note"]]
     marker = self_change.restart_required()
-    if marker and marker.get("change") == proposal_id:
-        lines.append(f"To run it: {self_change.restart_command()}")
+    changed_path = str(result.get("path") or "").replace("\\", "/")
+    is_leaf = (changed_path.startswith(("actions/", "plugins/"))
+               and changed_path.endswith(".py")
+               and changed_path.split("/")[-1] != "__init__.py")
+    if marker and marker.get("change") == proposal_id and is_leaf:
+        lines = [
+            f"Applied: {changed_path}.",
+            "The current registry remains active until the next provider reconnect; "
+            "then the action/plugin generation will be staged and checked.",
+            f"To restart immediately instead: {self_change.restart_command()}",
+        ]
+    else:
+        lines = [f"Applied: {result['path']}.", result["note"]]
+        if marker and marker.get("change") == proposal_id:
+            lines.append(f"To run it: {self_change.restart_command()}")
     return _say(lines)
 
 

@@ -25,6 +25,7 @@ of discover_actions() and never abort the scan of the remaining files.
 """
 from __future__ import annotations
 from core import failures
+from core.leaf_generations import clear_leaf_modules
 
 import importlib.util
 import inspect
@@ -381,8 +382,28 @@ def _safe_traceback() -> str:
         return ""
 
 
+def _load_action_module(path: Path, name: str, force_reload: bool):
+    module = sys.modules.get(name)
+    if module is not None and not force_reload:
+        return module
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError("could not build import spec")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        if force_reload:
+            Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(name, None)
+        raise
+    return module
+
+
 def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
-                     logger: Callable[[str], None] = print) -> ActionRegistry:
+                     logger: Callable[[str], None] = print,
+                     force_reload: bool = False) -> ActionRegistry:
     """
     Scans actions_dir for *.py files (skips files starting with '_'). A file is
     only treated as an action if it exposes a module-level TOOL dict; files
@@ -392,6 +413,7 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
     """
     reserved = reserved_names or set()
     actions_dir.mkdir(parents=True, exist_ok=True)
+    clear_leaf_modules("actions", force_reload)
     valid: dict[str, ActionRecord] = {}
     all_records: list[ActionRecord] = []
 
@@ -401,20 +423,8 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
             continue
         try:
             module_name = f"actions.{path.stem}"
-            # Reuse the already-imported module when present so handlers are the
-            # same objects the rest of the app holds.
-            module = sys.modules.get(module_name)
-            if module is None:
-                spec = importlib.util.spec_from_file_location(module_name, path)
-                if spec is None or spec.loader is None:
-                    raise ImportError("could not build import spec")
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                try:
-                    spec.loader.exec_module(module)
-                except Exception:
-                    sys.modules.pop(module_name, None)
-                    raise
+            # Startup reuses modules. A staged generation asks for fresh leaves.
+            module = _load_action_module(path, module_name, force_reload)
 
             if getattr(module, "TOOL", None) is None:
                 continue   # not an action file — a helper/capture-only module

@@ -20,6 +20,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -295,6 +296,16 @@ class TheTool(WithAFakeProject):
         self.assertEqual(self.read("app.py"), NEW_APP)
         self.assertIn("Put back", self.call(action="revert", change=change))
         self.assertEqual(self.read("app.py"), APP)
+
+        with patch.object(self.tool.self_change, "apply", return_value={
+                "path": "actions/open_app.py", "note": "legacy restart note"}), \
+                patch.object(self.tool.self_change, "restart_required",
+                             return_value={"change": "leaf-change"}), \
+                patch.object(self.tool.self_change, "restart_command",
+                             return_value="run.ps1"):
+            leaf_note = self.tool.ACTIONS["apply"]({"change": "leaf-change"})
+        self.assertIn("next provider reconnect", leaf_note)
+        self.assertIn("restart immediately", leaf_note)
 
     def test_a_protected_file_is_refused_in_words(self):
         said = self.call(action="propose", path="core/policy.py", text="x",

@@ -40,7 +40,7 @@ The refusal is code, not advice. Ultron cannot propose a change to any of them, 
 
 Python cannot replace a method inside a living object. Anyone who says otherwise is describing a development server that restarts.
 
-So a `.py` change is **on disk but not running** until the process starts again. Ultron says that in the same sentence as "applied", writes a restart marker, and gives you the line:
+A change to core/application code is **on disk but not running** until the process starts again. The action/plugin leaves have a narrower path: after the current session ends, the generation manager stages and validates them at the next provider reconnect boundary. They are never reloaded in the middle of a tool call. The self-change action says which case applies; a restart remains available for immediate activation.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\run.ps1

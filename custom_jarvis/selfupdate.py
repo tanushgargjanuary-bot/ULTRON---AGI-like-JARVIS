@@ -22,11 +22,11 @@ So this module does the honest version, in three parts:
 2. **Reload what is genuinely safe to reload.** Everything data-driven: skill
    packs (JSON), the tool catalog, the settings. Those are read from disk each
    time they are needed, so they take a new version with no process restart.
-3. **Ask for the restart only when it is really needed.** If a `.py` file changed,
-   the running process cannot take it. The update is verified, the marker is
-   written, and one sentence says so: the session state is in files (SQLite, the
-   ledger, the workspace), so a restart resumes where it stopped instead of
-   starting again.
+3. **Ask for the restart only when it is really needed.** Changed action/plugin
+   leaves are staged by the running app at its next reconnect boundary; they do
+   not interrupt a tool call. Other `.py` changes still require a process restart.
+   The update is verified, a marker names files that need restart, and one sentence
+   says so: session state is in files, so a restart resumes rather than starts over.
 
 If the new code fails verification, the update is **reverted** to the commit it
 came from. A self-update that leaves the machine on code that does not parse is
@@ -43,6 +43,30 @@ from typing import Callable
 
 TIMEOUT = 120.0
 MARKER = "restart-required.json"
+
+
+def _is_reloadable_leaf(path: str) -> bool:
+    """Action/plugin Python leaves are staged by the app at a reconnect boundary."""
+    normalized = path.replace("\\", "/")
+    return (normalized.endswith(".py") and normalized.split("/")[-1] != "__init__.py"
+            and normalized.startswith(("actions/", "plugins/")))
+
+
+def _code_file_groups(code_files: list[str]) -> tuple[list[str], list[str], bool]:
+    leaf_files = [name for name in code_files if _is_reloadable_leaf(name)]
+    restart_files = [name for name in code_files if name not in leaf_files]
+    return leaf_files, restart_files, bool(leaf_files) and not restart_files
+
+
+def _update_note(restart_required: bool, leaf_files: list[str]) -> str:
+    if restart_required:
+        return ("Updated. Non-leaf code is on disk; a restart is required before "
+                "it runs, and the session state survives it because it lives in "
+                "files, not in memory.")
+    if leaf_files:
+        return ("Updated. Action/plugin code will be staged at the next provider "
+                "reconnect boundary; no process restart is needed.")
+    return "Updated and reloaded. No restart needed: only data changed."
 
 
 def _run(args: list[str], cwd: Path, secret: str = "") -> tuple[int, str, str]:
@@ -111,6 +135,13 @@ class Updater:
                 "note": (f"{behind} new commit(s) on {self.remote}/{branch}" if behind
                          else "This copy is up to date.")}
 
+    def _mark_restart_if_needed(self, before: str, files: list[str]) -> None:
+        if files:
+            self._write_marker({"at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "from": before[:7],
+                                "to": self.git("rev-parse", "--short", "HEAD")[1],
+                                "files": files[:40]})
+
     # ------------------------------------------------------------------ apply
     def apply(self, verify: Callable[[], dict] | None = None) -> dict:
         """Pull, verify, reload what is safe, and ask for a restart only if needed."""
@@ -143,6 +174,7 @@ class Updater:
                         "files": ahead["files"]}
 
         code_files = [name for name in ahead["files"] if name.endswith(".py")]
+        leaf_files, restart_files, leaf_reload_pending = _code_file_groups(code_files)
         data_files = [name for name in ahead["files"] if not name.endswith(".py")]
         reloaded = {}
         for hook in self.hooks:
@@ -151,20 +183,14 @@ class Updater:
             except Exception as error:                         # noqa: BLE001
                 reloaded[getattr(hook, "__name__", "hook")] = {"ok": False,
                                                                "note": str(error)}
-        restart = bool(code_files)
-        if restart:
-            self._write_marker({"at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "from": before[:7],
-                                "to": self.git("rev-parse", "--short", "HEAD")[1],
-                                "files": code_files[:40]})
+        restart = bool(restart_files)
+        self._mark_restart_if_needed(before, restart_files)
+        note = _update_note(restart, leaf_files)
         return {"ok": True, "stage": "updated", "restart_required": restart,
+                "leaf_reload_pending": leaf_reload_pending,
                 "files": ahead["files"], "code_files": code_files,
-                "data_files": data_files, "reloaded": reloaded,
-                "note": ("Updated and reloaded. No restart needed: only data changed."
-                         if not restart else
-                         "Updated. The new code is on disk; a restart is required before "
-                         "it runs, and the session state survives it because it lives in "
-                         "files, not in memory.")}
+                "leaf_files": leaf_files, "restart_files": restart_files,
+                "data_files": data_files, "reloaded": reloaded, "note": note}
 
     def restart_marker(self) -> dict:
         try:

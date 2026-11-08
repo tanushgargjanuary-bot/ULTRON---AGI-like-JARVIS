@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
+from core.leaf_generations import clear_leaf_modules
 from memory.config_manager import get_plugin_enabled, get_plugin_config
 
 _NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$")
@@ -154,6 +155,15 @@ class PluginRegistry:
             })
         return out
 
+    def names(self) -> set[str]:
+        """The active plugin names in this registry generation."""
+        return set(self._plugins)
+
+    def failures(self) -> dict[str, str]:
+        """Invalid plugin files and their reasons, for generation preflight."""
+        return {rec.file: rec.error for rec in self._all_records
+                if not rec.valid and rec.error}
+
     # -- called by ui.py's Plugin Manager overlay --
     def list_for_ui(self) -> list[dict]:
         out = []
@@ -285,9 +295,26 @@ def _load_error(path: Path, plugins_dir: Path, exc: Exception) -> str:
     return f"Failed to load: {exc}"
 
 
+def _load_plugin_module(path: Path, name: str, force_reload: bool):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError("could not build import spec")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        if force_reload:
+            Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(name, None)
+        raise
+    return module
+
+
 def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
                       logger: Callable[[str], None] = print,
-                      notify: Callable[[str], None] | None = None) -> PluginRegistry:
+                      notify: Callable[[str], None] | None = None,
+                      force_reload: bool = False) -> PluginRegistry:
     """
     Scans plugins_dir for *.py files (skips files starting with '_', e.g. __init__.py,
     _template.py, and any shared-helper modules an author prefixes with '_').
@@ -296,6 +323,7 @@ def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
     of remaining files.
     """
     plugins_dir.mkdir(parents=True, exist_ok=True)
+    clear_leaf_modules("plugins", force_reload)
     valid: dict[str, PluginRecord] = {}
     all_records: list[PluginRecord] = []
 
@@ -305,16 +333,7 @@ def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
             continue
         try:
             module_name = f"plugins.{path.stem}"
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            if spec is None or spec.loader is None:
-                raise ImportError("could not build import spec")
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[module_name] = module
-            try:
-                spec.loader.exec_module(module)
-            except Exception:
-                sys.modules.pop(module_name, None)
-                raise
+            module = _load_plugin_module(path, module_name, force_reload)
 
             rec = _validate(module, path.name)
 

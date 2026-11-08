@@ -1,7 +1,7 @@
 # Branch review: what each branch holds, and what is worth taking
 
-**Status:** Recommendations only; no implementation is authorized by this document.
-**Prepared:** 2026-11-07 · **Re-measured:** 2026-11-07, after the `copilot` branch was renamed
+**Status:** Historical recommendations plus dated branch-tip and candidate audits. This is not blanket authorization to merge any branch; follow the owner's reviewed-PR and protected-file constraints.
+**Prepared:** 2026-11-07 · **Re-measured:** 2026-11-08
 **Audience:** Human owner and coding agents working on this repository.
 
 This document collects recommendations from a review of every branch that exists on the remote, plus product-level ideas for making Ultron more useful, reliable, safe, and powerful.
@@ -186,3 +186,20 @@ so they execute.
 
 **Left, deliberately:** everything else on both branches. `antigravity` is mid-flight; taking
 half of a moving branch is how a merge becomes a second merge.
+
+## 2026-11-08 — live promotion and candidate audit
+
+**Branch/PR topology, rechecked from the repository:** `main`=`44ec6db`, `ArenaAi`=`7dcf2d6`, `chatgpt`=`c98ea0f`, `antigravity`=`b8e9334`, and the arena worktree starts at `d4a57c9`. PR #12 is open from the arena branch to `ArenaAi`; PR #8 is open from `ArenaAi` to `main`. Do not delete `ArenaAi` while either PR depends on it. There are no open PRs from `antigravity`. No branch was deleted in this audit.
+
+The owner wants gradual promotion through reviewed PRs, not a wholesale branch merge or a direct write to `main`. The current PRs are broad, so their green CI is evidence about the tested tree, not approval to merge. Keep the arena changes isolated and reviewed in #12; do not treat #8 as an automatic promotion. Before any future main promotion, choose a narrow, independently reviewable slice and preserve the ordered PR dependency.
+
+**Deletion decision:** neither `chatgpt` nor `antigravity` is safe to delete yet. The endpoint comparison `ArenaAi..chatgpt` still differs in 51 files, including an alternate local detector/router, and also removes newer handover, verification, and workspace files. The endpoint comparison `ArenaAi..antigravity` differs in 98 files. Keep both candidate refs until useful changes have been audited and either carried selectively or deliberately discarded with the owner informed. `chatgpt`'s previously carried capability-guide/scout work does not mean its complete current endpoint is redundant.
+
+**Selective `antigravity` review (no code carried):**
+
+- The OCR candidate adds `core/ocr.py` and an OCR choice to `core/ui_ladder.py`, but `extract_words()` has no application call site in the reviewed branch. The tests mock both OCR backends and also include a live `ocr_available()` test that depends on the test machine. The MiniCPM bridge is a separate optional service path. This is a starting point, not an integrated OCR rung; before carrying it, connect a bounded local OCR operation to the actual UI workflow and add deterministic tests for image size/type, no backend, errors, and the no-upload promise.
+- `core/intent_router.py` defines keyword classification and a route logger, but a repository search found no production call to `route_request()`. Its tests exercise classification/routing in isolation; this is not yet application routing. Do not advertise it as a live capability or carry it as a connected feature without call-site and configured-provider tests.
+- `actions/plugin_forge.py` is guarded as a tool, but its "sandbox" is a same-user subprocess with a timeout, not an OS security boundary. The AST check does not make arbitrary Python safe. The model-supplied `tier` parameter can register a forged plugin as `observe` or `routine`, affecting future approvals. Do not carry this forge without an actual isolation boundary and a policy design that cannot self-lower a generated tool's risk.
+- The wider branch includes protected-adjacent and runtime changes; inspect each exact diff and its tests before selection. In particular, do not touch `core/self_change.py` without explicit owner approval, and preserve the laptop/cloud trust boundary.
+
+**Current session slice:** the arena worktree has uncommitted action/plugin generation staging and reconnect-boundary reload code. The self-updater distinguishes those leaves from core/application code, and the self-change tool explains the boundary behavior. Focused generation tests (134) and updater/self-change tests (16) passed; the full 1,714-test run has only the known missing-`libGL.so.1` Qt setup error. The deep scan reported zero high findings; there is no new GitHub CI run yet. Details and remaining limits are in `OwnerFiles/session-log.md`.

@@ -168,6 +168,26 @@ on Linux and Windows. The sandbox's own full run still has one Qt setup error be
 hardware path. The large self-evolution steps remain open: safe generation swaps,
 supervisor/worker, test-carrying proposals, evolution-ledger integration, and OCR.
 
+## 2026-11-08 — action and plugin leaves can stage a new generation
+
+The first safe-reload slice is in the arena worktree, not yet committed. It fingerprints only
+`actions/` and `plugins/`, builds candidate registries at a reconnect boundary, and keeps the
+active registries and module table if an active tool disappears or a new discovery failure
+appears. One preceding generation is retained for rollback. Fresh source loading also clears
+stale bytecode, because same-second, same-size edits once loaded old code. It does not reload
+the referee or change a running tool call. The updater now treats changed action/plugin
+leaves as waiting for that reconnect boundary; core/application Python still requests a
+process restart.
+
+The focused combined test run passed **134 tests**, and the deep scan returned **0 high
+findings** (108 complex functions). The latest full run executed **1,714 tests**, skipped 15,
+and stopped on one Qt setup error because this sandbox lacks `libGL.so.1`; no code-test
+failures remained after updating the README's live counts and removing duplicated test
+cleanup. This is not a separate worker process; it does not rehearse generated proposals
+before approval, and the rollback is not yet an owner-facing control. No live UI session,
+Windows run, or GitHub CI run has tested this worktree change. See `OwnerFiles/session-log.md`
+for the exact scope and branch state.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered

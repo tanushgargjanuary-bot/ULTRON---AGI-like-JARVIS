@@ -100,6 +100,7 @@ from core import reconnect_policy as _reconnect
 from core import tool_prompt, tool_usage
 from core import crash as _crash
 from core import action_audit as _action_audit
+from core.leaf_generations import LeafGenerations
 from custom_jarvis import local_fallback as _local
 from custom_jarvis import mcp_client as _mcp
 from custom_jarvis import plan_state as _plan_state
@@ -789,12 +790,15 @@ class JarvisLive:
 
         _base_dir = Path(__file__).resolve().parent
         _inline_names = {t["name"] for t in TOOL_DECLARATIONS}
+        self._leaf_action_dir = _base_dir / "actions"
+        self._leaf_plugin_dir = _base_dir / "plugins"
+        self._leaf_reserved_names = set(_inline_names)
 
         # File-backed tools: every actions/*.py with a TOOL dict, discovered the
         # same way plugins are. Reserved names = the inline tools above, so an
         # action can never shadow one.
         self._action_registry = discover_actions(
-            actions_dir=_base_dir / "actions",
+            actions_dir=self._leaf_action_dir,
             reserved_names=_inline_names,
             logger=lambda msg: print(f"[Actions] {msg}"),
         )
@@ -817,13 +821,17 @@ class JarvisLive:
         # Plugins must not collide with either an inline tool or a discovered action.
         _core_names = _inline_names | self._action_registry.names()
         self._plugin_registry = discover_plugins(
-            plugins_dir=_base_dir / "plugins",
+            plugins_dir=self._leaf_plugin_dir,
             core_tool_names=_core_names,
             # Console gets the full boot transcript; the activity log gets only
             # what the user has to know about. Every plugin loading correctly is
             # the expected case and does not belong in their conversation.
             logger=lambda msg: print(f"[Plugins] {msg}"),
             notify=lambda msg: self.ui.write_log(f"SYS: {msg}"),
+        )
+        self._leaf_generations = LeafGenerations(
+            (self._leaf_action_dir, self._leaf_plugin_dir),
+            self._action_registry, self._plugin_registry,
         )
         # MCP: one adaptor for the tools the owner already runs. The list is read from
         # config/mcp_servers.json — nothing is installed, nothing is fetched, and a
@@ -2613,6 +2621,40 @@ class JarvisLive:
 
     # ── main loop ───────────────────────────────────────────────────────────
 
+    def _refresh_leaf_generation(self):
+        """Reload only action/plugin leaves after the last session has closed."""
+        manager = getattr(self, "_leaf_generations", None)
+        if manager is None:
+            return
+
+        def build():
+            actions = discover_actions(
+                self._leaf_action_dir,
+                reserved_names=self._leaf_reserved_names,
+                logger=lambda msg: print(f"[Actions] {msg}"),
+                force_reload=True,
+            )
+            plugins = discover_plugins(
+                plugins_dir=self._leaf_plugin_dir,
+                core_tool_names=self._leaf_reserved_names | actions.names(),
+                logger=lambda msg: print(f"[Plugins] {msg}"),
+                notify=lambda msg: self.ui.write_log(f"SYS: {msg}"),
+                force_reload=True,
+            )
+            return actions, plugins
+
+        result = manager.refresh(build)
+        if result.get("changed"):
+            self._action_registry = manager.active.actions
+            self._plugin_registry = manager.active.plugins
+            self.ui.get_plugins = self._plugin_registry.list_for_ui
+            self.ui.get_plugin_settings = self._plugin_registry.settings_schemas
+            self.ui.write_log(
+                f"SYS: Action/plugin generation {manager.active.number} loaded at reconnect."
+            )
+        elif not result.get("ok") and not result.get("already_reported"):
+            self.ui.write_log(f"ERR: {result.get('note', 'leaf generation refused')}")
+
     # ── Which engine holds the conversation ──────────────────────────────────
     # Everything in this section is inert on a default install: `_engine_mode()`
     # reads one key out of the config that is already loaded, gets "gemini", and
@@ -2841,6 +2883,9 @@ class JarvisLive:
         while True:
             try:
                 self._ensure_executor()
+                # The previous session and every awaited tool call are over here.
+                # Stage/swap leaf code only at this boundary, never mid-step.
+                self._refresh_leaf_generation()
                 if (self._local_plan is not None and self._local_fallback_until
                         and time.monotonic() >= self._local_fallback_until):
                     # A local switch is not permanent. After a day, give the cloud

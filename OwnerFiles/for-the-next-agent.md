@@ -15,10 +15,10 @@ repository. Everything else is referenced from there.
 |---|---|
 | Build | **1.2.38** (`packaging/version.txt`) |
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
-| Branch/PR | `59c6cfb`, `5763c8d`, `048aed1`, `5825ad1`, and `dab95a7` are pushed to the arena branch; PR #12 is open |
-| CI | Run `42459569545`: Linux and Windows passed. Kilo Code Review is `ACTION_REQUIRED`; CodeRabbit was skipped |
-| CI | `.github/workflows/verify.yml`; recheck PR #12 after the next push. Linux passed on run `42407968327`; Windows was pending at last check |
-| Tests | Latest full run: 1,695 tests, 15 skipped, 1 Qt setup error from missing `libGL.so.1`; no other failures. README count is 1,710 collected test cases |
+| Branch/PR | Base tip `d4a57c9`; leaf-generation reloads are currently **uncommitted**. PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both are open |
+| CI | Latest recorded PR #12 run `42460444332`: Linux and Windows passed. This run predates the uncommitted leaf-generation changes |
+| Tests | Latest broad local run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`; focused leaf run: 134 passed, updater tests: 8 passed. README reports 1,729 discovered test cases |
+| Static scan | Latest deep scan: 0 high findings, 108 complex functions, 254 library prints, 82 discarded typed exceptions |
 | Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
 | Workspace | no size budget (owner decision, 2026-11-07); generated data stays out of Git |
 | Machine | Windows is the primary target; Linux is where work is built |
@@ -34,14 +34,16 @@ lists them. None of them can be closed from a Linux build machine.
 - **1.2.35** one malformed plugin field used to stop the session and blame the API key.
   Fixed, guarded, and proved.
 - **1.2.36** the documents a new agent needs, brought up to date.
-- **1.2.38 / arena worktree:** MCP and the local-model setup path are on branch commit
-  `505e334`. The current uncommitted slice adds Gemini-quota → Ollama fallback, exact
-  memory timestamps/change history, and a startup offer for saved planner work. Read
-  `OwnerFiles/session-log.md` for design decisions and test evidence. This work has not
-  been committed or pushed yet.
-- **Not finished:** safe generation swaps, worker/supervisor split, test-carrying
-  proposals, evolution ledger integration, OCR rung, and a dedicated after-action risk
-  line. Do not mark these done based on the current fallback work.
+- **1.2.38 / arena branch:** MCP, local-model setup, Gemini-quota → Ollama fallback,
+  exact memory timestamps/change history, saved-plan startup offer, and after-action risk
+  line are pushed on the arena branch. See `OwnerFiles/session-log.md` for evidence.
+- **Current uncommitted slice:** transactional action/plugin generation staging and
+  reconnect-boundary leaf reloads, with fresh source loading, preflight and rollback on
+  refusal. Self-update now leaves action/plugin changes for that boundary but still
+  requires restart for core/application code. Focused tests pass; it has not been committed
+  or pushed. This is not a separate worker process and does not provide test-carrying proposals.
+- **Still unfinished:** supervisor/worker split, test-carrying proposals, evolution-ledger
+  integration, and OCR. Recheck branch tips and open PRs before cleanup or promotion.
 
 `OwnerFiles/session-log.md` has the dated detail. `OwnerFiles/journey.md` has the longer
 project history. `log.txt` and `HANDOFF.md` retain the older phase record.

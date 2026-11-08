@@ -222,6 +222,28 @@ class Updating(Base):
         self.assertFalse(result["restart_required"])
         self.assertIn("No restart needed", result["note"])
 
+    def test_action_plugin_leaf_update_waits_for_reconnect_not_restart(self):
+        self.advance_origin("actions/example.py", "VALUE = 2\n")
+        updater = Updater(self.work, marker=self.work / "restart.json")
+        result = updater.apply()
+        self.assertTrue(result["ok"], result)
+        self.assertFalse(result["restart_required"])
+        self.assertTrue(result["leaf_reload_pending"])
+        self.assertEqual(result["leaf_files"], ["actions/example.py"])
+        self.assertIn("reconnect boundary", result["note"])
+        self.assertEqual(updater.restart_marker(), {})
+
+    def test_non_leaf_code_still_requires_restart_with_mixed_changes(self):
+        self.advance_origin("actions/example.py", "VALUE = 2\n")
+        self.advance_origin("core/example.py", "VALUE = 3\n")
+        updater = Updater(self.work, marker=self.work / "restart.json")
+        result = updater.apply()
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(result["restart_required"])
+        self.assertFalse(result["leaf_reload_pending"])
+        self.assertEqual(result["restart_files"], ["core/example.py"])
+        self.assertEqual(updater.restart_marker()["files"], ["core/example.py"])
+
     def test_a_version_that_fails_its_checks_is_put_back(self):
         self.advance_origin("broken.py", "def broken(:\n")
         before = git(self.work, "rev-parse", "HEAD")
