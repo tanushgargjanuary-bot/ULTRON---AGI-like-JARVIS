@@ -540,6 +540,46 @@ class AutonomyUpgradeTests(unittest.TestCase):
         self.assertEqual(calls.call_count, 1)
         self.assertEqual((self.root / "new.txt").read_text(), "approved text")
 
+    def test_disk_checkpoint_restarts_at_step_three_after_step_two(self):
+        """Persist after step two, reload in a fresh planner, and run only step three."""
+        folder = self.base / "plan-state-restart"
+        artifact = file_digest(self.root / "note.txt")
+        completed = [
+            PlanStep(
+                step_id,
+                f"completed step {step_id}",
+                "read_file",
+                {"path": "note.txt"},
+                status=StepStatus.COMPLETED,
+                artifact_sha256=artifact,
+            ).to_dict()
+            for step_id in (1, 2)
+        ]
+        pending = PlanStep(
+            3, "write after restart", "write_file",
+            {"path": "step-three.txt", "content": "resumed at three"},
+        ).to_dict()
+        checkpoint = {
+            "goal": "continue after step two",
+            "workspace": str(self.root.resolve()),
+            "current_step_index": 2,
+            "steps": [*completed, pending],
+        }
+
+        with patch.object(plan_state, "FOLDER", folder):
+            self.assertTrue(plan_state.save(checkpoint))
+            reloaded = plan_state.load()
+            self.assertEqual(reloaded["current_step_index"], 2)
+            with patch.object(self.raw, "execute", wraps=self.raw.execute) as calls:
+                result = AutonomousPlanner(
+                    brain=MagicMock(), tool_registry=self.control, verbose=False
+                ).resume_from_checkpoint(reloaded)
+
+        self.assertTrue(result.success)
+        self.assertEqual(calls.call_count, 1, "only the pending third step should execute")
+        self.assertEqual(calls.call_args.args[0], "write_file")
+        self.assertEqual((self.root / "step-three.txt").read_text(), "resumed at three")
+
     def test_checkpoint_resume_rejects_unpersisted_step_output_references(self):
         completed = PlanStep(
             1, "read", "read_file", {"path": "note.txt"},

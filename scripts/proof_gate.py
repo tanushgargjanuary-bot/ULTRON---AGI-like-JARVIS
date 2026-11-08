@@ -86,6 +86,112 @@ class Claim:
 
 
 # ── claims ───────────────────────────────────────────────────────────────────
+def claim_policy_grants(c: Claim) -> None:
+    """An unrelated live grant cannot extend an expired sensor permission."""
+    from core import policy
+
+    previous_clock = policy._clock
+    previous_grants = dict(policy._grants)
+    try:
+        policy.revoke()
+        policy._clock = lambda: 100.0
+        policy.grant("sensor", 0)
+        policy.grant("routine", 60)
+        decision = policy.decide("computer_control", {"action": "screenshot"})
+        if decision.allow:
+            return c.bad("expired grant", "a live routine grant kept expired sensor access allowed")
+        if decision.tier is not policy.Tier.SENSOR:
+            return c.bad("sensor classification", f"unexpected tier: {decision.tier}")
+        c.ok("expired grant", "the expired sensor grant is refused despite a live routine grant")
+        policy.grant("sensor", 60)
+        if not policy.decide("computer_control", {"action": "screenshot"}).allow:
+            return c.bad("live grant", "a live sensor grant was not honored")
+        c.ok("live grant", "the requested tier's own live grant is honored")
+    finally:
+        policy._grants.clear()
+        policy._grants.update(previous_grants)
+        policy._clock = previous_clock
+
+
+def claim_mcp(c: Claim) -> None:
+    """Start a local fake MCP server, expose two tools, enforce policy, stop it."""
+    import textwrap
+
+    from core import policy
+    from custom_jarvis.mcp_client import Client, McpError
+
+    server = textwrap.dedent('''\
+        import json, sys
+        tools = [
+            {"name": "first", "description": "first", "inputSchema": {"type": "object"}},
+            {"name": "second", "description": "second", "inputSchema": {"type": "object"}},
+        ]
+        for line in sys.stdin:
+            try:
+                request = json.loads(line)
+            except Exception:
+                continue
+            identity = request.get("id")
+            method = request.get("method")
+            if identity is None:
+                continue
+            if method == "initialize":
+                result = {"protocolVersion": "2024-11-05", "capabilities": {},
+                          "serverInfo": {"name": "proof", "version": "1"}}
+            elif method == "tools/list":
+                result = {"tools": tools}
+            else:
+                result = {"content": [{"type": "text", "text": "ok"}]}
+            print(json.dumps({"jsonrpc": "2.0", "id": identity, "result": result}), flush=True)
+    ''')
+    client = None
+    process = None
+    with tempfile.TemporaryDirectory(prefix="ultron-mcp-proof-") as folder:
+        script = Path(folder) / "server.py"
+        script.write_text(server, encoding="utf-8")
+        client = Client({"name": "proof", "command": sys.executable,
+                         "args": [str(script)]}, timeout=3.0)
+        try:
+            client.start()
+            process = client._process
+            declarations = client.declarations()
+            names = [row["name"] for row in declarations]
+            if names != ["mcp_proof_first", "mcp_proof_second"]:
+                return c.bad("tool catalogue", f"expected two tools, got {names}")
+            c.ok("tool catalogue", "both fake-server tools became prefixed declarations")
+            if any(policy.classify(name, {}).allow for name in names):
+                return c.bad("unknown-server policy", "an MCP tool bypassed the guarded default")
+            c.ok("unknown-server policy", "both new tool names remain guarded by native policy")
+        except (McpError, OSError, TypeError, ValueError) as exc:
+            return c.bad("fake MCP server", f"{type(exc).__name__}: {exc}")
+        finally:
+            if client is not None:
+                client.close()
+        if process is None or process.poll() is None:
+            return c.bad("process lifecycle", "the fake server remained alive after client.close()")
+        c.ok("process lifecycle", "client.close() stopped the owned server process")
+
+        dying_script = Path(folder) / "dies.py"
+        dying_script.write_text("import sys\nsys.stdin.readline()\nsys.exit(3)\n", encoding="utf-8")
+        dying = Client({"name": "dies", "command": sys.executable,
+                        "args": [str(dying_script)]}, timeout=2.0)
+        dying_process = None
+        try:
+            try:
+                dying.start()
+            except McpError:
+                dying_process = dying._process
+                c.ok("crashed server", "a server that exited during handshake was contained")
+            else:
+                dying_process = dying._process
+                c.bad("crashed server", "a server that exited during handshake was accepted")
+        finally:
+            dying.close()
+        if dying_process is not None and dying_process.poll() is None:
+            return c.bad("crashed process cleanup", "the failed server process remained alive")
+        c.ok("crashed process cleanup", "the failed server process was reaped")
+
+
 def claim_voice_in(c: Claim) -> None:
     """It hears you, and understands the words."""
     try:
@@ -2115,6 +2221,10 @@ def claim_sidecar(c: Claim) -> None:
 
 
 CLAIMS = [
+    ("policy_grants", "Expired grants cannot authorize their tier.",
+     "a grant only authorizes its own unexpired tier", claim_policy_grants),
+    ("mcp", "Local MCP tools are listed, guarded, and stopped with their server.",
+     "MCP local process lifecycle and fail-closed policy", claim_mcp),
     ("voice_in", "It hears you.", "voice-first assistant", claim_voice_in),
     ("voice_out", "It answers out loud.", "voice-first assistant", claim_voice_out),
     ("brain", "It thinks with a real model.", "no named-model policy", claim_brain),

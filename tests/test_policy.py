@@ -171,6 +171,11 @@ class GrantTests(unittest.TestCase):
         policy.revoke()
         self.assertFalse(policy.decide("camera", {}).allow)
 
+    def test_a_live_other_tier_cannot_keep_an_expired_sensor_grant_alive(self):
+        policy.grant("sensor", 0)
+        policy.grant("routine", 60)
+        self.assertFalse(policy.decide("computer_control", {"action": "screenshot"}).allow)
+
     def test_a_grant_does_not_unlock_destructive_actions(self):
         policy.grant("sensor", 600)
         self.assertFalse(policy.decide("send_message", {}).allow)
