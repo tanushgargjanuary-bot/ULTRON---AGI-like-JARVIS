@@ -25,7 +25,11 @@ of discover_actions() and never abort the scan of the remaining files.
 """
 from __future__ import annotations
 from core import failures
-from core.leaf_generations import clear_leaf_modules
+from core.leaf_generations import (
+    attach_leaf_module,
+    clear_leaf_modules,
+    detach_leaf_module,
+)
 
 import importlib.util
 import inspect
@@ -384,18 +388,23 @@ def _safe_traceback() -> str:
 
 def _load_action_module(path: Path, name: str, force_reload: bool):
     module = sys.modules.get(name)
-    if module is not None and not force_reload:
+    # After clear_leaf_modules(), any module already present during a forced scan
+    # was imported from this candidate generation as a sibling dependency. Reuse it
+    # rather than replacing it and leaving importers holding a split-generation ref.
+    if module is not None:
         return module
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise ImportError("could not build import spec")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
+    attach_leaf_module(name, module)
     try:
         if force_reload:
             Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
         spec.loader.exec_module(module)
     except Exception:
+        detach_leaf_module(name, module)
         sys.modules.pop(name, None)
         raise
     return module

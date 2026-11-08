@@ -17,7 +17,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from core.leaf_generations import clear_leaf_modules
+from core.leaf_generations import (
+    attach_leaf_module,
+    clear_leaf_modules,
+    detach_leaf_module,
+)
 from memory.config_manager import get_plugin_enabled, get_plugin_config
 
 _NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$")
@@ -296,16 +300,23 @@ def _load_error(path: Path, plugins_dir: Path, exc: Exception) -> str:
 
 
 def _load_plugin_module(path: Path, name: str, force_reload: bool):
+    module = sys.modules.get(name)
+    # In a forced scan, a present module was imported by another member of this
+    # freshly-cleared candidate generation. Keep its identity coherent for importers.
+    if force_reload and module is not None:
+        return module
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise ImportError("could not build import spec")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
+    attach_leaf_module(name, module)
     try:
         if force_reload:
             Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
         spec.loader.exec_module(module)
     except Exception:
+        detach_leaf_module(name, module)
         sys.modules.pop(name, None)
         raise
     return module

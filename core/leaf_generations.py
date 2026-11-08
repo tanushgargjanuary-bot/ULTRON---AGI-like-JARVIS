@@ -12,6 +12,7 @@ when a conversation session and its tool calls have ended.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,14 +38,38 @@ def tree_signature(roots: tuple[Path, ...]) -> str:
     return digest.hexdigest()
 
 
+def attach_leaf_module(name: str, module: object) -> None:
+    """Keep the parent package attribute consistent with its sys.modules entry."""
+    parent_name, separator, child_name = name.rpartition(".")
+    if not separator:
+        return
+    parent = sys.modules.get(parent_name)
+    if parent is None:
+        try:
+            parent = importlib.import_module(parent_name)
+        except ImportError:
+            return
+    setattr(parent, child_name, module)
+
+
+def detach_leaf_module(name: str, module: object) -> None:
+    parent_name, separator, child_name = name.rpartition(".")
+    parent = sys.modules.get(parent_name) if separator else None
+    if parent is not None and getattr(parent, "__dict__", {}).get(child_name) is module:
+        delattr(parent, child_name)
+
+
 def clear_leaf_modules(package: str, force_reload: bool) -> None:
-    """Drop one leaf package's loaded modules before a forced source reload."""
+    """Drop one leaf package's modules and package attributes before reload."""
     if not force_reload:
         return
     prefix = f"{package}."
-    for name in list(sys.modules):
-        if name.startswith(prefix):
-            sys.modules.pop(name, None)
+    names = sorted((name for name in sys.modules if name.startswith(prefix)),
+                   key=lambda name: name.count("."), reverse=True)
+    for name in names:
+        module = sys.modules.pop(name, None)
+        if module is not None:
+            detach_leaf_module(name, module)
 
 
 def _modules() -> dict[str, object]:
@@ -53,10 +78,15 @@ def _modules() -> dict[str, object]:
 
 
 def _restore_modules(saved: dict[str, object]) -> None:
-    for name in list(sys.modules):
-        if name.startswith(_PREFIXES):
-            sys.modules.pop(name, None)
+    current = sorted((name for name in sys.modules if name.startswith(_PREFIXES)),
+                     key=lambda name: name.count("."), reverse=True)
+    for name in current:
+        module = sys.modules.pop(name, None)
+        if module is not None:
+            detach_leaf_module(name, module)
     sys.modules.update(saved)
+    for name in sorted(saved, key=lambda value: value.count(".")):
+        attach_leaf_module(name, saved[name])
 
 
 def _clear_bytecode(roots: tuple[Path, ...]) -> None:
