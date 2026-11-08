@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from datetime import datetime
 from threading import Lock, RLock
@@ -14,6 +15,11 @@ def get_base_dir() -> Path:
 
 BASE_DIR         = get_base_dir()
 MEMORY_PATH      = BASE_DIR / "memory" / "long_term.json"
+# What changed, and what it was before. Kept apart from the store on purpose: a
+# history inside long_term.json grows every entry and would push the real facts out
+# through the size guard. This file is bounded to the last CHANGES_MAX writes.
+CHANGES_PATH     = BASE_DIR / "state" / "memory_changes.json"
+CHANGES_MAX      = 50
 _lock            = Lock()
 # One read-modify-write, indivisible.
 #
@@ -107,7 +113,8 @@ def _trim_to_limit(memory: dict) -> dict:
     if len(json.dumps(memory, ensure_ascii=False)) <= MEMORY_MAX_CHARS:
         return memory
     entries = _all_entries(memory)
-    entries.sort(key=lambda t: t[2].get("updated", "0000-00-00"))
+    entries.sort(key=lambda t: t[2].get("updated_at") or
+                 t[2].get("updated", "0000-00-00"))
     dropped = []
     for cat, key, _ in entries:
         if len(json.dumps(memory, ensure_ascii=False)) <= MEMORY_MAX_CHARS:
@@ -143,7 +150,8 @@ def _truncate_value(val: str) -> str:
     return val
 
 
-def _recursive_update(target: dict, updates: dict) -> bool:
+def _recursive_update(target: dict, updates: dict, changes: list | None = None,
+                      trail: tuple = ()) -> bool:
     changed = False
     for key, value in updates.items():
         if value is None:
@@ -154,7 +162,7 @@ def _recursive_update(target: dict, updates: dict) -> bool:
             if key not in target or not isinstance(target[key], dict):
                 target[key] = {}
                 changed = True
-            if _recursive_update(target[key], value):
+            if _recursive_update(target[key], value, changes, trail + (key,)):
                 changed = True
         else:
             existing_cat = target.get(key)
@@ -167,9 +175,20 @@ def _recursive_update(target: dict, updates: dict) -> bool:
                       f"single value — entries would be lost.")
                 continue
             new_val  = _truncate_value(str(value["value"] if isinstance(value, dict) else value))
-            entry    = {"value": new_val, "updated": datetime.now().strftime("%Y-%m-%d")}
+            now = datetime.now()
+            entry = {"value": new_val, "updated": now.strftime("%Y-%m-%d"),
+                     "updated_at": now.isoformat(timespec="seconds")}
             existing = target.get(key, {})
             if not isinstance(existing, dict) or existing.get("value") != new_val:
+                if changes is not None:
+                    # What it said before, so "you told me the opposite last week" is a
+                    # sentence this assistant can answer instead of deny.
+                    changes.append({
+                        "at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "path": "/".join(trail + (key,)),
+                        "from": _entry_value(existing),
+                        "to": new_val,
+                    })
                 target[key] = entry
                 changed = True
     return changed
@@ -180,10 +199,39 @@ def update_memory(memory_update: dict) -> dict:
         return load_memory()
     with _write_lock:
         memory = load_memory()
-        if _recursive_update(memory, memory_update):
+        changes: list = []
+        if _recursive_update(memory, memory_update, changes):
             save_memory(memory)
+            # The fact is already written. History failure cannot lose it.
+            _record_changes(changes)
             print(f"[Memory] 💾 Saved: {list(memory_update.keys())}")
         return memory
+
+
+def _record_changes(rows: list) -> None:
+    """Newest first, bounded. A history that grows without a limit is a disk leak."""
+    if not rows:
+        return
+    known = changes(limit=CHANGES_MAX)
+    kept = (list(reversed(rows)) + known)[:CHANGES_MAX]
+    try:
+        CHANGES_PATH.parent.mkdir(parents=True, exist_ok=True)
+        CHANGES_PATH.write_text(json.dumps(kept, indent=2, ensure_ascii=False),
+                                encoding="utf-8")
+    except OSError as error:
+        logging.getLogger("memory").warning("could not record memory change: %s", error)
+
+
+def changes(limit: int = 10) -> list:
+    """The last `limit` changes, newest first. Never raises: this is a record, not a guard."""
+    try:
+        rows = json.loads(CHANGES_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(rows, list):
+        return []
+    clean = [row for row in rows if isinstance(row, dict)]
+    return clean[:max(1, int(limit))]
 
 def _entry_value(entry) -> str:
     """Accept both the {'value': ..., 'updated': ...} shape and a bare string,
@@ -267,7 +315,8 @@ def format_memory_for_prompt(memory: dict | None) -> str:
             val = _entry_value(entry)
             if not val:
                 continue
-            updated = (entry.get("updated", "") if isinstance(entry, dict) else "") or "0000-00-00"
+            updated = ((entry.get("updated_at") or entry.get("updated", ""))
+                       if isinstance(entry, dict) else "") or "0000-00-00"
             rest.append((updated, cat, key, val))
     rest.sort(key=lambda t: t[0], reverse=True)
 
@@ -375,7 +424,7 @@ def search_memory(query: str, limit: int = 8) -> str:
     memory = load_memory()
     words  = [w for w in re.split(r"[^\w]+", (query or "").lower()) if len(w) > 1]
 
-    rows: list[tuple[int, str, str, str]] = []
+    rows: list[tuple[int, str, str, str, str]] = []
     for cat, items in memory.items():
         if not isinstance(items, dict):
             continue                     # skip 'sessions', which is a list
@@ -385,14 +434,18 @@ def search_memory(query: str, limit: int = 8) -> str:
                 continue
             s = _score(words, cat, key, val) if words else 1
             if s > 0:
-                rows.append((s, cat, key, val))
+                updated = ((entry.get("updated_at") or entry.get("updated", ""))
+                           if isinstance(entry, dict) else "")
+                rows.append((s, cat, key, val, updated))
 
     if not rows:
         return (f"Nothing stored about '{query}'." if query
                 else "I have not stored anything about this person yet.")
 
     rows.sort(key=lambda r: (-r[0], r[2]))
-    lines = [f"{cat}/{_pretty(key)}: {val}" for _s, cat, key, val in rows[:max(1, limit)]]
+    lines = [f"{cat}/{_pretty(key)}: {val}"
+             + (f" (last updated {updated})" if updated else "")
+             for _s, cat, key, val, updated in rows[:max(1, limit)]]
     head  = (f"Stored facts matching '{query}':" if query
              else "Everything currently stored:")
     more  = (f"\n(+{len(rows) - len(lines)} more — search with a narrower keyword)"
@@ -416,7 +469,8 @@ def all_entries_for_ui() -> list[dict]:
                 "category": cat,
                 "key":      key,
                 "value":    val,
-                "updated":  (entry.get("updated", "") if isinstance(entry, dict) else ""),
+                "updated":  ((entry.get("updated_at") or entry.get("updated", ""))
+                             if isinstance(entry, dict) else ""),
             })
     rows.sort(key=lambda r: (r["updated"] or "0000-00-00"), reverse=True)
     return rows
