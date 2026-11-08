@@ -125,7 +125,11 @@ class HoloAvatar:
     # see-through glass wireframe. Flip here, or per instance.
     shaded = True
 
-    def __init__(self) -> None:
+    def __init__(self, persona_id: str = "ultron") -> None:
+        from core.personas import get_persona
+        self.persona_id = "ultron"
+        self._animation = get_persona("ultron").animation
+        self.set_persona(persona_id)
         mesh = get_head_mesh()
         self._v0 = mesh["verts"]
         self._n0 = mesh["normals"]
@@ -257,6 +261,13 @@ class HoloAvatar:
         if self._mouth < 0.002:
             self._mouth = 0.0
 
+    def set_persona(self, persona_id: str) -> None:
+        """Switch to a distinct motion pack without rebuilding the face mesh."""
+        from core.personas import get_persona
+        persona = get_persona(persona_id)
+        self.persona_id = persona.id
+        self._animation = persona.animation
+
     def step(self, dt: float, amp: float, speaking: bool = False,
              muted: bool = False, state: str = "",
              expr=None,
@@ -285,9 +296,10 @@ class HoloAvatar:
         speed = (1.0 if not muted else 0.55) * (1.25 if live else 1.0)
         self._sway += dt * speed
         s = self._sway
-        self._yaw = 0.26 * math.sin(s * 0.31) + 0.09 * math.sin(s * 0.73 + 1.3)
-        self._pitch = (0.060 * math.sin(s * 0.23 + 0.7)
-                       + 0.024 * math.sin(s * 0.61))
+        sway = self._animation.sway
+        self._yaw = sway * (0.26 * math.sin(s * 0.31) + 0.09 * math.sin(s * 0.73 + 1.3))
+        self._pitch = sway * (0.060 * math.sin(s * 0.23 + 0.7)
+                              + 0.024 * math.sin(s * 0.61))
 
         # Mouth. Which level is driving it matters more than any rate here.
         #
@@ -337,7 +349,8 @@ class HoloAvatar:
 
         if live:
             if t >= self._expr_at:
-                self._expr_tgt = random.uniform(-0.35, 1.0)
+                expressiveness = self._animation.expression_range
+                self._expr_tgt = random.uniform(-0.35, 1.0) * expressiveness
                 self._expr_at = t + 1.1 + 2.0 * random.random()
         else:
             self._expr_tgt = 0.0
@@ -398,15 +411,16 @@ class HoloAvatar:
         # more frequent when there is something to say. While thinking they slow
         # right down — a darting eye reads as nervous, not thoughtful.
         if t >= self._gaze_at:
-            reach = 0.9 if live else (0.35 if thinking else 0.55)
+            reach = (0.9 if live else (0.35 if thinking else 0.55)) * self._animation.gaze_range
             self._gaze_tgt = [random.uniform(-1.0, 1.0) * reach,
                               random.uniform(-1.0, 1.0) * reach * 0.55]
-            if live:
-                self._gaze_at = t + 0.55 + 1.7 * random.random()
-            elif thinking:
-                self._gaze_at = t + 1.8 + 2.4 * random.random()
-            else:
-                self._gaze_at = t + 1.3 + 2.8 * random.random()
+            low = self._animation.gaze_interval_min
+            high = self._animation.gaze_interval_max
+            if thinking:
+                low, high = low * 1.35, high * 1.35
+            elif live:
+                low, high = low * 0.65, high * 0.75
+            self._gaze_at = t + low + max(0.0, high - low) * random.random()
 
         # A deliberate glance (something appeared on screen) overrides the
         # wandering for a moment, then hands control back.
@@ -445,8 +459,9 @@ class HoloAvatar:
                 self._blink_at = t + 6.0
             else:
                 self._blink = 1.0
-                gap = 5.5 if thinking else 3.4
-                self._blink_at = t + gap + 3.1 * random.random()
+                gap = self._animation.blink_seconds * (1.45 if thinking else 1.0)
+                jitter = self._animation.blink_jitter_seconds
+                self._blink_at = t + gap + jitter * random.random()
 
     def glance(self, dx: float, dy: float, hold: float = 1.1) -> None:
         """Look deliberately somewhere for `hold` seconds, then wander again.

@@ -58,6 +58,7 @@ from PyQt6.QtWidgets import (
 
 from core import expression as expression_mod
 from core import identity
+from core import personas as personas_mod
 from core import themes as themes_mod
 
 try:
@@ -5106,7 +5107,12 @@ class MainWindow(QMainWindow):
 
         # Load customization from config
         _cfg = _read_full_config()
-        self._assistant_name: str = (_cfg.get("assistant_name") or identity.NAME).strip()
+        self._persona_id = personas_mod.get_persona(_cfg.get("persona_id")).id
+        _persona = personas_mod.get_persona(self._persona_id)
+        if self._persona_id == "ultron":
+            self._assistant_name = (_cfg.get("assistant_name") or "Ultron").strip()
+        else:
+            self._assistant_name = _persona.name
         _display = self._assistant_name.upper()
 
         # Apply the saved UI colour BEFORE panels/stylesheets are built
@@ -5175,6 +5181,8 @@ class MainWindow(QMainWindow):
 
         # Center column: HUD + resizable content panel via QSplitter
         self.hud = HudCanvas(face_path, _display)
+        if self.hud._avatar is not None:
+            self.hud._avatar.set_persona(self._persona_id)
         self.hud.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._content_panel = self._build_content_panel()
         self._quiz_panel = self._build_quiz_panel()
@@ -6185,6 +6193,16 @@ class MainWindow(QMainWindow):
         self._ctrl_btn.clicked.connect(self._toggle_controls)
         lay.addSpacing(4)
         lay.addWidget(self._ctrl_btn)
+
+        self._persona_btn = QPushButton("◈")
+        self._persona_btn.setFixedSize(26, 26)
+        self._persona_btn.setFont(QFont("Courier New", 11))
+        self._persona_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._persona_btn.setToolTip("Switch assistant persona and visual theme")
+        self._persona_btn.setStyleSheet(self._drawer_btn.styleSheet())
+        self._persona_btn.clicked.connect(self._open_persona_menu)
+        lay.addSpacing(4)
+        lay.addWidget(self._persona_btn)
         lay.addStretch()
 
         mid = QVBoxLayout(); mid.setSpacing(1)
@@ -6194,9 +6212,7 @@ class MainWindow(QMainWindow):
         self._title_lbl.setFont(QFont("Courier New", 17, QFont.Weight.Bold))
         self._title_lbl.setStyleSheet(f"color: {C.PRI}; background: transparent;")
         mid.addWidget(self._title_lbl)
-        _sub_text = ("A Friendly Assistant"
-                     if _disp in ("JARVIS", "J.A.R.V.I.S")
-                     else "Personal AI Assistant")
+        _sub_text = _persona.audience_label
         self._sub_lbl = QLabel(_sub_text)
         self._sub_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._sub_lbl.setFont(QFont("Courier New", 7))
@@ -6218,6 +6234,134 @@ class MainWindow(QMainWindow):
         right_col.addWidget(self._date_lbl)
         lay.addLayout(right_col)
         return w
+
+    def _open_persona_menu(self):
+        """Show one-action persona/theme combinations; both choices stay independent."""
+        menu = QMenu(self)
+        quick = (
+            ("Ultron — Normal · Classic Cyan", "ultron", "classic_cyan"),
+            ("Nova — Teenager · Holographic", "teenager", "holographic"),
+            ("Cipher — Hacker · Classic Cyan", "hacker", "classic_cyan"),
+            ("Cipher — Hacker · Rose Glow", "hacker", "girly_rose"),
+            ("Vanta — Villain · Crimson Shadow", "villain", "villain_red"),
+            ("Luna — Girly · Rose Glow", "girly", "girly_rose"),
+        )
+        for label, persona_id, theme_id in quick:
+            action = menu.addAction(label)
+            action.triggered.connect(
+                lambda _checked=False, p=persona_id, t=theme_id:
+                    self._select_persona_theme(p, t)
+            )
+        menu.addSeparator()
+        all_combos = menu.addMenu("All persona and theme combinations")
+        for persona_id, persona in personas_mod.PERSONAS.items():
+            sub = all_combos.addMenu(f"{persona.name} — {persona.audience_label}")
+            for theme_id, theme in themes_mod.THEMES.items():
+                action = sub.addAction(theme["label"])
+                action.triggered.connect(
+                    lambda _checked=False, p=persona_id, t=theme_id:
+                        self._select_persona_theme(p, t)
+                )
+        theme_only = menu.addMenu("Keep current persona, change theme")
+        for theme_id, theme in themes_mod.THEMES.items():
+            action = theme_only.addAction(theme["label"])
+            action.triggered.connect(
+                lambda _checked=False, p=self._persona_id, t=theme_id:
+                    self._select_persona_theme(p, t)
+            )
+        current_config = _read_full_config()
+        current_theme = str(current_config.get("ui_theme") or "classic_cyan")
+        if current_theme == "custom" and current_config.get("ui_color"):
+            custom_action = theme_only.addAction("Custom current color")
+            custom_action.triggered.connect(
+                lambda _checked=False, p=self._persona_id:
+                    self._select_persona_theme(p, "custom")
+            )
+        persona_only = menu.addMenu("Keep current theme, change persona")
+        if not themes_mod.theme(current_theme) and current_theme != "custom":
+            current_theme = "classic_cyan"
+        for persona_id, persona in personas_mod.PERSONAS.items():
+            action = persona_only.addAction(f"{persona.name} — {persona.audience_label}")
+            action.triggered.connect(
+                lambda _checked=False, p=persona_id, t=current_theme:
+                    self._select_persona_theme(p, t)
+            )
+        menu.exec(self._persona_btn.mapToGlobal(self._persona_btn.rect().bottomLeft()))
+
+    def _select_persona_theme(self, persona_id: str, theme_id: str) -> None:
+        """Apply the selected identity and look without changing tools or context."""
+        persona = personas_mod.get_persona(persona_id)
+        data = _read_full_config()
+        theme = themes_mod.theme(theme_id)
+        if theme is None and theme_id == "custom":
+            accent = str(data.get("ui_color") or "").strip().lower()
+            if len(accent) != 7 or not accent.startswith("#"):
+                return
+            try:
+                int(accent[1:], 16)
+            except ValueError:
+                return
+            theme = {"label": "Custom", "accent": accent}
+        if theme is None:
+            return
+
+        try:
+            from memory.config_manager import get_voice, AVAILABLE_VOICES
+            current_voice = get_voice()
+        except Exception:
+            current_voice = "Charon"
+            AVAILABLE_VOICES = ("Charon", "Puck", "Kore", "Fenrir", "Aoede")
+
+        voice_map = data.get("persona_voices")
+        if not isinstance(voice_map, dict):
+            voice_map = {}
+        # Remember the outgoing persona's voice so a later return restores it.
+        voice_map[self._persona_id] = current_voice
+        if persona.id == self._persona_id:
+            target_voice = current_voice
+        else:
+            candidate = voice_map.get(persona.id, persona.voice)
+            target_voice = candidate if candidate in AVAILABLE_VOICES else persona.voice
+
+        persona_changed = persona.id != self._persona_id
+        old_palette = current_palette()
+        if themes_mod.theme(theme_id):
+            apply_ui_theme(theme_id)
+        else:
+            apply_ui_accent(theme["accent"])
+        retheme_all_widgets(old_palette, current_palette())
+        self._persona_id = persona.id
+        self._assistant_name = persona.name
+        display = self._assistant_name.upper()
+        self.setWindowTitle(f"{display} — {APP_VERSION}")
+        self._title_lbl.setText(display)
+        self._sub_lbl.setText(persona.audience_label)
+        self._log._ai_name_lc = self._assistant_name.lower()
+        self.hud._assistant_name = display
+        if self.hud._avatar is not None:
+            self.hud._avatar.set_persona(persona.id)
+
+        voice_changed = target_voice != current_voice
+        voice_map[persona.id] = target_voice
+        data["persona_id"] = persona.id
+        data["persona_voices"] = voice_map
+        data["ui_theme"] = theme_id
+        data["ui_color"] = theme["accent"]
+        data["voice_name"] = target_voice
+        if persona.id == "ultron":
+            data["assistant_name"] = "Ultron"
+        try:
+            API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
+            self._log.append_log(
+                f"SYS: Switched to {persona.name} — {persona.audience_label}; "
+                f"theme {theme['label']}"
+            )
+            if voice_changed:
+                self._log.append_log(f"SYS: Voice set — {target_voice}; carrying conversation context forward")
+        except Exception as error:
+            self._log.append_log(f"ERR: Could not save persona selection — {error}")
+        if (voice_changed or persona_changed) and self.on_voice_change:
+            self.on_voice_change()
 
     def _tick_clock(self):
         self._clock_lbl.setText(time.strftime("%H:%M:%S"))
@@ -7691,7 +7835,7 @@ class MainWindow(QMainWindow):
             self._customize_overlay.hide()
         cw = self.centralWidget()
         ov = CustomizeOverlay(
-            cfg.get("assistant_name", "JARVIS") or "JARVIS",
+            cfg.get("assistant_name", "Ultron") or "Ultron",
             cfg.get("user_name", ""),
             cfg.get("ui_color", "") or DEFAULT_UI_COLOR,
             cfg.get("voice_name", ""),
@@ -7752,14 +7896,11 @@ class MainWindow(QMainWindow):
     def _apply_name_update(self, name: str, user_name: str, ui_color: str = "",
                            voice: str = "", ui_theme: str = "custom"):
         """Update all name/theme-dependent UI elements and persist to config."""
-        self._assistant_name = name.strip() or "JARVIS"
+        self._assistant_name = name.strip() or "Ultron"
         display = self._assistant_name.upper()
         self.setWindowTitle(f"{display} — {APP_VERSION}")
         self._title_lbl.setText(display)
-        if display in ("JARVIS", "J.A.R.V.I.S"):
-            self._sub_lbl.setText("Just A Rather Very Intelligent System")
-        else:
-            self._sub_lbl.setText("Personal AI Assistant")
+        self._sub_lbl.setText(personas_mod.get_persona(self._persona_id).audience_label)
         self._log._ai_name_lc = self._assistant_name.lower()
         self.hud._assistant_name = display
 
@@ -7789,6 +7930,12 @@ class MainWindow(QMainWindow):
             if ui_color:
                 data["ui_color"] = ui_color.strip().lower()
                 data["ui_theme"] = (ui_theme if themes_mod.theme(ui_theme) else "custom")
+            if voice:
+                voice_map = data.get("persona_voices")
+                if not isinstance(voice_map, dict):
+                    voice_map = {}
+                voice_map[self._persona_id] = voice
+                data["persona_voices"] = voice_map
             API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
             self._log.append_log(f"SYS: Identity updated — {display}")
             if color_changed:

@@ -1,0 +1,2 @@
+# Optional local OCR wrapper. Also install the native Tesseract executable for your OS.
+pytesseract>=0.3.10,<0.4

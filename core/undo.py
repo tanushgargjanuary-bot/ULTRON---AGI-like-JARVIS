@@ -57,14 +57,16 @@ _stack: list[_Entry] = []
 _lock = threading.Lock()
 
 
-def push_undo(label: str, undo_fn: Callable[[], str]) -> None:
+def push_undo(label: str, undo_fn: Callable[[], str]) -> bool:
     """Record that `label` just happened and `undo_fn()` reverses it.
 
     Called from action handlers, which run in executor threads — hence the
     lock. Never raises: a broken undo registration must not take down the
-    action that actually succeeded."""
+    action that actually succeeded. Returns whether the entry was recorded so
+    callers that require a reversible write can roll it back if registration
+    itself fails. Existing callers may continue to ignore the result."""
     if not callable(undo_fn):
-        return
+        return False
     try:
         with _lock:
             _stack.append(_Entry(label=str(label)[:120], undo=undo_fn))
@@ -72,8 +74,10 @@ def push_undo(label: str, undo_fn: Callable[[], str]) -> None:
             # is what people ask to undo.
             while len(_stack) > MAX_DEPTH:
                 _stack.pop(0)
+        return True
     except Exception as e:                                  # pragma: no cover
         print(f"[Undo] push failed: {e}")
+        return False
 
 
 def can_undo() -> bool:

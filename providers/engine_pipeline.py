@@ -887,6 +887,21 @@ class PipelineEngine:
             return ""
         self._timing["stt"] = time.monotonic() - t0
         if text:
+            # Route-control phrases are parsed locally before generation. They
+            # are recorded as a user/assistant exchange, so switching models
+            # does not discard the conversation held by this engine.
+            switch = getattr(self._llm, "handle_switch", None)
+            response = switch(text) if callable(switch) else None
+            if response is not None:
+                self._history.append({"role": "user", "content": text})
+                self._history.append({"role": "assistant", "content": response})
+                self._done_calls.clear()
+                self._rounds = 0
+                await self._emit(Msg.heard(text))
+                await self._emit(Msg.said(response))
+                await self._speak(response)
+                return text
+
             # THIS is what the user said, and the only thing that should reach
             # the activity log as "You:". Emitted here rather than in
             # `send_client_content`, which is also how the app injects system

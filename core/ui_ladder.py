@@ -17,9 +17,10 @@ THE WEAKNESS THIS FILE EXISTS FOR
                      accessibility nodes at all
         4. KEYBOARD  the element has an access key or a shortcut — press it,
                      which is what a person would do
-        5. VISION    screenshot and a model, only if one is configured, only with
+        5. OCR       read screen text locally, with no model and no upload
+        6. VISION    screenshot and a model, only if one is configured, only with
                      the sensor consent that a screenshot already requires
-        6. ASK       say what could not be reached and ask, instead of clicking
+        7. ASK       say what could not be reached and ask, instead of clicking
                      something plausible and reporting success
 
     Step 6 is not a failure of the design; it is the design. The alternative —
@@ -65,6 +66,7 @@ class Rung(str, Enum):
     DRILL = "drill"
     DOM = "dom"
     KEYBOARD = "keyboard"
+    OCR = "ocr"
     VISION = "vision"
     ASK = "ask"
     STOP = "stop"
@@ -93,6 +95,8 @@ class Context:
     has_dom: bool = False
     dom_only: bool = False              # the window IS a browser page
     keyboard_ready: bool = False
+    ocr_ready: bool = False
+    read_text_requested: bool = False
     vision_ready: bool = False
     attempts: int = 0
     tried: tuple[Rung, ...] = ()
@@ -144,6 +148,8 @@ def next_step(error: object | None = None, context: Context | None = None) -> St
                         hotkey=ctx.hotkey)
         if ctx.has_dom and not ctx.tried_already(Rung.DOM):
             return pick(Rung.DOM, "the page can be addressed directly")
+        if ctx.read_text_requested and ctx.ocr_ready and not ctx.tried_already(Rung.OCR):
+            return pick(Rung.OCR, "read visible text locally; OCR cannot click or change controls")
         if ctx.vision_ready and not ctx.tried_already(Rung.VISION):
             return pick(Rung.VISION, "no structural route; a look at the screen is the last resort")
         return pick(Rung.ASK, "this window offers no way to do that without guessing")
@@ -161,6 +167,8 @@ def next_step(error: object | None = None, context: Context | None = None) -> St
                 else "no desktop tree, but the page behind it has one"
             )
             return pick(Rung.DOM, reason)
+        if ctx.read_text_requested and ctx.ocr_ready and not ctx.tried_already(Rung.OCR):
+            return pick(Rung.OCR, "read visible text locally; OCR cannot click or change controls")
         if ctx.keyboard_ready and not ctx.tried_already(Rung.KEYBOARD):
             return pick(Rung.KEYBOARD, "no tree; the keyboard can still reach it")
         if ctx.vision_ready and not ctx.tried_already(Rung.VISION):
@@ -211,6 +219,10 @@ def describe(context: Context | None = None, *, platform_name: str = "") -> str:
         parts.append("page DOM available")
     if ctx.keyboard_ready:
         parts.append("keyboard shortcuts available")
+    if ctx.ocr_ready:
+        parts.append("local OCR available — text only, no upload")
+    else:
+        parts.append("local OCR unavailable")
     if ctx.vision_ready:
         parts.append("vision configured — used last, and it sends a screenshot")
     else:

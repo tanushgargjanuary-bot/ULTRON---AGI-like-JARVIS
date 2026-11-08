@@ -80,6 +80,22 @@ class UnsupportedActionTests(unittest.TestCase):
         self.assertEqual(step.rung, Rung.VISION)
         self.assertIn("last resort", step.reason)
 
+    def test_local_ocr_precedes_vision_only_for_a_text_read_request(self):
+        ctx = Context(ocr_ready=True, read_text_requested=True, vision_ready=True)
+        step = next_step(err("NO_TREE"), ctx)
+        self.assertEqual(step.rung, Rung.OCR)
+        self.assertIn("cannot click", step.reason)
+
+    def test_ocr_is_not_offered_for_an_action_request(self):
+        ctx = Context(ocr_ready=True, vision_ready=True)
+        step = next_step(err("NO_TREE"), ctx)
+        self.assertEqual(step.rung, Rung.VISION)
+
+    def test_description_reports_local_ocr_state(self):
+        text = describe(Context(ocr_ready=True))
+        self.assertIn("local OCR available", text)
+        self.assertIn("no upload", text)
+
     def test_with_nothing_left_it_asks(self):
         step = next_step(err("UNSUPPORTED_ACTION"), Context(has_tree=True))
         self.assertEqual(step.rung, Rung.ASK)

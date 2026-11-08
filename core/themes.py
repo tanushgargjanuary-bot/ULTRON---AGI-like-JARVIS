@@ -23,6 +23,16 @@ THEMES = {
         "accent": "#ffb24a",
         "description": "Warm amber instrumentation on the same dark HUD.",
     },
+    "girly_rose": {
+        "label": "Rose Glow",
+        "accent": "#ff72b6",
+        "description": "Bright rose-pink accents on the same dark HUD.",
+    },
+    "villain_red": {
+        "label": "Crimson Shadow",
+        "accent": "#ff365e",
+        "description": "Dramatic crimson accents on the same dark HUD.",
+    },
 }
 
 

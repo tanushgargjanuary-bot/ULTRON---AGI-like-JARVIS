@@ -189,6 +189,9 @@ _ACTION_TIERS: dict[str, dict[str, Tier]] = {
     # a single approval.
     "ui_control": {
         "describe": Tier.OBSERVE,
+        "ocr": Tier.SENSOR,
+        "read_text": Tier.SENSOR,
+        "read_screen_text": Tier.SENSOR,
         "snapshot": Tier.SENSOR,
         "drill": Tier.SENSOR,
         "act": Tier.ROUTINE,

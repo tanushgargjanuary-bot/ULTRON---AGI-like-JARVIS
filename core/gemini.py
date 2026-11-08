@@ -570,8 +570,10 @@ def _provider_settings() -> tuple[str, bool]:
             return _prov_cache[1], _prov_cache[2]
 
     try:
-        from memory.config_manager import get_sidecar_first, get_sidecar_provider
-        pid, first = get_sidecar_provider(), get_sidecar_first()
+        from memory.config_manager import get_sidecar_first
+        from core.routing import Purpose
+        from core.routing_runtime import configured_provider_id
+        pid, first = configured_provider_id(Purpose.CRITIC), get_sidecar_first()
     except Exception:
         pid, first = "", False
 

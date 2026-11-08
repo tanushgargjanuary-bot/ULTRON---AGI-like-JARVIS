@@ -9,8 +9,8 @@ WHY THIS TOOL EXISTS
 
     It follows the same loop the user asked for, in the order Ultron already
     promised: the accessibility tree first, the page DOM for web content, the
-    keyboard for anything with an access key, vision only if it is configured and
-    consented, and otherwise an honest question instead of a guess
+    keyboard for anything with an access key, local OCR for text-only reading,
+    vision only if it is configured and consented, and otherwise an honest question
     (`core/ui_ladder.py`).
 
 WHAT IT RETURNS
@@ -103,10 +103,16 @@ def reset_session() -> None:
 
 def _context(session: Session, **kwargs) -> Context:
     caps = session.capabilities()
+    try:
+        from core.local_ocr import available as _ocr_available
+        ocr_ready = _ocr_available()
+    except Exception:
+        ocr_ready = False
     base = {
         "has_tree": "uia" in caps or "ax" in caps or "atspi" in caps,
         "has_dom": "dom" in caps,
         "keyboard_ready": "keyboard" in caps or bool(caps),
+        "ocr_ready": ocr_ready,
         "vision_ready": False,
     }
     base.update(kwargs)
@@ -123,6 +129,25 @@ def _vision_ready() -> bool:
         return False
 
 
+def _read_screen_text() -> str:
+    """Capture and OCR the foreground display locally; no provider is called."""
+    try:
+        from actions.screen_processor import _capture_screen
+        from core.local_ocr import extract_text
+        image_bytes, _mime = _capture_screen()
+        text = extract_text(image_bytes)
+        if not text:
+            return outcome.done(_TOOL_NAME, rung="ocr", text="", note="No readable text detected")
+        return outcome.done(_TOOL_NAME, rung="ocr", text=text, source="local OCR", uploaded=False)
+    except Exception as exc:  # noqa: BLE001
+        return outcome.failed(
+            _TOOL_NAME,
+            f"Local OCR could not read the screen: {type(exc).__name__}: {exc}",
+            rung="ocr",
+            uploaded=False,
+        )
+
+
 def ui_control(parameters=None, response=None, player=None, session_memory=None) -> str:
     params = dict(parameters or {})
     action = str(params.get("action") or "snapshot").strip().lower()
@@ -133,6 +158,9 @@ def ui_control(parameters=None, response=None, player=None, session_memory=None)
     role = str(params.get("role") or "").strip()
     skeleton = bool(params.get("skeleton"))
     max_lines = int(params.get("max_lines") or 120)
+
+    if action in ("ocr", "read_text", "read_screen_text"):
+        return _read_screen_text()
 
     session = _session()
     if _adapter() is None and action not in ("describe", "capabilities"):
@@ -301,8 +329,11 @@ TOOL = {
         "control — a button, field, tab, menu item, checkbox. Use "
         "computer_control only for what has no name: dragging, drawing, a "
         "canvas, a game. "
-        "The loop is: action='snapshot' for the app you are working in, read the "
-        "elements, then action='act' with the ref or the element's name. A ref "
+        "For visible text with no usable tree, action='ocr' reads a screenshot "
+        "locally with optional Tesseract. It does not upload the image and cannot "
+        "click or operate controls. The loop is: action='snapshot' for the app "
+        "you are working in, read the elements, then action='act' with the ref "
+        "or the element's name. A ref "
         "carries the snapshot it came from, so after ANY action the refs are dead "
         "— take a snapshot again before the next one. If an element was truncated "
         "(it says 'drill with @...'), use action='drill' on that ref rather than "
@@ -318,8 +349,8 @@ TOOL = {
         "properties": {
             "action": {
                 "type": "STRING",
-                "description": "What to do: snapshot, drill, act, batch, describe.",
-                "enum": ["snapshot", "drill", "act", "batch", "describe"],
+                "description": "What to do: snapshot, drill, act, batch, describe, or ocr for local text extraction.",
+                "enum": ["snapshot", "drill", "act", "batch", "describe", "ocr"],
             },
             "app": {
                 "type": "STRING",

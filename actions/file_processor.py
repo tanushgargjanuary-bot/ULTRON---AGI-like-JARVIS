@@ -24,9 +24,70 @@ import subprocess
 import tempfile
 from pathlib import Path
 from datetime import datetime
+import hashlib
 
+from core.undo import push_undo
 # Model choice, timeout and fallback ladder all live in core/gemini.py.
 from core import gemini
+
+# Existing output snapshots are bounded; large new outputs only retain a
+# streaming fingerprint in the undo closure.
+_MAX_UNDO_SNAPSHOT = 1024 * 1024
+
+
+def _file_fingerprint(path: Path) -> tuple[int, str]:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return path.stat().st_size, digest.hexdigest()
+
+
+def _write_text_output(path: Path, text: str, encoding: str = "utf-8") -> None:
+    """Write generated text and register conflict-safe undo or roll back."""
+    target = Path(path)
+    before = None
+    if target.exists():
+        if not target.is_file():
+            raise IsADirectoryError(f"output path is not a file: {target}")
+        if target.stat().st_size > _MAX_UNDO_SNAPSHOT:
+            raise ValueError("refusing to overwrite an output larger than the safe undo limit")
+        before = target.read_bytes()
+
+    try:
+        target.write_text(text, encoding=encoding)
+        after = _file_fingerprint(target)
+    except Exception:
+        if before is None:
+            try:
+                target.unlink(missing_ok=True)
+            except Exception:
+                pass
+        else:
+            try:
+                target.write_bytes(before)
+            except Exception:
+                pass
+        raise
+
+    def _undo_output() -> str:
+        if not target.exists():
+            return "The generated output was already removed."
+        if _file_fingerprint(target) != after:
+            raise RuntimeError("output changed after creation; left it untouched")
+        if before is None:
+            target.unlink()
+            return "Removed the generated output."
+        target.write_bytes(before)
+        return "Restored the file that was there before."
+
+    if not push_undo(f"write output {target.name}", _undo_output):
+        if before is None:
+            target.unlink(missing_ok=True)
+        else:
+            target.write_bytes(before)
+        raise RuntimeError("could not register undo; the output write was rolled back")
+
 
 def _get_api_key() -> str:
     config_path = Path(__file__).resolve().parent.parent / "config" / "api_keys.json"
@@ -113,7 +174,7 @@ def _process_image(path: Path, action: str, params: dict, speak=None) -> str:
 
             if len(result) > 500 and params.get("save", True):
                 out = _output_path(path, "result", ".txt")
-                out.write_text(result, encoding="utf-8")
+                _write_text_output(out, result)
                 return f"{result[:300]}...\n\nFull result saved to: {out}"
             return result
         except Exception as e:
@@ -205,7 +266,7 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
 
         if action == "extract_text":
             out = _output_path(path, "text", ".txt")
-            out.write_text(text, encoding="utf-8")
+            _write_text_output(out, text)
             return f"Text extracted ({len(text)} chars). Saved: {out.name}"
 
         prompt_map = {
@@ -220,7 +281,7 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
             result   = response.text.strip()
             if len(result) > 600 and params.get("save", True):
                 out = _output_path(path, action, ".txt")
-                out.write_text(result, encoding="utf-8")
+                _write_text_output(out, result)
                 return f"{result[:400]}...\n\nFull result saved: {out.name}"
             return result
         except Exception as e:
@@ -284,7 +345,7 @@ def _process_text_doc(path: Path, file_type: str, action: str,
     if action == "extract_text":
         if file_type != "txt":
             out = _output_path(path, "extracted", ".txt")
-            out.write_text(content, encoding="utf-8")
+            _write_text_output(out, content)
             return f"Text extracted. Saved: {out.name}"
         return content[:2000]
 
@@ -310,7 +371,7 @@ def _process_text_doc(path: Path, file_type: str, action: str,
         result   = response.text.strip()
         if len(result) > 600 and params.get("save", True):
             out = _output_path(path, action, ".txt")
-            out.write_text(result, encoding="utf-8")
+            _write_text_output(out, result)
             return f"{result[:400]}...\n\nFull result saved: {out.name}"
         return result
     except Exception as e:
@@ -428,7 +489,7 @@ def _process_json(path: Path, action: str, params: dict, speak=None) -> str:
 
     if action == "format":
         out = _output_path(path, "formatted", ".json")
-        out.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        _write_text_output(out, json.dumps(data, indent=2, ensure_ascii=False))
         return f"Formatted JSON saved: {out.name}"
 
     if action in ("analyze", "summarize", "extract"):
@@ -509,7 +570,7 @@ def _process_code(path: Path, action: str, params: dict, speak=None) -> str:
             out = _output_path(path, action)
             code_match = re.search(r"```(?:\w+)?\n(.*?)```", result, re.DOTALL)
             code_to_save = code_match.group(1) if code_match else result
-            out.write_text(code_to_save, encoding="utf-8")
+            _write_text_output(out, code_to_save)
             return f"{result[:400]}...\n\nSaved: {out.name}"
         return result
     except Exception as e:
@@ -549,7 +610,7 @@ def _process_audio(path: Path, action: str, params: dict, speak=None) -> str:
             result = response.text.strip()
             if params.get("save", True):
                 out = _output_path(path, "transcript", ".txt")
-                out.write_text(result, encoding="utf-8")
+                _write_text_output(out, result)
                 return f"Transcription saved: {out.name}\n\nPreview: {result[:300]}"
             return result
         except Exception as e:
@@ -769,7 +830,7 @@ def _process_pptx(path: Path, action: str, params: dict, speak=None) -> str:
         text = _read_pptx_text()
         if action == "extract_text":
             out = _output_path(path, "text", ".txt")
-            out.write_text(text, encoding="utf-8")
+            _write_text_output(out, text)
             return f"Text extracted. Saved: {out.name}"
         try:
             model    = _gemini_client()

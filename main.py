@@ -95,6 +95,8 @@ from memory.memory_manager import (
 # (screen_process, close_camera, save_memory, manage_monitor, shutdown_jarvis,
 # system_status).
 from core import identity
+from core import personas as personas_mod
+from core.conversation_context import carryover_block
 from core import outcome
 from core import philosophy
 from core import reconnect_policy as _reconnect
@@ -651,9 +653,9 @@ class _ReconnectSignal(Exception):
     the session must be rebuilt).
 
     Carries `keep_context`: True for an ordinary rebuild, where the stored
-    resumption handle is replayed and the conversation continues; False when the
-    new session must genuinely start clean (see the voice-change note in
-    _on_voice_change)."""
+    resumption handle is replayed; False when the server handle cannot be reused.
+    Voice/persona changes then carry the in-memory transcript into the new system
+    context instead of pretending the conversation started over."""
 
     def __init__(self, keep_context: bool = True):
         """Initialize the live assistant, UI hooks, clients, and session state."""
@@ -758,6 +760,7 @@ class JarvisLive:
         # Why the local engine would not start, if it would not — read by the run
         # loop to avoid asking Gemini for a session this install cannot open.
         self._pipeline_error = ""
+        self._routing_runtime = None
         # The delay the next failure waits, in seconds. Reset on a successful
         # connect, so one bad minute does not slow every later reconnect.
         self._conn_backoff = _RECONNECT_BASE
@@ -787,6 +790,7 @@ class JarvisLive:
         self._insights = get_insights()
         self._last_user_speech = time.monotonic()  # updated on every user utterance
         self._session_log: list[str] = []          # conversation turns for end-of-session summary
+        self._context_carryover = ""              # prompt-only bridge after voice/persona rebuild
 
         self._enhanced_live = True  # proactive audio; auto-disabled if the server rejects it
         self._tuned_live    = True  # turn-taking / media / thinking knobs; same fallback
@@ -1078,9 +1082,8 @@ class JarvisLive:
         session. Called from the Qt thread. No-op until the async loop and
         reconnect event exist.
 
-        `keep_context=False` drops the resumption handle so the new session
-        starts empty — only for changes the server cannot apply to a resumed
-        session."""
+        `keep_context=False` drops the resumption handle. Voice/persona changes
+        prepare a bounded transcript copy for the next session's system context."""
         loop = getattr(self, "_loop", None)
         ev   = self._reconnect_event
         self._reconnect_keep   = keep_context
@@ -1089,15 +1092,16 @@ class JarvisLive:
             loop.call_soon_threadsafe(ev.set)
 
     def _on_voice_change(self):
-        """Voice picker applied.
+        """Rebuild for a voice/persona change while carrying the transcript.
 
-        The voice is baked into the session at connect time, so a rebuild is
-        required. It is rebuilt WITHOUT the resumption handle on purpose:
-        resuming restores the server's own session state, and the safe reading
-        is that it restores the voice with it — which would make the picker
-        appear to do nothing. Losing context here is acceptable because changing
-        voice is a deliberate, rare act; losing it on a dropped packet was not."""
-        self.request_reconnect(keep_context=False, reason="new voice")
+        The voice and persona prompt are fixed at connect time. The old server
+        resumption handle cannot be reused because it may restore the old voice;
+        preserve the in-memory transcript in the new system context instead.
+        """
+        self._context_carryover = carryover_block(self._session_log)
+        if self._context_carryover:
+            self.ui.write_log("SYS: Reconnecting with recent conversation context preserved.")
+        self.request_reconnect(keep_context=False, reason="voice or persona change")
 
     def _on_audio_device_change(self):
         """Microphone or speaker changed. Both streams are opened inside the
@@ -1407,14 +1411,16 @@ class JarvisLive:
             # file the settings dialog cannot rewrite.
             with open(API_CONFIG_PATH, encoding="utf-8") as _fh:
                 _cfg = json.load(_fh)
-            self._asst_name = (_cfg.get("assistant_name") or identity.NAME).strip()
+            _persona = personas_mod.get_persona(_cfg.get("persona_id"))
+            if _persona.id == "ultron":
+                self._asst_name = (_cfg.get("assistant_name") or "Ultron").strip()
+            else:
+                self._asst_name = _persona.name
             _user_name = (_cfg.get("user_name") or "").strip()
         except Exception:
-            # The identity module, not a literal. This line used to say
-            # "JARVIS", so a config file that failed to parse renamed the
-            # assistant back to the name the rest of this build stopped using —
-            # silently, once, at the moment something else was already wrong.
-            self._asst_name = identity.NAME
+            _cfg = {}
+            _persona = personas_mod.get_persona("ultron")
+            self._asst_name = "Ultron"
             _user_name = ""
 
         memory     = load_memory()
@@ -1509,7 +1515,10 @@ class JarvisLive:
             ),
         })
 
-        parts = [time_ctx, identity_ctx]
+        persona_ctx = personas_mod.persona_prompt(_persona.id)
+        parts = [time_ctx, identity_ctx, persona_ctx]
+        if self._context_carryover:
+            parts.append(self._context_carryover)
         if mem_str:
             parts.append(mem_str)
         parts.append(sys_prompt)
@@ -2741,19 +2750,32 @@ class JarvisLive:
         local = getattr(self, "_local_plan", None)
         if self._engine_mode() != "pipeline":
             self._pipeline_error = ""
+            self._routing_runtime = None
             return None
         try:
             # Cleared on the way in: a message from a previous attempt must not
             # outlive the failure it described.
             self._pipeline_error = ""
-            from memory.config_manager import get_pipeline, get_provider_config
+            from memory.config_manager import (
+                get_pipeline, get_provider_config, get_providers, save_pipeline,
+                save_provider_config,
+            )
             from providers import registry
+            from core.routing import Provider, Purpose, RoutingTable
+            from core.routing_runtime import (
+                RoutedLLM, configured_slot_id, provider_for_id,
+            )
 
             pipe = dict(local["pipeline"]) if local else get_pipeline()
+            provider_block = get_providers()
+            configured_creds = (dict(local["creds"]) if local else
+                                dict(provider_block.get("creds") or {}))
 
             def settings(pid: str) -> dict:
                 """Return credentials for a provider from the temporary or saved configuration."""
-                return dict(local["creds"].get(pid) or {}) if local else get_provider_config(pid)
+                if pid in configured_creds:
+                    return dict(configured_creds.get(pid) or {})
+                return {} if local else get_provider_config(pid)
 
             llm_id = str(pipe.get("llm") or "").strip()
             if not llm_id:
@@ -2761,11 +2783,88 @@ class JarvisLive:
             missing = registry.missing_fields(llm_id, settings(llm_id))
             if missing:
                 raise RuntimeError(f"{llm_id} needs: {', '.join(missing)}")
-            llm = registry.build(llm_id, settings(llm_id))
+
+            # Register every fully configured LLM service as an explicit route.
+            # No price or privacy property is guessed: hosted services are
+            # treated as paid fallbacks, and no fallback is installed silently.
+            route_table = RoutingTable()
+            route_clients = {}
+            route_ids = {}
+            for pid, saved in configured_creds.items():
+                declaration = registry.get_declaration(pid)
+                if not declaration or declaration.get("kind") != "llm":
+                    continue
+                provider_cfg = dict(saved or {})
+                if registry.missing_fields(pid, provider_cfg):
+                    continue
+                try:
+                    client = registry.build(pid, provider_cfg)
+                except Exception as route_error:
+                    self.ui.write_log(f"SYS: Routing skipped {pid}: {route_error}")
+                    continue
+                catalog = registry.catalog_entry(pid)
+                label = str(catalog.get("label") or pid)
+                local_provider = catalog.get("local") is True
+                provider = Provider(
+                    label,
+                    quota_group=str(catalog.get("quota_group") or pid),
+                    local=local_provider,
+                    paid=not local_provider,
+                    shares_data=bool(catalog.get("shares_data", False)),
+                )
+                route_table.add_provider(provider)
+                route_clients[provider.key] = client
+                route_ids[provider.key] = pid
+
+            # The selected engine provider is always present after the validation
+            # above. It is the conversation default; the other purpose defaults
+            # use the configured coding and sidecar providers when available.
+            active_catalog = registry.catalog_entry(llm_id)
+            active_label = str(active_catalog.get("label") or llm_id)
+            active_client = registry.build(llm_id, settings(llm_id))
+            if active_label.lower() not in route_clients:
+                active_local = active_catalog.get("local") is True
+                route_table.add_provider(Provider(
+                    active_label, quota_group=llm_id, local=active_local,
+                    paid=not active_local,
+                ))
+                route_clients[active_label.lower()] = active_client
+                route_ids[active_label.lower()] = llm_id
+            route_table.set_route(Purpose.CONVERSATION, active_label,
+                                  str(getattr(active_client, "model", "") or ""))
+
+            # Set three named routes using configured slots. If a specialized
+            # slot is unset, point it at conversation rather than inventing a
+            # model or silently switching to a different account.
+            slots = {
+                purpose: configured_slot_id(purpose, provider_block)
+                for purpose in (Purpose.EVOLUTION, Purpose.CRITIC)
+            }
+            for purpose, pid in slots.items():
+                provider = provider_for_id(route_table, route_ids, pid) if pid else None
+                if provider is None:
+                    route_table.set_route(purpose, active_label,
+                                          str(getattr(active_client, "model", "") or ""))
+                else:
+                    route_table.set_route(
+                        purpose, provider.name,
+                        str(getattr(route_clients[provider.key], "model", "") or ""),
+                    )
+
+            def persist_conversation_provider(pid: str) -> None:
+                if local is not None:
+                    local["pipeline"]["llm"] = pid
+                else:
+                    save_pipeline(llm=pid)
+
+            llm = RoutedLLM(
+                route_table, route_clients, route_ids,
+                log=self.ui.write_log, persist=persist_conversation_provider,
+            )
+            self._routing_runtime = llm
 
             # Vision detection writes settings, so skip it for a temporary local plan.
-            from memory.config_manager import save_provider_config
-            ensure = None if local else getattr(llm, "ensure_vision_known", None)
+            ensure = None if local else getattr(active_client, "ensure_vision_known", None)
             if ensure is not None:
                 try:
                     seen = ensure(lambda v, _id=llm_id: save_provider_config(_id, v))
@@ -2775,10 +2874,11 @@ class JarvisLive:
                 except Exception as e:
                     print(f"[JARVIS] vision check skipped: {e}")
 
-            caps = dict(getattr(llm, "caps", {}) or {})
+            caps = dict(llm.caps)
             caps["audio_out"] = bool(str(pipe.get("tts") or "").strip())
             return caps
         except Exception as e:
+            self._routing_runtime = None
             self._local_engine_failed(local)
             # A local engine that will not start must never mean no assistant —
             # but the fallback has to be one that exists. With no Gemini key,
@@ -2875,7 +2975,8 @@ class JarvisLive:
             return registry.build(pid, cfg)
 
         try:
-            engine = PipelineEngine(part("llm"), part("stt"), part("tts"),
+            routed_llm = getattr(self, "_routing_runtime", None)
+            engine = PipelineEngine(routed_llm or part("llm"), part("stt"), part("tts"),
                                     config=config, log=self.ui.write_log)
         except Exception as error:
             if local is not None:
@@ -3043,6 +3144,9 @@ class JarvisLive:
                     # drop waiting up to a minute, long after the network was
                     # fine, and nothing on screen explained why.
                     self._conn_backoff = _RECONNECT_BASE
+                    if self._context_carryover:
+                        self._context_carryover = ""
+                        self.ui.write_log("SYS: Previous conversation context carried into this session.")
                     if _resumed_with:
                         # Say it plainly: the difference between "it reconnected"
                         # and "it reconnected and still knows what we were doing"

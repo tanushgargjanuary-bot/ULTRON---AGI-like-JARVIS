@@ -32,10 +32,11 @@ def _get_api_key() -> str:
 
 
 def _coding_provider() -> str:
-    """The service chosen under ENGINE & PROVIDERS → CODING, or ''."""
+    """The evolution route selected under ENGINE & PROVIDERS → CODING, or ''."""
     try:
-        from memory.config_manager import get_coding_provider
-        return get_coding_provider()
+        from core.routing import Purpose
+        from core.routing_runtime import configured_provider_id
+        return configured_provider_id(Purpose.EVOLUTION)
     except Exception:
         return ""
 
