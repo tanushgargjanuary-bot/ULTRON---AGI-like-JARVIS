@@ -159,11 +159,14 @@ edit records what it replaced in a bounded history under ignored `state/`. That 
 future answer a trail instead of pretending the old fact never existed. A saved planner
 checkpoint is offered at startup, but still waits for the owner's explicit request.
 
-This slice is now in two local commits: fallback `59c6cfb`, memory recency `5763c8d`. It is
-not pushed yet. The sandbox cannot import Qt because `libGL.so.1` is missing, and it has no
-live Ollama/Gemini/microphone with which to prove the owner's actual hardware path. The large
-self-evolution steps remain open: safe generation swaps, supervisor/worker, test-carrying
-proposals, the dedicated after-action risk line, and OCR.
+The after-action line was then added as its own small slice: `core/action_audit.py` reads
+the existing policy tier and the tool's reported status. It does not authorize anything or
+copy arguments/results into the HUD. Fallback is `59c6cfb`, memory recency is `5763c8d`, and
+the audit is `dab95a7`; all are pushed on the arena branch. GitHub CI run `42459569545` passed
+on Linux and Windows. The sandbox's own full run still has one Qt setup error because
+`libGL.so.1` is absent; no live Ollama/Gemini/microphone was available to test the owner's
+hardware path. The large self-evolution steps remain open: safe generation swaps,
+supervisor/worker, test-carrying proposals, evolution-ledger integration, and OCR.
 
 ## What has not changed
 

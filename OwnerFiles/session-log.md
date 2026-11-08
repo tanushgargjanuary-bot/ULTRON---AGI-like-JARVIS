@@ -422,21 +422,25 @@ use elevation.
 shows the timestamp in recall, and writes bounded `{time, path, from, to}` history under
 ignored `state/`. A history write failure does not lose the memory fact. Startup offers an
 existing planner checkpoint; it never resumes a plan without the owner's request.
+`core/action_audit.py` adds one post-action HUD line for non-read-only tools: policy risk tier
+plus the status the tool actually reported. It logs neither arguments nor result contents;
+it observes the referee's decision and does not change it.
 
-**Proof.** After the final branch-count refactor, the targeted fallback, memory, plan-state,
-and existing pipeline-fallback tests ran **50 tests successfully**. Deep scan reports **0 high
-findings**; the tracked debts are unchanged at 108 complex functions, 254 library prints,
-and 82 discarded typed exceptions. The latest full suite ran **1,695 tests**, 15 skipped,
-with one Qt setup error because this Linux environment lacks `libGL.so.1`; no other failures
-were reported. README's measured test count is 1,710. No live Gemini key, Ollama server,
-microphone, or Windows machine was available for this session. This is not a green full-suite
-run.
+**Proof.** The latest targeted fallback, memory, plan-state, pipeline-fallback, and action-
+audit run: **55 tests passed**. Deep scan reports **0 high findings**; the tracked debts are
+unchanged at 108 complex functions, 254 library prints, and 82 discarded typed exceptions.
+The latest full suite ran **1,700 tests**, 15 skipped, with one Qt setup error because this
+sandbox lacks `libGL.so.1`; no other failures were reported. README's measured test count is
+1,715. GitHub CI run `42459569545` passed on **Linux and Windows**. The sandbox had no live
+Gemini key, Ollama server, or microphone, so the owner's actual model/audio path is not
+hardware-verified.
 
-**Not done yet.** This is not all the approved self-evolution work. The generation swap and
-safe leaf reload, worker/supervisor split, test-carrying proposals, evolution ledger, OCR
-rung, and a dedicated after-action risk line remain future slices. Existing `core/outcome.py`
-labels done/unverified/failed/ask results; do not claim that it is a complete risk line.
-**Commits.** Local quota fallback: `59c6cfb`. Memory recency/history: `5763c8d`. Both are
-on `arena/4c973188-ultron-agi-like-jarvis` and were pushed to `origin` at `048aed1`.
-PR #12 remains open. The latest `gh pr checks 12` showed only **Kilo Code Review: pending**;
-no final CI result is available yet.
+**Not done yet.** The generation swap and safe leaf reload, worker/supervisor split,
+test-carrying proposals, evolution-ledger integration, and OCR rung are still future slices.
+The user asked to do all of these; this log does not mark them complete.
+
+**Commits and push.** Local quota fallback: `59c6cfb`. Memory recency/history: `5763c8d`.
+Owner handover and project trace: `048aed1`, `5825ad1`. After-action risk line:
+`dab95a7`. All are pushed to `origin/arena/4c973188-ultron-agi-like-jarvis`. PR #12 remains
+open. At the latest check, Linux and Windows passed; Kilo Code Review returned
+`ACTION_REQUIRED`, and CodeRabbit was skipped.
