@@ -209,6 +209,7 @@ class Updating(Base):
         result = updater.apply()
         self.assertTrue(result["ok"], result)
         self.assertTrue(result["restart_required"])
+        self.assertFalse(result["leaf_reload_deferred"])
         self.assertIn("restart is required", result["note"])
         marker = updater.restart_marker()
         self.assertIn("to", marker)
@@ -229,6 +230,7 @@ class Updating(Base):
         self.assertTrue(result["ok"], result)
         self.assertFalse(result["restart_required"])
         self.assertTrue(result["leaf_reload_pending"])
+        self.assertFalse(result["leaf_reload_deferred"])
         self.assertEqual(result["leaf_files"], ["actions/example.py"])
         self.assertIn("reconnect boundary", result["note"])
         self.assertEqual(updater.restart_marker(), {})
@@ -241,7 +243,16 @@ class Updating(Base):
         self.assertTrue(result["ok"], result)
         self.assertTrue(result["restart_required"])
         self.assertFalse(result["leaf_reload_pending"])
+        self.assertTrue(result["leaf_reload_deferred"])
+        self.assertIn("stay inactive until that restart", result["note"])
+        self.assertTrue(updater.leaf_reload_deferred())
         self.assertEqual(result["restart_files"], ["core/example.py"])
+        self.assertEqual(updater.restart_marker()["files"], ["core/example.py"])
+
+        # The flag is consumed only by a fresh process after it has loaded the
+        # updated tree; the restart marker itself remains available for diagnosis.
+        self.assertTrue(updater.mark_process_started())
+        self.assertFalse(updater.leaf_reload_deferred())
         self.assertEqual(updater.restart_marker()["files"], ["core/example.py"])
 
     def test_a_version_that_fails_its_checks_is_put_back(self):

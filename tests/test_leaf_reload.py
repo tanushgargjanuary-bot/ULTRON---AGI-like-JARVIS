@@ -106,10 +106,16 @@ class LeafReloadTests(unittest.TestCase):
         self.assertEqual(new.run("reloadable_plugin", {}, player=None,
                                  session_memory=None), "two")
 
-    def test_a_referee_module_is_not_part_of_leaf_reload(self):
-        # The loader knows only the two explicit leaf packages.
-        self.assertFalse(any(name.startswith("core.policy.")
-                             for name in self.saved))
+    def test_forced_leaf_discovery_preserves_referee_policy_identity(self):
+        policy = importlib.import_module("core.policy")
+        tier_type = policy.Tier
+
+        discover_actions(self.actions, logger=lambda _line: None, force_reload=True)
+        discover_plugins(self.plugins, set(), logger=lambda _line: None,
+                         force_reload=True)
+
+        self.assertIs(sys.modules["core.policy"], policy)
+        self.assertIs(policy.Tier, tier_type)
 
 
 if __name__ == "__main__":

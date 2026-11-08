@@ -833,6 +833,18 @@ class JarvisLive:
             (self._leaf_action_dir, self._leaf_plugin_dir),
             self._action_registry, self._plugin_registry,
         )
+        # Mixed self-updates must not activate leaf code against the old in-memory
+        # core. A restart starts from the new files and consumes this one-process gate.
+        try:
+            from custom_jarvis.selfupdate import Updater
+            self._leaf_updater = Updater(_base_dir)
+            if self._leaf_updater.mark_process_started():
+                self.ui.write_log(
+                    "SYS: Restart complete; the updated action/plugin files are active."
+                )
+        except Exception as _update_state_error:
+            self._leaf_updater = None
+            print(f"[Updater] Could not read restart state: {_update_state_error}")
         # MCP: one adaptor for the tools the owner already runs. The list is read from
         # config/mcp_servers.json — nothing is installed, nothing is fetched, and a
         # server that is not listed is a server this app does not know. A broken entry
@@ -2625,6 +2637,9 @@ class JarvisLive:
         """Reload only action/plugin leaves after the last session has closed."""
         manager = getattr(self, "_leaf_generations", None)
         if manager is None:
+            return
+        updater = getattr(self, "_leaf_updater", None)
+        if updater is not None and updater.leaf_reload_deferred():
             return
 
         def build():

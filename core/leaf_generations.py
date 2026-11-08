@@ -99,7 +99,7 @@ def _clear_bytecode(roots: tuple[Path, ...]) -> None:
 @dataclass
 class Generation:
     number: int
-    signature: str
+    signature: str | None
     actions: object
     plugins: object
     modules: dict[str, object]
@@ -110,7 +110,15 @@ class LeafGenerations:
 
     def __init__(self, roots: tuple[Path, ...], actions, plugins):
         self.roots = tuple(Path(root) for root in roots)
-        self.active = Generation(1, tree_signature(self.roots), actions, plugins, _modules())
+        try:
+            signature = tree_signature(self.roots)
+            self.initial_signature_error: str | None = None
+        except OSError as error:
+            # Discovery has already produced usable registries. Keep them active
+            # and let refresh() retry the fingerprint at the next safe boundary.
+            signature = None
+            self.initial_signature_error = str(error)
+        self.active = Generation(1, signature, actions, plugins, _modules())
         self.previous: Generation | None = None
         self._refused_signature: str | None = None
 

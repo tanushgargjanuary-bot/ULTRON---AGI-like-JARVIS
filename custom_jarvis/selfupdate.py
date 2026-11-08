@@ -60,9 +60,11 @@ def _code_file_groups(code_files: list[str]) -> tuple[list[str], list[str], bool
 
 def _update_note(restart_required: bool, leaf_files: list[str]) -> str:
     if restart_required:
+        leaf_note = (" Action/plugin files stay inactive until that restart."
+                     if leaf_files else "")
         return ("Updated. Non-leaf code is on disk; a restart is required before "
                 "it runs, and the session state survives it because it lives in "
-                "files, not in memory.")
+                "files, not in memory." + leaf_note)
     if leaf_files:
         return ("Updated. Action/plugin code will be staged at the next provider "
                 "reconnect boundary; no process restart is needed.")
@@ -135,12 +137,14 @@ class Updater:
                 "note": (f"{behind} new commit(s) on {self.remote}/{branch}" if behind
                          else "This copy is up to date.")}
 
-    def _mark_restart_if_needed(self, before: str, files: list[str]) -> None:
+    def _mark_restart_if_needed(self, before: str, files: list[str],
+                                leaf_reload_deferred: bool = False) -> None:
         if files:
             self._write_marker({"at": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "from": before[:7],
                                 "to": self.git("rev-parse", "--short", "HEAD")[1],
-                                "files": files[:40]})
+                                "files": files[:40],
+                                "leaf_reload_deferred": bool(leaf_reload_deferred)})
 
     # ------------------------------------------------------------------ apply
     def apply(self, verify: Callable[[], dict] | None = None) -> dict:
@@ -184,10 +188,12 @@ class Updater:
                 reloaded[getattr(hook, "__name__", "hook")] = {"ok": False,
                                                                "note": str(error)}
         restart = bool(restart_files)
-        self._mark_restart_if_needed(before, restart_files)
+        leaf_reload_deferred = bool(restart and leaf_files)
+        self._mark_restart_if_needed(before, restart_files, leaf_reload_deferred)
         note = _update_note(restart, leaf_files)
         return {"ok": True, "stage": "updated", "restart_required": restart,
                 "leaf_reload_pending": leaf_reload_pending,
+                "leaf_reload_deferred": leaf_reload_deferred,
                 "files": ahead["files"], "code_files": code_files,
                 "leaf_files": leaf_files, "restart_files": restart_files,
                 "data_files": data_files, "reloaded": reloaded, "note": note}
@@ -197,6 +203,19 @@ class Updater:
             return json.loads(self.marker.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return {}
+
+    def leaf_reload_deferred(self) -> bool:
+        """Whether a mixed update must keep disk leaves inactive until restart."""
+        return bool(self.restart_marker().get("leaf_reload_deferred"))
+
+    def mark_process_started(self) -> bool:
+        """Clear the defer flag after a fresh process has loaded the updated code."""
+        marker = self.restart_marker()
+        deferred = bool(marker.get("leaf_reload_deferred"))
+        if deferred:
+            marker["leaf_reload_deferred"] = False
+            self._write_marker(marker)
+        return deferred
 
     def clear_marker(self) -> None:
         try:

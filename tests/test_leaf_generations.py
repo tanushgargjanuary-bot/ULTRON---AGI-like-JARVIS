@@ -5,6 +5,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from core.leaf_generations import LeafGenerations, _restore_modules, tree_signature
 
@@ -44,6 +45,19 @@ class LeafGenerationTests(unittest.TestCase):
 
     def change_source(self):
         (self.actions / "one.py").write_text("v2", encoding="utf-8")
+
+    def test_initial_signature_failure_keeps_registries_and_retries_later(self):
+        with patch("core.leaf_generations.tree_signature",
+                   side_effect=[OSError("temporarily unreadable"), "readable-again"]):
+            manager = LeafGenerations((self.actions, self.plugins), *self.old)
+            self.assertIs(manager.active.actions, self.old[0])
+            self.assertIsNone(manager.active.signature)
+            self.assertIn("temporarily unreadable", manager.initial_signature_error)
+            result = manager.refresh(lambda: self.old)
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["changed"])
+        self.assertEqual(manager.active.signature, "readable-again")
 
     def test_no_source_change_does_not_build_a_candidate(self):
         result = self.manager.refresh(lambda: self.fail("unchanged tree was rebuilt"))
@@ -121,11 +135,15 @@ class LeafGenerationTests(unittest.TestCase):
 
     def test_underscored_helper_source_is_part_of_the_generation(self):
         helper = self.actions / "_helper.py"
+        without_helper = tree_signature((self.actions, self.plugins))
         helper.write_text("v1", encoding="utf-8")
-        first = self.manager.active.signature
+        self.assertNotEqual(without_helper, tree_signature((self.actions, self.plugins)))
+
+        manager = LeafGenerations((self.actions, self.plugins), *self.old)
+        first = manager.active.signature
         helper.write_text("v2", encoding="utf-8")
         self.assertNotEqual(first, tree_signature((self.actions, self.plugins)))
-        self.assertTrue(self.manager.refresh(
+        self.assertTrue(manager.refresh(
             lambda: (Registry({"one"}), Registry({"plugin_one"}))
         )["changed"])
 
