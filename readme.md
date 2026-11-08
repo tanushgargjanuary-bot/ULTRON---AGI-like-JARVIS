@@ -8,6 +8,30 @@ You talk. It answers. It does the work.
 
 <sub>An illustration of the HUD in its three states, drawn from the app's own colours by `scripts/make_banner.py`. The real window is in the app.</sub>
 
+![CI status](https://img.shields.io/github/actions/workflow/status/FatihMakes/Mark-LVI?label=verify) ![Tests](https://img.shields.io/badge/tests-1%2C737-brightgreen) ![Python](https://img.shields.io/badge/python-3.11%20%E2%95%B2%203.12%20%E2%95%B2%203.13-blue) ![License](https://img.shields.io/badge/license/CC--BY--NC--4.0-orange)
+
+<details>
+<summary><b>Contents</b> (click)</summary>
+
+- [The short version](#the-short-version)
+- [What it does](#what-it-does)
+- [Your instructions are yours to read](#your-instructions-are-yours-to-read)
+- [Your syllabus, inside it](#your-syllabus-inside-it)
+- [It remembers how it died](#it-remembers-how-it-died)
+- [It does not blame your key](#it-does-not-blame-your-key)
+- [Every skill has a reason to be used](#every-skill-has-a-reason-to-be-used)
+- [It changes its own code now](#it-changes-its-own-code-now)
+- [A mind with a cast](#a-mind-with-a-cast)
+- [Install — three steps](#install--three-steps)
+- [Quick start from source](#quick-start-from-source)
+- [What it cannot do yet](#what-it-cannot-do-yet)
+- [Your privacy, in four lines](#your-privacy-in-four-lines)
+- [Try this first](#try-this-first)
+- [For engineers](#-for-engineers-click-to-open) — shape, invariants, benchmarks, documents
+- [Credits](#credits)
+
+</details>
+
 ---
 
 ## The short version
@@ -130,7 +154,7 @@ Each one brings **methods**, not permissions: *suit check* is the health of its 
 
 ## Install — three steps
 
-1. **Run `UltronSetup-1.2.27.exe`** and click Next three times. No administrator prompt: it installs into your own folder. It checks for Python first and says so in a sentence if it is missing.
+1. **Run the setup file from the [Releases page](https://github.com/FatihMakes/Mark-LVI/releases)** — its name carries the current version, e.g. `UltronSetup-1.2.36.exe` (the number in `packaging/version.txt`) — and click Next three times. No administrator prompt: it installs into your own folder. It checks for Python first and says so in a sentence if it is missing.
 2. **Or, from a folder:** unpack it, then double-click `run.bat` — or in PowerShell: `.\run.ps1`
 3. **Wait once.** Ten to twenty minutes. It builds a private environment, installs the packages, and starts.
 
@@ -151,6 +175,19 @@ Then add **one key**: open `config/api_keys.json` and paste a key for the model 
 | Want to skip the browser engines | Set `ULTRON_SKIP_BROWSERS=1` before the first run. |
 
 </details>
+
+## Quick start from source
+
+No installer, one terminal. Needs **Python 3.11, 3.12 or 3.13** (3.14 is refused on purpose) and a model key.
+
+```powershell
+git clone <this repository>
+cd ultron
+.\run.ps1                  # first run builds .venv, installs requirements.txt, starts
+                           # (or install by hand: python setup.py, then python main.py)
+```
+
+Then put one key in `config/api_keys.json` — or paste it on the first screen the app shows. The same three commands work on macOS and Linux; see **[docs/INSTALL.md](docs/INSTALL.md)** for the per-platform table.
 
 ---
 
@@ -205,7 +242,7 @@ scripts/              verify.py, proof_gate.py, verify_all.py, map.py, bench
 tests/                no network, no hardware, no mocks where a real thing fits
 ```
 
-**251 Python files. 94,825 lines. 1,737 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
+**253 Python files. 95,073 lines. 1,737 tests.** That count is the last green run's own count; `scripts/verify.py` prints the number it just measured, and a few tests exist only when an optional package is missing, so two machines can differ by a handful. Proof gate, this build, Linux, no display attached: **22 PROVEN / 13 PARTIAL / 0 FAILED**. It also says why each one is open — `Windows 4, audio or display 3, keys 3, hardware 1, unclassified 1, the owner's voice 1` — because a bare count is not an explanation. The Windows runner closes the Windows-only claims too; the last artifact said 18 / 9, measured on commit `23e120e`, and has not been re-measured since.
 
 ### Five invariants, and what enforces each
 
