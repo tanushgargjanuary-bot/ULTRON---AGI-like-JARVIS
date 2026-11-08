@@ -189,7 +189,12 @@ class Ledger:
 
         buckets = []
         for low in (0.5, 0.6, 0.7, 0.8, 0.9):
-            members = [row for row in rows if low <= _clamp(row["confidence"]) < low + 0.1]
+            upper = round(low + 0.1, 1)
+            members = [
+                row for row in rows
+                if low <= _clamp(row["confidence"]) < upper
+                or (upper == 1.0 and _clamp(row["confidence"]) == 1.0)
+            ]
             if not members:
                 continue
             buckets.append({

@@ -53,10 +53,12 @@ def _rehearse(parameters: dict) -> str:
     proposal_id = str(parameters.get("change") or parameters.get("proposal") or "").strip()
     if not proposal_id:
         return "Which change? Ask for 'pending' and I will name them."
-    result = self_change.rehearse(proposal_id, full=bool(parameters.get("full")))
+    # Model-generated source must pass the full harness, not merely compile.
+    # A caller cannot opt out by setting a model-controlled `full: false` flag.
+    result = self_change.rehearse(proposal_id, full=True)
     if result["ok"]:
         return _say([
-            f"The copy passed: {result['command']}",
+            f"The full test harness passed in the copy: {result['command']}",
             "Nothing in the project was written — that ran in a temporary copy of the "
             "tree.",
             "Next: two confirmations, in two different places, then 'apply'.",
@@ -77,6 +79,7 @@ def _confirm(parameters: dict) -> str:
 
 
 def _apply(parameters: dict) -> str:
+    """Apply a validated self-change and report its outcome."""
     proposal_id = str(parameters.get("change") or parameters.get("proposal") or "").strip()
     if not proposal_id:
         return "Which change? Ask for 'pending' and I will name them."
@@ -139,8 +142,8 @@ def _rules(_parameters=None) -> str:
     return _say([
         "Five stages, in order, and no other door: propose, rehearse, confirm, apply, "
         "revert.",
-        "Rehearsal runs in a copy of the tree, so a broken draft costs a temporary "
-        "folder and never the body.",
+        "Every source rehearsal runs the full test harness in a copy of the tree; "
+        "there is no compile-only bypass. A failed or incomplete run cannot be applied.",
         f"Two confirmations, in two different places: {', '.join(self_change.CHANNELS)}.",
         "The referee is off limits: " + ", ".join(self_change.PROTECTED) + ".",
         "A code change runs when the process starts again. The session survives "
@@ -203,7 +206,8 @@ def self_modify(parameters: dict) -> str:
         return (f"I do not know the action '{action}'. I can: crashes, propose, "
                 f"rehearse, confirm, apply, revert, pending, show, history, rules.")
     try:
-        return handler(parameters)
+        with self_change.change_lock():
+            return handler(parameters)
     except ValueError as error:
         return str(error)
     except Exception as error:
@@ -221,7 +225,8 @@ TOOL = {
         "traceback on request, so a repair starts from the fault. Use 'propose' with a "
         "path inside the project plus either 'text' (the whole new file) or 'find' and "
         "'replace' (one passage), and a 'reason'. Then 'rehearse' runs the change in a "
-        "temporary copy of the project with the test harness, 'confirm' twice in two "
+        "temporary copy with the full test harness (no compile-only bypass), 'confirm' "
+        "twice in two "
         "different channels (voice, panel, cli), and only then 'apply'. 'revert' puts "
         "back the exact bytes that were replaced. Never say a change is active before "
         "'apply' has returned the applied message, and never say it is running if the "
@@ -252,9 +257,6 @@ TOOL = {
                       "description": "For crashes: also show the newest traceback."},
             "channel": {"type": "STRING",
                         "description": "Where the confirmation came from: voice | panel | cli."},
-            "full": {"type": "BOOLEAN",
-                     "description": "Run the whole test suite in the copy, not just a "
-                                    "compile check."},
         },
         "required": ["action"],
     },

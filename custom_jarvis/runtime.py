@@ -23,7 +23,9 @@ class Registry(Protocol):
 
     def list_tools(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]: ...
 
-    def execute(self, name: str, **kwargs: Any) -> ToolResult: ...
+    def execute(self, name: str, **kwargs: Any) -> ToolResult:
+        """Apply policy and approval gates before invoking a registered tool."""
+        ...
 
 
 ApprovalCallback = Callable[[str, dict[str, Any]], bool]
@@ -49,6 +51,7 @@ class ControlledRegistry:
         self.approve = approve
         self.cancelled = threading.Event()
         self.preview = False
+        self.on_approval: Callable[[str, dict[str, Any]], bool | None] | None = None
 
     def list_tools(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
         return self.registry.list_tools(*args, **kwargs)
@@ -62,6 +65,7 @@ class ControlledRegistry:
         )
 
     def execute(self, name: str, **kwargs: Any) -> ToolResult:
+        """Apply policy and approval gates before invoking a registered tool."""
         if self.cancelled.is_set():
             return self.blocked(
                 "Cancelled by user. No further tools were executed.", "CANCELLED"
@@ -75,6 +79,16 @@ class ControlledRegistry:
             # Unknown tools and aliases are deliberately not implicitly trusted.
             if self.approve is None or not self.approve(name, kwargs):
                 return self.blocked("Action not approved. Execution stopped.", "DENIED")
+            if self.on_approval is not None:
+                try:
+                    recorded = self.on_approval(name, kwargs)
+                except Exception:
+                    recorded = False
+                if recorded is False:
+                    return self.blocked(
+                        "Approval could not be recorded safely; execution stopped.",
+                        "APPROVAL_RECORD_FAILED",
+                    )
         if self.cancelled.is_set():
             return self.blocked("Cancelled before tool execution.", "CANCELLED")
         return self.registry.execute(name, **kwargs)

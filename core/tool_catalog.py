@@ -42,7 +42,7 @@ CATEGORIES: dict[str, str] = {
     "file_controller": "files", "file_processor": "files", "code_helper": "files",
     "dev_agent": "files",
     # knowledge and time
-    "web_search": "knowledge", "weather_report": "knowledge", "recall_memory": "knowledge",
+    "web_search": "knowledge", "web_read": "knowledge", "weather_report": "knowledge", "recall_memory": "knowledge",
     "save_memory": "knowledge", "daily_digest": "knowledge", "reminder": "knowledge",
     "flight_finder": "knowledge", "system_monitor": "knowledge",
     # media

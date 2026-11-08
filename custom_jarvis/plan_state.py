@@ -17,12 +17,17 @@ No dependency. `json` and a path.
 from __future__ import annotations
 
 import json
+import logging
+import math
+import re
 import time
 from pathlib import Path
 from typing import Any, Optional
 
 FOLDER = Path(__file__).resolve().parent.parent / "state"
+logger = logging.getLogger("plan_state")
 NAME = "active_plan.json"
+INVALID_NAME = "active_plan.invalid"
 
 # A plan older than this is still offered, in different words. It is never resumed
 # on its own, and it is never deleted on its own either: deleting the only record of
@@ -40,14 +45,41 @@ STEP_FIELDS = (
     "verification",
     "artifact_sha256",
     "backup_id",
-    "resolved_args",
+    "approval_recorded",
+)
+
+_STEP_REFERENCE = re.compile(
+    r"\$(?:PREV_OUTPUT|PREV_DATA|OUTPUT|STEP_\d+_(?:OUTPUT|DATA))|"
+    r"\{\{(?:prev_output|prev_data|output|step_\d+\.(?:output|data))\}\}|"
+    r"\{(?:prev_output|prev_data|output|step_\d+_output)\}",
+    re.IGNORECASE,
 )
 
 _SECRET_HINTS = ("key", "token", "secret", "password", "passwd", "credential")
 
 
 def _path(folder: Optional[Path] = None) -> Path:
+    """Resolve the active checkpoint path for an optional state folder."""
     return (Path(folder) if folder else FOLDER) / NAME
+
+
+def _invalid_path(folder: Optional[Path] = None) -> Path:
+    """Resolve the sidecar that makes any stale checkpoint non-resumable."""
+    return (Path(folder) if folder else FOLDER) / INVALID_NAME
+
+
+def _invalidate(folder: Optional[Path] = None) -> None:
+    """Delete an old checkpoint or leave a fail-closed sidecar if deletion fails."""
+    if clear(folder):
+        return
+    try:
+        marker = _invalid_path(folder)
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text("checkpoint update failed; do not resume\n", encoding="utf-8")
+    except (OSError, ValueError) as error:
+        # If storage itself is unavailable there is no durable place to mark unsafe.
+        logger.warning("could not mark the active plan unsafe: %s", error)
+        return
 
 
 def _secret_in(value: Any) -> bool:
@@ -63,15 +95,110 @@ def _secret_in(value: Any) -> bool:
     return False
 
 
+def has_step_output_references(value: Any) -> bool:
+    """True when arguments depend on output/data omitted from the disk checkpoint."""
+    if isinstance(value, str):
+        return bool(_STEP_REFERENCE.search(value))
+    if isinstance(value, dict):
+        return any(has_step_output_references(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_step_output_references(item) for item in value)
+    return False
+
+
+def _json_safe(value: Any) -> bool:
+    """Reject values that cannot be safely represented as finite JSON."""
+    if value is None or isinstance(value, (str, bool, int)):
+        return True
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if isinstance(value, list):
+        return all(_json_safe(item) for item in value)
+    if isinstance(value, dict):
+        return all(isinstance(key, str) and _json_safe(item)
+                   for key, item in value.items())
+    return False
+
+
+def _number(value: Any, *, integer: bool = False) -> bool:
+    """Validate a finite numeric checkpoint field and optional integer form."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        finite = math.isfinite(value)
+    except (OverflowError, ValueError):
+        return False
+    if not finite:
+        return False
+    return not integer or not isinstance(value, float) or value.is_integer()
+
+
+_VALID_STATUSES = {"pending", "running", "completed", "failed", "skipped", "retrying"}
+
+
+def _valid_step(row: Any) -> Optional[int]:
+    """Return a step id only when its resume fields are well formed."""
+    if not isinstance(row, dict):
+        return None
+    step_id = row.get("step_id")
+    if isinstance(step_id, bool) or not isinstance(step_id, int) or step_id < 1:
+        return None
+    if not isinstance(row.get("tool_name"), str) or not row["tool_name"].strip():
+        return None
+    if not isinstance(row.get("description"), str):
+        return None
+    arguments = row.get("tool_args")
+    if not isinstance(arguments, dict) or not _json_safe(arguments):
+        return None
+    if row.get("status") not in _VALID_STATUSES:
+        return None
+    if not isinstance(row.get("approval_recorded", False), bool):
+        return None
+    return step_id
+
+
+def _valid_record(record: Any) -> bool:
+    """Validate the checkpoint structure before it is offered for resume."""
+    if not isinstance(record, dict):
+        return False
+    steps = record.get("steps")
+    if not isinstance(steps, list) or not steps:
+        return False
+    index = record.get("current_step_index")
+    saved = record.get("saved")
+    if not isinstance(record.get("goal"), str):
+        return False
+    if isinstance(index, bool) or not isinstance(index, int):
+        return False
+    if not _number(saved) or saved > time.time() + 300:
+        return False
+    if not 0 <= index <= len(steps):
+        return False
+    workspace = record.get("workspace")
+    if workspace is not None and not isinstance(workspace, str):
+        return False
+    step_ids = set()
+    for row in steps:
+        step_id = _valid_step(row)
+        if step_id is None or step_id in step_ids:
+            return False
+        step_ids.add(step_id)
+    return True
+
+
 def keep(plan: dict) -> dict:
     """Reduce a `Plan.to_dict()` to the fields a resume can use."""
     steps = []
     for row in plan.get("steps") or []:
-        steps.append({name: row.get(name) for name in STEP_FIELDS})
+        kept = {name: row.get(name) for name in STEP_FIELDS}
+        kept["approval_recorded"] = bool(row.get("approval_recorded"))
+        steps.append(kept)
+    workspace = plan.get("workspace")
     return {
         "goal": str(plan.get("goal") or "")[:500],
+        "workspace": str(workspace) if workspace is not None else None,
         "steps": steps,
-        "current_step_index": int(plan.get("current_step_index") or 0),
+        "current_step_index": plan.get("current_step_index", 0),
         "saved": time.time(),
     }
 
@@ -85,29 +212,47 @@ def save(plan: dict, folder: Optional[Path] = None) -> bool:
     """
     if any(_secret_in(row.get("tool_args")) or _secret_in(row.get("resolved_args"))
            for row in plan.get("steps") or []):
-        clear(folder)
-        return False
-
-    record = keep(plan)
-    text = json.dumps(record, ensure_ascii=False, default=str)
-    if len(text.encode("utf-8")) > MAX_BYTES:
-        clear(folder)
+        _invalidate(folder)
         return False
 
     path = _path(folder)
+    temp = path.with_suffix(".tmp")
     try:
+        record = keep(plan)
+        if not _valid_record(record):
+            _invalidate(folder)
+            return False
+        text = json.dumps(record, ensure_ascii=False, allow_nan=False)
+        if len(text.encode("utf-8")) > MAX_BYTES:
+            _invalidate(folder)
+            return False
         path.parent.mkdir(parents=True, exist_ok=True)
-        temp = path.with_suffix(".tmp")
         temp.write_text(text, encoding="utf-8")
         temp.replace(path)          # a half-written plan must never be readable
+        marker = _invalid_path(folder)
+        try:
+            marker.unlink(missing_ok=True)
+        except (OSError, ValueError):
+            _invalidate(folder)
+            return False
         return True
-    except (OSError, ValueError):
+    except (OSError, TypeError, ValueError):
+        # An older checkpoint may describe an action that already ran. If the new
+        # state could not be saved, do not leave that stale record resumable.
+        _invalidate(folder)
         return False
+    finally:
+        try:
+            temp.unlink(missing_ok=True)
+        except (OSError, ValueError) as error:
+            logger.warning("could not remove checkpoint temp file: %s", error)
 
 
 def load(folder: Optional[Path] = None) -> Optional[dict]:
-    """The saved plan, or None. A damaged file is treated as no file."""
+    """The saved plan, or None. A damaged or invalidated file is not resumable."""
     try:
+        if _invalid_path(folder).exists():
+            return None
         raw = _path(folder).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return None
@@ -115,20 +260,20 @@ def load(folder: Optional[Path] = None) -> Optional[dict]:
         record = json.loads(raw)
     except ValueError:
         return None
-    if not isinstance(record, dict) or not record.get("steps"):
+    if not _valid_record(record):
         return None
     return record
 
 
 def clear(folder: Optional[Path] = None) -> bool:
-    """Remove the file. True when it is gone afterwards."""
-    try:
-        _path(folder).unlink()
-        return True
-    except FileNotFoundError:
-        return True
-    except OSError:
-        return False
+    """Remove the active checkpoint and any unsafe sidecar."""
+    removed = True
+    for target in (_path(folder), _invalid_path(folder)):
+        try:
+            target.unlink(missing_ok=True)
+        except (OSError, ValueError):
+            removed = False
+    return removed
 
 
 def pending(folder: Optional[Path] = None, now: Optional[float] = None) -> Optional[dict]:
@@ -148,7 +293,11 @@ def describe(record: dict) -> str:
     total = len(record.get("steps") or [])
     index = min(int(record.get("current_step_index") or 0), total)
     goal = str(record.get("goal") or "").strip().strip("\"'") or "a plan with no name"
-    return f'step {index + 1} of {total} — "{goal[:80]}"'
+    confirmation = ""
+    steps = record.get("steps") or []
+    if index < total and steps[index].get("approval_recorded"):
+        confirmation = " (confirmed earlier; will ask again)"
+    return f'step {index + 1} of {total} — "{goal[:60]}"{confirmation}'
 
 
 def startup_notice(folder: Optional[Path] = None, now: Optional[float] = None) -> str:
@@ -163,7 +312,8 @@ def startup_notice(folder: Optional[Path] = None, now: Optional[float] = None) -
         return ""
     if record["stale"]:
         days = max(1, int(record["age_seconds"] // 86400))
-        return (f"SYS: A plan from {days} day(s) ago is still on disk — {describe(record)}. "
-                "It is not resumed by itself. Say \"resume the last plan\", "
-                "or delete state/active_plan.json.")
-    return f"SYS: A plan stopped at {describe(record)}. Say \"resume the last plan\" to continue."
+        return (f"SYS: Saved plan ({days}d old), {describe(record)}. "
+                "Not resumed automatically. Say \"resume the last plan\" or "
+                "\"discard the saved plan\"; writes need fresh approval.")
+    return (f"SYS: Saved plan, {describe(record)}. Say \"resume the last plan\" or "
+            "\"discard the saved plan\"; writes need fresh approval.")

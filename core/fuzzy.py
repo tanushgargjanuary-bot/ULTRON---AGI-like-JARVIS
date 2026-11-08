@@ -14,8 +14,8 @@ WHAT THIS FILE IS
     being built alongside, and each one has a measurable effect:
 
       `damerau_levenshtein`  edit distance with adjacent transposition
-                             (DAA Unit IV: dynamic programming, O(mn) time,
-                             O(min(m,n)) space by keeping one row)
+                             (DAA Unit IV: dynamic programming, O(mn) time/space,
+                             with a fixed cell budget for overlong input)
       `soundex`, `metaphone`  phonetic keys, so "viber" and "vyber" collide
                              BEFORE any distance is computed
       `Trie` (in core/trie.py) prefix index, O(len) lookup
@@ -41,6 +41,7 @@ import unicodedata
 
 _DROP = re.compile(r"[^a-z0-9]+")
 _VOWELS = set("aeiouy")          # Y drops like a vowel (Metaphone convention)
+_MAX_DISTANCE_CELLS = 200_000   # bound O(mn) work and memory on untrusted text
 
 
 def normalise(text: str) -> str:
@@ -64,9 +65,11 @@ def damerau_levenshtein(a: str, b: str) -> int:
     Speech errors are exactly transpositions — "chorme" for "chrome" — so the
     difference is not academic here.
 
-    Time O(mn), space O(mn) for the plain version below. `max_distance` lets
-    callers stop early with a cheap upper bound, which is how the index avoids
-    paying full price for hopeless candidates.
+    Time and space are O(mn), subject to a fixed matrix-cell budget. If a
+    non-empty pair would exceed that budget, return max(len(a), len(b)) as a
+    conservative non-match sentinel instead of allocating an unbounded matrix.
+    This is intentionally approximate only for overlong inputs; exact matches
+    and empty-string cases are handled before the budget check.
 
         >>> damerau_levenshtein("chorme", "chrome")
         1
@@ -77,6 +80,8 @@ def damerau_levenshtein(a: str, b: str) -> int:
         return len(b)
     if not b:
         return len(a)
+    if (len(a) + 2) * (len(b) + 2) > _MAX_DISTANCE_CELLS:
+        return max(len(a), len(b))
 
     # The standard formulation (Wagner–Fischer extended with a transposition
     # term). `d` is (m+2) x (n+2) with a sentinel border so the transposition

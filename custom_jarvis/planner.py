@@ -70,6 +70,7 @@ class PlanStep:
     data: Any = None
     artifact_sha256: Optional[str] = None
     resolved_args: Optional[Dict[str, Any]] = None
+    approval_recorded: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -90,6 +91,7 @@ class PlanStep:
             "data": self.data,
             "artifact_sha256": self.artifact_sha256,
             "resolved_args": self.resolved_args,
+            "approval_recorded": self.approval_recorded,
         }
 
 
@@ -189,26 +191,34 @@ class AutonomousPlanner:
         )
         self.on_checkpoint: Optional[Callable[[Dict[str, Any]], None]] = None
 
-    def _checkpoint(self, plan: Plan) -> None:
-        # Two records, two lifetimes. `on_checkpoint` is opt-in, holds outputs, and is
-        # gated by an approval. The file is not: it holds steps and never outputs, so a
-        # restart can offer to continue without asking permission to write a plan down.
-        try:
-            if plan.is_completed:
-                plan_state.clear()
-            else:
-                plan_state.save(plan.to_dict())
-        except Exception:
-            # A plan that cannot be written down is still a plan. Losing the resume
-            # is a smaller loss than losing the run that was making it.
-            logger.exception("Could not record the running plan")
-        if self.on_checkpoint:
+    def _checkpoint(self, plan: Plan, *, persist: bool = True) -> bool:
+        # The active-plan file is a minimal, non-output checkpoint. `on_checkpoint`
+        # is a separate opt-in store and may hold more detail behind its own approval.
+        """Persist minimal resume state and any explicitly approved checkpoint."""
+        saved = True
+        if persist:
             try:
-                self.on_checkpoint(plan.to_dict())
+                if plan.is_completed:
+                    saved = plan_state.clear()
+                else:
+                    payload = plan.to_dict()
+                    engine = getattr(self.tool_registry, "engine", None)
+                    workspace = getattr(engine, "workspace", None)
+                    payload["workspace"] = (
+                        str(Path(workspace).resolve()) if workspace is not None else None
+                    )
+                    saved = plan_state.save(payload)
             except Exception:
-                logger.exception(
-                    "Checkpoint storage failed; task remains inspectable in memory"
-                )
+                saved = False
+                logger.exception("Could not record the running plan")
+            if self.on_checkpoint:
+                try:
+                    self.on_checkpoint(plan.to_dict())
+                except Exception:
+                    logger.exception(
+                        "Checkpoint storage failed; task remains inspectable in memory"
+                    )
+        return bool(saved)
 
     def _log(self, message: str, prefix: str = "[J.A.R.V.I.S.]"):
         """Print stylized output for user/console observability."""
@@ -430,14 +440,15 @@ class AutonomousPlanner:
             )
 
         plan_steps: List[PlanStep] = []
-        for i, s in enumerate(raw_steps, start=1):
+        for i, raw_step in enumerate(raw_steps, start=1):
             plan_steps.append(
                 PlanStep(
-                    step_id=s.get("step_id", i),
-                    description=s.get("description", f"Action step {i}"),
-                    tool_name=s.get("tool_name", "run_shell"),
-                    tool_args=s.get("tool_args", {}),
-                    expected_outcome=s.get("expected_outcome"),
+                    step_id=raw_step.get("step_id", i),
+                    description=raw_step.get("description", f"Action step {i}"),
+                    tool_name=raw_step.get("tool_name", "run_shell"),
+                    tool_args=raw_step.get("tool_args", {}),
+                    expected_outcome=raw_step.get("expected_outcome"),
+                    approval_recorded=bool(raw_step.get("approval_recorded", False)),
                 )
             )
 
@@ -494,7 +505,7 @@ class AutonomousPlanner:
             plan.current_step_index = len(self._resume_verified)
         if self.on_plan_created:
             self.on_plan_created(plan)
-        self._checkpoint(plan)
+        self._checkpoint(plan, persist=not plan_only)
 
         if plan_only:
             return PlanExecutionResult(
@@ -568,10 +579,22 @@ class AutonomousPlanner:
 
             self._checkpoint(plan)
 
-            # Tool Invocation
-            tool_res: ToolResult = self.tool_registry.execute(
-                step.tool_name, **resolved_args
-            )
+            # Persist the per-step approval record before a gated tool can run. The
+            # record is for audit/resume state, not a reusable authorization token.
+            previous_approval_observer = getattr(self.tool_registry, "on_approval", None)
+            if hasattr(self.tool_registry, "on_approval"):
+                def record_approval(_name, _arguments):
+                    step.approval_recorded = True
+                    return self._checkpoint(plan)
+
+                self.tool_registry.on_approval = record_approval
+            try:
+                tool_res: ToolResult = self.tool_registry.execute(
+                    step.tool_name, **resolved_args
+                )
+            finally:
+                if hasattr(self.tool_registry, "on_approval"):
+                    self.tool_registry.on_approval = previous_approval_observer
             step.execution_time = tool_res.execution_time
             step.verification = tool_res.metadata.get(
                 "verification", "executed_unverified" if tool_res.success else "failed"
@@ -757,63 +780,14 @@ class AutonomousPlanner:
         )
 
     def resume_from_checkpoint(self, checkpoint_payload, approve_resume=True):
+        """Validate a saved plan, verify completed artifacts, and resume safely."""
         if not approve_resume:
             raise ValueError("Explicit resume approval is required")
-        from custom_jarvis.evidence import file_digest
-
-        payload = checkpoint_payload.get("plan", checkpoint_payload)
-        rows = payload.get("steps", [])
-        if not isinstance(rows, list) or not rows:
-            raise ValueError("Checkpoint has no valid steps")
         engine = getattr(self.tool_registry, "engine", None)
         if engine is None or engine.workspace is None:
             raise ValueError("Resume requires a workspace-confined registry")
-        completed = []
-        pending_seen = False
-        for row in rows:
-            if row.get("status") != "completed":
-                pending_seen = True
-                continue
-            if pending_seen:
-                raise ValueError(
-                    "Non-contiguous checkpoint completion cannot be safely resumed"
-                )
-            args = row.get("resolved_args") or row.get("tool_args", {})
-            args = engine.prepare_args(row["tool_name"], args)
-            path = args.get("path")
-            if not isinstance(path, str):
-                raise ValueError(
-                    "Completed non-artifact action cannot be independently verified; manual review required"
-                )
-            expected = row.get("artifact_sha256")
-            if row.get("backup_id"):
-                folder = engine.backups._folder(row["backup_id"])
-                import json
-
-                manifest = json.loads(
-                    (folder / "manifest.json").read_text(encoding="utf-8")
-                )
-                if Path(manifest["path"]).resolve() != Path(path).resolve():
-                    raise ValueError("Checkpoint backup target mismatch")
-                expected = manifest.get("after_sha256")
-            if not expected or file_digest(Path(path)) != expected:
-                raise ValueError(
-                    "Completed artifact changed or lacks a verified fingerprint"
-                )
-            step = PlanStep(
-                row["step_id"],
-                row.get("description", "Restored step"),
-                row["tool_name"],
-                row.get("tool_args", {}),
-                status=StepStatus.COMPLETED,
-                output=row.get("output"),
-                data=row.get("data"),
-                artifact_sha256=expected,
-                backup_id=row.get("backup_id"),
-                resolved_args=args,
-                verification=row.get("verification", "executed_unverified"),
-            )
-            completed.append(step)
+        payload, rows = _validated_checkpoint(checkpoint_payload, engine)
+        completed = _restore_completed_steps(rows, engine)
         self._resume_verified = completed
         try:
             return self.execute(
@@ -821,3 +795,78 @@ class AutonomousPlanner:
             )
         finally:
             self._resume_verified = None
+
+
+def _validated_checkpoint(checkpoint_payload, engine):
+    """Validate resume payload, workspace binding, and omitted-output references."""
+    if not isinstance(checkpoint_payload, dict):
+        raise ValueError("Checkpoint must be an object")
+    payload = checkpoint_payload.get("plan", checkpoint_payload)
+    if not isinstance(payload, dict):
+        raise ValueError("Checkpoint plan must be an object")
+    rows = payload.get("steps", [])
+    if not isinstance(rows, list) or not rows or any(not isinstance(row, dict) for row in rows):
+        raise ValueError("Checkpoint has no valid steps")
+    saved_workspace = payload.get("workspace")
+    if (not isinstance(saved_workspace, str)
+            or Path(saved_workspace).resolve() != Path(engine.workspace).resolve()):
+        raise ValueError("Checkpoint workspace does not match the selected workspace")
+    for row in rows:
+        if (plan_state.has_step_output_references(row.get("tool_args", {}))
+                or plan_state.has_step_output_references(row.get("resolved_args", {}))):
+            raise ValueError(
+                "This checkpoint depends on step outputs that are not persisted; "
+                "review and restart the plan manually."
+            )
+    return payload, rows
+
+
+def _restore_completed_step(row, engine):
+    """Recreate a completed artifact step only when its current bytes are verified."""
+    from custom_jarvis.evidence import file_digest
+
+    args = engine.prepare_args(row["tool_name"], row.get("tool_args", {}))
+    path = args.get("path")
+    if not isinstance(path, str):
+        raise ValueError(
+            "Completed non-artifact action cannot be independently verified; manual review required"
+        )
+    expected = row.get("artifact_sha256")
+    if row.get("backup_id"):
+        import json
+
+        folder = engine.backups._folder(row["backup_id"])
+        manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+        if Path(manifest["path"]).resolve() != Path(path).resolve():
+            raise ValueError("Checkpoint backup target mismatch")
+        expected = manifest.get("after_sha256")
+    if not expected or file_digest(Path(path)) != expected:
+        raise ValueError("Completed artifact changed or lacks a verified fingerprint")
+    return PlanStep(
+        row["step_id"],
+        row.get("description", "Restored step"),
+        row["tool_name"],
+        row.get("tool_args", {}),
+        status=StepStatus.COMPLETED,
+        output=row.get("output"),
+        data=row.get("data"),
+        artifact_sha256=expected,
+        backup_id=row.get("backup_id"),
+        resolved_args=args,
+        verification=row.get("verification", "executed_unverified"),
+        approval_recorded=bool(row.get("approval_recorded", False)),
+    )
+
+
+def _restore_completed_steps(rows, engine):
+    """Restore only a contiguous prefix of independently verified file steps."""
+    completed = []
+    pending_seen = False
+    for row in rows:
+        if row.get("status") != "completed":
+            pending_seen = True
+            continue
+        if pending_seen:
+            raise ValueError("Non-contiguous checkpoint completion cannot be safely resumed")
+        completed.append(_restore_completed_step(row, engine))
+    return completed

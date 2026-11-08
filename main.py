@@ -8,6 +8,7 @@ if _platform.system() == "Windows":
 
     class _Popen(_OrigPopen):
         def __init__(self, args, **kw):
+            """Initialize the live assistant, UI hooks, clients, and session state."""
             kw["creationflags"] = kw.get("creationflags", 0) | _subprocess.CREATE_NO_WINDOW
             kw.pop("startupinfo", None)   # drop any stale/shared STARTUPINFO
             super().__init__(args, **                       kw)
@@ -655,6 +656,7 @@ class _ReconnectSignal(Exception):
     _on_voice_change)."""
 
     def __init__(self, keep_context: bool = True):
+        """Initialize the live assistant, UI hooks, clients, and session state."""
         super().__init__()
         self.keep_context = keep_context
 
@@ -686,6 +688,7 @@ class JarvisLive:
     def __init__(self, ui: JarvisUI):
         # Platform limits are announced once per run, not once per
         # reconnect: a dropped connection is not news about Wayland.
+        """Initialize the live assistant, UI hooks, clients, and session state."""
         self._platform_notes_shown = False
         self.ui             = ui
         self._asst_name     = "JARVI    S"   # updated each session from config
@@ -803,20 +806,30 @@ class JarvisLive:
             logger=lambda msg: print(f"[Actions] {msg}"),
         )
 
-        # A capability that fails to load used to leave one line in a console
-        # nobody reads, and the tool simply was not in the session any more — from
-        # the user's side, indistinguishable from the assistant refusing. Missing
-        # playwright removing browser_control is the case that prompted this. It is
-        # said out loud instead, once, in the activity log.
+        # A persistent health inbox turns detected startup/runtime failures into
+        # actionable notices. The logger stays in memory only; the health ledger
+        # stores bounded, redacted issue summaries and ignore/dismiss state.
+        from core import failures as _failure_journal
+        from custom_jarvis.health_center import get_health_center as _get_health_center
+        self._health_center = _get_health_center()
+        self._health_center.set_notifier(lambda line: self.ui.write_log(f"SYS: {line}"))
+        self._health_failure_unsubscribe = _failure_journal.subscribe(
+            self._health_center.capture_failure
+        )
+        for _failure in _failure_journal.recent(limit=50):
+            self._health_center.capture_failure(_failure)
         for _missing, _why in sorted(self._action_registry.failures().items()):
-            self.ui.write_log(f"SYS: {_missing} is unavailable — {_why}")
+            self._health_center.record_unavailable(_missing, _why)
 
         # The last run's death, in one line, if there was one. Said in the activity
         # log rather than as a question: the owner is starting their assistant, not
         # opening a bug tracker. The offer to look is the sentence they choose next.
         _crash_notice = _crash.startup_notice()
         if _crash_notice:
-            self.ui.write_log(_crash_notice)
+            self._health_center.record(
+                "crash", "previous_run", "The previous Ultron process crashed",
+                _crash_notice, "Crash",
+            )
 
         # Plugins must not collide with either an inline tool or a discovered action.
         _core_names = _inline_names | self._action_registry.names()
@@ -827,8 +840,16 @@ class JarvisLive:
             # what the user has to know about. Every plugin loading correctly is
             # the expected case and does not belong in their conversation.
             logger=lambda msg: print(f"[Plugins] {msg}"),
-            notify=lambda msg: self.ui.write_log(f"SYS: {msg}"),
+            # Invalid plugins are reported through the persistent health center below.
+            notify=lambda _msg: None,
         )
+        for _plugin in self._plugin_registry.list_for_ui():
+            if not _plugin.get("valid", True):
+                self._health_center.record_unavailable(
+                    str(_plugin.get("name") or "plugin"),
+                    str(_plugin.get("error") or "plugin validation failed"),
+                    source="local_catalog",
+                )
         self._leaf_generations = LeafGenerations(
             (self._leaf_action_dir, self._leaf_plugin_dir),
             self._action_registry, self._plugin_registry,
@@ -861,7 +882,9 @@ class JarvisLive:
             except Exception as _mcp_error:
                 _mcp_notes.append(f"MCP server '{_client.name}': {_mcp_error}")
         for _note in _mcp_notes:
-            self.ui.write_log(f"SYS: {_note}")
+            self._health_center.record(
+                "mcp", "mcp", "MCP integration is unavailable", _note, "Unavailable"
+            )
         if self._mcp_tools:
             self.ui.write_log(f"SYS: {len(self._mcp_tools)} MCP tool(s) connected — "
                               "each one asks before it runs.")
@@ -1373,6 +1396,7 @@ class JarvisLive:
         self.speak(f"Sir, {tool_name} encountered an error. {short}")
 
     def _build_config(self) -> "types.LiveConnectConfig":
+        """Build provider-compatible session configuration and declarations."""
         from datetime import datetime
 
         # Load customization from config
@@ -1609,6 +1633,7 @@ class JarvisLive:
         return await dispatch(fc, self._execute_tool_approved, self.ui, types.FunctionResponse)
 
     async def _execute_tool_approved(self, fc) -> "types.FunctionResponse":
+        """Execute one approved action and publish its result to the session."""
         name = fc.name
 # A model that omits an optional argument and one that sends "topic": null are
 # saying the same thing, but only the first is safe: dict.get(key, default)
@@ -1756,6 +1781,7 @@ class JarvisLive:
             elif name == "shutdown_jarvis":
                 self.ui.write_log("SYS: Shutdown requested.")
                 async def _do_shutdown():
+                    """Save the final session summary and close owned MCP processes before exit."""
                     await self._save_session_summary()
                     if self.session:
                         try:
@@ -1766,6 +1792,12 @@ class JarvisLive:
                         except Exception:
                             pass
                     await asyncio.sleep(1.5)
+                    try:
+                        await asyncio.to_thread(
+                            _mcp.close_all, getattr(self, "_mcp_clients", [])
+                        )
+                    except Exception as error:
+                        print(f"[MCP] shutdown cleanup failed: {error}")
                     import os as _os
                     _os._exit(0)
                 asyncio.create_task(_do_shutdown())
@@ -1824,6 +1856,8 @@ class JarvisLive:
                     result = f"Unknown tool: {name}"
 
         except Exception as e:
+            from core import failures as _tool_failures
+            _tool_failures.note(f"tool.{name}", e)
             result = f"Tool '{name}' failed: {e}"
             traceback.print_exc()
             self.speak_error(name, e)
@@ -2678,6 +2712,7 @@ class JarvisLive:
     # "providers are not installed" — the assistant then runs exactly as it did
     # before any of this existed.
     def _engine_mode(self) -> str:
+        """Select the temporary fallback engine or configured provider mode."""
         if getattr(self, "_local_plan", None) is not None:
             return "pipeline"
         try:
@@ -2717,6 +2752,7 @@ class JarvisLive:
             pipe = dict(local["pipeline"]) if local else get_pipeline()
 
             def settings(pid: str) -> dict:
+                """Return credentials for a provider from the temporary or saved configuration."""
                 return dict(local["creds"].get(pid) or {}) if local else get_provider_config(pid)
 
             llm_id = str(pipe.get("llm") or "").strip()
@@ -2780,26 +2816,24 @@ class JarvisLive:
             current["provider_config"] = {stt: get_provider_config(stt)} if stt else {}
         except Exception:
             current = {}
-        try:
-            plan = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: _local.plan(current=current)
-            )
-        except Exception as error:                       # a fallback must never crash a turn
-            self.ui.write_log(f"ERR: could not look for a local model — {error}")
-            return None
-        if not plan.get("ok"):
-            self.ui.write_log(f"ERR: {plan.get('note', 'no local model is available')}")
-            return None
-        # Load it now, off the event loop, so the first sentence is the answer and not
-        # the sound of 2 GB coming off the disk.
-        self.ui.write_log(f"SYS: Loading {plan['model']} from Ollama…")
-        warmed = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: _local.warm(plan.get("url") or _local.DEFAULT_URL, plan["model"])
+        async def local_stt_ready(plan):
+            """Build and load the planned recognizer before choosing local mode."""
+            # A package being importable is not proof its model can load. Build and
+            # ready the planned recognizer before swapping away from Gemini.
+            from providers import registry
+
+            stt_id = str(plan["pipeline"].get("stt") or "").strip()
+            stt_cfg = dict(plan.get("creds", {}).get(stt_id) or {})
+            stt_cfg["log"] = self.ui.write_log
+            stt_provider = registry.build(stt_id, stt_cfg)
+            ensure_ready = getattr(stt_provider, "ensure_ready", None)
+            return True if ensure_ready is None else await ensure_ready(log=self.ui.write_log)
+
+        return await _local.prepare_switch(
+            current=current,
+            log=self.ui.write_log,
+            stt_ready=local_stt_ready,
         )
-        if not warmed:
-            self.ui.write_log(f"ERR: Ollama did not load {plan['model']}; staying on the cloud retry.")
-            return None
-        return plan
 
     @asynccontextmanager
     async def _open_session(self, live_model: str, config):
@@ -2829,6 +2863,7 @@ class JarvisLive:
         pipe = dict(local["pipeline"]) if local else get_pipeline()
 
         def part(slot):
+            """Build one configured pipeline provider, using temporary fallback settings when active."""
             pid = str(pipe.get(slot) or "").strip()
             if not pid:
                 return None
@@ -2839,8 +2874,20 @@ class JarvisLive:
             cfg["log"] = self.ui.write_log
             return registry.build(pid, cfg)
 
-        engine = PipelineEngine(part("llm"), part("stt"), part("tts"),
-                                config=config, log=self.ui.write_log)
+        try:
+            engine = PipelineEngine(part("llm"), part("stt"), part("tts"),
+                                    config=config, log=self.ui.write_log)
+        except Exception as error:
+            if local is not None:
+                self._local_engine_failed(local)
+            self._pipeline_error = str(error)
+            self.ui.write_log(
+                f"ERR: provider engine could not be constructed ({error}); "
+                "the temporary local fallback was cleared."
+                if local is not None else
+                f"ERR: provider engine could not be constructed ({error})."
+            )
+            raise
         # Without push-to-talk nothing else knows when a sentence ended, so the
         # engine finds it in the audio. With push-to-talk the key release is the
         # signal and the detector stays out of the way.
@@ -2853,6 +2900,7 @@ class JarvisLive:
             await engine.close()
 
     async def run(self):
+        """Run the reconnecting assistant session and recover from supported failures."""
         self._loop = asyncio.get_event_loop()
         self._reconnect_event = asyncio.Event()
 

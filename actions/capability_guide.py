@@ -18,6 +18,8 @@ ALIASES = {
     "transcribe": {"transcribe", "transcription", "speech", "audio"},
     "evolve": {"evolve", "evolution", "self_modify", "self_change", "improve", "upgrade"},
     "compress": {"compress", "compression", "zip", "archive", "shrink", "reduce", "smaller", "oversized", "big"},
+    "read_page": {"read", "article", "page", "scrape", "extract", "webpage"},
+    "computer_use": {"computer", "desktop", "click", "type", "keyboard", "mouse", "screen", "window"},
 }
 
 
@@ -31,6 +33,8 @@ TASK_TOOL_CUES = {
     "screenshot": {"screen_process"},
     "search": {"web_search", "file_controller"},
     "evolve": {"self_modify"},
+    "read_page": {"web_read"},
+    "computer_use": {"computer_control", "browser_control", "open_app", "desktop_control"},
 }
 
 

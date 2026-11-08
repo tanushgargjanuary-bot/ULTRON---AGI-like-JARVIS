@@ -102,6 +102,15 @@ class DistanceTests(unittest.TestCase):
         self.assertEqual(damerau_levenshtein("abc", ""), 3)
         self.assertEqual(damerau_levenshtein("", ""), 0)
 
+    def test_oversized_near_match_is_bounded_to_nonmatch(self):
+        # App names are short. Refuse an oversized quadratic matrix rather
+        # than spending unbounded resources on untrusted recognized text.
+        left = "a" * 500
+        right = "a" * 499 + "b"
+        self.assertEqual(damerau_levenshtein(left, right), 500)
+        self.assertEqual(similarity(left, right), 0.0)
+        self.assertEqual(damerau_levenshtein(left, left), 0)
+
     def test_symmetry(self):
         for a, b in (("chorme", "chrome"), ("visual studio", "visul studio"), ("abc", "xyz")):
             self.assertEqual(damerau_levenshtein(a, b), damerau_levenshtein(b, a))

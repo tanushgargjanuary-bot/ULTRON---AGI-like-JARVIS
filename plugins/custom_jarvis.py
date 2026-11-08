@@ -15,12 +15,13 @@ PLUGIN = {
         "Jobs return started, NOT done; use status to see the actual result. "
         "Operations: insights, recommendations, review_insight, reject_insight, forget_insights, status, stop, knowledge_status, set_workspace, list_skills, list_tools, tool, run_skill, "
         "preview_skill, verify_goal, rollback_transaction, repair_test, repair_generate, "
-        "repair_shadow, repair_activate, repair_rollback, breaker_reset, resume_checkpoint, "
+        "repair_shadow, repair_activate, repair_rollback, breaker_reset, resume_checkpoint, discard_checkpoint, "
         "procedure_propose, procedure_approve, procedures, run_procedure, forget. "
         'payload_json examples: set_workspace {"path":"C:/Projects/MyApp"}; '
         'tool {"name":"read_file","arguments":{"path":"README.md"}}; '
         'run_skill {"id":"ID_FROM_LIST","target":"README.md"}; '
-        'resume_checkpoint {} continues the plan this machine was running when it stopped. '
+        'resume_checkpoint {} continues the plan this machine was running when it stopped, after workspace validation and fresh per-step approvals. '
+        'discard_checkpoint {} removes that saved plan after confirmation. '
         "Never use this as a general Python execution or automatic self-rewrite tool."
     ),
     "parameters": {

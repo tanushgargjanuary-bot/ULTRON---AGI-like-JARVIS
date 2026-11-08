@@ -15,7 +15,7 @@ import time
 import random
 from pathlib import Path
 
-from core import appidentity, outcome
+from core import appidentity, failures, outcome
 from core.lazyimport import LazyModule, installed
 
 # pyautogui and pyperclip are imported on first USE, not at launch — see
@@ -664,6 +664,7 @@ def computer_control(
         return f"Unknown action: '{action}'"
 
     except Exception as e:
+        failures.note(f"computer_control.{action}", e)
         print(f"[ComputerControl] ❌ {action}: {e}")
         return f"computer_control '{action}' failed: {e}"
 

@@ -128,6 +128,7 @@ class PluginRegistry:
         try:
             return _call_run(rec.run, parameters, player, session_memory) or "Done."
         except Exception as e:
+            failures.note(f"plugin.{name}", e)
             self._logger(f"Plugin '{name}' crashed during run(): {e}")
             self._notify(f"Plugin '{name}' failed — see the console for details.")
             traceback.print_exc()
@@ -300,6 +301,7 @@ def _load_error(path: Path, plugins_dir: Path, exc: Exception) -> str:
 
 
 def _load_plugin_module(path: Path, name: str, force_reload: bool):
+    """Import one plugin module into the candidate generation."""
     module = sys.modules.get(name)
     # In a forced scan, a present module was imported by another member of this
     # freshly-cleared candidate generation. Keep its identity coherent for importers.

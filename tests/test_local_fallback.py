@@ -4,8 +4,10 @@ A real HTTP server is started in a thread for these tests, because the shape of 
 Ollama answer is the thing most likely to change and the thing a mock cannot tell us.
 """
 
+import asyncio
 import json
 import threading
+import tempfile
 import unittest
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -19,6 +21,7 @@ class _Fake(BaseHTTPRequestHandler):
     calls: list = []
 
     def do_GET(self):                                    # noqa: N802 — stdlib name
+        """Serve the fake Ollama model-list response for the test server."""
         if self.path == "/api/tags":
             body = json.dumps({"models": [{"name": name} for name in self.models]}).encode()
             self._answer(200, body)
@@ -26,6 +29,7 @@ class _Fake(BaseHTTPRequestHandler):
             self._answer(404, b"")
 
     def do_POST(self):                                   # noqa: N802 — stdlib name
+        """Record and answer fake Ollama generation requests."""
         size = int(self.headers.get("Content-Length") or 0)
         payload = json.loads(self.rfile.read(size) or b"{}")
         _Fake.calls.append((self.path, payload))
@@ -84,6 +88,7 @@ class WhichModel(unittest.TestCase):
         self.assertEqual(
             local_fallback.pick(["llama3:70b", "lfm2:latest"]), "lfm2:latest"
         )
+        self.assertIsNone(local_fallback.pick(["llama3:70b"]))
 
     def test_four_billion_beat_seventy(self):
         self.assertEqual(
@@ -120,6 +125,13 @@ class ThePlan(_Server):
         self.assertEqual(plan["creds"]["openai_compat@ollama"]["model"], "qwen3:4b")
         self.assertTrue(plan["creds"]["openai_compat@ollama"]["base_url"].startswith(self.url))
 
+    def test_over_capacity_models_are_excluded_before_ranking(self):
+        self.assertIsNone(local_fallback.pick(["llama3:70b", "qwen3:32b"]))
+        with mock.patch.object(local_fallback, "find_spec", return_value=object()):
+            plan = local_fallback.plan(self.url, models=["llama3:70b"])
+        self.assertFalse(plan["ok"])
+        self.assertIn("14B", plan["note"])
+
     def test_no_model_installed_is_one_sentence(self):
         with mock.patch.object(local_fallback, "find_spec", return_value=object()):
             plan = local_fallback.plan(self.url, models=[])
@@ -144,11 +156,82 @@ class ThePlan(_Server):
         self.assertIn("faster-whisper", plan["note"])
         self.assertIn("Speech recognition still uses whisper@groq", plan["note"])
 
+    def test_switch_warmup_exceptions_leave_the_cloud_path_available(self):
+        logs = []
+        result = asyncio.run(local_fallback.prepare_switch(
+            url=self.url,
+            plan_builder=lambda **_kwargs: {
+                "ok": True, "url": self.url, "model": "qwen3:4b",
+            },
+            warm_model=mock.Mock(side_effect=OSError("truncated response")),
+            log=logs.append,
+        ))
+        self.assertIsNone(result)
+        self.assertTrue(any("staying on the cloud retry" in line for line in logs))
+
+    def test_switch_refuses_a_plan_when_stt_is_not_ready(self):
+        logs = []
+        result = asyncio.run(local_fallback.prepare_switch(
+            url=self.url,
+            plan_builder=lambda **_kwargs: {
+                "ok": True, "url": self.url, "model": "qwen3:4b",
+            },
+            warm_model=mock.Mock(return_value=True),
+            stt_ready=lambda _plan: False,
+            log=logs.append,
+        ))
+        self.assertIsNone(result)
+        self.assertTrue(any("speech recognition is not ready" in line for line in logs))
+
+    def test_local_stt_readiness_fails_closed_when_model_loading_fails(self):
+        from providers.stt_whisper import WhisperSTT
+
+        provider = WhisperSTT({"backend": "local"})
+        loader = mock.AsyncMock(side_effect=RuntimeError("model unavailable"))
+        with mock.patch.object(provider, "_ensure_model", loader):
+            self.assertFalse(asyncio.run(provider.ensure_ready()))
+        loader.assert_awaited_once()
+
+    def test_local_stt_readiness_reuses_a_loaded_model(self):
+        from providers.stt_whisper import WhisperSTT
+
+        provider = WhisperSTT({"backend": "local"})
+        loader = mock.AsyncMock(return_value=object())
+        with mock.patch.object(provider, "_ensure_model", loader):
+            self.assertTrue(asyncio.run(provider.ensure_ready()))
+        loader.assert_awaited_once()
+
     def test_the_plan_writes_nothing(self):
-        source = Path(local_fallback.__file__).read_text(encoding="utf-8")
-        for forbidden in ("save_providers(", "save_provider_config(", "CONFIG_FILE"):
-            self.assertNotIn(forbidden, source,
-                             "a fallback must not rewrite the settings file")
+        """Verify a planned fallback leaves saved provider settings untouched."""
+        from memory import config_manager
+
+        with tempfile.TemporaryDirectory() as folder:
+            config = Path(folder) / "api_keys.json"
+            config.write_text(json.dumps({"providers": {
+                "mode": "gemini",
+                "pipeline": {"stt": "whisper@groq"},
+                "creds": {"whisper@groq": {
+                    "api_key": "keep-this", "base_url": "https://example.test"}},
+            }}), encoding="utf-8")
+            before = config.read_bytes()
+            with mock.patch.object(config_manager, "CONFIG_FILE", config):
+                current = config_manager.get_pipeline()
+                current["provider_config"] = {
+                    "whisper@groq": config_manager.get_provider_config("whisper@groq")
+                }
+                with mock.patch.object(local_fallback, "find_spec", return_value=None):
+                    plan = asyncio.run(local_fallback.prepare_switch(
+                        current,
+                        url=self.url,
+                        plan_builder=lambda **kwargs: local_fallback.plan(
+                            url=self.url,
+                            current=kwargs.get("current"),
+                            models=["qwen3:4b"],
+                        ),
+                        stt_ready=lambda _plan: True,
+                    ))
+            self.assertTrue(plan["ok"])
+            self.assertEqual(config.read_bytes(), before)
 
 
 class StayingWarm(_Server):

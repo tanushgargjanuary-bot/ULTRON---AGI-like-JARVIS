@@ -53,6 +53,7 @@ def attach_leaf_module(name: str, module: object) -> None:
 
 
 def detach_leaf_module(name: str, module: object) -> None:
+    """Detach a leaf module and its package bindings before reload."""
     parent_name, separator, child_name = name.rpartition(".")
     parent = sys.modules.get(parent_name) if separator else None
     if parent is not None and getattr(parent, "__dict__", {}).get(child_name) is module:
@@ -78,6 +79,7 @@ def _modules() -> dict[str, object]:
 
 
 def _restore_modules(saved: dict[str, object]) -> None:
+    """Restore a captured module generation and its parent bindings."""
     current = sorted((name for name in sys.modules if name.startswith(_PREFIXES)),
                      key=lambda name: name.count("."), reverse=True)
     for name in current:
@@ -109,6 +111,7 @@ class LeafGenerations:
     """Active + previous action/plugin registries with fail-closed staging."""
 
     def __init__(self, roots: tuple[Path, ...], actions, plugins):
+        """Initialize generation tracking for the configured leaf modules."""
         self.roots = tuple(Path(root) for root in roots)
         try:
             signature = tree_signature(self.roots)
@@ -128,6 +131,7 @@ class LeafGenerations:
 
     @staticmethod
     def _failures(registry) -> dict[str, str]:
+        """Normalize discovery failures for generation comparison."""
         method = getattr(registry, "failures", None)
         return dict(method()) if callable(method) else {}
 

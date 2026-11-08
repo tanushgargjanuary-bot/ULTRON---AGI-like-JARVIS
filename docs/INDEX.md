@@ -42,7 +42,9 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 |---|---|
 | [`CONNECTION.md`](CONNECTION.md) | Provider errors, tool-schema faults, and reconnect diagnosis |
 | [`CRASHES.md`](CRASHES.md) | Crash records, redaction, and repair evidence |
+| [`HEALTH_CENTER.md`](HEALTH_CENTER.md) | Persistent detected-issue notices, ignore/dismiss controls, and background repair proposals |
 | [`SELF-CHANGE.md`](SELF-CHANGE.md) | Guarded source-change process and protected referee files |
+| [`UPDATE_ARCHITECTURE.md`](UPDATE_ARCHITECTURE.md) | Owner-canary releases, signed updates, and no-shutdown worker handoff design |
 | [`INSTALL.md`](INSTALL.md) | Installation, setup, and troubleshooting |
 | [`SIDECAR.md`](SIDECAR.md) | Go watcher responsibilities, build, and fallback behavior |
 | [`SPACE.md`](SPACE.md) | Workspace size/file-count limits and enforcement |
@@ -56,6 +58,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | Why the current implementation language is retained |
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | What each branch holds, what is worth taking; recommendations are not authorization |
+| [`RUST_MIGRATION.md`](RUST_MIGRATION.md) | Evidence-first policy for selective Rust ports; Python remains the control plane |
 | [`reference/ALGORITHMS.md`](reference/ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
 | [`reference/CUSTOM_ULTRON.md`](reference/CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
 | [`reference/PUBLISH.md`](reference/PUBLISH.md) | Publishing steps, attribution, and license requirements |

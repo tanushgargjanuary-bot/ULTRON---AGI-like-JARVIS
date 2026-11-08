@@ -1,6 +1,8 @@
 import json
 import logging
+import os
 import re
+import tempfile
 from datetime import datetime
 from threading import Lock, RLock
 from pathlib import Path
@@ -110,6 +112,7 @@ def set_trim_notifier(fn) -> None:
 
 
 def _trim_to_limit(memory: dict) -> dict:
+    """Reduce stored memory while retaining the most useful facts."""
     if len(json.dumps(memory, ensure_ascii=False)) <= MEMORY_MAX_CHARS:
         return memory
     entries = _all_entries(memory)
@@ -152,6 +155,7 @@ def _truncate_value(val: str) -> str:
 
 def _recursive_update(target: dict, updates: dict, changes: list | None = None,
                       trail: tuple = ()) -> bool:
+    """Merge nested memory facts and collect bounded change records."""
     changed = False
     for key, value in updates.items():
         if value is None:
@@ -195,6 +199,7 @@ def _recursive_update(target: dict, updates: dict, changes: list | None = None,
 
 
 def update_memory(memory_update: dict) -> dict:
+    """Atomically merge a memory update and record its history."""
     if not isinstance(memory_update, dict) or not memory_update:
         return load_memory()
     with _write_lock:
@@ -214,12 +219,28 @@ def _record_changes(rows: list) -> None:
         return
     known = changes(limit=CHANGES_MAX)
     kept = (list(reversed(rows)) + known)[:CHANGES_MAX]
+    temp_path = None
     try:
         CHANGES_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CHANGES_PATH.write_text(json.dumps(kept, indent=2, ensure_ascii=False),
-                                encoding="utf-8")
+        fd, temp_name = tempfile.mkstemp(
+            prefix=f".{CHANGES_PATH.name}.", suffix=".tmp", dir=CHANGES_PATH.parent
+        )
+        temp_path = Path(temp_name)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(kept, indent=2, ensure_ascii=False))
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp_path, CHANGES_PATH)
     except OSError as error:
         logging.getLogger("memory").warning("could not record memory change: %s", error)
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError as error:
+                logging.getLogger("memory").warning(
+                    "could not remove temporary memory history: %s", error
+                )
 
 
 def changes(limit: int = 10) -> list:

@@ -13,7 +13,7 @@ import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from core import appidentity, outcome
+from core import appidentity, failures, outcome
 
 # Importing playwright cost 198 ms at every launch, paid by action discovery
 # whether or not a browser was ever opened. It is the second-largest import in
@@ -1118,8 +1118,10 @@ def browser_control(
                 else:
                     result = sess.run(sess.go_to(params.get("url", "")))
             except concurrent.futures.TimeoutError:
+                failures.note(f"browser_control.{action}", "timed out after 60 seconds")
                 result = f"Browser action '{action}' timed out (60s)."
             except Exception as e:
+                failures.note(f"browser_control.{action}", e)
                 result = f"Browser error ({action}): {e}"
             _log(player, result)
             return result
@@ -1144,6 +1146,7 @@ def browser_control(
     try:
         sess = _registry.get(browser)
     except Exception as e:
+        failures.note(f"browser_control.{action}.session", e)
         result = f"Could not start browser session: {e}"
         _log(player, result)
         return result
@@ -1189,8 +1192,10 @@ def browser_control(
             result = f"Unknown browser action: '{action}'"
 
     except concurrent.futures.TimeoutError:
+        failures.note(f"browser_control.{action}", "timed out after 60 seconds")
         result = f"Browser action '{action}' timed out (60s)."
     except Exception as e:
+        failures.note(f"browser_control.{action}", e)
         result = f"Browser error ({action}): {e}"
 
     _log(player, result)

@@ -55,6 +55,7 @@ class WhatChanged(_Store):
         self.assertEqual(mm.changes()[0]["path"], "projects/thesis")
 
     def test_the_history_is_bounded(self):
+        """Verify change history remains within its configured entry limit."""
         for number in range(mm.CHANGES_MAX + 25):
             self.write({"notes": {"counter": f"value {number}"}})
         self.assertEqual(len(mm.changes(limit=mm.CHANGES_MAX)), mm.CHANGES_MAX)
@@ -62,6 +63,7 @@ class WhatChanged(_Store):
         self.assertLessEqual(len(rows), mm.CHANGES_MAX)
 
     def test_the_newest_change_is_first(self):
+        """Verify recorded memory changes are ordered newest first."""
         for value in ("one", "two", "three"):
             self.write({"notes": {"word": value}})
         self.assertEqual(mm.changes()[0]["to"], "three")
@@ -88,18 +90,15 @@ class WhatChanged(_Store):
         mm.CHANGES_PATH.write_text("{not a list", encoding="utf-8")
         self.assertEqual(mm.changes(), [])
 
-    def test_a_failed_write_of_the_history_does_not_lose_the_fact(self):
-        write_text = Path.write_text
-
-        def fail_history(path, *args, **kwargs):
-            if path == mm.CHANGES_PATH:
-                raise OSError("disk full")
-            return write_text(path, *args, **kwargs)
-
-        with mock.patch.object(Path, "write_text", new=fail_history):
+    def test_a_failed_atomic_history_replace_keeps_the_old_file_and_fact(self):
+        mm.CHANGES_PATH.write_text('[{"path":"old"}]', encoding="utf-8")
+        old_history = mm.CHANGES_PATH.read_bytes()
+        with mock.patch.object(mm.os, "replace", side_effect=OSError("disk full")):
             self.write({"preferences": {"answer_length": "short"}})
         stored = json.loads(mm.MEMORY_PATH.read_text(encoding="utf-8"))
         self.assertEqual(stored["preferences"]["answer_length"]["value"], "short")
+        self.assertEqual(mm.CHANGES_PATH.read_bytes(), old_history)
+        self.assertEqual(list(mm.CHANGES_PATH.parent.glob(".changes.json.*.tmp")), [])
 
 
 if __name__ == "__main__":

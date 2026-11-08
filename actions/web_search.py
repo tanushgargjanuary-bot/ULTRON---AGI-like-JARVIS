@@ -5,6 +5,8 @@ import threading
 import time
 from pathlib import Path
 
+from core import failures
+
 # ── Gemini grounding quota circuit breaker ────────────────────────────────────
 # The google_search grounding tool has its own small quota, separate from plain
 # generation.  Once it is spent every call returns 429 — so retrying it at the
@@ -43,6 +45,7 @@ def _log_gemini_failure(context: str, exc: Exception) -> None:
     """Log a Gemini failure — silently when it is just the expected cooldown."""
     if isinstance(exc, _QuotaCooldown):
         return          # announced once when the breaker tripped; not a warning
+    failures.note(f"web_search.{context}", exc)
     print(f"[WebSearch] \u26a0\ufe0f {context} failed ({exc}) — using DDG instead")
 
 
@@ -60,6 +63,7 @@ def _run_bounded(fn, timeout: float, label: str = "task"):
     t.start()
     t.join(timeout)
     if t.is_alive():
+        failures.note(f"web_search.{label}", f"timed out after {timeout:.0f}s")
         print(f"[WebSearch] {label} exceeded {timeout:.0f}s — moving on")
     return box[0]
 
@@ -139,6 +143,7 @@ def _ddg_search(query: str, max_results: int = 6) -> list[dict]:
                     "url":     r.get("href",   ""),
                 })
     except Exception as e:
+        failures.note("web_search.ddg_text", e)
         print(f"[WebSearch] ⚠️ DDG text() failed: {e}")
     return results
 
@@ -157,6 +162,7 @@ def _ddg_news(query: str, max_results: int = 8) -> list[dict]:
                     "source":  r.get("source", ""),
                 })
     except Exception as e:
+        failures.note("web_search.ddg_news", e)
         print(f"[WebSearch] ⚠️ DDG news() failed ({e}) — falling back to text search")
     # Also covers the legacy-package case, where news() returns an empty list
     # instead of raising.
@@ -381,6 +387,7 @@ def web_search(
             found = _search(query)
 
     except Exception as e:
+        failures.note("web_search.all_backends", e)
         print(f"[WebSearch] ❌ All backends failed: {e}")
         return outcome.failed("web_search", f"the search failed: {e}",
                               query=query or ", ".join(items))
@@ -402,7 +409,7 @@ def web_search(
 # ── Tool declaration (auto-discovered by core/action_loader.py) ──────────────
 TOOL = {
     "name": "web_search",
-    "description": "Searches the web. Use for ANY question about current facts, events, prices, or topics — always prefer this over guessing. Modes: 'search' (default), 'news' (latest headlines on a topic), 'research' (deep comprehensive answer), 'price' (product cost lookup), 'compare' (side-by-side comparison of items).",
+    "description": "Searches the web. Use for current facts, events, prices, or topics rather than guessing. Modes: 'search' (default), 'news', 'research', 'price', or 'compare'. For the full text of a specific public result or user-provided URL, use web_read; it checks robots.txt and may be refused by the site.",
     "parameters": {
         "type": "OBJECT",
         "properties": {

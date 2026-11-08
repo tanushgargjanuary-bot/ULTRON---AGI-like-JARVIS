@@ -39,7 +39,26 @@ KEEP = 200
 
 _lock = threading.Lock()
 _notes: list[dict] = []
+_listeners: set = set()
 _log = logging.getLogger("ultron.failures")
+
+
+def subscribe(listener):
+    """Receive future failure notes; callbacks run outside the journal lock.
+
+    Listener errors are isolated in ``note`` so instrumentation cannot break the
+    feature that was already handling the original failure.
+    """
+    if not callable(listener):
+        raise TypeError("listener must be callable")
+    with _lock:
+        _listeners.add(listener)
+
+    def unsubscribe():
+        with _lock:
+            _listeners.discard(listener)
+
+    return unsubscribe
 
 
 def note(where: str, error: BaseException | str, *, detail: str = "") -> None:
@@ -69,7 +88,14 @@ def note(where: str, error: BaseException | str, *, detail: str = "") -> None:
             _notes.append(entry)
             if len(_notes) > KEEP:
                 del _notes[: len(_notes) - KEEP]
+            listeners = tuple(_listeners)
         _log.debug("%s could not proceed: %s: %s", where, kind, text)
+        for listener in listeners:
+            try:
+                listener(dict(entry))
+            except Exception:
+                # Notifications are best-effort; failure capture itself must survive.
+                continue
     except Exception:
         # Deliberately silent, and deliberately the only such place in the project:
         # this is the note-taker's own fallback, and it has nowhere left to write.

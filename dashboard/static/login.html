@@ -3,155 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>JARVIS</title>
+  <script>
+    (() => {
+      try {
+        const initialUiVariant = localStorage.getItem('ultron_ui_variant');
+        if (['command','citadel','sentinel','core','terminal','nexus'].includes(initialUiVariant))
+          document.documentElement.dataset.ui = initialUiVariant;
+      } catch (_) {}
+    })();
+  </script>
+  <title>ULTRON — Remote Access</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:     #07090f;
-      --card:   rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
-      --accent: #6366f1;
-      --adim:   rgba(99,102,241,0.15);
-      --text:   #dde3ed;
-      --muted:  #5e6a7e;
+    *, *::before, *::after { box-sizing: border-box; }
+    :root { color-scheme: dark; --bg:#070b14; --panel:rgba(15,22,37,.78); --line:rgba(167,190,235,.13); --text:#eff5ff; --muted:#8998b2; --cyan:#71e7ff; --blue:#6997ff; --violet:#a08aff; --green:#67e8b5; --red:#ff728a; --ambient-a:rgba(77,110,214,.17); --ambient-b:rgba(95,68,189,.17); }
+    :root[data-ui="core"] { --bg:#0b0817;--panel:rgba(22,16,39,.84);--line:rgba(194,172,255,.16);--cyan:#d9a0ff;--blue:#9a83ff;--violet:#ff8acb;--text:#f5f0ff;--muted:#a99abb;--ambient-a:rgba(134,74,232,.22);--ambient-b:rgba(206,70,181,.16); }
+    :root[data-ui="nexus"] { --bg:#110b09;--panel:rgba(31,21,18,.88);--line:rgba(255,197,151,.16);--cyan:#ffc27a;--blue:#ff936e;--violet:#f28da7;--text:#fff3e8;--muted:#b49b8c;--ambient-a:rgba(209,104,43,.19);--ambient-b:rgba(139,53,54,.16); }
+    :root[data-ui="terminal"] { --bg:#06110f;--panel:rgba(12,29,26,.88);--line:rgba(123,245,206,.15);--cyan:#7df4c7;--blue:#54ddbd;--violet:#d1ed78;--text:#eafff6;--muted:#8aafa3;--ambient-a:rgba(34,174,133,.2);--ambient-b:rgba(45,114,88,.16); }
+    :root[data-ui="citadel"] { --bg:#120912;--panel:rgba(31,16,27,.87);--line:rgba(255,162,191,.16);--cyan:#ff91b7;--blue:#f270a0;--violet:#c79cff;--text:#fff0f5;--muted:#b69aa8;--ambient-a:rgba(193,57,111,.2);--ambient-b:rgba(107,55,151,.16); }
+    :root[data-ui="sentinel"] { --bg:#08111d;--panel:rgba(17,30,47,.89);--line:rgba(174,218,255,.17);--cyan:#b5edff;--blue:#87bdff;--violet:#c3d1ff;--text:#eff9ff;--muted:#9bb3c8;--ambient-a:rgba(83,160,224,.2);--ambient-b:rgba(93,116,200,.16); }
+    html, body { width:100%; min-width:320px; min-height:100%; margin:0; }
+    body {
+      min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px;
+      color:var(--text); background:radial-gradient(ellipse at 20% 12%,var(--ambient-a),transparent 38%),radial-gradient(ellipse at 82% 78%,var(--ambient-b),transparent 37%),var(--bg);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased;
     }
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .card {
-      width: 340px;
-      padding: 44px 36px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      text-align: center;
-    }
-    .logo {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 10px;
-      margin-bottom: 6px;
-    }
-    .logo em { color: var(--accent); font-style: normal; }
-    .sub {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .hint {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.55;
-      margin-bottom: 28px;
-    }
-    .key-wrap {
-      position: relative;
-      margin-bottom: 16px;
-    }
-    .key-input {
-      width: 100%;
-      padding: 18px 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
-      color: var(--text);
-      font-size: 30px;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      letter-spacing: 10px;
-      text-transform: uppercase;
-      outline: none;
-      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-      caret-color: var(--accent);
-    }
-    .key-input::placeholder {
-      color: rgba(94,106,126,0.5);
-      letter-spacing: 6px;
-      font-size: 20px;
-    }
-    .key-input:focus {
-      border-color: var(--accent);
-      background: var(--adim);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-    }
-    .err {
-      font-size: 12px;
-      color: #f87171;
-      min-height: 18px;
-      margin-bottom: 14px;
-    }
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-    .btn:hover  { opacity: 0.88; }
-    .btn:active { transform: scale(0.98); }
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%,60% { transform: translateX(-7px); }
-      40%,80% { transform: translateX(7px); }
-    }
-    .shake { animation: shake 0.35s ease; }
-    .voice-note {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 20px;
-      line-height: 1.6;
-      text-align: left;
-    }
-    .voice-note code {
-      background: rgba(255,255,255,0.07);
-      padding: 1px 4px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-      font-size: 9px;
-    }
-    #reconnecting {
-      display: none;
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
+    body::before { position:fixed;inset:0;z-index:-1;content:"";pointer-events:none;opacity:.2;background-image:linear-gradient(rgba(155,180,226,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(155,180,226,.035) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,black,transparent 88%); }
+    .login-shell { width:min(900px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,400px);align-items:stretch;overflow:hidden;border:1px solid var(--line);border-radius:30px;background:rgba(12,17,29,.63);box-shadow:0 35px 100px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(24px); }
+    .welcome-panel { position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:520px;padding:42px;overflow:hidden;background:radial-gradient(ellipse at 54% 39%,rgba(68,132,205,.13),transparent 43%); }
+    .brand { display:flex;align-items:center;gap:12px; }.brand-mark { width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;color:var(--cyan);background:linear-gradient(145deg,rgba(113,231,255,.17),rgba(105,151,255,.08) 58%,rgba(160,138,255,.13));box-shadow:0 0 28px rgba(74,185,255,.11); }.brand-mark svg { width:23px;height:23px; }
+    .brand-name { font-size:14px;font-weight:750;letter-spacing:.19em; }.brand-name em { color:var(--cyan);font-style:normal; }.brand-caption { margin-top:4px;color:var(--muted);font-size:10px;letter-spacing:.04em; }
+    .hero-copy { position:relative;z-index:1;max-width:390px;margin:auto 0; }.eyebrow { color:#91a4c4;font-size:9px;font-weight:750;letter-spacing:.2em;text-transform:uppercase; }.hero-copy h1 { margin:13px 0 12px;font-size:clamp(32px,5vw,48px);line-height:1.04;font-weight:640;letter-spacing:-.055em; }.hero-copy h1 span { color:var(--cyan); }.hero-copy p { max-width:350px;margin:0;color:var(--muted);font-size:13px;line-height:1.75; }
+    .orb-stage { position:absolute;width:255px;height:255px;right:4%;top:26%;display:grid;place-items:center;opacity:.74;pointer-events:none; }.ring { position:absolute;border:1px solid rgba(113,231,255,.18);border-radius:50%; }.ring.r1 { inset:0;border-style:dashed;animation:orbit 35s linear infinite; }.ring.r2 { inset:25px;border-color:rgba(160,138,255,.2);animation:orbit 24s linear infinite reverse; }.ring.r3 { inset:51px;border-color:rgba(113,231,255,.16); }.core { width:91px;height:91px;display:grid;place-items:center;border:1px solid rgba(151,232,255,.4);border-radius:50%;color:var(--cyan);background:radial-gradient(circle at 36% 26%,color-mix(in srgb,var(--cyan) 38%,white),transparent 29%),radial-gradient(circle at 50% 58%,color-mix(in srgb,var(--cyan) 27%,transparent),color-mix(in srgb,var(--blue) 32%,#101827) 50%,var(--bg) 76%);box-shadow:0 0 28px rgba(87,199,255,.24),0 0 70px rgba(91,102,226,.2),inset 0 0 20px rgba(118,218,255,.2);animation:breathe 4.5s ease-in-out infinite; }.core svg { width:42px;height:42px;filter:drop-shadow(0 0 8px rgba(113,231,255,.65)); }
+    .panel-foot { position:relative;z-index:1;display:flex;align-items:center;gap:8px;color:#73829b;font-size:9px;letter-spacing:.1em;text-transform:uppercase; }.panel-foot span { width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(103,232,181,.6); }
+    .card { display:flex;flex-direction:column;justify-content:center;width:100%;min-height:520px;padding:42px 36px;border-left:1px solid var(--line);background:rgba(7,11,19,.56); }
+    .card-top { margin-bottom:28px; }.card-icon { width:44px;height:44px;display:grid;place-items:center;margin-bottom:20px;border:1px solid rgba(113,231,255,.2);border-radius:14px;color:var(--cyan);background:rgba(113,231,255,.065); }.card-icon svg { width:21px;height:21px; }.sub { margin-bottom:7px;color:#91a4c4;font-size:9px;font-weight:750;letter-spacing:.19em;text-transform:uppercase; }.card h2 { margin:0 0 8px;font-size:23px;font-weight:640;letter-spacing:-.04em; }.hint { margin:0;color:var(--muted);font-size:11px;line-height:1.7; }.hint strong { color:#dce8fa;font-weight:650; }
+    #reconnecting { display:none;margin:0 0 15px;padding:9px 11px;border:1px solid rgba(113,231,255,.16);border-radius:10px;color:#a8eefa;background:rgba(113,231,255,.05);font-size:10px; }
+    .key-wrap { position:relative;margin:0 0 11px; }.key-input { width:100%;height:58px;padding:0 14px;border:1px solid rgba(154,180,225,.18);border-radius:14px;outline:none;color:var(--text);background:rgba(4,8,15,.46);font:700 24px ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;letter-spacing:.48em;text-indent:.48em;text-transform:uppercase;caret-color:var(--cyan);transition:border-color .18s,box-shadow .18s,background .18s; }.key-input::placeholder { color:rgba(137,152,178,.4);font-size:16px;letter-spacing:.3em;text-indent:.3em; }.key-input:focus { border-color:rgba(113,231,255,.45);background:rgba(113,231,255,.035);box-shadow:0 0 0 3px rgba(113,231,255,.07); }
+    .err { min-height:19px;margin:0 0 9px;color:var(--red);font-size:10px; }.btn { width:100%;height:46px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:13px;color:#08111b;background:linear-gradient(105deg,#8beaff,#80b7ff 65%,#b2a0ff);box-shadow:0 7px 22px rgba(90,180,247,.18),inset 0 1px rgba(255,255,255,.5);font-size:10px;font-weight:800;letter-spacing:.14em;cursor:pointer;transition:filter .18s,transform .15s,box-shadow .18s; }.btn svg { width:15px;height:15px; }.btn:hover { filter:brightness(1.08);box-shadow:0 9px 28px rgba(90,180,247,.27),inset 0 1px rgba(255,255,255,.55); }.btn:active { transform:scale(.98); }
+    .voice-note { margin-top:20px;padding-top:16px;border-top:1px solid rgba(167,190,235,.09);color:var(--muted);font-size:9px;line-height:1.75; }.voice-note strong { color:#dce8fa; }.voice-note code { padding:2px 5px;border:1px solid rgba(167,190,235,.1);border-radius:5px;color:#bfd0e8;background:rgba(255,255,255,.035);font:9px ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere; }
+    @keyframes orbit { to { transform:rotate(360deg); } } @keyframes breathe { 0%,100% { transform:scale(.97); } 50% { transform:scale(1.04); } } @keyframes shake { 0%,100% { transform:translateX(0); } 20%,60% { transform:translateX(-6px); } 40%,80% { transform:translateX(6px); } } .shake { animation:shake .35s ease; }
+    @media (max-width:700px) { body { padding:12px; }.login-shell { width:min(440px,100%);grid-template-columns:minmax(0,1fr);border-radius:23px; }.welcome-panel { min-height:0;padding:19px 20px 16px;background:transparent; }.brand-mark { width:36px;height:36px;border-radius:12px; }.brand-mark svg { width:20px;height:20px; }.brand-name { font-size:12px; }.brand-caption { display:none; }.hero-copy,.orb-stage,.panel-foot { display:none; }.card { min-height:0;padding:25px 20px 22px;border:0;background:transparent; }.card-top { margin-bottom:22px; }.card-icon { width:40px;height:40px;margin-bottom:15px; }.card h2 { font-size:21px; }.voice-note { margin-top:17px;padding-top:13px; } }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important; } }
   </style>
 </head>
 <body>
-  <div class="card" id="card">
-    <div class="logo"><em>J</em>ARVIS</div>
-    <div class="sub">Remote Access</div>
-    <p id="reconnecting">Reconnecting…</p>
-    <p class="hint">Press <strong style="color:var(--text)">Remote Control</strong> in the JARVIS desktop app to get a QR code or session key.</p>
-    <div class="key-wrap">
-      <input class="key-input" id="key" type="text" maxlength="6"
-             autocomplete="off" autocorrect="off" spellcheck="false"
-             placeholder="· · · · · ·">
-    </div>
-    <div class="err" id="err"></div>
-    <button class="btn" onclick="doLogin()">CONNECT</button>
-    <p class="voice-note">
-      🎤 <strong style="color:var(--text)">Voice commands:</strong> open
-      <code>chrome://flags</code> on your phone, search
-      <code>Insecure origins treated as secure</code>, add your JARVIS URL, tap Relaunch.
-    </p>
-  </div>
+  <main class="login-shell">
+    <section class="welcome-panel" aria-label="ULTRON remote access">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 13.2c2.05 0 2.05-5.4 4.1-5.4s2.05 8.4 4.1 8.4 2.05-10.4 4.1-10.4 2.05 7.4 3.7 7.4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path d="M4 19h16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".45"/></svg></div>
+        <div><div class="brand-name"><em>U</em>LTRON</div><div class="brand-caption">Personal intelligence. Your command.</div></div>
+      </div>
+      <div class="orb-stage" aria-hidden="true"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core"><svg viewBox="0 0 32 32" fill="none"><path d="M4 17c3.1 0 3.1-7 6.2-7s3.1 12 6.2 12 3.1-15 6.2-15S25.7 17 28 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div></div>
+      <div class="hero-copy"><div class="eyebrow">A secure link to your assistant</div><h1>Your world,<br><span>within reach.</span></h1><p>Connect to ULTRON on your computer and bring your assistant along.</p></div>
+      <div class="panel-foot"><span></span>Paired remote access</div>
+    </section>
 
+    <section class="card" id="card" aria-labelledby="login-title">
+      <div class="card-top">
+        <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="sub">Remote access</div>
+        <h2 id="login-title">Welcome back.</h2>
+        <p class="hint">Press <strong>Remote Control</strong> in the ULTRON desktop app to get a QR code or six-character session key.</p>
+      </div>
+      <p id="reconnecting">Reconnecting to your paired device…</p>
+      <div class="key-wrap"><input class="key-input" id="key" type="text" maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Six-character session key" placeholder="· · · · · ·"></div>
+      <div class="err" id="err" role="alert" aria-live="polite"></div>
+      <button class="btn" onclick="doLogin()" type="button"><span>Connect</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <p class="voice-note">🎤 <strong>Voice commands:</strong> microphone access on some mobile browsers requires HTTPS or a secure local origin. If your browser needs its special local-origin setting, follow its documented steps for your trusted JARVIS URL.</p>
+    </section>
+  </main>
   <script>
     // Try auto-reconnect with stored device token (set on first QR login)
     (async function() {

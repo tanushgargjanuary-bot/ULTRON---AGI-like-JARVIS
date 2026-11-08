@@ -53,12 +53,14 @@ def _is_reloadable_leaf(path: str) -> bool:
 
 
 def _code_file_groups(code_files: list[str]) -> tuple[list[str], list[str], bool]:
+    """Separate reloadable leaf files from changes requiring process restart."""
     leaf_files = [name for name in code_files if _is_reloadable_leaf(name)]
     restart_files = [name for name in code_files if name not in leaf_files]
     return leaf_files, restart_files, bool(leaf_files) and not restart_files
 
 
 def _update_note(restart_required: bool, leaf_files: list[str]) -> str:
+    """Describe update effects and whether they require restart."""
     if restart_required:
         leaf_note = (" Action/plugin files stay inactive until that restart."
                      if leaf_files else "")
@@ -139,6 +141,7 @@ class Updater:
 
     def _mark_restart_if_needed(self, before: str, files: list[str],
                                 leaf_reload_deferred: bool = False) -> None:
+        """Record that a mixed or core update must wait for process restart."""
         if files:
             self._write_marker({"at": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "from": before[:7],

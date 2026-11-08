@@ -250,6 +250,19 @@ class WhisperSTT:
             audio.resample(pcm, sample_rate, 16_000))    # Whisper is a 16 kHz model
         return await asyncio.to_thread(self._transcribe_blocking, samples)
 
+    async def ensure_ready(self, log=None) -> bool:
+        """Load the configured local model now, so callers can fail over safely."""
+        if self.backend != "local":
+            return True
+        try:
+            await self._ensure_model(log)
+            return True
+        except Exception as error:
+            if log:
+                log(f"ERR: speech model is not ready — {type(error).__name__}: "
+                    f"{str(error)[:120]}")
+            return False
+
     async def warmup(self, log=None) -> None:
         """Load the model AND run one throwaway recognition, before the user
         ever speaks.

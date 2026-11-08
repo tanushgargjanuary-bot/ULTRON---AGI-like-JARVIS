@@ -23,6 +23,8 @@ No dependency and no network beyond the loopback address in `DEFAULT_URL`.
 
 from __future__ import annotations
 
+import asyncio
+import inspect
 import json
 import re
 import shutil
@@ -31,7 +33,7 @@ import time
 import urllib.error
 import urllib.request
 from importlib.util import find_spec
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 DEFAULT_URL = "http://localhost:11434"
 OPENAI_ENDPOINT = "/v1/chat/completions"
@@ -50,6 +52,7 @@ _SIZE = re.compile(r"(\d+(?:\.\d+)?)b", re.IGNORECASE)
 
 
 def _get(url: str, timeout: float = SHORT) -> Optional[dict]:
+    """Fetch a bounded JSON response from the local model service."""
     try:
         with urllib.request.urlopen(url, timeout=timeout) as answer:
             return json.loads(answer.read().decode("utf-8", "replace"))
@@ -58,6 +61,7 @@ def _get(url: str, timeout: float = SHORT) -> Optional[dict]:
 
 
 def _post(url: str, payload: dict, timeout: float = 30.0) -> Optional[dict]:
+    """Post JSON to the local model service and decode its response."""
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         url, data=body, headers={"Content-Type": "application/json"}, method="POST"
@@ -150,12 +154,16 @@ def score(name: str) -> int:
     return points
 
 
+_NON_CHAT = ("embed", "nomic-embed", "mxbai", "bge-", "rerank")
+
+
 def pick(models: list[str]) -> Optional[str]:
+    """Choose the highest-ranked installed chat model within the size cap."""
     # Ollama also lists vector encoders and rerankers. They answer embeddings,
     # not chat, so a name match alone must never send the conversation to one.
-    non_chat = ("embed", "nomic-embed", "mxbai", "bge-", "rerank")
     candidates = [name for name in models
-                  if not any(marker in str(name).lower() for marker in non_chat)]
+                  if not any(marker in str(name).lower() for marker in _NON_CHAT)
+                  and size_of(str(name)) <= 14]
     if not candidates:
         return None
     return sorted(candidates, key=lambda name: (-score(name), len(name), name))[0]
@@ -171,6 +179,66 @@ def warm(url: str = DEFAULT_URL, model: str = "") -> bool:
     return answer is not None
 
 
+def _notify(log: Optional[Callable[[str], Any]], message: str) -> None:
+    """Send a fallback status line when the caller supplied a logger."""
+    if log:
+        log(message)
+
+
+async def prepare_switch(
+    current: Optional[dict] = None,
+    *,
+    url: str = DEFAULT_URL,
+    log: Optional[Callable[[str], Any]] = None,
+    plan_builder: Optional[Callable[..., dict]] = None,
+    warm_model: Optional[Callable[[str, str], bool]] = None,
+    stt_ready: Optional[Callable[[dict], Any]] = None,
+) -> Optional[dict]:
+    """Plan, warm, and validate a local fallback before handing it to the app."""
+    loop = asyncio.get_running_loop()
+    builder = plan_builder or plan
+    warmer = warm_model or warm
+    try:
+        proposed = await loop.run_in_executor(
+            None, lambda: builder(url=url, current=current)
+        )
+    except Exception as error:
+        _notify(log, f"ERR: could not look for a local model — {error}")
+        return None
+    if not isinstance(proposed, dict):
+        _notify(log, "ERR: the local-model planner returned an invalid result.")
+        return None
+    if not proposed.get("ok"):
+        _notify(log, f"ERR: {proposed.get('note', 'no local model is available')}")
+        return None
+
+    _notify(log, f"SYS: Loading {proposed['model']} from Ollama…")
+    try:
+        warmed = await loop.run_in_executor(
+            None, lambda: warmer(proposed.get("url") or url, proposed["model"])
+        )
+    except Exception as error:
+        _notify(log, f"ERR: Ollama warm-up failed ({error}); staying on the cloud retry.")
+        return None
+    if not warmed:
+        _notify(log, f"ERR: Ollama did not load {proposed['model']}; staying on the cloud retry.")
+        return None
+
+    if stt_ready is not None:
+        try:
+            readiness = stt_ready(proposed)
+            if inspect.isawaitable(readiness):
+                readiness = await readiness
+        except Exception as error:
+            _notify(log, f"ERR: local speech recognition could not start ({error}); "
+                    "staying on the cloud retry.")
+            return None
+        if not readiness:
+            _notify(log, "ERR: local speech recognition is not ready; staying on the cloud retry.")
+            return None
+    return proposed
+
+
 def _hearing(current: dict) -> tuple[Optional[str], str]:
     """Which speech recognition to use, and what to say if there is none."""
     if find_spec("faster_whisper") is not None:
@@ -180,6 +248,24 @@ def _hearing(current: dict) -> tuple[Optional[str], str]:
         return already, f"hearing stays on {already} — faster-whisper is not installed"
     return None, ("no speech recognition on this machine: install faster-whisper "
                   "(pip install faster-whisper) or choose a Whisper API in the panel")
+
+
+def _no_model_note(names: list[str]) -> str:
+    """Explain which chat-model installation constraint blocked the local switch."""
+    chat_names = [name for name in names if not any(
+        marker in str(name).lower() for marker in _NON_CHAT
+    )]
+    if names and not chat_names:
+        return ("Ollama has models installed, but they are embedding-only. "
+                "In a terminal: ollama pull qwen3:4b — then say continue.")
+    if chat_names and all(size_of(name) > 14 for name in chat_names):
+        return ("The installed chat models exceed the 14B local-fallback size cap. "
+                "In a terminal: ollama pull qwen3:4b — then say continue.")
+    if names:
+        return ("Ollama has no supported chat model installed. "
+                "In a terminal: ollama pull qwen3:4b — then say continue.")
+    return ("Ollama is running but no model is installed. In a terminal: "
+            "ollama pull qwen3:4b — then say continue.")
 
 
 def plan(url: str = DEFAULT_URL, current: Optional[dict] = None,
@@ -200,13 +286,7 @@ def plan(url: str = DEFAULT_URL, current: Optional[dict] = None,
         names = installed(url)
     model = pick(names)
     if not model:
-        if names:
-            note = ("Ollama has models installed, but they are embedding-only. "
-                    "In a terminal: ollama pull qwen3:4b — then say continue.")
-        else:
-            note = ("Ollama is running but no model is installed. In a terminal: "
-                    "ollama pull qwen3:4b — then say continue.")
-        return {"ok": False, "note": note}
+        return {"ok": False, "note": _no_model_note(names)}
 
     stt, hearing_note = _hearing(dict(current or {}))
     if not stt:

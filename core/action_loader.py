@@ -261,6 +261,7 @@ class ActionRegistry:
             return _call_handler(rec.handler, _coerce_parameters(
                 _clean_parameters(parameters), rec.parameters), ctx or {}) or "Done."
         except Exception as e:
+            failures.note(f"action.{name}", e)
             self._logger(f"Action '{name}' crashed during run(): {e}")
             if sys.stderr is not None:
                 try:
@@ -387,6 +388,7 @@ def _safe_traceback() -> str:
 
 
 def _load_action_module(path: Path, name: str, force_reload: bool):
+    """Import one action module and isolate it from stale module state."""
     module = sys.modules.get(name)
     # After clear_leaf_modules(), any module already present during a forced scan
     # was imported from this candidate generation as a sibling dependency. Reuse it

@@ -58,6 +58,7 @@ from PyQt6.QtWidgets import (
 
 from core import expression as expression_mod
 from core import identity
+from core import themes as themes_mod
 
 try:
     from core.avatar import HoloAvatar
@@ -187,6 +188,14 @@ def apply_ui_accent(accent_hex: str) -> bool:
         setattr(C, key, "#{:02x}{:02x}{:02x}".format(
             int(r * 255 + 0.5), int(g * 255 + 0.5), int(b * 255 + 0.5)))
     return True
+
+
+def apply_ui_theme(theme_id: str) -> bool:
+    """Apply one named preset through the same hue-linked palette as custom colour."""
+    preset = themes_mod.theme(theme_id)
+    if preset is None:
+        return False
+    return apply_ui_accent(preset["accent"])
 
 
 def current_palette() -> dict[str, str]:
@@ -2025,12 +2034,12 @@ class HueWheel(QWidget):
 class CustomizeOverlay(QWidget):
     """Floating overlay — change assistant name, user name, UI colour and voice."""
 
-    saved = pyqtSignal(str, str, str, str)   # assistant_name, user_name, ui_color, voice
-    restart_requested = pyqtSignal()         # the scale changed; relaunch to apply it
-    _OW, _OH = 400, 672
+    saved = pyqtSignal(str, str, str, str, str)   # name, user, colour, voice, theme id
+    restart_requested = pyqtSignal()              # the scale changed; relaunch to apply it
+    _OW, _OH = 420, 704
 
     def __init__(self, assistant_name="", user_name="",
-                 ui_color=DEFAULT_UI_COLOR, voice="", parent=None):
+                 ui_color=DEFAULT_UI_COLOR, voice="", theme_id="classic_cyan", parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
@@ -2193,6 +2202,34 @@ class CustomizeOverlay(QWidget):
         lay.addLayout(restart_row)
         self._refresh_scale_btns()
 
+        # ── Named visual presets ────────────────────────────────────────────
+        lay.addSpacing(4)
+        self._initial_theme = (theme_id if themes_mod.theme(theme_id) or theme_id == "custom"
+                               else themes_mod.theme_id_for_color(ui_color))
+        self._sel_theme = self._initial_theme
+        theme_row = QHBoxLayout(); theme_row.setSpacing(8)
+        theme_row.addWidget(_lbl("VISUAL THEME", 8, color=C.TEXT_DIM,
+                                 align=Qt.AlignmentFlag.AlignLeft))
+        self._theme_combo = QComboBox()
+        for _theme_id, _theme in themes_mod.THEMES.items():
+            self._theme_combo.addItem(_theme["label"], _theme_id)
+        self._theme_combo.addItem("Custom colour", "custom")
+        self._theme_combo.setFixedHeight(28)
+        self._theme_combo.setStyleSheet(f"""
+            QComboBox {{ background: #000d12; color: {C.TEXT};
+                border: 1px solid {C.BORDER}; border-radius: 3px; padding: 3px 8px; }}
+            QComboBox:hover {{ border-color: {C.PRI}; }}
+            QComboBox QAbstractItemView {{ background: {C.PANEL}; color: {C.TEXT};
+                selection-background-color: {C.PRI_GHO}; }}
+        """)
+        _theme_index = self._theme_combo.findData(self._sel_theme)
+        self._theme_combo.setCurrentIndex(max(0, _theme_index))
+        _theme = themes_mod.theme(self._sel_theme)
+        self._theme_combo.setToolTip(_theme["description"] if _theme else "Custom accent colour.")
+        self._theme_combo.currentIndexChanged.connect(self._on_theme_pick)
+        theme_row.addWidget(self._theme_combo, 1)
+        lay.addLayout(theme_row)
+
         # ── UI colour — colour wheel ─────────────────────────────────────────
         lay.addSpacing(4)
         clr_hdr = QHBoxLayout()
@@ -2210,7 +2247,7 @@ class CustomizeOverlay(QWidget):
             }}
             QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
         """)
-        df_btn.clicked.connect(lambda: self._set_color(DEFAULT_UI_COLOR))
+        df_btn.clicked.connect(lambda: self._choose_theme("classic_cyan"))
         clr_hdr.addWidget(df_btn)
         lay.addLayout(clr_hdr)
 
@@ -2344,7 +2381,32 @@ class CustomizeOverlay(QWidget):
                     QPushButton:hover {{ color: {C.TEXT}; border-color: {C.BORDER_B}; }}
                 """)
 
-    # ── colour flow ──────────────────────────────────────────────────────────
+    # ── theme and colour flow ────────────────────────────────────────────────
+    def _choose_theme(self, theme_id: str):
+        index = self._theme_combo.findData(theme_id)
+        if index >= 0:
+            if self._theme_combo.currentIndex() == index:
+                # Selecting the already-current theme does not emit the Qt signal.
+                self._on_theme_pick(index)
+            else:
+                self._theme_combo.setCurrentIndex(index)
+
+    def _on_theme_pick(self, index: int):
+        theme_id = str(self._theme_combo.itemData(index) or "custom")
+        self._sel_theme = theme_id
+        preset = themes_mod.theme(theme_id)
+        self._theme_combo.setToolTip(preset["description"] if preset else "Custom accent colour.")
+        if preset:
+            self._set_color(preset["accent"], update_wheel=True, preview=True)
+
+    def _mark_custom_theme(self):
+        self._sel_theme = "custom"
+        if getattr(self, "_theme_combo", None) is not None:
+            index = self._theme_combo.findData("custom")
+            if index >= 0 and self._theme_combo.currentIndex() != index:
+                self._theme_combo.blockSignals(True)
+                self._theme_combo.setCurrentIndex(index)
+                self._theme_combo.blockSignals(False)
     def _set_color(self, hx: str, update_wheel: bool = True, preview: bool = True):
         """Updates the selected colour; hex box + wheel stay in sync, theme is live-previewed."""
         self._sel_color = hx.strip().lower()
@@ -2358,6 +2420,7 @@ class CustomizeOverlay(QWidget):
 
     def _on_wheel_pick(self, hx: str):
         # While dragging: update the hex box, don't apply the theme yet
+        self._mark_custom_theme()
         self._sel_color = hx
         self._hex_input.blockSignals(True)
         self._hex_input.setText(hx)
@@ -2374,18 +2437,29 @@ class CustomizeOverlay(QWidget):
                 int(t[1:], 16)
             except ValueError:
                 return
+            self._mark_custom_theme()
             self._set_color(t, update_wheel=True, preview=True)
 
     def _cancel(self):
-        # If a preview was applied, revert to the colour from launch
+        # If a preview was applied, revert to the colour/theme from launch.
         if self.on_preview and self._sel_color != self._initial_color:
             self.on_preview(self._initial_color)
+        self._sel_color = self._initial_color
+        self._sel_theme = self._initial_theme
+        _index = self._theme_combo.findData(self._initial_theme)
+        if _index >= 0:
+            self._theme_combo.blockSignals(True)
+            self._theme_combo.setCurrentIndex(_index)
+            self._theme_combo.blockSignals(False)
+        _preset = themes_mod.theme(self._initial_theme)
+        self._theme_combo.setToolTip(_preset["description"] if _preset else "Custom accent colour.")
         self.hide()
 
     def _save(self):
         name = self._name_input.text().strip() or identity.NAME
         user = self._user_input.text().strip()
-        self.saved.emit(name, user, self._sel_color or DEFAULT_UI_COLOR, self._sel_voice)
+        self.saved.emit(name, user, self._sel_color or DEFAULT_UI_COLOR,
+                        self._sel_voice, self._sel_theme)
         self.hide()
 
 
@@ -5037,7 +5111,10 @@ class MainWindow(QMainWindow):
 
         # Apply the saved UI colour BEFORE panels/stylesheets are built
         _ui_color = (_cfg.get("ui_color") or "").strip()
-        if _ui_color and _ui_color.lower() != DEFAULT_UI_COLOR:
+        _ui_theme = str(_cfg.get("ui_theme") or "")
+        if themes_mod.theme(_ui_theme):
+            apply_ui_theme(_ui_theme)
+        elif _ui_color and _ui_color.lower() != DEFAULT_UI_COLOR:
             apply_ui_accent(_ui_color)
 
         self.setWindowTitle(f"{_display} — {APP_VERSION}")
@@ -7618,6 +7695,8 @@ class MainWindow(QMainWindow):
             cfg.get("user_name", ""),
             cfg.get("ui_color", "") or DEFAULT_UI_COLOR,
             cfg.get("voice_name", ""),
+            theme_id=(cfg.get("ui_theme") or
+                      ("custom" if cfg.get("ui_color") else "classic_cyan")),
             parent=cw,
         )
         ow, oh = CustomizeOverlay._OW, CustomizeOverlay._OH
@@ -7671,7 +7750,7 @@ class MainWindow(QMainWindow):
             retheme_all_widgets(old, current_palette())
 
     def _apply_name_update(self, name: str, user_name: str, ui_color: str = "",
-                           voice: str = ""):
+                           voice: str = "", ui_theme: str = "custom"):
         """Update all name/theme-dependent UI elements and persist to config."""
         self._assistant_name = name.strip() or "JARVIS"
         display = self._assistant_name.upper()
@@ -7687,7 +7766,9 @@ class MainWindow(QMainWindow):
         color_changed = False
         if ui_color:
             old = current_palette()
-            if apply_ui_accent(ui_color):
+            _theme_ok = (apply_ui_theme(ui_theme) if themes_mod.theme(ui_theme)
+                         else apply_ui_accent(ui_color))
+            if _theme_ok:
                 # Live-paint the whole interface (panels, buttons, borders, HUD)
                 retheme_all_widgets(old, current_palette())
                 color_changed = old["PRI"] != C.PRI
@@ -7707,6 +7788,7 @@ class MainWindow(QMainWindow):
             data["user_name"] = user_name.strip()
             if ui_color:
                 data["ui_color"] = ui_color.strip().lower()
+                data["ui_theme"] = (ui_theme if themes_mod.theme(ui_theme) else "custom")
             API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
             self._log.append_log(f"SYS: Identity updated — {display}")
             if color_changed:

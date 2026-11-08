@@ -9,7 +9,7 @@ Say what is wrong. Ultron stages a change. You watch it try the change in a copy
 | You say | Stage | What has actually happened |
 |---|---|---|
 | "Change that so it stops printing twice." | **propose** | A diff is written down. **Your program is untouched.** |
-| "Try it." | **rehearse** | The change runs in a temporary copy of the whole project, with the compiler or the 1,500-test suite. Your program is still untouched. |
+| "Try it." | **rehearse** | The action runs the full repository test harness in a temporary copy. There is no model-controlled compile-only shortcut. Your program is still untouched. |
 | "Yes." then a click in the panel | **confirm** | Two yeses, from two different places |
 | "Apply it." | **apply** | The file is written in one atomic step, the old bytes are saved, the ledger gets a line |
 | "Put that back." | **revert** | The exact bytes from before are restored |
@@ -18,7 +18,7 @@ Say what is wrong. Ultron stages a change. You watch it try the change in a copy
 
 A rehearsal that runs in your folder is not a rehearsal — it is the change with extra steps. So the trial runs in a **temporary copy of the tree**: the same files, in a scratch folder, thrown away afterwards.
 
-A draft that does not compile fails there. A draft that breaks a test fails there. Your program never knows either of them happened.
+A draft that does not compile fails there. A draft that breaks a test fails there. Your program never knows either of them happened. The full harness is a minimum gate, not a proof of correctness: model confidence or a second model's review cannot override a failure, missing verifier, or the separate two-channel approval. A green run still needs human scrutiny of the diff and the actual behavior.
 
 ## The referee is off limits
 
@@ -56,7 +56,7 @@ The **session survives** the restart, because the session lives in files — mem
 | Edit `scripts/proof_gate.py` | That is the judge |
 | Write outside the project | A self-change tool that can reach `C:\Windows` is not a self-change tool |
 | Write into `.git` | History is not a scratch pad |
-| Skip the rehearsal | An unrehearsed change is a guess, and guesses are what this pipeline exists to remove |
+| Skip the rehearsal or downgrade it to compile-only through the action | An unrehearsed or weakly checked change is a guess. The action always requests the full verification harness. |
 | Apply on one confirmation | One yes can be a reflex. Two places mean it was read twice |
 | Change more than 400,000 characters at once | That is a database, not a source file |
 
@@ -66,7 +66,7 @@ The **session survives** the restart, because the session lives in files — mem
 |---|---|
 | `core/self_change.py` | the five stages, the referee list, the ledger, the restart marker |
 | `actions/self_change.py` | the tool the model calls: propose, rehearse, confirm, apply, revert, pending, history, rules |
-| `tests/test_self_change.py` | 37 tests, run against a fake four-file project |
+| `tests/test_self_change.py` | Focused tests of the five-stage gate, including proof the action cannot request compile-only rehearsal |
 | `config/self_change/` | proposals, the ledger, and the kept copies of what each change replaced |
 
 ## The one question to ask of any change

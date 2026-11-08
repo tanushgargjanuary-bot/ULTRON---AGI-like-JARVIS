@@ -8,10 +8,14 @@ of client actually breaks.
 
 import json
 import os
+import signal
 import sys
 import tempfile
 import textwrap
+import threading
+import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from core import policy
@@ -232,6 +236,17 @@ class TheSchema(unittest.TestCase):
         clean = mcp_client.schema({"type": "object", "properties": {"a": {"type": "whatever"}}})
         self.assertEqual(clean["properties"]["a"]["type"], "STRING")
 
+    def test_enum_values_keep_their_json_types(self):
+        clean = mcp_client.schema({
+            "type": "object",
+            "properties": {"value": {"type": "number", "enum": [0, 1.5, True, False, "x"]}},
+        })
+        values = clean["properties"]["value"]["enum"]
+        self.assertEqual(values, [0, 1.5, True, False, "x"])
+        self.assertIs(type(values[0]), int)
+        self.assertIs(type(values[2]), bool)
+        self.assertIs(type(values[3]), bool)
+
 
 class ThePolicyStaysThePolicy(_Folder):
     def test_a_new_tool_is_asked_about_because_policy_never_saw_it(self):
@@ -240,6 +255,7 @@ class ThePolicyStaysThePolicy(_Folder):
         self.assertEqual(decision.tier, policy.Tier.GUARDED)
 
     def test_this_module_may_not_classify_its_own_tools(self):
+        """Guard against MCP code bypassing the shared policy boundary."""
         source = Path(mcp_client.__file__).read_text(encoding="utf-8")
         for word in ("OBSERVE_TOOLS", "ROUTINE_TOOLS", "policy.grant", "set_workspace_roots"):
             self.assertNotIn(word, source,
@@ -258,11 +274,78 @@ class ADyingServer(_Folder):
     def test_a_server_that_never_answers_times_out_instead_of_hanging_the_turn(self):
         client = Client(self.entry(SILENT), timeout=0.4)
         try:
-            client.start()
-        except McpError as error:
-            self.assertIn("no answer", str(error))
+            with self.assertRaisesRegex(McpError, "no answer"):
+                client.start()
         finally:
             client.close()
+
+    def test_context_entry_failure_closes_the_process(self):
+        client = Client(self.entry(SILENT), timeout=0.2)
+        with self.assertRaises(McpError):
+            with client:
+                self.fail("silent server unexpectedly entered the context")
+        self.assertIsNone(client._process)
+        self.assertFalse(client.alive())
+
+    def test_context_cleanup_failure_does_not_mask_the_entry_error(self):
+        client = Client(self.entry())
+        original = McpError("handshake failed")
+        with (
+            mock.patch.object(client, "start", side_effect=original),
+            mock.patch.object(client, "close", side_effect=OSError("cleanup failed")) as close,
+        ):
+            with self.assertRaises(McpError) as caught:
+                with client:
+                    self.fail("entry unexpectedly succeeded")
+        self.assertIs(caught.exception, original)
+        close.assert_called_once_with()
+
+    def test_blocked_stdin_write_has_a_deadline_and_releases_its_worker(self):
+        class BlockedStdin:
+            def __init__(self):
+                self.entered = threading.Event()
+                self.released = threading.Event()
+                self.finished = threading.Event()
+
+            def write(self, _text):
+                self.entered.set()
+                self.released.wait(5.0)
+
+            def flush(self):
+                return None
+
+            def close(self):
+                self.released.set()
+
+        class FakeProcess:
+            pid = 123456
+
+            def __init__(self):
+                self.stdin = BlockedStdin()
+
+            def poll(self):
+                return None
+
+        client = Client(self.entry(), timeout=2.0)
+        process = FakeProcess()
+        client._process = process
+        original_write = process.stdin.write
+
+        def tracked_write(text):
+            try:
+                return original_write(text)
+            finally:
+                process.stdin.finished.set()
+
+        process.stdin.write = tracked_write
+        with mock.patch.object(client, "_signal_tree"):
+            started = time.monotonic()
+            with self.assertRaisesRegex(McpError, "timed out writing"):
+                client.request("blocked", {}, timeout=0.05)
+            self.assertLess(time.monotonic() - started, 0.75)
+        self.assertTrue(process.stdin.entered.is_set())
+        self.assertTrue(process.stdin.finished.wait(1.0))
+        client._process = None
 
     def test_closing_ends_the_process(self):
         client = Client(self.entry())
@@ -271,6 +354,23 @@ class ADyingServer(_Folder):
         self.assertIsNotNone(process)
         client.close()
         self.assertIsNotNone(process.poll(), "the server must not outlive the app")
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process groups only")
+    def test_close_signals_the_owned_process_group(self):
+        class FakeProcess:
+            pid = 4321
+            stdin = stdout = stderr = None
+
+            def wait(self, timeout):
+                return None
+
+        client = Client(self.entry())
+        client._process = FakeProcess()
+        with mock.patch.object(mcp_client.os, "killpg") as kill_group:
+            client.close()
+        self.assertEqual(kill_group.call_count, 2)
+        self.assertEqual(kill_group.call_args_list[0].args, (4321, signal.SIGTERM))
+        self.assertEqual(kill_group.call_args_list[1].args, (4321, signal.SIGKILL))
 
     def test_closing_twice_is_not_an_error(self):
         client = Client(self.entry())

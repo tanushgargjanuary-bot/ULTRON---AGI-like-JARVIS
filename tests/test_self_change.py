@@ -41,6 +41,15 @@ class WithAFakeProject(unittest.TestCase):
         self.project.mkdir()
         (self.project / "app.py").write_text(APP, encoding="utf-8")
         (self.project / "notes.md").write_text("# notes\n", encoding="utf-8")
+        verify = self.project / "scripts" / "verify.py"
+        verify.parent.mkdir(parents=True, exist_ok=True)
+        verify.write_text(
+            "import compileall, sys\n"
+            "if not compileall.compile_dir('.', quiet=1):\n"
+            "    sys.exit(1)\n"
+            "print('full verification passed')\n",
+            encoding="utf-8",
+        )
         for protected in self_change.PROTECTED:
             path = self.project / protected
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -276,6 +285,16 @@ class TheTool(WithAFakeProject):
         offered = set(declaration["parameters"]["properties"]["action"]["enum"])
         self.assertTrue(offered <= set(self.tool.ACTIONS))
 
+    def test_rehearsal_cannot_disable_the_full_test_harness(self):
+        with patch.object(self.tool.self_change, "rehearse", return_value={
+            "ok": True,
+            "command": f"{sys.executable} scripts/verify.py",
+            "full": True,
+        }) as rehearse:
+            said = self.call(action="rehearse", change="c123", full=False)
+        rehearse.assert_called_once_with("c123", full=True)
+        self.assertIn("full test harness", said.lower())
+
     def test_staging_says_plainly_that_nothing_happened(self):
         said = self.call(action="propose", path="app.py", find="'hello'",
                          replace="'hi'", reason="shorter greeting")
@@ -287,7 +306,7 @@ class TheTool(WithAFakeProject):
                          replace="'hello, sir'", reason="politer")
         change = self_change.pending()[0]["id"]
         self.assertIn("staged", said.lower())
-        self.assertIn("copy passed", self.call(action="rehearse", change=change))
+        self.assertIn("full test harness passed", self.call(action="rehearse", change=change))
         self.call(action="confirm", change=change, channel="voice")
         self.call(action="confirm", change=change, channel="panel")
         applied = self.call(action="apply", change=change)

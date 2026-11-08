@@ -69,6 +69,21 @@ class CapabilityGuideRouting(unittest.TestCase):
         self.assertIn("unavailable: missing codec", result)
         self.assertIn("research candidate GitHub projects", result)
 
+    def test_desktop_click_request_routes_to_computer_controls(self):
+        result = self._run(
+            "Click the button in the desktop window",
+            [_entry("computer_control", "system", "Direct computer control for keyboard, mouse, and screen actions."),
+             _entry("browser_control", "system", "Control a browser page.")],
+        )
+        self.assertIn("computer_control (ready)", result)
+
+    def test_read_public_webpage_routes_to_bounded_web_reader(self):
+        result = self._run(
+            "Scrape the public webpage and extract the article",
+            [_entry("web_read", "knowledge", "Read and extract text from a public web page.", True)],
+        )
+        self.assertIn("web_read (ready)", result)
+
     def test_unknown_task_offers_research_without_claiming_a_tool(self):
         result = self._run(
             "Teleport a person to Mars",

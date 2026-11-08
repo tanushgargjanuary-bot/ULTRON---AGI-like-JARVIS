@@ -66,67 +66,32 @@ class PathsOnTheFrontPage(unittest.TestCase):
                 missing.append(link)
         self.assertEqual(missing, [], f"broken links: {missing}")
 
-    def test_the_picture_is_a_small_gif(self):
-        picture = ROOT / "docs" / "img" / "hud-states.gif"
-        self.assertTrue(picture.exists(), "the readme shows a picture that does not exist")
+    def test_the_demo_is_a_small_animated_gif(self):
+        picture = ROOT / "docs" / "img" / "ultron-operating-layer-demo.gif"
+        self.assertTrue(picture.exists(), "the readme demo GIF is missing")
         data = picture.read_bytes()[:6]
-        self.assertIn(data, (b"GIF87a", b"GIF89a"), "the picture is not a GIF")
+        self.assertIn(data, (b"GIF87a", b"GIF89a"), "the demo is not a GIF")
         self.assertLess(picture.stat().st_size, 400_000,
-                        "the picture is too big to load quickly on a phone")
+                        "the demo is too big to load quickly on a phone")
+        self.assertTrue((ROOT / "docs" / "img" / "ultron-operating-layer-demo.cast").exists())
 
-    def test_the_picture_is_captioned_as_an_illustration(self):
-        """It is drawn, not photographed. Saying so is the honest part."""
+    def test_visual_media_is_labelled_honestly(self):
+        """The HUD picture is illustrative and the terminal demo is scripted."""
         self.assertIn("illustration", self.text.lower())
+        self.assertIn("scripted", self.text.lower())
+        self.assertIn("synthetic", self.text.lower())
 
 
-class NumbersOnTheFrontPage(unittest.TestCase):
-    """A number in a document must come from the tree, or it does not go in."""
+class CapabilityClaims(unittest.TestCase):
+    def test_core_capabilities_and_theme_are_named(self):
+        text = readme_text().lower()
+        for claim in ("use the computer", "search the web", "web_read", "robots.txt", "holographic"):
+            self.assertIn(claim, text)
 
-    def setUp(self):
-        self.text = readme_text()
-
-    def test_the_python_file_count_is_the_real_one(self):
-        actual = len([path for path in ROOT.rglob("*.py")
-                      if ".git" not in path.parts and "__pycache__" not in path.parts])
-        self.assertIn(f"{actual} Python files", self.text,
-                      f"the readme does not say {actual} Python files")
-
-    def test_the_test_count_is_the_one_the_suite_reports(self):
-        # Counted live, from the test loader, not read from a file that a previous
-        # run wrote. The old version read verification-results.txt, which made the
-        # page a statement about the LAST run on SOME machine — and the count moves
-        # by a few between machines, because some tests only exist when an optional
-        # package is missing. That is a broken claim, not a broken page: this shows
-        # up as a red test on the owner's Windows box while the Linux box is green.
-        #
-        # Discovery imports the modules and counts, without running anything, so it
-        # is quick and it is exactly the number the suite will print as "Ran N".
-        import sys as _sys
-        import unittest as _unittest
-        tests_dir = str(ROOT / "tests")
-        if str(ROOT) not in _sys.path:
-            _sys.path.insert(0, str(ROOT))
-        live = _unittest.defaultTestLoader.discover(
-            tests_dir, top_level_dir=tests_dir).countTestCases()
-        allowed = {live}
-        # A second, equally real number: the count in the last recorded green run.
-        # The page may state either, because both are measurements. What it may not
-        # state is a number nobody ever observed — which is what a hand-kept count
-        # becomes the moment a test is added or an optional package is missing.
-        results = ROOT / "verification-results.txt"
-        if results.exists():
-            found = re.search(r"Ran (\d+) tests",
-                              results.read_text(encoding="utf-8", errors="replace"))
-            if found:
-                allowed.add(int(found.group(1)))
-        number = live
-        # The page writes counts with thousands separators; the suite does not.
-        for candidate in sorted(allowed):
-            for spelling in (f"{candidate} tests", f"{candidate:,} tests"):
-                if spelling in self.text:
-                    return
-        wanted = " or ".join(f"{value:,}" for value in sorted(allowed))
-        self.fail(f"the readme says no number this tree has: it should say {wanted}")
+    def test_readme_avoids_machine_dependent_test_and_file_counts(self):
+        text = readme_text().lower()
+        self.assertNotRegex(text, r"\b\d[\d,]* python files\b")
+        self.assertNotRegex(text, r"\b\d[\d,]* tests\b")
 
 
 class Licence(unittest.TestCase):

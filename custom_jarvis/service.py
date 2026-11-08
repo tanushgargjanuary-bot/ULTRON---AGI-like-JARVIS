@@ -364,6 +364,7 @@ class CustomService:
             )
 
     def perform(self, operation, p):
+        """Dispatch a service operation after validating its approval boundary."""
         if operation in {
             "insights",
             "recommendations",
@@ -576,20 +577,43 @@ class CustomService:
             self._require_approval(operation, p)
             self.breaker.reset()
             return {"breaker_reset": True}
+        if operation == "discard_checkpoint":
+            checkpoint = plan_state.load()
+            if checkpoint is None:
+                return {"discarded": False, "note": "There is no valid saved plan to discard."}
+            self._require_approval(
+                operation,
+                {"goal": checkpoint.get("goal", ""),
+                 "warning": "Remove the saved plan. It will not be resumed."},
+            )
+            if not plan_state.clear():
+                raise ValueError("The saved plan could not be removed; nothing else changed.")
+            return {"discarded": True, "goal": checkpoint.get("goal", "")}
         if operation == "resume_checkpoint":
             # The payload is optional: with no checkpoint given, the plan this machine
-            # was running when it stopped is the one meant. That file is written by the
-            # planner on every step and removed when the plan ends.
+            # was running when it stopped is the one meant. It is bound to the workspace
+            # where it was created, and every pending mutation still needs approval.
             checkpoint = p.get("checkpoint") or plan_state.load()
-            if not checkpoint:
+            if not isinstance(checkpoint, dict):
                 raise ValueError(
-                    "No saved plan to resume. The file is state/active_plan.json."
+                    "No valid saved plan to resume. The file is state/active_plan.json."
+                )
+            checkpoint_plan = checkpoint.get("plan", checkpoint)
+            active_workspace = getattr(self.control.engine, "workspace", None)
+            saved_workspace = (
+                checkpoint_plan.get("workspace")
+                if isinstance(checkpoint_plan, dict) else None
+            )
+            if (active_workspace is None or not saved_workspace
+                    or Path(saved_workspace).resolve() != Path(active_workspace).resolve()):
+                raise ValueError(
+                    "The saved plan belongs to a different workspace. Select its original workspace before resuming."
                 )
             self._require_approval(
                 operation,
                 {
                     "goal": checkpoint.get("goal", ""),
-                    "warning": "Only independently reverified file artifacts are skipped; remaining mutations require separate approval.",
+                    "warning": "Only independently reverified file artifacts are skipped; each pending mutation requires its own approval.",
                 },
             )
             return self.planner.resume_from_checkpoint(

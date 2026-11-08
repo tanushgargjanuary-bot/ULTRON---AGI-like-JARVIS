@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from custom_jarvis import compat
+from custom_jarvis import compat, plan_state
 from custom_jarvis.addon_runtime import AddonRegistry
 from custom_jarvis.autonomy_governor import AutonomyGovernor, BudgetLimits
 from custom_jarvis.brain import detect_intent_ambiguity, score_candidate_plan
@@ -44,7 +44,7 @@ from custom_jarvis.skills import (
     compile_procedure_to_skill,
     judge_skill_applicability,
 )
-from custom_jarvis.tools import ToolRegistry, execute_command, read_file, write_file
+from custom_jarvis.tools import ToolRegistry, ToolResult, execute_command, read_file, write_file
 
 STRIP = 'def adapt(args):\n    return dict(args, path=args["path"].strip())\n'
 CASES = [ContractCase({"path": " note.txt"}, {"path": "note.txt"})]
@@ -524,21 +524,92 @@ class AutonomyUpgradeTests(unittest.TestCase):
             artifact_sha256=file_digest(self.root / "note.txt"),
         )
         pending = PlanStep(
+            2, "write", "write_file", {"path": "new.txt", "content": "approved text"}
+        )
+        planner = AutonomousPlanner(
+            brain=MagicMock(), tool_registry=self.control, verbose=False
+        )
+        checkpoint = {
+            "goal": "write new.txt",
+            "workspace": str(self.root.resolve()),
+            "steps": [completed.to_dict(), pending.to_dict()],
+        }
+        with patch.object(self.raw, "execute", wraps=self.raw.execute) as calls:
+            result = planner.resume_from_checkpoint(checkpoint)
+        self.assertTrue(result.success)
+        self.assertEqual(calls.call_count, 1)
+        self.assertEqual((self.root / "new.txt").read_text(), "approved text")
+
+    def test_checkpoint_resume_rejects_unpersisted_step_output_references(self):
+        completed = PlanStep(
+            1, "read", "read_file", {"path": "note.txt"},
+            status=StepStatus.COMPLETED,
+            artifact_sha256=file_digest(self.root / "note.txt"),
+        )
+        pending = PlanStep(
             2, "write", "write_file", {"path": "new.txt", "content": "$STEP_1_OUTPUT"}
         )
         planner = AutonomousPlanner(
             brain=MagicMock(), tool_registry=self.control, verbose=False
         )
-        with patch.object(self.raw, "execute", wraps=self.raw.execute) as calls:
-            result = planner.resume_from_checkpoint(
-                {
-                    "goal": "write new.txt",
-                    "steps": [completed.to_dict(), pending.to_dict()],
-                }
-            )
-        self.assertTrue(result.success)
-        self.assertEqual(calls.call_count, 1)
-        self.assertEqual((self.root / "new.txt").read_text(), "hello")
+        checkpoint = {
+            "goal": "write new.txt",
+            "workspace": str(self.root.resolve()),
+            "steps": [completed.to_dict(), pending.to_dict()],
+        }
+        with self.assertRaisesRegex(ValueError, "outputs that are not persisted"):
+            planner.resume_from_checkpoint(checkpoint)
+        self.assertFalse((self.root / "new.txt").exists())
+
+    def test_checkpoint_resume_rejects_workspace_mismatch(self):
+        pending = PlanStep(
+            1, "write", "write_file", {"path": "other.txt", "content": "blocked"}
+        )
+        planner = AutonomousPlanner(
+            brain=MagicMock(), tool_registry=self.control, verbose=False
+        )
+        with self.assertRaisesRegex(ValueError, "workspace does not match"):
+            planner.resume_from_checkpoint({
+                "goal": "write other.txt",
+                "workspace": str(self.other.resolve()),
+                "steps": [pending.to_dict()],
+            })
+        self.assertFalse((self.root / "other.txt").exists())
+
+    def test_checkpoint_resume_reprompts_pending_write_after_reload(self):
+        """Verify an interrupted write is confirmed again after checkpoint reload."""
+        folder = self.base / "plan-state"
+        approvals = []
+        self.control.approve = lambda name, args: approvals.append((name, args)) or True
+        self.raw.get("write_file").handler = lambda **_args: ToolResult(
+            False,
+            error="simulated partial failure",
+            metadata={"requires_user_action": True},
+        )
+        pending = PlanStep(
+            1, "write", "write_file", {"path": "new.txt", "content": "value"}
+        )
+        checkpoint = {
+            "goal": "write new.txt",
+            "workspace": str(self.root.resolve()),
+            "steps": [pending.to_dict()],
+        }
+        with patch.object(plan_state, "FOLDER", folder):
+            first = AutonomousPlanner(
+                brain=MagicMock(), tool_registry=self.control, verbose=False
+            ).resume_from_checkpoint(checkpoint)
+            self.assertFalse(first.success)
+            saved = plan_state.load(folder)
+            self.assertTrue(saved["steps"][0]["approval_recorded"])
+
+            second = AutonomousPlanner(
+                brain=MagicMock(), tool_registry=self.control, verbose=False
+            ).resume_from_checkpoint(saved)
+            self.assertFalse(second.success)
+            self.assertTrue(plan_state.load(folder)["steps"][0]["approval_recorded"])
+
+        self.assertEqual(len(approvals), 2)
+        self.assertEqual([name for name, _args in approvals], ["write_file", "write_file"])
 
     def test_checkpoint_resume_rejects_drift(self):
         row = PlanStep(
@@ -553,7 +624,10 @@ class AutonomyUpgradeTests(unittest.TestCase):
             brain=MagicMock(), tool_registry=self.control, verbose=False
         )
         with self.assertRaises(ValueError):
-            planner.resume_from_checkpoint({"steps": [row]})
+            planner.resume_from_checkpoint({
+                "workspace": str(self.root.resolve()),
+                "steps": [row],
+            })
 
     def test_resume_requires_explicit_approval(self):
         with self.assertRaises(ValueError):

@@ -26,8 +26,10 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import os
 import queue
+import signal
 import shutil
 import subprocess
 import threading
@@ -42,6 +44,7 @@ CONFIG_NAME = Path("config") / "mcp_servers.json"
 LIST_TIMEOUT = 20.0
 CALL_TIMEOUT = 120.0
 STOP_TIMEOUT = 4.0
+WRITE_TIMEOUT = 10.0
 MAX_TOOLS = 200
 MAX_TEXT = 20_000
 
@@ -55,6 +58,7 @@ class McpError(RuntimeError):
 
 
 def config_path(folder: Optional[Path] = None) -> Path:
+    """Return the configured MCP server-list path."""
     return (Path(folder) if folder else Path(__file__).resolve().parent.parent) / CONFIG_NAME
 
 
@@ -114,7 +118,6 @@ def _server(entry: Any, index: int) -> dict[str, Any]:
         "args": list(args),
         "cwd": str(entry.get("cwd") or "").strip() or None,
     }
-    return servers
 
 
 def _identifier(text: str) -> str:
@@ -133,8 +136,24 @@ _TYPES = {"STRING", "NUMBER", "INTEGER", "BOOLEAN", "ARRAY", "OBJECT"}
 
 
 def _kind(value: Any) -> str:
+    """Normalize a JSON Schema type to the provider spelling."""
     kind = str(value or "string").upper()
     return kind if kind in _TYPES else "STRING"
+
+
+def _enum_values(enum: Any) -> list[Any]:
+    """Keep valid JSON scalar enum choices in their original primitive types."""
+    if not isinstance(enum, list) or not enum:
+        return []
+    values = []
+    for value in enum[:50]:
+        if isinstance(value, str):
+            values.append(value[:100])
+        elif value is None or isinstance(value, (bool, int)):
+            values.append(value)
+        elif isinstance(value, float) and math.isfinite(value):
+            values.append(value)
+    return values
 
 
 def schema(raw: Any) -> dict[str, Any]:
@@ -158,9 +177,9 @@ def schema(raw: Any) -> dict[str, Any]:
             clean["items"] = {"type": _kind(items.get("type"))}
         if clean["type"] == "OBJECT":
             clean["properties"] = {}
-        enum = spec.get("enum")
-        if isinstance(enum, list) and enum:
-            clean["enum"] = [str(value)[:100] for value in enum[:50]]
+        values = _enum_values(spec.get("enum"))
+        if values:
+            clean["enum"] = values
         properties[str(key)] = clean
     out: dict[str, Any] = {"type": "OBJECT", "properties": properties}
     required = [str(name) for name in (raw.get("required") or []) if str(name) in properties]
@@ -183,6 +202,7 @@ class Client:
     """
 
     def __init__(self, entry: dict[str, Any], timeout: float = CALL_TIMEOUT):
+        """Initialize process, request, and synchronization state for one server."""
         self.name = str(entry.get("name") or "server")
         self.command = str(entry.get("command") or "")
         self.args = [str(arg) for arg in entry.get("args") or []]
@@ -192,6 +212,7 @@ class Client:
         self._replies: "queue.Queue[dict[str, Any]]" = queue.Queue()
         self._pending: dict[int, dict[str, Any]] = {}
         self._lock = threading.Lock()
+        self._write_lock = threading.Lock()
         self._next_id = 0
         self._dead = ""
         self.stderr_tail: list[str] = []
@@ -241,45 +262,91 @@ class Client:
         )
         self.notify("notifications/initialized")
 
-    def close(self) -> None:
-        """End the process whether or not it wants to.
+    @staticmethod
+    def _signal_tree(process: subprocess.Popen, *, force: bool) -> None:
+        """Signal the owned process group/tree, including its descendants."""
+        if os.name == "nt":
+            command = ["taskkill", "/PID", str(process.pid), "/T"]
+            if force:
+                command.append("/F")
+            try:
+                subprocess.run(command, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=1.0, check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                with contextlib.suppress(OSError):
+                    process.kill() if force else process.terminate()
+            return
+        try:
+            os.killpg(process.pid, signal.SIGKILL if force else signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        except OSError:
+            with contextlib.suppress(OSError):
+                process.kill() if force else process.terminate()
 
-        Called from a `finally`, on app exit, and by tests. An orphan here would be a
-        program the owner did not start twice.
-        """
+    @staticmethod
+    def _close_stream_bounded(stream) -> None:
+        """Close a pipe without blocking the shutdown thread indefinitely."""
+        if stream is None:
+            return
+
+        def close_stream() -> None:
+            with contextlib.suppress(Exception):
+                stream.close()
+
+        closer = threading.Thread(target=close_stream, daemon=True,
+                                  name="mcp-pipe-close")
+        closer.start()
+        closer.join(timeout=0.25)
+
+    def close(self) -> None:
+        """Boundedly terminate the owned process tree and close its pipes."""
         process = self._process
         self._process = None
         self._dead = self._dead or "closed"
         if process is None:
             return
+        # Signal the group even if its leader exited: a child may have outlived it.
+        self._signal_tree(process, force=False)
         try:
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=STOP_TIMEOUT)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=STOP_TIMEOUT)
+            process.wait(timeout=STOP_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            self._signal_tree(process, force=True)
+            with contextlib.suppress(subprocess.TimeoutExpired, OSError):
+                process.wait(timeout=STOP_TIMEOUT)
         except OSError:
-            process.kill()          # it would not stop politely; it stops anyway
+            self._signal_tree(process, force=True)
+        else:
+            # A cleanly exiting parent may leave a child in the same POSIX group.
+            # Kill anything still in that group rather than assuming parent == tree.
+            if os.name != "nt":
+                self._signal_tree(process, force=True)
         finally:
             for stream in (process.stdin, process.stdout, process.stderr):
-                with contextlib.suppress(OSError):
-                    if stream is not None:
-                        stream.close()
+                self._close_stream_bounded(stream)
 
     def __enter__(self) -> "Client":
-        self.start()
+        """Start the server and release it if context entry fails."""
+        try:
+            self.start()
+        except BaseException:
+            try:
+                self.close()
+            except BaseException as cleanup_error:
+                self._dead = f"entry cleanup failed: {cleanup_error}"
+            raise
         return self
 
     def __exit__(self, *_exc) -> None:
         self.close()
 
     def alive(self) -> bool:
+        """Report whether the server process is running and responsive."""
         return self._process is not None and self._process.poll() is None and not self._dead
 
     # ── the conversation ────────────────────────────────────────────────────
     def _read_stdout(self) -> None:
+        """Route JSON-RPC replies to the matching waiting request."""
         process = self._process
         if process is None or process.stdout is None:
             return
@@ -300,6 +367,7 @@ class Client:
         self._dead = self._dead or "the server stopped"
 
     def _read_stderr(self) -> None:
+        """Keep only a bounded diagnostic tail from the server stderr pipe."""
         process = self._process
         if process is None or process.stderr is None:
             return
@@ -307,17 +375,44 @@ class Client:
             self.stderr_tail.append(line.rstrip()[:400])
             del self.stderr_tail[:-20]      # a bounded tail, never a growing file
 
-    def _write(self, payload: dict[str, Any]) -> None:
+    def _write(self, payload: dict[str, Any], timeout: Optional[float] = None) -> None:
+        """Send one JSON-RPC message with a deadline on pipe I/O."""
         process = self._process
         if process is None or process.stdin is None or process.poll() is not None:
             raise McpError(f"{self.name}: {self._dead or 'the server is not running'}.")
-        try:
-            process.stdin.write(json.dumps(payload, ensure_ascii=False) + "\n")
-            process.stdin.flush()
-        except (OSError, ValueError) as error:
+        deadline = min(self.timeout, WRITE_TIMEOUT) if timeout is None else max(0.0, float(timeout))
+        line = json.dumps(payload, ensure_ascii=False) + "\n"
+        done = threading.Event()
+        failures: list[BaseException] = []
+
+        def write_pipe() -> None:
+            """Write and flush one serialized message under the writer lock."""
+            try:
+                with self._write_lock:
+                    if process is not self._process or process.poll() is not None:
+                        raise McpError(f"{self.name}: the server is not running.")
+                    process.stdin.write(line)
+                    process.stdin.flush()
+            except BaseException as error:
+                failures.append(error)
+            finally:
+                done.set()
+
+        threading.Thread(target=write_pipe, daemon=True,
+                         name=f"mcp-{self.name}-write").start()
+        if not done.wait(deadline):
+            self._dead = self._dead or "the server did not accept input"
+            self._signal_tree(process, force=True)
+            self._close_stream_bounded(process.stdin)
+            raise McpError(f"{self.name}: timed out writing to the server.")
+        if failures:
+            error = failures[0]
+            if isinstance(error, McpError):
+                raise error
             raise McpError(f"{self.name}: the server closed its input ({error}).") from error
 
     def notify(self, method: str, params: Optional[dict[str, Any]] = None) -> None:
+        """Send a JSON-RPC notification that does not expect a reply."""
         payload: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
         if params is not None:
             payload["params"] = params
@@ -326,17 +421,22 @@ class Client:
     def request(self, method: str, params: Optional[dict[str, Any]] = None,
                 timeout: Optional[float] = None) -> Any:
         """Send one request, wait for the reply with its id, return `result`."""
+        request_timeout = self.timeout if timeout is None else max(0.0, float(timeout))
+        deadline = time.monotonic() + request_timeout
         with self._lock:
             self._next_id += 1
             identity = self._next_id
             slot = {"event": threading.Event(), "reply": None}
             self._pending[identity] = slot
         try:
-            self._write({"jsonrpc": "2.0", "id": identity, "method": method,
-                         "params": params or {}})
-            if not slot["event"].wait(float(timeout or self.timeout)):
+            self._write(
+                {"jsonrpc": "2.0", "id": identity, "method": method,
+                 "params": params or {}},
+                timeout=max(0.0, deadline - time.monotonic()),
+            )
+            if not slot["event"].wait(max(0.0, deadline - time.monotonic())):
                 raise McpError(f"{self.name}: no answer to '{method}' in "
-                               f"{int(timeout or self.timeout)}s.")
+                               f"{int(request_timeout)}s.")
         finally:
             with self._lock:
                 self._pending.pop(identity, None)
@@ -352,6 +452,7 @@ class Client:
 
     # ── what the app needs ──────────────────────────────────────────────────
     def list_tools(self) -> list[dict[str, Any]]:
+        """Request and validate the server’s available tool declarations."""
         result = self.request("tools/list", {}, timeout=min(LIST_TIMEOUT, self.timeout)) or {}
         tools = result.get("tools") if isinstance(result, dict) else None
         if not isinstance(tools, list):
@@ -390,7 +491,9 @@ class Client:
         return rows
 
     def _handler(self, remote: str):
+        """Create the app-facing callable for one remote tool."""
         def run(parameters: Optional[dict[str, Any]] = None, **_ignored) -> str:
+            """Call the selected remote tool and return its text result."""
             answer = self.call(remote, parameters or {})
             return answer["text"]
 
@@ -434,6 +537,7 @@ def connect_all(folder: Optional[Path] = None) -> tuple[list[Client], list[str]]
 
 
 def close_all(clients: Iterable[Client]) -> None:
+    """Close every MCP client without letting one failure block the rest."""
     for client in clients:
         # One server that will not close must not leave the other ones running.
         with contextlib.suppress(Exception):

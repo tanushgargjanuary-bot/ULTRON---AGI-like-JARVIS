@@ -12,6 +12,7 @@ from core.leaf_generations import LeafGenerations, _restore_modules, tree_signat
 
 class Registry:
     def __init__(self, names=(), failures=None):
+        """Prepare isolated temporary action and plugin trees for generation tests."""
         self._names = set(names)
         self._failures = dict(failures or {})
 

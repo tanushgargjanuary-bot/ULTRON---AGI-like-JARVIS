@@ -1,0 +1,4 @@
+# Optional tools for reproducing docs/img/ultron-operating-layer-demo.gif
+asciinema==2.4.0
+Pillow>=10,<14
+pyte>=0.8,<1

@@ -46,6 +46,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -77,6 +78,12 @@ MAX_PATCH = 400_000          # characters: a source file, not a database
 
 _store: Path | None = None
 _root: Path | None = None
+_change_lock = threading.RLock()
+
+
+def change_lock():
+    """Serialize interactive and background self-change operations."""
+    return _change_lock
 
 
 def set_root(folder: Path | None) -> None:

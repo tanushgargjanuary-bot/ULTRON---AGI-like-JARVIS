@@ -12,10 +12,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from custom_jarvis import plan_state
+from custom_jarvis.planner import PlanStep
 from custom_jarvis.service import CustomService
 
 
@@ -47,6 +50,29 @@ class Base(unittest.TestCase):
 
     def skill(self, identity, **extra):
         return self.service.perform("run_skill", {"id": identity, **extra})
+
+
+class CheckpointControls(Base):
+    def test_discard_requires_confirmation_and_removes_only_the_saved_plan(self):
+        folder = self.base / "plan-state"
+        step = PlanStep(1, "write", "write_file", {"path": "new.txt", "content": "x"})
+        record = {
+            "goal": "write a file",
+            "workspace": str(self.workspace.resolve()),
+            "current_step_index": 0,
+            "steps": [step.to_dict()],
+        }
+        with patch.object(plan_state, "FOLDER", folder):
+            self.assertTrue(plan_state.save(record))
+            self.service.approve = lambda *_args: False
+            with self.assertRaisesRegex(ValueError, "approval was denied"):
+                self.service.perform("discard_checkpoint", {})
+            self.assertIsNotNone(plan_state.load())
+
+            self.service.approve = lambda *_args: True
+            result = self.service.perform("discard_checkpoint", {})
+            self.assertTrue(result["discarded"])
+            self.assertIsNone(plan_state.load())
 
 
 class ToolsRegistered(Base):
