@@ -67,6 +67,35 @@ HIGH = 0.90
 FAIR = 0.75
 
 
+def _reliability_buckets(rows: list[dict]) -> list[dict]:
+    buckets = []
+    for low in (0.5, 0.6, 0.7, 0.8, 0.9):
+        upper = round(low + 0.1, 1)
+        members = [row for row in rows
+                   if low <= _clamp(row["confidence"]) < upper
+                   or (upper == 1.0 and _clamp(row["confidence"]) == 1.0)]
+        if members:
+            buckets.append({
+                "range": f"{int(low * 100)}-{int((low + 0.1) * 100)}%",
+                "n": len(members),
+                "said": round(sum(_clamp(row["confidence"]) for row in members)
+                              / len(members), 3),
+                "was_right": round(sum(OUTCOMES[row["outcome"]] for row in members)
+                                   / len(members), 3),
+            })
+    return buckets
+
+
+def _calibration_verdict(bound: float) -> str:
+    if bound >= HIGH:
+        return "reliable — state it plainly, cite the record"
+    if bound >= FAIR:
+        return "usually right — say the number, offer to check"
+    if bound >= 0.5:
+        return "unreliable — verify before asserting"
+    return "not yet evidence — ask, or go and check"
+
+
 def _tokens(text: str) -> set[str]:
     return {word for word in _WORD.findall(str(text or "").lower())
             if word not in _STOP and len(word) > 1}
@@ -170,11 +199,10 @@ class Ledger:
 
     # ------------------------------------------------------------- calibration
     def calibration(self, domain: str = "") -> dict:
-        """Brier score, buckets, and an honest lower bound on accuracy."""
+        """Brier score, reliability buckets, and an honest lower bound."""
         wanted = str(domain or "").strip().lower()
         rows = [row for row in self._data["predictions"]
-                if row.get("outcome")
-                and (not wanted or row.get("domain") == wanted)]
+                if row.get("outcome") and (not wanted or row.get("domain") == wanted)]
         if not rows:
             return {
                 "domain": wanted or "all", "n": 0,
@@ -182,47 +210,16 @@ class Ledger:
                 "verdict": "no resolved predictions yet — nothing to be confident about",
                 "buckets": [],
             }
-
-        hits = sum(1 for row in rows if OUTCOMES[row["outcome"]] == 1.0)
+        hits = sum(OUTCOMES[row["outcome"]] == 1.0 for row in rows)
         brier = sum((_clamp(row["confidence"]) - OUTCOMES[row["outcome"]]) ** 2
                     for row in rows) / len(rows)
-
-        buckets = []
-        for low in (0.5, 0.6, 0.7, 0.8, 0.9):
-            upper = round(low + 0.1, 1)
-            members = [
-                row for row in rows
-                if low <= _clamp(row["confidence"]) < upper
-                or (upper == 1.0 and _clamp(row["confidence"]) == 1.0)
-            ]
-            if not members:
-                continue
-            buckets.append({
-                "range": f"{int(low * 100)}-{int((low + 0.1) * 100)}%",
-                "n": len(members),
-                "said": round(sum(_clamp(r["confidence"]) for r in members) / len(members), 3),
-                "was_right": round(
-                    sum(OUTCOMES[r["outcome"]] for r in members) / len(members), 3),
-            })
-
         bound = wilson_lower(hits, len(rows))
-        if bound >= HIGH:
-            verdict = "reliable — state it plainly, cite the record"
-        elif bound >= FAIR:
-            verdict = "usually right — say the number, offer to check"
-        elif bound >= 0.5:
-            verdict = "unreliable — verify before asserting"
-        else:
-            verdict = "not yet evidence — ask, or go and check"
         return {
-            "domain": wanted or "all",
-            "n": len(rows),
-            "hits": hits,
+            "domain": wanted or "all", "n": len(rows), "hits": hits,
             "accuracy": round(hits / len(rows), 3),
-            "lower_bound": round(bound, 3),
-            "brier": round(brier, 4),
-            "verdict": verdict,
-            "buckets": buckets,
+            "lower_bound": round(bound, 3), "brier": round(brier, 4),
+            "verdict": _calibration_verdict(bound),
+            "buckets": _reliability_buckets(rows),
         }
 
     def summary(self) -> dict:

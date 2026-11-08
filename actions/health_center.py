@@ -30,12 +30,61 @@ def _render(center, include_inactive=False) -> str:
     return "\n".join(lines)
 
 
+def _issue_status(center, action: str, issue_id: str) -> str:
+    if not issue_id:
+        return "Give me the issue ID shown by health status."
+    if not getattr(center, action)(issue_id):
+        return f"I cannot find health issue {issue_id}. Ask for health status to see current IDs."
+    labels = {
+        "ignore": "muted until restored",
+        "dismiss": "dismissed; a later occurrence can reopen it",
+        "restore": "restored",
+    }
+    return f"Health issue {issue_id} {labels[action]}. No code was changed."
+
+
+def _job_list(center) -> str:
+    rows = center.jobs()
+    if not rows:
+        return "There are no background health-repair jobs."
+    return "Background health-repair jobs:\n" + "\n".join(
+        f"{row['id']} [{row['status']}] issue {row['issue_id']} — {row.get('result', '')}"
+        for row in rows[:20]
+    )
+
+
+def _job_detail(center, job_id: str) -> str:
+    row = center.job(job_id)
+    if row is None:
+        return f"I have no health-repair job {job_id}."
+    return f"{row['id']} [{row['status']}] for issue {row['issue_id']}: {row.get('result', '')}"
+
+
+def _start_fix(center, parameters: dict, issue_id: str, player=None) -> str:
+    if not issue_id:
+        return "Give me a detected issue ID from health status."
+    try:
+        job = center.start_fix(
+            issue_id, str(parameters.get("path") or ""),
+            str(parameters.get("reason") or ""), text=parameters.get("text"),
+            find=parameters.get("find"), replace=parameters.get("replace"), player=player,
+        )
+    except ValueError as error:
+        return str(error)
+    return (
+        f"Started background repair proposal {job['id']} for issue {issue_id}. "
+        "The conversation can continue. It will stage the candidate and run the full "
+        "verification harness in a scratch copy; it cannot apply code or confirm for you. "
+        f"Query health_center action=job with job_id={job['id']} for its status."
+    )
+
+
 def run(parameters: dict, player=None, session_memory=None) -> str:
     """List, mute, restore or start a background repair proposal for a detected issue."""
     parameters = dict(parameters or {})
     center = get_health_center()
     action = str(parameters.get("action") or "status").strip().lower()
-    issue_id = str(parameters.get("issue_id") or parameters.get("issue") or "").strip()
+    issue_id = str(parameters.get("issue_id") or parameters.get("issue") or parameters.get("id") or "").strip()
 
     if action in {"status", "list", "show"}:
         return _render(center, bool(parameters.get("include_inactive")))
@@ -48,49 +97,13 @@ def run(parameters: dict, player=None, session_memory=None) -> str:
                 "This checked readiness only; it did not invoke bridge operations.\n"
                 f"{_render(center)}")
     if action in {"ignore", "dismiss", "restore"}:
-        if not issue_id:
-            return "Give me the issue ID shown by health status."
-        changed = getattr(center, action)(issue_id)
-        if not changed:
-            return f"I cannot find health issue {issue_id}. Ask for health status to see current IDs."
-        label = "muted until restored" if action == "ignore" else (
-            "dismissed; a later occurrence can reopen it" if action == "dismiss" else "restored"
-        )
-        return f"Health issue {issue_id} {label}. No code was changed."
+        return _issue_status(center, action, issue_id)
     if action == "jobs":
-        rows = center.jobs()
-        if not rows:
-            return "There are no background health-repair jobs."
-        return "Background health-repair jobs:\n" + "\n".join(
-            f"{row['id']} [{row['status']}] issue {row['issue_id']} — {row.get('result', '')}"
-            for row in rows[:20]
-        )
+        return _job_list(center)
     if action == "job":
-        job_id = str(parameters.get("job_id") or "").strip()
-        row = center.job(job_id)
-        return (f"I have no health-repair job {job_id}." if row is None else
-                f"{row['id']} [{row['status']}] for issue {row['issue_id']}: {row.get('result', '')}")
+        return _job_detail(center, str(parameters.get("job_id") or "").strip())
     if action == "fix":
-        if not issue_id:
-            return "Give me a detected issue ID from health status."
-        try:
-            job = center.start_fix(
-                issue_id,
-                str(parameters.get("path") or ""),
-                str(parameters.get("reason") or ""),
-                text=parameters.get("text"),
-                find=parameters.get("find"),
-                replace=parameters.get("replace"),
-                player=player,
-            )
-        except ValueError as error:
-            return str(error)
-        return (
-            f"Started background repair proposal {job['id']} for issue {issue_id}. "
-            "The conversation can continue. It will stage the candidate and run the full "
-            "verification harness in a scratch copy; it cannot apply code or confirm for you. "
-            f"Query health_center action=job with job_id={job['id']} for its status."
-        )
+        return _start_fix(center, parameters, issue_id, player)
     return "I can: status, scan, scan_bridges, ignore, dismiss, restore, fix, jobs, or job."
 
 
@@ -108,10 +121,12 @@ TOOL = {
     "parameters": {
         "type": "OBJECT",
         "properties": {
-            "action": {"type": "STRING", "enum": [
+            "action": {"type": "STRING", "description": "Operation: status, scan, scan_bridges, ignore, dismiss, restore, fix, jobs, or job.", "enum": [
                 "status", "scan", "scan_bridges", "ignore", "dismiss", "restore", "fix", "jobs", "job"
             ]},
             "issue_id": {"type": "STRING", "description": "The issue ID from the health notice."},
+            "issue": {"type": "STRING", "description": "Alias for issue_id; the detected health issue ID."},
+            "id": {"type": "STRING", "description": "Compatibility alias for the detected health issue ID."},
             "job_id": {"type": "STRING", "description": "A background repair job ID."},
             "include_inactive": {"type": "BOOLEAN", "description": "Also show ignored and dismissed issues."},
             "path": {"type": "STRING", "description": "Project-relative source path for a proposed fix."},

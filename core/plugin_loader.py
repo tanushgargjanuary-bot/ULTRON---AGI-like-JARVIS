@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
+from core import failures
+
 from core.leaf_generations import (
     attach_leaf_module,
     clear_leaf_modules,

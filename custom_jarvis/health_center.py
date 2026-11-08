@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import threading
 import time
 import uuid
@@ -20,6 +21,7 @@ from core import failures
 MAX_ISSUES = 500
 MAX_JOBS = 100
 DETAIL_LIMIT = 500
+_LOG = logging.getLogger("ultron.health_center")
 
 
 def _now() -> str:
@@ -117,8 +119,8 @@ class HealthCenter:
         if callback:
             try:
                 callback(text)
-            except Exception:
-                pass
+            except Exception as error:
+                _LOG.debug("Health notification callback failed (%s).", type(error).__name__)
 
     def record(self, source: str, component: str, summary: str,
                detail: str = "", kind: str = "Unavailable") -> dict:
@@ -350,8 +352,9 @@ class HealthCenter:
         if player is not None:
             try:
                 player.write_log("SYS: " + message)
-            except Exception:
-                pass
+            except Exception as error:
+                _LOG.debug("Health repair status could not reach the UI (%s).",
+                           type(error).__name__)
 
     def job(self, job_id: str) -> dict | None:
         with self._lock:

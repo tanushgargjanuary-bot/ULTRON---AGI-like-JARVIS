@@ -93,9 +93,10 @@ def note(where: str, error: BaseException | str, *, detail: str = "") -> None:
         for listener in listeners:
             try:
                 listener(dict(entry))
-            except Exception:
-                # Notifications are best-effort; failure capture itself must survive.
-                continue
+            except Exception as listener_error:
+                # Keep notifying independent listeners, but leave a trace that a
+                # subscriber failed while handling this diagnostic.
+                _log.debug("failure listener raised %s", type(listener_error).__name__)
     except Exception:
         # Deliberately silent, and deliberately the only such place in the project:
         # this is the note-taker's own fallback, and it has nowhere left to write.

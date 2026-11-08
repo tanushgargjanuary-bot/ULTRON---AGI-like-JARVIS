@@ -12,6 +12,7 @@ import base64
 import binascii
 import hashlib
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass
@@ -34,6 +35,7 @@ _HEX_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _KEY_ID = re.compile(r"[A-Za-z0-9._-]{1,64}\Z")
 _PLATFORM = re.compile(r"[a-z0-9][a-z0-9._-]{0,63}\Z")
 _ASSET_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+_LOG = logging.getLogger("ultron.update_releases")
 
 
 class ReleaseValidationError(ValueError):
@@ -98,8 +100,9 @@ def save_update_policy(path: Path | str, policy: UpdatePolicy) -> None:
     except OSError as error:
         try:
             temporary.unlink(missing_ok=True)
-        except OSError:
-            pass
+        except OSError as cleanup_error:
+            _LOG.debug("Could not remove temporary update-policy file (%s).",
+                       type(cleanup_error).__name__)
         raise ReleaseValidationError(f"could not save update policy: {error}") from error
 
 
@@ -128,62 +131,54 @@ class VerifiedRelease:
     key_id: str
 
 
-def verify_release_manifest(
-    document: Mapping,
-    trusted_keys: Mapping[str, bytes],
-    *,
-    selected_channel: str,
-    expected_platform: str,
-) -> VerifiedRelease:
-    """Validate schema, channel, platform and pinned Ed25519 signature.
-
-    `trusted_keys` must come from a separately trusted local source. The manifest
-    cannot add or replace keys. The caller must still verify the downloaded
-    artifact with :func:`verify_artifact` before extraction or activation.
-    """
+def _validate_manifest_context(document, trusted_keys, selected_channel, expected_platform):
     if not isinstance(selected_channel, str) or selected_channel not in CHANNELS:
         raise ReleaseValidationError("unknown selected update channel")
     if not isinstance(expected_platform, str) or not _PLATFORM.fullmatch(expected_platform):
         raise ReleaseValidationError("invalid expected platform")
     if not isinstance(trusted_keys, Mapping):
         raise ReleaseValidationError("trusted keys must come from a local keyring")
-    if not isinstance(document, Mapping) or set(document) != {
-        "payload", "key_id", "signature"
-    }:
+    if not isinstance(document, Mapping) or set(document) != {"payload", "key_id", "signature"}:
         raise ReleaseValidationError("release manifest has an unexpected shape")
-
     payload = document["payload"]
     if not isinstance(payload, Mapping) or set(payload) != _PAYLOAD_FIELDS:
         raise ReleaseValidationError("release payload has an unexpected shape")
     if type(payload["schema_version"]) is not int or payload["schema_version"] != 1:
         raise ReleaseValidationError("unsupported release-manifest schema")
+    return payload
 
+
+def _validate_payload_identity(payload, selected_channel, expected_platform):
     channel = payload["channel"]
     version = payload["version"]
     source_commit = payload["source_commit"]
     platform = payload["platform"]
-    asset_name = payload["asset_name"]
-    digest = payload["artifact_sha256"]
-    size = payload["artifact_size"]
-
-    if (not isinstance(channel, str) or channel not in CHANNELS
-            or channel != selected_channel):
+    if not isinstance(channel, str) or channel not in CHANNELS or channel != selected_channel:
         raise ReleaseValidationError("release channel does not match local policy")
     if not isinstance(version, str) or not _VERSION.fullmatch(version):
         raise ReleaseValidationError("release version is malformed")
     if (not isinstance(source_commit, str) or not _COMMIT.fullmatch(source_commit)
             or set(source_commit) == {"0"}):
         raise ReleaseValidationError("source commit must be a full Git object id")
-    if (not isinstance(platform, str) or not _PLATFORM.fullmatch(platform)
-            or platform != expected_platform):
+    if not isinstance(platform, str) or not _PLATFORM.fullmatch(platform) or platform != expected_platform:
         raise ReleaseValidationError("release is for a different or invalid platform")
+    return channel, version, source_commit, platform
+
+
+def _validate_artifact_fields(payload):
+    asset_name = payload["asset_name"]
+    digest = payload["artifact_sha256"]
+    size = payload["artifact_size"]
     if not isinstance(asset_name, str) or not _ASSET_NAME.fullmatch(asset_name):
         raise ReleaseValidationError("artifact name must be a plain safe file name")
     if not isinstance(digest, str) or not _HEX_SHA256.fullmatch(digest):
         raise ReleaseValidationError("artifact SHA-256 is malformed")
-    if (type(size) is not int or size <= 0 or size > MAX_ARTIFACT_SIZE):
+    if type(size) is not int or size <= 0 or size > MAX_ARTIFACT_SIZE:
         raise ReleaseValidationError("artifact size is outside the permitted range")
+    return asset_name, digest, size
 
+
+def _verify_manifest_signature(document, payload, trusted_keys):
     key_id = document["key_id"]
     signature_text = document["signature"]
     if not isinstance(key_id, str) or not _KEY_ID.fullmatch(key_id):
@@ -199,16 +194,34 @@ def verify_release_manifest(
         public_key.verify(signature, canonical_payload(payload))
     except (binascii.Error, ValueError, InvalidSignature) as error:
         raise ReleaseValidationError("release signature verification failed") from error
+    return key_id
 
+
+def verify_release_manifest(
+    document: Mapping,
+    trusted_keys: Mapping[str, bytes],
+    *,
+    selected_channel: str,
+    expected_platform: str,
+) -> VerifiedRelease:
+    """Validate schema, channel, platform and pinned Ed25519 signature.
+
+    `trusted_keys` must come from a separately trusted local source. The manifest
+    cannot add or replace keys. The caller must still verify the downloaded
+    artifact with :func:`verify_artifact` before extraction or activation.
+    """
+    payload = _validate_manifest_context(
+        document, trusted_keys, selected_channel, expected_platform
+    )
+    channel, version, source_commit, platform = _validate_payload_identity(
+        payload, selected_channel, expected_platform
+    )
+    asset_name, digest, size = _validate_artifact_fields(payload)
+    key_id = _verify_manifest_signature(document, payload, trusted_keys)
     return VerifiedRelease(
-        channel=channel,
-        version=version,
-        source_commit=source_commit,
-        platform=platform,
-        asset_name=asset_name,
-        artifact_sha256=digest,
-        artifact_size=size,
-        key_id=key_id,
+        channel=channel, version=version, source_commit=source_commit,
+        platform=platform, asset_name=asset_name, artifact_sha256=digest,
+        artifact_size=size, key_id=key_id,
     )
 
 

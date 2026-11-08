@@ -33,7 +33,9 @@ from providers import schema                                     # noqa: E402
 from providers.base import FunctionCall                          # noqa: E402
 from providers.engine_pipeline import PipelineEngine              # noqa: E402
 
-META_KEYS = {"tier", "brief", "scheduling", "behavior"}
+# Only local tool-budget hints are private bookkeeping. Live API behavior is
+# an intentional Gemini-only declaration feature and is preserved by strip_meta.
+META_KEYS = {"tier", "brief"}
 
 
 def _response(call_id: str, name: str):

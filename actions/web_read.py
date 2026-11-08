@@ -23,6 +23,28 @@ MAX_CHARS = 12_000
 MAX_REDIRECTS = 4
 
 
+def _validate_public_hostname(host: str) -> None:
+    if (host in {"localhost", "localhost.localdomain"}
+            or host.endswith((".localhost", ".local", ".internal"))):
+        raise ValueError("Local and private-network addresses are not fetched by the web reader.")
+    try:
+        literal = ipaddress.ip_address(host)
+    except ValueError:
+        return
+    if not literal.is_global:
+        raise ValueError("Private, local, and reserved IP addresses are not fetched by the web reader.")
+
+
+def _validate_standard_port(parsed, scheme: str) -> None:
+    try:
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("That URL has an invalid port.") from error
+    expected = 443 if scheme == "https" else 80
+    if port is not None and port != expected:
+        raise ValueError("Only standard web ports are allowed.")
+
+
 class _PinnedHTTPConnection(http.client.HTTPConnection):
     def __init__(self, host, port, address, timeout):
         super().__init__(host, port, timeout=timeout)
@@ -56,21 +78,9 @@ def _normalize_url(value: str) -> str:
     if not parsed.hostname:
         raise ValueError("That URL has no hostname.")
     host = parsed.hostname.encode("idna").decode("ascii").lower().rstrip(".")
-    if host in {"localhost", "localhost.localdomain"} or host.endswith((".localhost", ".local", ".internal")):
-        raise ValueError("Local and private-network addresses are not fetched by the web reader.")
-    try:
-        literal = ipaddress.ip_address(host)
-    except ValueError:
-        literal = None
-    if literal is not None and not literal.is_global:
-        raise ValueError("Private, local, and reserved IP addresses are not fetched by the web reader.")
-    try:
-        port = parsed.port
-    except ValueError as error:
-        raise ValueError("That URL has an invalid port.") from error
-    default_port = 443 if parsed.scheme.lower() == "https" else 80
-    if port is not None and port != default_port:
-        raise ValueError("Only standard web ports are allowed.")
+    scheme = parsed.scheme.lower()
+    _validate_public_hostname(host)
+    _validate_standard_port(parsed, scheme)
     path = parsed.path or "/"
     netloc = f"[{host}]" if ":" in host else host
     return urlunsplit((parsed.scheme.lower(), netloc, path, parsed.query, ""))
@@ -190,6 +200,61 @@ def _fetch_page(url: str) -> tuple[str, str, bytes, str]:
     raise RuntimeError("The page redirected too many times.")
 
 
+def _extract_with_stdlib(text: str) -> tuple[str, str]:
+    from html.parser import HTMLParser
+
+    class _Text(HTMLParser):
+        _ignored = {"script", "style", "noscript", "svg", "canvas", "iframe", "form", "nav", "footer"}
+        _blocks = {"p", "div", "main", "article", "section", "li", "h1", "h2", "h3", "br"}
+
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.parts = []
+            self.title_parts = []
+            self.skip_depth = 0
+            self.in_title = False
+
+        def handle_starttag(self, tag, attrs):
+            if tag in self._ignored:
+                self.skip_depth += 1
+            if tag == "title":
+                self.in_title = True
+            if not self.skip_depth and tag in self._blocks:
+                self.parts.append(" ")
+
+        def handle_endtag(self, tag):
+            if tag == "title":
+                self.in_title = False
+            if tag in self._ignored and self.skip_depth:
+                self.skip_depth -= 1
+            if not self.skip_depth and tag in self._blocks:
+                self.parts.append(" ")
+
+        def handle_data(self, data):
+            if self.in_title:
+                self.title_parts.append(data)
+                return
+            if not self.skip_depth:
+                self.parts.append(data)
+
+    parser = _Text()
+    parser.feed(text)
+    title = " ".join(" ".join(parser.title_parts).split())
+    extracted = " ".join(" ".join(parser.parts).split())
+    return title[:300], extracted[:MAX_CHARS]
+
+
+def _extract_with_bs4(text: str, soup_factory) -> tuple[str, str]:
+    soup = soup_factory(text, "html.parser")
+    title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    ignored = ("script", "style", "noscript", "svg", "canvas", "iframe", "form", "nav", "footer")
+    for element in soup(ignored):
+        element.decompose()
+    main = soup.find("main") or soup.find("article") or soup.body or soup
+    extracted = " ".join(main.stripped_strings)
+    return title[:300], extracted[:MAX_CHARS]
+
+
 def _extract_text(content_type: str, body: bytes, charset: str) -> tuple[str, str]:
     text = body.decode(charset, "replace")
     if content_type == "text/plain":
@@ -197,55 +262,8 @@ def _extract_text(content_type: str, body: bytes, charset: str) -> tuple[str, st
     try:
         from bs4 import BeautifulSoup
     except ImportError:
-        from html.parser import HTMLParser
-
-        class _Text(HTMLParser):
-            _ignored = {"script", "style", "noscript", "svg", "canvas", "iframe", "form", "nav", "footer"}
-            _blocks = {"p", "div", "main", "article", "section", "li", "h1", "h2", "h3", "br"}
-
-            def __init__(self):
-                super().__init__(convert_charrefs=True)
-                self.parts = []
-                self.title_parts = []
-                self.skip_depth = 0
-                self.in_title = False
-
-            def handle_starttag(self, tag, attrs):
-                if tag in self._ignored:
-                    self.skip_depth += 1
-                if tag == "title":
-                    self.in_title = True
-                if not self.skip_depth and tag in self._blocks:
-                    self.parts.append(" ")
-
-            def handle_endtag(self, tag):
-                if tag == "title":
-                    self.in_title = False
-                if tag in self._ignored and self.skip_depth:
-                    self.skip_depth -= 1
-                if not self.skip_depth and tag in self._blocks:
-                    self.parts.append(" ")
-
-            def handle_data(self, data):
-                if self.in_title:
-                    self.title_parts.append(data)
-                    return
-                if not self.skip_depth:
-                    self.parts.append(data)
-
-        parser = _Text()
-        parser.feed(text)
-        title = " ".join(" ".join(parser.title_parts).split())
-        extracted = " ".join(" ".join(parser.parts).split())
-        return title[:300], extracted[:MAX_CHARS]
-
-    soup = BeautifulSoup(text, "html.parser")
-    title = soup.title.get_text(" ", strip=True) if soup.title else ""
-    for element in soup(["script", "style", "noscript", "svg", "canvas", "iframe", "form", "nav", "footer"]):
-        element.decompose()
-    main = soup.find("main") or soup.find("article") or soup.body or soup
-    extracted = " ".join(main.stripped_strings)
-    return title[:300], extracted[:MAX_CHARS]
+        return _extract_with_stdlib(text)
+    return _extract_with_bs4(text, BeautifulSoup)
 
 
 def web_read(parameters: dict, player=None, session_memory=None) -> str:

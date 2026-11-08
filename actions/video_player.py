@@ -29,6 +29,8 @@ import threading
 import webbrowser
 from pathlib import Path
 
+from core import failures
+
 _YT = re.compile(r"(youtube\.com/|youtu\.be/)", re.I)
 
 # Which open request is the current one. Opening happens on a thread now, so
@@ -64,8 +66,8 @@ def _local_path(text: str) -> str:
         p = Path(raw).expanduser()
         if p.exists() and p.is_file():
             return str(p)
-    except Exception:
-        pass
+    except OSError as error:
+        failures.note("video_player.local_path", error)
     return ""
 
 
@@ -169,9 +171,17 @@ def _search_page(query: str) -> str:
 
 def video_player(parameters: dict = None, response=None, player=None,
                  session_memory=None) -> str:
-    params = parameters or {}
-    action = (params.get("action") or "play").strip().lower()
-    source = (params.get("source") or "").strip()
+    params = parameters if isinstance(parameters, dict) else {}
+    raw_action = params.get("action")
+    raw_source = params.get("source")
+    if raw_action is not None and not isinstance(raw_action, str):
+        failures.note("video_player.arguments", f"action expected text, got {type(raw_action).__name__}")
+        return "The video action must be plain text."
+    if raw_source is not None and not isinstance(raw_source, str):
+        failures.note("video_player.arguments", f"source expected text, got {type(raw_source).__name__}")
+        return "The video source must be a path, URL, or search phrase in plain text."
+    action = (raw_action or "play").strip().lower()
+    source = (raw_source or "").strip()
 
     if player is None:
         return "There is no display to play a video on."
@@ -234,6 +244,7 @@ def _play_youtube(player, source: str, token: int) -> None:
     try:
         url, audio_url, title, err = _resolve_youtube(source)
     except Exception as e:                                  # noqa: BLE001
+        failures.note("video_player.resolve", e)
         url = audio_url = title = ""
         err = str(e)
 
@@ -246,6 +257,7 @@ def _play_youtube(player, source: str, token: int) -> None:
                               audio_source=audio_url)
             return
         except Exception as e:                              # noqa: BLE001
+            failures.note("video_player.show", e)
             err = str(e)
 
     # Resolution failed. Opening it in a browser is worse than playing it in the
@@ -256,8 +268,8 @@ def _play_youtube(player, source: str, token: int) -> None:
     try:
         webbrowser.open(page)
         opened = " and it has been opened in the browser instead"
-    except Exception:
-        pass
+    except Exception as error:                              # noqa: BLE001
+        failures.note("video_player.browser_fallback", error)
     _say(player, "Tell the user, in one short sentence in their own language: "
                  f"'{source}' could not be played on the display "
                  f"({err}){opened}.")
@@ -267,8 +279,8 @@ def _say(player, instruction: str) -> None:
     if player is not None and hasattr(player, "request_say"):
         try:
             player.request_say(instruction)
-        except Exception:
-            pass
+        except Exception as error:                          # noqa: BLE001
+            failures.note("video_player.speech_fallback", error)
 
 
 # ── Tool declaration (auto-discovered by core/action_loader.py) ──────────────
