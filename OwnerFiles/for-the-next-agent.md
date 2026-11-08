@@ -15,8 +15,8 @@ repository. Everything else is referenced from there.
 |---|---|
 | Build | **1.2.38** (`packaging/version.txt`) |
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
-| Branch/PR | Base tip `d4a57c9`; leaf-generation reloads are currently **uncommitted**. PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both are open |
-| CI | Latest recorded PR #12 run `42460444332`: Linux and Windows passed. This run predates the uncommitted leaf-generation changes |
+| Branch/PR | Arena head `f5a090b` (generation reload `e763747`, README count correction `f5a090b`); PR #12 is arena → `ArenaAi`; PR #8 is `ArenaAi` → `main`; both are open |
+| CI | PR #12 run `42464882412` passed Linux and Windows on `f5a090b`. Kilo review needs account credits; CodeRabbit skipped |
 | Tests | Latest broad local run: 1,714 tests, 15 skipped, one Qt setup error from missing `libGL.so.1`; focused leaf run: 134 passed, updater tests: 8 passed. README reports 1,729 discovered test cases |
 | Static scan | Latest deep scan: 0 high findings, 108 complex functions, 254 library prints, 82 discarded typed exceptions |
 | Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
@@ -37,11 +37,11 @@ lists them. None of them can be closed from a Linux build machine.
 - **1.2.38 / arena branch:** MCP, local-model setup, Gemini-quota → Ollama fallback,
   exact memory timestamps/change history, saved-plan startup offer, and after-action risk
   line are pushed on the arena branch. See `OwnerFiles/session-log.md` for evidence.
-- **Current uncommitted slice:** transactional action/plugin generation staging and
-  reconnect-boundary leaf reloads, with fresh source loading, preflight and rollback on
-  refusal. Self-update now leaves action/plugin changes for that boundary but still
-  requires restart for core/application code. Focused tests pass; it has not been committed
-  or pushed. This is not a separate worker process and does not provide test-carrying proposals.
+- **Latest pushed slice (`e763747`):** transactional action/plugin generation staging
+  and reconnect-boundary leaf reloads, with fresh source loading, preflight and rollback on
+  refusal. Self-update defers action/plugin leaves to that boundary but still requires
+  restart for core/application code. CI passed on Linux and Windows. This is not a separate
+  worker process and does not provide test-carrying proposals.
 - **Still unfinished:** supervisor/worker split, test-carrying proposals, evolution-ledger
   integration, and OCR. Recheck branch tips and open PRs before cleanup or promotion.
 

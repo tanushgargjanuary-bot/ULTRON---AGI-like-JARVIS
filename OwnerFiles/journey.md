@@ -182,11 +182,11 @@ process restart.
 The focused combined test run passed **134 tests**, and the deep scan returned **0 high
 findings** (108 complex functions). The latest full run executed **1,714 tests**, skipped 15,
 and stopped on one Qt setup error because this sandbox lacks `libGL.so.1`; no code-test
-failures remained after updating the README's live counts and removing duplicated test
-cleanup. This is not a separate worker process; it does not rehearse generated proposals
-before approval, and the rollback is not yet an owner-facing control. No live UI session,
-Windows run, or GitHub CI run has tested this worktree change. See `OwnerFiles/session-log.md`
-for the exact scope and branch state.
+failures remained after updating the README counts and removing duplicated test cleanup.
+PR #12 run `42464882412` then passed on Linux and Windows. This is not a separate worker
+process; it does not rehearse generated proposals before approval, and rollback is not yet
+an owner-facing control. No live UI session has exercised a real generation swap. See
+`OwnerFiles/session-log.md` for the exact scope and branch state.
 
 ## What has not changed
 
