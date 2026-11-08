@@ -437,5 +437,6 @@ safe leaf reload, worker/supervisor split, test-carrying proposals, evolution le
 rung, and a dedicated after-action risk line remain future slices. Existing `core/outcome.py`
 labels done/unverified/failed/ask results; do not claim that it is a complete risk line.
 **Commits.** Local quota fallback: `59c6cfb`. Memory recency/history: `5763c8d`. Both are
-on `arena/4c973188-ultron-agi-like-jarvis`. They are committed locally but not pushed yet.
-Record the push and PR CI result here after they are sent.
+on `arena/4c973188-ultron-agi-like-jarvis` and were pushed to `origin` at `048aed1`.
+PR #12 remains open. The latest `gh pr checks 12` showed only **Kilo Code Review: pending**;
+no final CI result is available yet.

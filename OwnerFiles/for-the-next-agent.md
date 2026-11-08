@@ -15,7 +15,7 @@ repository. Everything else is referenced from there.
 |---|---|
 | Build | **1.2.38** (`packaging/version.txt`) |
 | Repository | `github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`, branch `arena/4c973188-ultron-agi-like-jarvis` |
-| Branch/PR | `59c6cfb` + `5763c8d` are committed locally on the arena branch; PR #12 is open. Owner-file updates are pending commit; code is not pushed yet |
+| Branch/PR | `59c6cfb`, `5763c8d`, and `048aed1` are pushed to the arena branch; PR #12 is open. Latest check: Kilo Code Review pending |
 | CI | `.github/workflows/verify.yml`; recheck PR #12 after the next push. Linux passed on run `42407968327`; Windows was pending at last check |
 | Tests | Latest full run: 1,695 tests, 15 skipped, 1 Qt setup error from missing `libGL.so.1`; no other failures. README count is 1,710 collected test cases |
 | Proof gate | Last measured 35 claims: 21 PROVEN, 14 PARTIAL, 0 FAILED on Linux without hardware, display or `libGL`; 22 / 13 where Qt libraries are installed |
