@@ -1420,3 +1420,19 @@ a report folder missing on a fresh clone, three instruments calling a missing de
 `focus_safe` calling `WindowsAdapter.foreground()` (never written) and then reading `.refs` from a `Node` that has
 none. The consoles now land in the artifact because every Windows step runs under `bash` with `tee`; PowerShell had
 also been failing a step whose command had already passed.
+
+## 6aa. Branch audit and selective security fixes (2026-11-08)
+
+**Scope and guardrails.** The user asked for a comparison of every available branch and PR, with only validated compatible pieces carried onto `arena/4c973188-ultron-agi-like-jarvis`. The final move to `main` remains the owner's. The refreshed snapshot, branch matrix, rejection reasons, and test evidence are in `docs/BRANCH_REVIEW.md`.
+
+**Selected findings, implemented as three small commits (not cherry-picks):**
+
+- `53fc208` — `custom_jarvis/tools.py`: an SSL validation error now fails closed; a fake-request subprocess test proves there is no insecure retry or network access.
+- `b3bb417` — `core/crash.py`: bearer authorization values are removed; the regression test confirms the token is absent while the header label remains.
+- `ddd788e` — `actions/dev_agent.py`: VS Code is launched through a resolved `Code.exe` argument list with `shell=False`; AST and mocked-launch tests cover the invariant.
+
+The source findings were reproduced against the active branch and informed by the closed code-quality PR's tests; that PR itself contained tests/docs, not implementation fixes. No antigravity or chatgpt code was carried. No dependency was added. Each fix and test is isolated in its own commit; the previous dirty worktree was not staged.
+
+**Checks:** 93 focused tests passed across `tests.test_crash`, `tests.test_web_platforms`, and `tests.test_policy`; compileall and `git diff --check` passed. Full `scripts/verify.py` parsed 274 Python files and reported 1,295 tests, 25 errors, 13 skips, and one stale README count failure (README says 273). Errors include missing optional packages (`httpx`, `numpy`, `psutil`, Playwright) and Qt/platform modules. This sandbox run is not green. The live `proof_gate.py` / `verify_all.py` instruments were not run because their checks can record audio or capture screen/camera; this task did not authorize sensor access, and this is not the owner's Windows PC.
+
+**Delivery state at this entry:** local HEAD is `ddd788ea1ff987e6d384080c7f83cd2fef3437ea`, on the active branch only. Remote PR #12 still points to the pre-fix `9c41bb1` until the active branch is pushed. Its then-current Linux/Windows checks passed, but Kilo review failed and CodeRabbit was skipped; those checks do not cover these three commits. The owner still handles the final integration to `main`.
