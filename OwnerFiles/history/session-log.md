@@ -309,7 +309,7 @@ one of the fixtures. The gate now proves *"the provider accepts the list"*.
 He is handing this project to other tools, so the documents were brought up to date and
 one new page was written: `WORKING-PHILOSOPHY.md`. It holds the one rule, how we talk to
 him, how a change is made, what is never allowed, the failure patterns, and the checklist
-before a push. `OwnerFiles/for-the-next-agent.md` is the same thing applied to today: what
+before a push. `OwnerFiles/ULTIMATE_Context.md` is the same thing applied to today: what
 stands, what is open, the first three commands, and the ten traps that already cost time.
 
 `GATEKEEPERS.md` was saying *"there is no CI, so nothing has ever run on Windows"*. That
@@ -467,4 +467,10 @@ CodeRabbit completed a review of PR #12, covering the diff from `8f4803b` throug
 
 **Other review comments.** The remaining CodeRabbit comments cover plan-state validation/resume, planner persistence, local fallback, MCP robustness, memory-write atomicity, and other broader PR content. The review also flagged PR scope, linked-issue checks, and docstring coverage. These were not part of the requested action/plugin reload follow-up and are not marked resolved; keep them visible for owner triage rather than silently expanding or splitting the open PR.
 
-**Verification and promotion.** Focused reload/self-change tests: **52 passed**; updater tests: **8 passed**; `compileall` and `git diff --check` passed. The bare system-Python full-suite attempt remained incomplete due missing optional packages and is not a clean broad-suite result. README's discovered count is **1,732**. The review-driven fixes are committed/pushed as `983a9f6` on the Arena branch; PR #12 remains open. Run `42469609070` passed on Linux and Windows for this commit. No change was merged or pushed to `main`. See `OwnerFiles/reload-review-follow-up.md` for exact triage and next steps.
+**Verification and promotion.** Focused reload/self-change tests: **52 passed**; updater tests: **8 passed**; `compileall` and `git diff --check` passed. The bare system-Python full-suite attempt remained incomplete due missing optional packages and is not a clean broad-suite result. README's discovered count is **1,732**. The review-driven fixes are committed/pushed as `983a9f6` on the Arena branch; PR #12 remains open. Run `42469609070` passed on Linux and Windows for this commit. No change was merged or pushed to `main`. See `OwnerFiles/reviews/reload-review-follow-up.md` for exact triage and next steps.
+
+## OwnerFiles organization and context archive
+
+The owner asked for the context folder to be less cluttered and easier for agents to navigate. The five older handover/history/notes/review documents are now grouped under `history/`, `owner/`, and `reviews/`; the old handover is explicitly marked historical. `OwnerFiles/README.md` is now a short index, and `OwnerFiles/ULTIMATE_Context.md` is the single current entry point. Existing references were updated rather than leaving broken links. No historical note was deleted.
+
+The portable `ULTIMATE_Context.zip` remains in the folder as a tracked deliverable. It is being refreshed against the reorganized source snapshot; the live metadata page records its source revision and checksum. It deliberately excludes itself and all credentials. The current PR/CI state remains open/red: run `42529553481` failed Linux suite/self-checks and Windows native checks; exact runner logs still need human/agent review.

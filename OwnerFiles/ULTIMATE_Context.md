@@ -1,28 +1,62 @@
-# ULTIMATE Context ZIP
+# ULTIMATE Context
 
-`ULTIMATE_Context.zip` is the handoff bundle for an agent that needs both the project snapshot and the current session context.
+This is the current entry point for a new agent. It replaces the old top-level handover; older handovers remain under `history/` for provenance.
 
-## Current artifact
+## Live state
 
-- File: `OwnerFiles/ULTIMATE_Context.zip`
-- ZIP SHA-256: `bf614e08b993f47963ee5e413a80ec1658cd4770be6d7766ca81dc246bde8fee`
-- Contains the 386-file tracked project source snapshot at commit `da01db7bf66c682af79c5b945ba55325545d3bfe`, plus the OpenMausBot handoff docs, validation notes, backlog, user preferences, GitHub state, and collaboration tips.
-- `.git`, credentials, local runtime state, and private owner-development repositories are excluded.
-- This ZIP is a snapshot, so its embedded project tree intentionally predates this archive's addition to the branch. It does not embed itself recursively.
+- Repository: `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
+- Working branch: `arena/4c973188-ultron-agi-like-jarvis` (lowercase suffix)
+- PR #12 is open to `ArenaAi`. Do not merge it or modify `main` without the owner's explicit instruction.
+- Latest known commit before this folder cleanup: `b2b9bbd` (context archive added). The PR remains open.
+- Latest known CI run: `42529553481`. Linux suite/self-checks and Windows native checks failed. Exact causes have not yet been read from the runner logs. Do not say the current branch is green.
+- Focused tests at `da01db7`: 102 passed, 1 skipped. This is not a full suite result. The skipped test needs real local OCR dependencies.
+- The latest handoff bundle is `ULTIMATE_Context.zip`; its archive-source revision and SHA-256 are listed below after the bundle is built.
 
-## Get it on Windows
+## Immediate next steps
 
-The repository is public. In PowerShell, this downloads the committed file to Downloads and prints its hash:
+1. Read the latest GitHub Actions logs for run `42529553481`; diagnose the actual failures before adding features.
+2. Complete the plan restart/hard-kill proof and review findings for issue #11.
+3. Audit each mutating action for tested undo or an explicit irreversible/refusal path; current undo only covers generated text outputs in `file_processor`.
+4. Run real Tesseract OCR and verify on the owner's Windows screen. The Linux sandbox cannot prove physical desktop, microphone, camera, or DPI behavior.
+5. Finish updater rollback/release acceptance and review/scope PR #12 with the owner.
+
+## Owner's active constraints and preferences
+
+- Keep Ultron/Nova/Cipher/Vanta/Luna as presentation personas with the same tools, capabilities, permissions, and approval rules.
+- Persona, theme, and voice remain mix-and-match. Preserve transcript/context through switches; give each persona distinct face animation.
+- Local OCR must not upload screenshots or operate controls. Do not duplicate private `antigravity` OCR work.
+- Do not edit `core/confirm.py` without explicit owner approval.
+- Preserve unrelated work. Do not overstate tests, CI, hardware, or Windows desktop evidence.
+- Use Python unless measured end-to-end performance justifies another language. The fuzzy benchmark is synthetic and does not justify Rust.
+- The owner wants parallel agents when available. Delegate bounded independent audits; avoid simultaneous edits to shared files. Issue #7 has a branch claim/release convention.
+- Private owner-development repository work is out of scope.
+
+## Implemented in the current feature slice
+
+- Persona switching, independent theme/voice persistence, face animation selection, and conversation-context carry-over.
+- Optional local OCR rung and sensor-policy classification; real Tesseract recognition is still unverified here.
+- Routing purpose adapter for conversation/evolution/critic, live engine wiring, usage accounting, and local spoken conversation-provider switching.
+- Pipeline integration test that checks provider switch acknowledgement, persisted setting, preserved old/current history, and no LLM request for the switch turn.
+- Conflict-aware undo for generated text outputs in `file_processor`; not universal writer coverage.
+
+## Download the ZIP on Windows
+
+The repository is public. This avoids the broken Arena sandbox preview and does not require local Python:
 
 ```powershell
 $uri = 'https://raw.githubusercontent.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/arena/4c973188-ultron-agi-like-jarvis/OwnerFiles/ULTIMATE_Context.zip'
 $out = Join-Path $HOME 'Downloads\ULTIMATE_Context.zip'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+New-Item -ItemType Directory -Path (Split-Path $out) -Force | Out-Null
 Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $out
 Get-FileHash -LiteralPath $out -Algorithm SHA256
 ```
 
-The expected SHA-256 is printed above. This uses no local Python installation. The raw URL points at the branch tip, so this download is available after the commit is pushed.
+- Archive source revision: recorded in the live copy of this page after the bundle is built.
+- ZIP SHA-256: recorded in the live copy of this page. The embedded project snapshot intentionally omits its own final checksum to avoid a self-referential archive.
 
-## Updating this archive later
+## Bundle contents and maintenance
 
-Regenerate only when the handoff itself changes materially. Update the handoff documents first, create the new bundle from the exact tracked source commit, validate the ZIP with `unzip -t`, record the source commit and SHA-256 here, then commit/push both archive and metadata. Keep secrets and private owner-repo material out.
+The ZIP contains the project source snapshot, the OpenMausBot handoff/decision/architecture/backlog/validation notes, and original project documentation. It excludes `.git`, credentials, local runtime state, private repositories, and itself. It is safe to share only to the extent the public repository's `OwnerFiles` policy allows; recheck before adding anything sensitive.
+
+Update this page and the dated evidence in `history/session-log.md` when material facts change. Keep old records in `history/`; do not create another root handover file. Rebuild the ZIP only after reviewing what belongs in it, then verify the archive and checksum before committing it.

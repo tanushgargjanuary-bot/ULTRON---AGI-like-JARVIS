@@ -203,7 +203,7 @@ NEW
                                debug (find the false sentence, not just the exception), the
                                provider boundary, the shape of the code, and the checklist
                                before a push.
-  OwnerFiles/for-the-next-agent.md  the same thing applied to today: what stands, what is
+  OwnerFiles/ULTIMATE_Context.md  the same thing applied to today: what stands, what is
                                open, the first three commands, ten traps that already cost
                                time, the owner's own words, and how decisions are protected.
 
@@ -214,16 +214,16 @@ CORRECTED, because a tracked page that is wrong is the defect this project keeps
                                new claims (triggers, crash_record) and the extended plugins
                                claim are in the table, and the structural-gate section now
                                says what the gate found instead of what was missing.
-  OwnerFiles/journey.md        stopped at 1.2.17. It now runs to 1.2.36 in order, and the
+  OwnerFiles/history/journey.md        stopped at 1.2.17. It now runs to 1.2.36 in order, and the
                                stranded item 8 was put back with the list it belongs to.
   DECISIONS.md                 2026-11-07: a tool schema is a provider contract; a close code
                                is not a diagnosis; one bad field costs one argument; a crash
                                leaves a file; every tool says when to call it; a yes or no
                                question gets Yes or No first; the working philosophy is a file.
-  OwnerFiles/owner-notes.md    his preferences filled in from his own recorded words, quoted
+  OwnerFiles/owner/owner-notes.md    his preferences filled in from his own recorded words, quoted
                                where they are short enough, and the last section left empty for
                                him to write.
-  OwnerFiles/session-log.md    1.2.33, 1.2.34, 1.2.35 and 1.2.36, in plain words.
+  OwnerFiles/history/session-log.md    1.2.33, 1.2.34, 1.2.35 and 1.2.36, in plain words.
   AGENTS.md                    titled Ultron, not JARVIS, and points at the philosophy page.
   HANDOFF.md, readme.md, docs/INDEX.md, OwnerFiles/README.md   the new pages listed.
 

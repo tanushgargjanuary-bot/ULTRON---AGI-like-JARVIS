@@ -1,4 +1,6 @@
-# For the next agent
+# Historical handover snapshot
+
+> **Superseded.** This file contains older branch, test, and CI status. For current facts, start with [`../ULTIMATE_Context.md`](../ULTIMATE_Context.md). The detail below is preserved as history, not live status.
 
 You have been handed a working voice assistant and a long record of how it got here. This
 page is the short version: what stands today, what is open, where the traps are, and the
@@ -36,7 +38,7 @@ lists them. None of them can be closed from a Linux build machine.
 - **1.2.36** the documents a new agent needs, brought up to date.
 - **1.2.38 / arena branch:** MCP, local-model setup, Gemini-quota → Ollama fallback,
   exact memory timestamps/change history, saved-plan startup offer, and after-action risk
-  line are pushed on the arena branch. See `OwnerFiles/session-log.md` for evidence.
+  line are pushed on the arena branch. See `OwnerFiles/history/session-log.md` for evidence.
 - **Latest pushed slice (`e763747`):** transactional action/plugin generation staging
   and reconnect-boundary leaf reloads, with fresh source loading, preflight and rollback on
   refusal. Self-update defers action/plugin leaves to that boundary but still requires
@@ -47,11 +49,11 @@ lists them. None of them can be closed from a Linux build machine.
   completed its review of `657b73b`: in-scope startup-scan, mixed-update deferral, and test
   coverage findings are addressed in `983a9f6`; broader unrelated PR comments remain for
   owner triage. Focused reload/self-change tests: 52 passed; updater tests: 8 passed. See
-  `OwnerFiles/reload-review-follow-up.md`; CI run `42469609070` is pending.
+  `OwnerFiles/reviews/reload-review-follow-up.md`; CI run `42469609070` is pending.
 - **Still unfinished:** supervisor/worker split, test-carrying proposals, evolution-ledger
   integration, and OCR. Recheck branch tips and open PRs before cleanup or promotion.
 
-`OwnerFiles/session-log.md` has the dated detail. `OwnerFiles/journey.md` has the longer
+`OwnerFiles/history/session-log.md` has the dated detail. `OwnerFiles/history/journey.md` has the longer
 project history. `log.txt` and `HANDOFF.md` retain the older phase record.
 
 ## 3. The first three things to run
@@ -129,7 +131,7 @@ He **considered and abandoned** a rewrite. Do not propose one. The measurements 
 ## 7. The tone of the record
 
 This project writes its own history honestly, and the defects the assistant caused are in
-it. `OwnerFiles/journey.md` is not a success story; it is a list of things the program said
+it. `OwnerFiles/history/journey.md` is not a success story; it is a list of things the program said
 that it had not checked, and what it cost. Keep writing it that way. If you fix something,
 say what it was. If you could not reproduce something, say that too - there is already one
 unreproduced Qt teardown segfault in the record, and it stays there on purpose.

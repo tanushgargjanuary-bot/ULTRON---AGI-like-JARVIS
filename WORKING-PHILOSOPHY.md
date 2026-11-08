@@ -77,7 +77,7 @@ The order is not negotiable, because each step has caught something the others m
 
 ## 4. What is never allowed
 
-Each of these has been broken once, and the cost is in `OwnerFiles/journey.md`.
+Each of these has been broken once, and the cost is in `OwnerFiles/history/journey.md`.
 
 | Never | Because |
 |---|---|
@@ -201,8 +201,8 @@ Three habits keep that shape:
 | Read | For |
 |---|---|
 | `OwnerFiles/README.md` | why the folder exists, and the one sentence that defines it |
-| `OwnerFiles/for-the-next-agent.md` | what stands today, what is open, where the traps are |
-| `OwnerFiles/journey.md` | the build history, defects included |
+| `OwnerFiles/ULTIMATE_Context.md` | what stands today, what is open, where the traps are |
+| `OwnerFiles/history/journey.md` | the build history, defects included |
 | `AGENTS.md` | the hard rules: threading, plugins, hooks, provider schemas |
 | `DECISIONS.md` | what the owner decided, and where each decision is enforced |
 | `GATEKEEPERS.md` | which claims have proof, which need his machine, and why |

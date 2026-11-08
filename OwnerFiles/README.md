@@ -1,66 +1,27 @@
 # OwnerFiles
 
-This folder is the owner's, not the code's.
+This folder keeps the project context a new person or agent needs, alongside the code. It is public. Keep secrets, credentials, private machine details, and other people's personal data out.
 
-It holds the things that make this repository useful to a person and to another
-AI: how the project was built, what was decided and why, and what the owner was
-thinking while it happened. `Ultron` reads it. The owner writes it. The
-assistant only adds what it can prove.
+## Start here
 
-## Why it exists
+1. [`ULTIMATE_Context.md`](ULTIMATE_Context.md) — current handoff, download command, archive provenance, and immediate status.
+2. [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) — how the owner wants changes made and communicated.
+3. [`../AGENTS.md`](../AGENTS.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md), [`../DECISIONS.md`](../DECISIONS.md), and [`../GATEKEEPERS.md`](../GATEKEEPERS.md) — hard constraints, system shape, decisions, and proof status.
 
-A repository of source code tells a new AI **what** the program does. It does not
-tell it **why** any of it is the way it is — which requirement created which
-module, which defect taught which lesson, which option was rejected. Without that
-context, the next assistant changes something carefully and breaks a decision it
-never saw.
+## Folders
 
-So the rule for this folder is one sentence:
+- [`history/`](history/) — project journey, dated session log, and superseded handovers. These preserve earlier evidence; do not treat old status lines as current.
+- [`owner/`](owner/) — the owner's recorded preferences and notes.
+- [`reviews/`](reviews/) — focused review follow-ups and triage records.
 
-> Another AI, given only this repository, should understand the intent well
-> enough to continue the work without undoing it.
+## Portable context
 
-## What is here
+[`ULTIMATE_Context.zip`](ULTIMATE_Context.zip) packages a tracked source snapshot plus the OpenMausBot handoff notes and backlog. The archive excludes `.git`, credentials, local runtime state, and the archive itself. See `ULTIMATE_Context.md` for provenance, the PowerShell download command, and the current SHA-256. The embedded snapshot cannot contain its own final checksum.
 
-| File | What it holds | Who writes it |
-|---|---|---|
-| `for-the-next-agent.md` | **start here.** What stands today, what is open, the first three commands, and the ten traps that already cost time | the assistant, from the build record |
-| `journey.md` | the build history in plain language: what was asked, what was built, what broke | the assistant, from the build record |
-| `session-log.md` | short dated entries, newest last: what each session did | the assistant, and the owner can append |
-| `owner-notes.md` | the owner's own words: goals, preferences, things he does not want | the owner |
-| `ULTIMATE_Context.zip` | portable source snapshot plus current OpenMausBot handoff, evidence, decisions, and backlog; see `ULTIMATE_Context.md` for hash and download/update instructions | the assistant, from tracked source and session evidence |
-| `ULTIMATE_Context.md` | ZIP provenance, SHA-256, PowerShell download command, and rules for refreshing the snapshot | the assistant, from verifiable bundle facts |
+## Keeping the folder useful
 
-The working philosophy the whole project follows is one level up, in
-[`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md): the one rule, how we talk, how a
-change is made, what is never allowed, and the checklist before a push. That page is the
-shortest path into this repository for an agent; `for-the-next-agent.md` is the same thing
-applied to today's state.
-
-## What must never be here
-
-This folder is published. It is safe for anyone to read, and it must stay that
-way. So:
-
-- **No keys, tokens, passwords or account details.** Ever. They live in
-  `config/api_keys.json`, which is ignored by git for exactly this reason.
-- **No personal data about other people.** A name and an opinion is fine. A phone
-  number, an address, a message thread is not.
-- **Nothing that is only true of one machine.** A path with a username in it, a
-  drive letter, a company laptop name.
-
-The owner reviewed this paragraph and asked for this folder, knowing it is
-public.
-
-## How to use it with another AI
-
-Give the other assistant the repository and say:
-
-> Read `OwnerFiles/for-the-next-agent.md` first, then `WORKING-PHILOSOPHY.md`, then
-> `AGENTS.md`, then `ARCHITECTURE.md`, then `DECISIONS.md`, then `GATEKEEPERS.md`. Do not
-> weaken a test to make a change pass. If a decision in `DECISIONS.md` blocks your change,
-> say so instead of working around it.
-
-That order matters. The handover says where things stand, the philosophy says how work is
-done, the rules say what breaks, the architecture explains the shape, the decisions explain
-the limits, and the gatekeepers say which claims already have proof.
+- Update current facts instead of adding another dated handover page.
+- Keep chronology and detailed session evidence in `history/session-log.md`.
+- Preserve older records under `history/`; label them as historical rather than silently deleting them.
+- Keep every claim scoped to what was actually tested. A skipped test, a headless Windows runner, and the owner's interactive PC are different evidence levels.
+- The owner reviewed the public nature of this folder. Do not add keys, tokens, passwords, account details, private repositories, or data that only belongs to one machine.

@@ -53,7 +53,7 @@ GitHub has not accepted account passwords for pushes since 2021.
 
 `log.txt`, `verification-results.txt` and the whole of `OwnerFiles/` **are**
 published on purpose: the owner wants the record of how this was built to be
-readable by anyone, including another AI. `OwnerFiles/owner-notes.md` is his own
+readable by anyone, including another AI. `OwnerFiles/owner/owner-notes.md` is his own
 file and holds nothing private.
 
 ## The licence line, which is the only legal boundary here

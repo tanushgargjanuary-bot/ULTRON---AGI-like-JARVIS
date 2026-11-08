@@ -138,7 +138,7 @@ commit behind it.
     had not checked.
 
 19. **The pages a new agent needs (1.2.36).** `WORKING-PHILOSOPHY.md` and
-    `OwnerFiles/for-the-next-agent.md`, plus every stale page corrected — including
+    `OwnerFiles/ULTIMATE_Context.md`, plus every stale page corrected — including
     one that still said there was no CI.
 
 
@@ -186,7 +186,7 @@ failures remained after updating the README counts and removing duplicated test 
 PR #12 run `42464882412` then passed on Linux and Windows. This is not a separate worker
 process; it does not rehearse generated proposals before approval, and rollback is not yet
 an owner-facing control. No live UI session has exercised a real generation swap. See
-`OwnerFiles/session-log.md` for the exact scope and branch state.
+`OwnerFiles/history/session-log.md` for the exact scope and branch state.
 
 ## What has not changed
 
