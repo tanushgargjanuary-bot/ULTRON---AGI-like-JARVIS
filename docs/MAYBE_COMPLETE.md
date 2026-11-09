@@ -3,7 +3,7 @@
 **Checkpoint:** Branch consolidation candidate  
 **Promotion PR:** [#14 — Consolidate reviewed branches and archive development refs](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/14)  
 **Target:** `main`  
-**State:** Not merged. The owner must review and merge PR #14 after the final checks pass.
+**State:** Not promoted. PR #14 is the review surface. After the final checks pass, the owner can fast-forward `main` to the reviewed candidate SHA. Do not merge the source development branches or create a merge commit.
 
 This checkpoint means the current consolidation work is ready for a final promotion decision. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
@@ -20,7 +20,7 @@ This checkpoint means the current consolidation work is ready for a final promot
 - Loopback-only dashboard by default; LAN exposure requires an explicit setting and HTTPS.
 - Public web reader with URL, DNS, redirect, robots, content-type, and response-size checks.
 - Reviewdog + Ruff advisory PR checks.
-- Branch archive tags and a guarded post-merge cleanup workflow.
+- Immutable branch archive tags through a guarded, manual-only workflow. The workflow does not delete branch refs.
 
 ## Verification evidence
 
@@ -36,7 +36,7 @@ The CI result must belong to the **latest PR head**, not an earlier commit. See 
 
 ## Code-review status
 
-A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 176 files.
+A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 178 files.
 
 Four security defects were found and fixed in the focused MCP/self-change review:
 
@@ -83,9 +83,9 @@ Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent
 
 ## Branch cleanup
 
-The original development branches remain present until PR #14 merges. The post-merge workflow first creates and verifies archive tags at the reviewed branch tips. It then deletes only the named temporary branches if their SHAs still match the reviewed values. A moved branch stops cleanup. `main` is not in the deletion list.
+The original development branches remain present after promotion. The manual archive workflow creates and verifies tags at the reviewed branch tips. It does not delete branch refs. A moved branch stops the workflow before tags are created. `main` is not in the archive or deletion list.
 
-After merge, verify the archive workflow run and the branch list. Do not assume cleanup happened merely because PR #14 merged.
+After fast-forward promotion, manually dispatch the archive workflow and verify every tag. The workflow preserves all source branch refs; any branch deletion is a separate manual owner decision.
 
 ## Promotion checklist
 
