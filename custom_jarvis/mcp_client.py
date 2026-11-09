@@ -163,41 +163,94 @@ def _enum_values(enum: Any) -> list[Any]:
     return values
 
 
-def schema(raw: Any) -> dict[str, Any]:
-    """A server's `inputSchema`, in the shape this app sends and the provider accepts.
+MAX_SCHEMA_DEPTH = 6
+MAX_SCHEMA_PROPERTIES = 100
 
-    Two changes and no others: the casing, and a `required` list that only names
-    arguments that exist. Nothing is added, so a tool that takes no arguments stays a
-    tool that takes no arguments.
+
+def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
+    """Translate a bounded JSON Schema node without silently dropping its shape."""
+    if depth > MAX_SCHEMA_DEPTH:
+        raise McpError(f"MCP input schema exceeds the {MAX_SCHEMA_DEPTH}-level nesting limit.")
+    if not isinstance(raw, dict):
+        raise McpError("MCP input schema contains a property that is not an object.")
+
+    kind = _kind(raw.get("type"))
+    clean: dict[str, Any] = {"type": kind}
+    if raw.get("description"):
+        clean["description"] = str(raw["description"])[:500]
+    values = _enum_values(raw.get("enum"))
+    if values:
+        clean["enum"] = values
+
+    if kind == "OBJECT":
+        raw_properties = raw.get("properties") or {}
+        if not isinstance(raw_properties, dict):
+            raise McpError("MCP object schema has invalid properties; expected an object.")
+        if len(raw_properties) > MAX_SCHEMA_PROPERTIES:
+            raise McpError(
+                f"MCP object schema exceeds the {MAX_SCHEMA_PROPERTIES}-property limit."
+            )
+        properties: dict[str, Any] = {}
+        for key, spec in raw_properties.items():
+            name = str(key)
+            if not name or len(name) > 128 or any(ord(char) < 32 for char in name):
+                raise McpError("MCP input schema contains an invalid property name.")
+            properties[name] = _schema_node(spec, depth + 1)
+        clean["properties"] = properties
+        wanted = raw.get("required") or []
+        if not isinstance(wanted, list):
+            raise McpError("MCP object schema has an invalid required list.")
+        required = [name for name in wanted
+                    if isinstance(name, str) and name in properties]
+        if required:
+            clean["required"] = required
+    elif kind == "ARRAY":
+        items = raw.get("items")
+        if items is None:
+            clean["items"] = {"type": "STRING"}
+        else:
+            clean["items"] = _schema_node(items, depth + 1)
+    return clean
+
+
+def schema(raw: Any) -> dict[str, Any]:
+    """Translate supported MCP JSON Schema, including nested objects and arrays.
+
+    The translation is bounded. Unsupported or malformed shapes fail with McpError
+    instead of being silently flattened into a different tool contract.
     """
     if not isinstance(raw, dict):
         return {"type": "OBJECT", "properties": {}}
-    properties: dict[str, Any] = {}
-    for key, spec in (raw.get("properties") or {}).items():
-        if not isinstance(spec, dict):
-            spec = {}
-        clean: dict[str, Any] = {"type": _kind(spec.get("type"))}
-        if spec.get("description"):
-            clean["description"] = str(spec["description"])[:500]
-        if clean["type"] == "ARRAY":
-            items = spec.get("items") if isinstance(spec.get("items"), dict) else {}
-            clean["items"] = {"type": _kind(items.get("type"))}
-        if clean["type"] == "OBJECT":
-            clean["properties"] = {}
-        values = _enum_values(spec.get("enum"))
-        if values:
-            clean["enum"] = values
-        properties[str(key)] = clean
-    out: dict[str, Any] = {"type": "OBJECT", "properties": properties}
-    required = [str(name) for name in (raw.get("required") or []) if str(name) in properties]
-    if required:
-        out["required"] = required
-    return out
+    if str(raw.get("type") or "object").lower() != "object":
+        raise McpError("MCP tool input schema must have an object at its root.")
+    return _schema_node(raw, 0)
 
 
 def tool_name(server: str, tool: str) -> str:
     """`mcp_<server>_<tool>`, so a server can never shadow a native tool."""
     return f"mcp_{_identifier(server)}_{_identifier(tool)}"[:100]
+
+
+def register_declaration(
+    registry: dict[str, dict[str, Any]],
+    collisions: set[str],
+    declaration: dict[str, Any],
+) -> str | None:
+    """Register a unique MCP name; remove and permanently reject collisions."""
+    name = str((declaration or {}).get("name") or "").strip()
+    if not name:
+        return "MCP returned a tool declaration without a name; it was rejected."
+    if name in collisions:
+        return None
+    if name in registry:
+        registry.pop(name, None)
+        collisions.add(name)
+        return (
+            f"MCP tool-name collision for '{name}'. All tools with this normalized "
+            "name were refused. Rename one server or tool."
+        )
+    registry[name] = declaration
+    return None
 
 
 class Client:
