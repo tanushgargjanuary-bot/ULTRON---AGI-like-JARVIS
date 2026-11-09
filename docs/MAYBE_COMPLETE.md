@@ -14,7 +14,7 @@ This checkpoint means the current consolidation work is ready for a final promot
 - Memory search over saved session summaries.
 - Stale self-change proposal protection: apply and revert compare content hashes before overwriting.
 - Windows NTFS alternate-data-stream path rejection.
-- MCP client with recursive bounded input-schema conversion, collision rejection across MCP servers and native tools, and guarded unknown-tool policy.
+- MCP client with recursive bounded input schemas, collision rejection across MCP/native tools, guarded unknown-tool policy, 1 MB JSON-RPC line limits, and bounded stderr diagnostics.
 - Local fallback restricted to explicit consent, quantized 1.5B–3B chat models, loopback-only HTTP, no redirects, and bounded JSON responses.
 - Non-streaming Ollama warm-up response so the code receives one JSON object.
 - Loopback-only dashboard by default; LAN exposure requires an explicit setting and HTTPS.
@@ -38,7 +38,7 @@ The CI result must belong to the **latest PR head**, not an earlier commit. See 
 
 A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 177 files.
 
-Two Medium MCP defects were found and fixed:
+Three security defects were found and fixed in the focused MCP/self-change review:
 
 1. Nested MCP object and array schemas were being flattened. The converter now preserves supported nested properties and rejects malformed or over-deep schemas.
 2. Distinct MCP names could normalize to the same tool name and silently overwrite one another. Registration now rejects collisions, including collisions with native action/plugin names.
@@ -59,7 +59,7 @@ Do not advertise automatic multi-provider failover as complete. Do not add paid 
 
 A rehearsal runs in a temporary copy, but this is **not an OS security sandbox**. The Python subprocess runs with the same operating-system permissions as ULTRON. Candidate code can access files and network resources that the current user can access.
 
-The tool has path restrictions, protected files, a guarded action, two apply confirmations, and stale-file checks. Those controls do not contain hostile code during rehearsal. Only rehearse code from a trusted source. A real restricted worker or VM is still required before treating self-repair as safe against adversarial code.
+The tool has path restrictions, protected files (including symlink aliases to resolved protected targets), a guarded action, two apply confirmations, and stale-file checks. Those controls do not contain hostile code during rehearsal. Only rehearse code from a trusted source. A real restricted worker or VM is still required before treating self-repair as safe against adversarial code.
 
 ### MCP process trust
 
