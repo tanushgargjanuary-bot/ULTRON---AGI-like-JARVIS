@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ruff check . --output-format=rdjson > "${RUNNER_TEMP}/ruff.rdjson" || true
+          ruff check . --select E4,E7,E9,F,B,BLE001,S --output-format=rdjson > "${RUNNER_TEMP}/ruff.rdjson" || true
           reviewdog \
             -f=rdjson \
             -name="Ruff (changed lines)" \
