@@ -63,9 +63,9 @@ The tool has path restrictions, protected files, a guarded action, two apply con
 
 ### MCP process trust
 
-The app starts the commands listed in `config/mcp_servers.json`. Each process runs with the current user's permissions. The shared tool-policy gate asks before an unknown MCP tool is invoked, but it does not sandbox the MCP server process itself.
+The app starts the commands listed in `config/mcp_servers.json`. Each process runs with the current user's permissions and inherits ULTRON's process environment, which may contain credentials. The shared tool-policy gate asks before an unknown MCP tool is invoked, but it does not sandbox the MCP server process itself or restrict its environment.
 
-Only configure MCP commands and arguments from servers you trust.
+Only configure MCP commands and arguments from servers you trust. Do not configure untrusted MCP servers in a process that holds credentials in environment variables.
 
 ### Updates
 
