@@ -875,6 +875,7 @@ class JarvisLive:
         # server that is not listed is a server this app does not know. A broken entry
         # is one line in the log; it does not stop the other servers or this start.
         self._mcp_tools = {}
+        _mcp_name_collisions = set()
         try:
             self._mcp_clients, _mcp_notes = _mcp.connect_all(_base_dir)
         except Exception as _mcp_error:      # a bad file here must not cost a start
@@ -882,7 +883,11 @@ class JarvisLive:
         for _client in self._mcp_clients:
             try:
                 for _declaration in _client.declarations():
-                    self._mcp_tools[_declaration["name"]] = _declaration
+                    _collision = _mcp.register_declaration(
+                        self._mcp_tools, _mcp_name_collisions, _declaration
+                    )
+                    if _collision:
+                        _mcp_notes.append(_collision)
             except Exception as _mcp_error:
                 _mcp_notes.append(f"MCP server '{_client.name}': {_mcp_error}")
         for _note in _mcp_notes:
