@@ -1,0 +1,51 @@
+name: Reviewdog — Python static review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: reviewdog-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    name: reviewdog / Ruff (changed lines)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: python -m pip install "ruff>=0.14,<1"
+
+      - uses: reviewdog/action-setup@d8edfce3dd5e1ec6978745e8019f50b5ef80252 # v1.4.0
+        with:
+          reviewdog_version: latest
+
+      - name: Report Ruff findings on changed lines
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -o pipefail
+          ruff check . --output-format=rdjson > "${RUNNER_TEMP}/ruff.rdjson" || true
+          reviewdog \
+            -f=rdjson \
+            -name="Ruff (changed lines)" \
+            -reporter=github-pr-check \
+            -filter-mode=added \
+            -level=warning \
+            < "${RUNNER_TEMP}/ruff.rdjson"
