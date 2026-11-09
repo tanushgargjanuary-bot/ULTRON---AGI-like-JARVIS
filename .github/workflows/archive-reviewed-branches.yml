@@ -1,10 +1,8 @@
-name: Archive and prune reviewed branches
+name: Archive reviewed branch tips
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/archive-reviewed-branches.yml"
+  # Manual only. This workflow creates and verifies archive tags.
+  # It never deletes branch refs.
   workflow_dispatch:
 
 permissions:
@@ -12,11 +10,11 @@ permissions:
   pull-requests: read
 
 jobs:
-  archive-and-prune:
-    if: github.ref == 'refs/heads/main'
+  archive-reviewed-tips:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Archive reviewed branch tips, then remove temporary branch refs
+      - name: Archive reviewed branch tips after explicit manual dispatch
         uses: actions/github-script@v7
         with:
           script: |
@@ -79,7 +77,7 @@ jobs:
               }
             };
 
-            // Preflight all source refs and tags before creating or deleting anything.
+            // Preflight all source refs and tags before creating anything.
             // A moved branch is a hard stop; it must be reviewed again.
             for (const entry of entries) {
               const branchRef = await getRefOrNull(`heads/${entry.name}`);
@@ -114,39 +112,19 @@ jobs:
               }
             }
 
-            // Only now delete temporary branches, and re-check each SHA immediately.
-            const deleted = [];
-            const alreadyAbsent = [];
-            for (const entry of entries) {
-              const branchRef = await getRefOrNull(`heads/${entry.name}`);
-              if (!branchRef) {
-                alreadyAbsent.push(entry.name);
-                continue;
-              }
-              if (branchRef.data.object.sha !== entry.sha) {
-                throw new Error(`Refusing to delete moved branch ${entry.name}.`);
-              }
-              await github.rest.git.deleteRef({
-                owner, repo, ref: `heads/${entry.name}`,
-              });
-              deleted.push(entry.name);
-            }
-
-            // Verify deletion. main is deliberately not in the deletion list.
-            for (const entry of entries) {
-              const stillThere = await getRefOrNull(`heads/${entry.name}`);
-              if (stillThere) throw new Error(`Branch still exists: ${entry.name}`);
-            }
+            // This workflow only creates and verifies tags. It never deletes branches.
+            // Branch deletion is a separate owner decision and must be done manually.
 
             await core.summary
-              .addHeading("Branch archive complete")
+              .addHeading("Branch archive complete — branch refs preserved")
               .addTable([
                 [{ data: "Branch", header: true }, { data: "Archived tip", header: true }, { data: "Tag", header: true }],
                 ...entries.map(entry => [entry.name, entry.sha, entry.tag]),
               ])
               .addList([
-                `Deleted: ${deleted.join(", ") || "none"}`,
-                `Already absent: ${alreadyAbsent.join(", ") || "none"}`,
+                `Verified archive tags: ${entries.length}`,
+                "All source branch refs were preserved.",
                 "main was not changed or deleted.",
+                "Any branch deletion requires a separate manual owner decision.",
               ])
               .write();
