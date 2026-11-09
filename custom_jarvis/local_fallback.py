@@ -233,7 +233,8 @@ def warm(url: str = DEFAULT_URL, model: str = "") -> bool:
     if not model:
         return False
     answer = _post(f"{url}/api/generate",
-                   {"model": model, "prompt": "", "keep_alive": KEEP_ALIVE},
+                   {"model": model, "prompt": "", "keep_alive": KEEP_ALIVE,
+                    "stream": False},
                    timeout=60.0)
     return answer is not None
 
