@@ -44,6 +44,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -106,7 +107,68 @@ def set_store(folder: Path | None) -> None:
 def store() -> Path:
     folder = _store or (root() / "config" / "self_change")
     folder.mkdir(parents=True, exist_ok=True)
+    is_junction = getattr(folder, "is_junction", lambda: False)()
+    if folder.is_symlink() or is_junction:
+        raise OSError("The self-change store must not be a symlink or junction.")
     return folder
+
+
+def _read_regular_text(path: Path) -> str:
+    """Read a regular file only. Never follow a symlink from the state directory."""
+    path = Path(path)
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return ""
+    if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+        raise OSError(f"Refusing a non-regular self-change state file: {path.name}")
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
+def _atomic_write_text(path: Path, text: str, default_mode: int = 0o600) -> None:
+    """Replace a file through a unique, exclusively-created sibling.
+
+    A fixed temporary path can be pre-created as a link. Writing to that name
+    would then write through the link before os.replace runs. mkstemp creates a
+    unique file with exclusive creation, and replace swaps the directory entry
+    rather than following a destination symlink or hard link.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    parent_is_junction = getattr(path.parent, "is_junction", lambda: False)()
+    if path.parent.is_symlink() or parent_is_junction:
+        raise OSError(f"Refusing a linked self-change directory: {path.parent.name}")
+
+    mode = default_mode
+    try:
+        current = path.lstat()
+    except FileNotFoundError:
+        pass
+    else:
+        if stat.S_ISLNK(current.st_mode) or not stat.S_ISREG(current.st_mode):
+            raise OSError(f"Refusing to replace a non-regular self-change file: {path.name}")
+        mode = stat.S_IMODE(current.st_mode)
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent)
+    )
+    try:
+        os.chmod(temporary_name, mode)
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
+            handle.write(str(text))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, path)
+    except BaseException:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+        try:
+            os.unlink(temporary_name)
+        except OSError:
+            pass
+        raise
 
 
 def _content_digest(text: str) -> str:
@@ -124,29 +186,27 @@ def _ledger_file() -> Path:
 
 def _load_proposals() -> dict:
     try:
-        data = json.loads(_proposals_file().read_text(encoding="utf-8"))
+        data = json.loads(_read_regular_text(_proposals_file()))
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
 
 
 def _save_proposals(data: dict) -> None:
-    path = _proposals_file()
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
-    os.replace(tmp, path)
+    _atomic_write_text(_proposals_file(), json.dumps(data, indent=1))
 
 
 def _note(entry: dict) -> None:
-    with _ledger_file().open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry) + "\n")
+    path = _ledger_file()
+    previous = _read_regular_text(path)
+    _atomic_write_text(path, previous + json.dumps(entry) + "\n")
 
 
 @implements("DBMS", 4, "Log-based recovery")
 def ledger(limit: int = 20) -> list[dict]:
     """Every change this module made, newest first."""
     try:
-        lines = _ledger_file().read_text(encoding="utf-8").splitlines()
+        lines = _read_regular_text(_ledger_file()).splitlines()
     except OSError:
         return []
     rows = []
@@ -248,7 +308,7 @@ def propose(path: str, reason: str, new_text: str | None = None,
     # Store the resolved project-relative target. Re-resolving the model-supplied
     # symlink name later could otherwise redirect an approved proposal to another file.
     canonical_path = target.relative_to(root().resolve()).as_posix()
-    old = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
+    old = _read_regular_text(target)
     new = _apply_edit(old, find, replace, new_text)
     if len(new) > MAX_PATCH:
         raise ValueError(f"That change is {len(new)} characters; the limit is "
@@ -362,7 +422,7 @@ def apply(proposal_id: str) -> dict:
     target = _inside(proposal["path"])
     if target is None:
         raise ValueError(f"'{proposal['path']}' is no longer a file I may change.")
-    current = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
+    current = _read_regular_text(target)
     expected_old = proposal.get("old_sha256") or _content_digest(proposal.get("old", ""))
     if _content_digest(current) != expected_old:
         raise ValueError(
@@ -371,11 +431,8 @@ def apply(proposal_id: str) -> dict:
         )
     backup = store() / "backups"
     backup.mkdir(parents=True, exist_ok=True)
-    (backup / f"{proposal_id}.bak").write_text(proposal["old"], encoding="utf-8")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_suffix(target.suffix + ".ultron-tmp")
-    tmp.write_text(proposal["new"], encoding="utf-8")
-    os.replace(tmp, target)
+    _atomic_write_text(backup / f"{proposal_id}.bak", proposal["old"])
+    _atomic_write_text(target, proposal["new"], default_mode=0o644)
     proposal["applied_sha256"] = _content_digest(proposal["new"])
     proposal["stage"] = "applied"
     proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -413,9 +470,7 @@ def revert(proposal_id: str) -> str:
             f"Cannot revert {proposal['path']}: it changed after {proposal_id} was applied. "
             "The current file was left untouched."
         )
-    tmp = target.with_suffix(target.suffix + ".ultron-tmp")
-    tmp.write_text(kept.read_text(encoding="utf-8"), encoding="utf-8")
-    os.replace(tmp, target)
+    _atomic_write_text(target, _read_regular_text(kept), default_mode=0o644)
     proposal["stage"] = "reverted"
     proposal["reverted_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     data[proposal_id] = proposal
@@ -433,14 +488,14 @@ def _write_marker(proposal: dict) -> bool:
         return False
     marker = root() / MARKER
     try:
-        marker.write_text(json.dumps({
+        _atomic_write_text(marker, json.dumps({
             "at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "change": proposal["id"],
             "path": proposal["path"],
             "reason": proposal["reason"],
             "note": ("Ultron changed its own code. Restart to run it. The session is "
                      "kept: memory, ledger and workspace live in files."),
-        }, indent=1), encoding="utf-8")
+        }, indent=1))
     except OSError as error:
         failures.note("self_change._write_marker", error)
         return False
