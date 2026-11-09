@@ -6212,6 +6212,8 @@ class MainWindow(QMainWindow):
         self._title_lbl.setFont(QFont("Courier New", 17, QFont.Weight.Bold))
         self._title_lbl.setStyleSheet(f"color: {C.PRI}; background: transparent;")
         mid.addWidget(self._title_lbl)
+        _persona_id = getattr(self, "_persona_id", "ultron")
+        _persona = personas_mod.get_persona(_persona_id)
         _sub_text = _persona.audience_label
         self._sub_lbl = QLabel(_sub_text)
         self._sub_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
