@@ -244,6 +244,16 @@ class TheSchema(unittest.TestCase):
         clean = mcp_client.schema({"type": "object", "properties": {"a": {"type": "whatever"}}})
         self.assertEqual(clean["properties"]["a"]["type"], "STRING")
 
+    def test_object_shape_is_inferred_when_type_is_omitted(self):
+        clean = mcp_client.schema({
+            "properties": {"profile": {"properties": {"name": {"type": "string"}}}}
+        })
+        self.assertEqual(clean["type"], "OBJECT")
+        self.assertEqual(clean["properties"]["profile"]["type"], "OBJECT")
+        self.assertEqual(
+            clean["properties"]["profile"]["properties"]["name"]["type"], "STRING"
+        )
+
     def test_nested_object_properties_are_preserved(self):
         clean = mcp_client.schema({
             "type": "object",
@@ -324,6 +334,18 @@ class TheMcpNameRegistry(unittest.TestCase):
         self.assertIn("collision", message)
         self.assertNotIn(first_name, registry)
         self.assertIn(first_name, collisions)
+
+    def test_mcp_name_cannot_shadow_a_reserved_native_tool(self):
+        name = mcp_client.tool_name("custom", "dangerous")
+        registry = {}
+        collisions = set()
+        note = mcp_client.register_declaration(
+            registry, collisions, {"name": name, "handler": lambda _args: "remote"},
+            reserved_names={name},
+        )
+        self.assertIn("native tool", note)
+        self.assertEqual(registry, {})
+        self.assertIn(name, collisions)
 
     def test_a_third_duplicate_cannot_reintroduce_a_rejected_name(self):
         name = mcp_client.tool_name("files-prod", "list")
