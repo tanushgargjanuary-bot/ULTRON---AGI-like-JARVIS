@@ -14,7 +14,7 @@ This checkpoint means the current consolidation work is ready for a final promot
 - Memory search over saved session summaries.
 - Stale self-change proposal protection: apply and revert compare content hashes before overwriting.
 - Windows NTFS alternate-data-stream path rejection.
-- MCP client with recursive bounded input schemas, collision rejection across MCP/native tools, guarded unknown-tool policy, 1 MB JSON-RPC line limits, and bounded stderr diagnostics.
+- MCP client with recursive bounded input schemas, strict rejection of unsupported schema shapes, collision rejection across MCP/native tools, guarded unknown-tool policy, 1 MB JSON-RPC line limits, and bounded stderr diagnostics.
 - Local fallback restricted to explicit consent, quantized 1.5B–3B chat models, loopback-only HTTP, no redirects, and bounded JSON responses.
 - Non-streaming Ollama warm-up response so the code receives one JSON object.
 - Loopback-only dashboard by default; LAN exposure requires an explicit setting and HTTPS.
@@ -40,10 +40,10 @@ A risk-focused review inspected the main security and integration paths and the 
 
 Four security defects were found and fixed in the focused MCP/self-change review:
 
-1. Nested MCP object and array schemas were being flattened. The converter now preserves supported nested properties and rejects malformed or over-deep schemas.
+1. Nested MCP object and array schemas were being flattened. The converter preserves supported nested properties and rejects malformed, over-deep, or unsupported schemas rather than mapping them to a different type.
 2. Distinct MCP names could normalize to the same tool name and silently overwrite one another. Registration now rejects collisions, including collisions with native action/plugin names.
 3. MCP servers could emit oversized protocol lines. The reader now caps a line at 1 MB, kills a server that exceeds the limit, bounds stderr reads, and rejects oversized client messages.
-4. A self-change path could reach a protected referee file through a symlink alias. The path guard now checks the resolved target, with file-link and directory-link regression tests.
+4. A self-change path could reach a protected referee file through a symlink alias, or be redirected after approval by retargeting the link. The path guard now checks protected resolved targets and proposals store the canonical resolved path, with file-link, directory-link, and retargeting regression tests.
 
 Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, and the Ollama warm-up stream setting. Regression tests were added.
 
