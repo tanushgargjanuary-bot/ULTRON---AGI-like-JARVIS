@@ -48,10 +48,11 @@ them" answer at protocol level, and it is the only item on this page that change
   launched as a child process. Nothing is downloaded, fetched or installed.
 - **Local process only.** An entry with a `url`, `host`, `port`, `socket` or `transport` is
   refused by name, with the reason — not ignored, and not quietly dialled.
-- **Not an OS sandbox.** The child runs with the current user's permissions. It can access
-  files, processes and network resources available to that account. Configure only MCP
-  programs and arguments you trust. The protocol's policy gate does not restrict the
-  server process itself.
+- **Not an OS sandbox.** The child runs with the current user's permissions and
+  inherits the app's process environment. It can access files, processes, network
+  resources and environment variables available to that account. Environment variables
+  may contain credentials. Configure only MCP programs and arguments you trust. The
+  protocol's policy gate does not restrict the server process itself.
 - **No shell.** A command with a space in it is refused and told to split itself into
   `command` + `args`. `shell=True` is not a shortcut; it is the door.
 - **No exemption from policy.** A tool arrives as `mcp_<server>_<tool>`; `core/policy.py` has
