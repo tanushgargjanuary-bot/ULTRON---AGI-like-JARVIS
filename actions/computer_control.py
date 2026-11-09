@@ -279,7 +279,12 @@ def _focus_window(title: str) -> str:
 
     if os_name == "windows":
         try:
-            script = f'(New-Object -ComObject WScript.Shell).AppActivate("{title}")'
+            # A window title is model-supplied text. Single quotes stop PowerShell
+            # expanding $ and backticks; doubling an embedded quote keeps it inside
+            # the string instead of ending the argument.
+            safe_title = title.replace("'", "''")
+            script = ("(New-Object -ComObject WScript.Shell).AppActivate('"
+                      + safe_title + "')")
             subprocess.run(
                 ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                 capture_output=True, timeout=5, **_WIN_HIDE,

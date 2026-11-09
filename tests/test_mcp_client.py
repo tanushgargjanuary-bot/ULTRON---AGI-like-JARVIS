@@ -182,12 +182,20 @@ class TheFakeServer(_Folder):
     def test_a_call_reaches_the_server_and_comes_back_as_text(self):
         self.client.start()
         handler = self.client.declarations()[0]["handler"]
-        self.assertEqual(handler({"a": 2, "b": 3}), "5")
+        self.assertEqual(handler({"a": 2, "b": 3}),
+                         mcp_client.UNTRUSTED_PREFIX + "5")
 
     def test_an_error_answer_is_reported_not_raised(self):
         self.client.start()
         handler = self.client.declarations()[1]["handler"]
-        self.assertEqual(handler({"text": "hi"}), "unknown tool")
+        self.assertEqual(handler({"text": "hi"}),
+                         mcp_client.UNTRUSTED_PREFIX + "unknown tool")
+
+    def test_server_text_is_labelled_as_untrusted(self):
+        self.client.start()
+        handler = self.client.declarations()[0]["handler"]
+        self.assertTrue(handler({"a": 2, "b": 3}).startswith(
+            mcp_client.UNTRUSTED_PREFIX))
 
     def test_a_notification_between_replies_is_not_mistaken_for_one(self):
         self.client.start()          # the fake server prints one before tools/list

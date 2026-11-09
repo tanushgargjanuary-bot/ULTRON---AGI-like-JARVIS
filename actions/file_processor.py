@@ -856,6 +856,14 @@ def file_processor(parameters: dict, player=None, speak=None) -> str:
     if not path.is_file():
         return f"Path is not a file: {file_path_str}"
 
+    # A document can be named anything. Read it through the same guard the file
+    # tools use: inside the user's home, and never a credential store. Without
+    # this, a web page could ask the assistant to summarise a key file and send
+    # the contents to a model provider.
+    from actions.file_controller import _denial_message, _is_safe_path
+    if not _is_safe_path(path):
+        return _denial_message(path)
+
     file_type   = _detect_type(path)
     action      = (parameters.get("action") or "").lower().strip()
     instruction = parameters.get("instruction", "")
