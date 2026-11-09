@@ -15,6 +15,10 @@ the quantization level from Ollama's model metadata. It refuses unquantized mode
 models outside that size range, and embedding-only models. The saved cloud provider
 configuration is not changed.
 
+The fallback's HTTP client accepts literal loopback IP addresses only. It disables proxy
+use and redirects, and it caps each JSON response at 2 MiB. It does not contact a LAN or
+public model endpoint.
+
 To disable the feature, remove the key or set it to `false`.
 
 Ultron already talks to a model on this machine. `core/llm_client.py` reads three keys from
@@ -22,7 +26,7 @@ Ultron already talks to a model on this machine. `core/llm_client.py` reads thre
 
 ```
 llm_provider   "ollama"                 or "openai" for LM Studio, Jan, llama.cpp
-llm_url        "http://localhost:11434"
+llm_url        "http://127.0.0.1:11434"
 llm_model      "llama3.2"               the model name, exactly as the server lists it
 ```
 
