@@ -391,6 +391,15 @@ class TheSchema(unittest.TestCase):
         self.assertIs(type(values[0]), bool)
 
 
+    def test_large_integer_enum_values_do_not_overflow_finite_check(self):
+        large = 10 ** 500
+        clean = mcp_client.schema({
+            "type": "object",
+            "properties": {"value": {"type": "number", "enum": [large]}},
+        })
+        self.assertEqual(clean["properties"]["value"]["enum"], [large])
+
+
 class TheMcpNameRegistry(unittest.TestCase):
     def test_distinct_server_names_that_normalize_to_one_name_are_rejected(self):
         first_name = mcp_client.tool_name("files-prod", "list")
