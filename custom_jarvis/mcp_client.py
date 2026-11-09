@@ -174,7 +174,11 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise McpError("MCP input schema contains a property that is not an object.")
 
-    kind = _kind(raw.get("type"))
+    raw_type = raw.get("type")
+    if raw_type is None:
+        kind = "OBJECT" if "properties" in raw else ("ARRAY" if "items" in raw else "STRING")
+    else:
+        kind = _kind(raw_type)
     clean: dict[str, Any] = {"type": kind}
     if raw.get("description"):
         clean["description"] = str(raw["description"])[:500]
@@ -235,6 +239,8 @@ def register_declaration(
     registry: dict[str, dict[str, Any]],
     collisions: set[str],
     declaration: dict[str, Any],
+    *,
+    reserved_names: set[str] | None = None,
 ) -> str | None:
     """Register a unique MCP name; remove and permanently reject collisions."""
     name = str((declaration or {}).get("name") or "").strip()
@@ -242,6 +248,12 @@ def register_declaration(
         return "MCP returned a tool declaration without a name; it was rejected."
     if name in collisions:
         return None
+    if name in (reserved_names or set()):
+        collisions.add(name)
+        return (
+            f"MCP tool-name collision for '{name}' with an existing native tool. "
+            "The MCP tool was refused; rename the MCP server or tool."
+        )
     if name in registry:
         registry.pop(name, None)
         collisions.add(name)
