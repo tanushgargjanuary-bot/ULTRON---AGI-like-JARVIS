@@ -20,6 +20,8 @@ A rehearsal that runs in your folder is not a rehearsal — it is the change wit
 
 A draft that does not compile fails there. A draft that breaks a test fails there. Your program never knows either of them happened. The full harness is a minimum gate, not a proof of correctness: model confidence or a second model's review cannot override a failure, missing verifier, or the separate two-channel approval. A green run still needs human scrutiny of the diff and the actual behavior.
 
+**Important security limit:** the temporary folder is not an OS security sandbox. The rehearsal subprocess runs with the same user permissions as Ultron. Candidate code can still access other files that user can access and can use the network. The copy protects the active project files from direct rehearsal writes; it does not contain hostile code. Only rehearse code from a source you trust. Do not treat two apply confirmations as a sandbox. A real sandbox needs OS-enforced filesystem, process and network restrictions; that is not implemented here.
+
 ## The referee is off limits
 
 These files decide *whether* a change is allowed, or record *that* it happened:
