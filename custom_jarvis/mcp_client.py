@@ -13,8 +13,10 @@ Four rules, and each one is here because the alternative is a hole:
 - **Local process only.** No URL, no socket, no remote transport. A config entry with a
   `url`, host, or port is refused with the reason, not ignored.
 - **Not an OS sandbox.** The child runs with the current user's operating-system
-  permissions. It may access any resource that account can access. Only configure
-  commands and arguments from MCP servers you trust.
+  permissions and inherits the app's process environment. It may access files,
+  processes, network resources, and environment variables available to that account.
+  Environment variables may contain credentials. Only configure commands and
+  arguments from MCP servers you trust.
 - **No shell.** A command is a program and a list of arguments. A command with a space
   in it is refused, because "split this yourself" is a real answer and `shell=True` is
   not.
