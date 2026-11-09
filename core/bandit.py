@@ -135,6 +135,11 @@ class UCB1(_Base):
 
     score = mean + c * sqrt(ln(N) / n_i)
 
+    The classical regret guarantee assumes unit-weight stationary observations.
+    This implementation also accepts fractional effective sample weights for
+    decayed history replay; those weights are a practical heuristic, not a
+    claim that the classical guarantee still applies.
+
     `c` is the exploration dial. sqrt(2) is the theoretical default for rewards
     in [0, 1]; it can be lowered when the caller knows the arms are stable.
     """
@@ -149,7 +154,10 @@ class UCB1(_Base):
             total = sum(arm.pulls for arm in arms)
             if total == 0:
                 return [(arm.name, float("inf")) for arm in arms]
-            log_total = math.log(total)
+            # Fractional sample weights represent discounted historical evidence.
+            # Its total can be below 1; clamp the log input so the exploration
+            # bonus stays real and scores remain defined.
+            log_total = math.log(max(total, 1.0))
             scored = []
             for arm in arms:
                 if arm.pulls == 0:
