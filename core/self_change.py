@@ -120,12 +120,18 @@ def _read_regular_text(path: Path) -> str:
         info = path.lstat()
     except FileNotFoundError:
         return ""
-    if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
-        raise OSError(f"Refusing a non-regular self-change state file: {path.name}")
+    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink > 1):
+        raise OSError(f"Refusing a linked or non-regular self-change state file: {path.name}")
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def _atomic_write_text(path: Path, text: str, default_mode: int = 0o600) -> None:
+def _atomic_write_text(
+    path: Path,
+    text: str,
+    default_mode: int = 0o600,
+    expected_sha256: str | None = None,
+) -> None:
     """Replace a file through a unique, exclusively-created sibling.
 
     A fixed temporary path can be pre-created as a link. Writing to that name
@@ -158,6 +164,12 @@ def _atomic_write_text(path: Path, text: str, default_mode: int = 0o600) -> None
             handle.write(str(text))
             handle.flush()
             os.fsync(handle.fileno())
+        if expected_sha256 is not None:
+            current_text = _read_regular_text(path)
+            if _content_digest(current_text) != expected_sha256:
+                raise ValueError(
+                    f"{path.name} changed while the self-change operation was being prepared."
+                )
         os.replace(temporary_name, path)
     except BaseException:
         try:
@@ -198,8 +210,9 @@ def _save_proposals(data: dict) -> None:
 
 def _note(entry: dict) -> None:
     path = _ledger_file()
-    previous = _read_regular_text(path)
-    _atomic_write_text(path, previous + json.dumps(entry) + "\n")
+    with _change_lock:
+        previous = _read_regular_text(path)
+        _atomic_write_text(path, previous + json.dumps(entry) + "\n")
 
 
 @implements("DBMS", 4, "Log-based recovery")
@@ -432,7 +445,9 @@ def apply(proposal_id: str) -> dict:
     backup = store() / "backups"
     backup.mkdir(parents=True, exist_ok=True)
     _atomic_write_text(backup / f"{proposal_id}.bak", proposal["old"])
-    _atomic_write_text(target, proposal["new"], default_mode=0o644)
+    _atomic_write_text(
+        target, proposal["new"], default_mode=0o644, expected_sha256=expected_old
+    )
     proposal["applied_sha256"] = _content_digest(proposal["new"])
     proposal["stage"] = "applied"
     proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -470,7 +485,10 @@ def revert(proposal_id: str) -> str:
             f"Cannot revert {proposal['path']}: it changed after {proposal_id} was applied. "
             "The current file was left untouched."
         )
-    _atomic_write_text(target, _read_regular_text(kept), default_mode=0o644)
+    _atomic_write_text(
+        target, _read_regular_text(kept), default_mode=0o644,
+        expected_sha256=expected_applied,
+    )
     proposal["stage"] = "reverted"
     proposal["reverted_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     data[proposal_id] = proposal
