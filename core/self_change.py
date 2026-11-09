@@ -149,8 +149,8 @@ def _atomic_write_text(
     try:
         current = path.lstat()
     except FileNotFoundError:
-        pass
-    else:
+        current = None
+    if current is not None:
         if stat.S_ISLNK(current.st_mode) or not stat.S_ISREG(current.st_mode):
             raise OSError(f"Refusing to replace a non-regular self-change file: {path.name}")
         mode = stat.S_IMODE(current.st_mode)
@@ -161,6 +161,9 @@ def _atomic_write_text(
     try:
         os.chmod(temporary_name, mode)
         with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
+            # fdopen owns the descriptor from this point. Do not close its old
+            # integer again after the context exits; the OS may have reused it.
+            descriptor = -1
             handle.write(str(text))
             handle.flush()
             os.fsync(handle.fileno())
@@ -172,14 +175,15 @@ def _atomic_write_text(
                 )
         os.replace(temporary_name, path)
     except BaseException:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
+        if descriptor >= 0:
+            try:
+                os.close(descriptor)
+            except OSError as cleanup_error:
+                failures.note("self_change.temp_descriptor_close", cleanup_error)
         try:
             os.unlink(temporary_name)
-        except OSError:
-            pass
+        except OSError as cleanup_error:
+            failures.note("self_change.temp_unlink", cleanup_error)
         raise
 
 
