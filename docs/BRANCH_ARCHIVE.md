@@ -1,17 +1,17 @@
 # Branch archive and cleanup
 
-**Review date:** 2026-11-09  
+**Review date:** 2026-11-10  
 **Target end state:** `main` is the only permanent branch. Historical branch tips remain recoverable through immutable Git tags.
 
 ## Why this cleanup exists
 
 The repository accumulated branches for separate agent sessions and competing implementations. That makes it hard to tell which code is current. It also makes CI branch filters stale.
 
-The consolidation pull request is the only candidate for promotion. It uses the integration snapshot as its base, then applies selected fixes and regression tests. It does not merge every branch wholesale.
+The working candidate is `ultron/curated-promotion-2026-11`, created from the reviewed consolidation tip. It uses the integration snapshot as its base, then carries selected implementations and regression tests. It does not merge every branch wholesale. Promotion is a fast-forward-only update of `main`; do not create a merge commit.
 
 ## Reviewed branch tips
 
-The archive workflow creates and verifies a tag for each exact reviewed branch tip. It runs only after a manual workflow dispatch on `main` and only after PR #14 is merged. It preserves every branch ref. If a source branch moved after this review, the workflow stops before it creates any tags.
+The archive workflow creates and verifies a tag for every reviewed source tip. It runs only after a manual workflow dispatch on `main`, and only when `main` contains the current `ultron/curated-promotion-2026-11` tip. It preserves every branch ref. If a reviewed source branch moved, the workflow stops before it creates any tags.
 
 | Source branch | Reviewed tip | Archive tag |
 |---|---|---|
@@ -21,14 +21,15 @@ The archive workflow creates and verifies a tag for each exact reviewed branch t
 | `chatgpt` | `c98ea0ff81a440ba4b2f56b1aef0f726384f521d` | `archive/2026-11-09/chatgpt-c98ea0ff` |
 | `code-quality-and-security-improvements-af08a` | `bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420` | `archive/2026-11-09/code-quality-and-security-improvements-af08a-bc65a274` |
 | `integration/best-of-all-2026-11-09` | `5118dede0ca4c29206a24a08ec9f9ae6699011f5` | `archive/2026-11-09/integration-best-of-all-2026-11-09-5118dede` |
-| `ultron/consolidation-2026-11` | The head SHA of merged PR #14, read at cleanup time | `archive/2026-11-09/ultron-consolidation-<head-sha>` |
+| `ultron/consolidation-2026-11` | `e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a` | `archive/2026-11-10/ultron-consolidation-e058f26d` |
+| `ultron/curated-promotion-2026-11` | The exact promoted candidate branch tip, checked against `main` | `archive/2026-11-10/ultron-curated-promotion-<head-sha>` |
 
 ## What was carried forward
 
 - **ArenaAi and arena:** both are ancestors of the integration snapshot. Their commits are already in the consolidation history.
 - **integration:** used as the base. Its capability guide, read-only GitHub scout, guarded MCP bridge, plan checkpoints, health center, web reader, bounded fuzzy matching, crash redaction, and other reviewed work remain in the candidate tree.
 - **chatgpt:** the capability guide and repository scout are retained in the integration line. The local-model inventory was carried as a read-only status tool. Its probe is loopback-only, rejects redirects, and bounds the response. The provider-configuration action was not carried.
-- **antigravity:** saved-session recall was adapted into `memory/memory_manager.py`; its skill files, metacognition work, and bandit implementation were already present in the integration line. The file controller now also rejects Windows NTFS alternate data stream names. The branch's incompatible undo metadata API was not copied.
+- **antigravity:** saved-session recall was adapted into `memory/memory_manager.py`; the skill files and base metacognition work were already present. Fractional evidence weights were adapted into `core/bandit.py` and the metacognition replay caller, with regression tests. The system-voice TTS fallback was adapted into `core/tts.py`, using `providers/tts_system.py`. The file controller also rejects Windows NTFS alternate data stream names. The branch's incompatible undo metadata API was not copied.
 - **code-quality branch:** it contains tests and a README, not a distinct implementation fix. The useful bounded fuzzy-distance and TLS/redaction ideas were implemented with tests in the integration line. Its live-network test and stale documentation were not copied.
 
 ## Deliberately not promoted
@@ -65,4 +66,4 @@ Replace the branch and tag with the row you need. The tag points to the exact re
 - Archive reviewed branch tips with the manual workflow. Delete a temporary branch only as a separate manual owner action.
 - Never delete a branch if its current SHA differs from the reviewed SHA. Re-review it first.
 
-The workflow `.github/workflows/archive-reviewed-branches.yml` performs a guarded, manual archive operation after PR #14 merges into `main`. It creates and verifies the seven tags. It never deletes a branch. Branch deletion is a separate manual owner decision after the archived tags have been checked.
+The workflow `.github/workflows/archive-reviewed-branches.yml` performs a guarded, manual archive operation after `main` has been fast-forwarded to the reviewed candidate. It verifies that the candidate tip is reachable from `main`, checks all reviewed source refs, and creates eight immutable tags. It never deletes a branch. Branch deletion is a separate manual owner decision after the archived tags have been checked.
