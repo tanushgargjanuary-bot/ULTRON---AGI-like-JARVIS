@@ -40,6 +40,7 @@ Some abilities are optional. If a dependency or integration is unavailable, Ultr
 - Web reading is best-effort. Many sites restrict automated access; this project does not try to evade those controls.
 - A health notice means an issue was detected through an instrumented failure path or a requested scan. It does not mean every possible fault can be detected.
 - Background repair work stages and tests a candidate. It never applies code or supplies the owner's confirmations.
+- **Rehearsal is not a security sandbox.** Candidate code runs with the current user's OS permissions, even in a temporary copy. Only rehearse trusted code; do not treat this as isolation from hostile code.
 - The signed release verifier is not yet wired into a complete publisher/downloader and safe core-update handoff. Do not enable unattended core-code updates.
 - The private owner-development repository has not been created or configured. The current public repository remains the curated/professional upstream.
 - **License:** Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). Attribution: FatihMakes / 0101e5. Commercial use is not permitted; see [`LICENSE`](LICENSE).
