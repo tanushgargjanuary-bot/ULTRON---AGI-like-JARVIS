@@ -149,6 +149,15 @@ def _identifier(text: str) -> str:
 _TYPES = {"STRING", "NUMBER", "INTEGER", "BOOLEAN", "ARRAY", "OBJECT"}
 
 
+def _finite_number(value: Any) -> bool:
+    """Integers are finite; floats must pass the IEEE-754 finite check."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    return isinstance(value, float) and math.isfinite(value)
+
+
 _SCHEMA_ANNOTATIONS = frozenset({
     "title", "default", "examples", "deprecated", "readOnly", "writeOnly", "$comment",
 })
@@ -224,8 +233,7 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
         enum_values = _enum_values(raw["enum"])
         matches = {
             "STRING": lambda value: isinstance(value, str),
-            "NUMBER": lambda value: isinstance(value, (int, float))
-                and not isinstance(value, bool) and math.isfinite(value),
+            "NUMBER": _finite_number,
             "INTEGER": lambda value: (
                 isinstance(value, int) and not isinstance(value, bool)
             ) or (
