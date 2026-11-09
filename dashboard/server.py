@@ -20,6 +20,8 @@ import threading
 import time
 from pathlib import Path
 
+from core import failures
+
 _DEPS_OK = False
 try:
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
@@ -1301,12 +1303,14 @@ class DashboardServer:
         if use_ssl:
             asyncio.create_task(self._serve_redirector())
         elif allow_lan:
-            print("[Dashboard] Refusing an unencrypted LAN command listener.")
+            failures.note("dashboard.lan_refused", "Refused an unencrypted LAN command listener.")
             return
         else:
-            print("[Dashboard] HTTP is available on this machine only (loopback).")
-            print('[Dashboard] For remote access, set "dashboard_https": true and '
-                  '"dashboard_allow_lan": true in config/api_keys.json.')
+            failures.note(
+                "dashboard.loopback_only",
+                'HTTP is available on loopback. Set dashboard_https=true and '
+                'dashboard_allow_lan=true for remote access.',
+            )
 
         cfg = uvicorn.Config(
             self.app, host=self._bind_host(),

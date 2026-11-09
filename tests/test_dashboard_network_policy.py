@@ -25,8 +25,13 @@ class DashboardNetworkPolicyTests(unittest.TestCase):
             json.dumps(data), encoding="utf-8"
         )
 
+    def dashboard(self):
+        instance = object.__new__(server.DashboardServer)
+        instance._ip = "192.0.2.10"
+        return instance
+
     def test_default_is_loopback_only(self):
-        dashboard = server.DashboardServer()
+        dashboard = self.dashboard()
         self.assertFalse(dashboard._allow_lan())
         self.assertEqual(dashboard._bind_host(), "127.0.0.1")
         with patch.object(dashboard, "_ssl_enabled", return_value=False):
@@ -43,14 +48,14 @@ class DashboardNetworkPolicyTests(unittest.TestCase):
         certs.mkdir()
         (certs / "jarvis.key").write_text("test-key", encoding="utf-8")
         (certs / "jarvis.crt").write_text("test-cert", encoding="utf-8")
-        dashboard = server.DashboardServer()
+        dashboard = self.dashboard()
         self.assertTrue(dashboard._allow_lan())
         self.assertEqual(dashboard._bind_host(), "0.0.0.0")
         self.assertEqual(dashboard._display_host(), dashboard._ip)
         self.assertTrue(dashboard.get_url().startswith("https://"))
 
     def test_local_https_url_uses_loopback_without_lan_permission(self):
-        dashboard = server.DashboardServer()
+        dashboard = self.dashboard()
         with patch.object(dashboard, "_ssl_enabled", return_value=True):
             self.assertEqual(dashboard.get_url(), "https://127.0.0.1:8001")
 
