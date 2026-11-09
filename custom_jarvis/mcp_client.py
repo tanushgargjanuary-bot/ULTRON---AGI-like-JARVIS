@@ -149,24 +149,42 @@ def _identifier(text: str) -> str:
 _TYPES = {"STRING", "NUMBER", "INTEGER", "BOOLEAN", "ARRAY", "OBJECT"}
 
 
+_SCHEMA_ANNOTATIONS = frozenset({
+    "title", "default", "examples", "deprecated", "readOnly", "writeOnly", "$comment",
+})
+_SCHEMA_KEYS = frozenset({
+    "type", "description", "properties", "required", "items", "enum",
+}) | _SCHEMA_ANNOTATIONS
+
+
 def _kind(value: Any) -> str:
-    """Normalize a JSON Schema type to the provider spelling."""
-    kind = str(value or "string").upper()
-    return kind if kind in _TYPES else "STRING"
+    """Normalize a supported JSON Schema type. Never guess an unknown type."""
+    if not isinstance(value, str):
+        raise McpError("MCP schema type must be one supported string type.")
+    kind = value.upper()
+    if kind not in _TYPES:
+        raise McpError(f"MCP schema type '{value}' is not supported by this provider.")
+    return kind
 
 
 def _enum_values(enum: Any) -> list[Any]:
-    """Keep valid JSON scalar enum choices in their original primitive types."""
+    """Preserve every supported JSON scalar enum value or reject the schema."""
     if not isinstance(enum, list) or not enum:
-        return []
+        raise McpError("MCP enum must be a non-empty list.")
+    if len(enum) > 50:
+        raise McpError("MCP enum exceeds the 50-value limit.")
     values = []
-    for value in enum[:50]:
+    for value in enum:
         if isinstance(value, str):
-            values.append(value[:100])
+            if len(value) > 1000:
+                raise McpError("MCP enum string exceeds the 1000-character limit.")
+            values.append(value)
         elif value is None or isinstance(value, (bool, int)):
             values.append(value)
         elif isinstance(value, float) and math.isfinite(value):
             values.append(value)
+        else:
+            raise McpError("MCP enum contains a non-scalar or invalid JSON value.")
     return values
 
 
@@ -175,26 +193,38 @@ MAX_SCHEMA_PROPERTIES = 100
 
 
 def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
-    """Translate a bounded JSON Schema node without silently dropping its shape."""
+    """Translate only the JSON Schema subset this provider can represent."""
     if depth > MAX_SCHEMA_DEPTH:
         raise McpError(f"MCP input schema exceeds the {MAX_SCHEMA_DEPTH}-level nesting limit.")
     if not isinstance(raw, dict):
         raise McpError("MCP input schema contains a property that is not an object.")
 
+    unsupported = sorted(str(key) for key in raw if key not in _SCHEMA_KEYS)
+    if unsupported:
+        names = ", ".join(unsupported[:8])
+        raise McpError(f"MCP input schema uses unsupported keyword(s): {names}.")
+
     raw_type = raw.get("type")
-    if raw_type is None:
-        kind = "OBJECT" if "properties" in raw else ("ARRAY" if "items" in raw else "STRING")
-    else:
+    if "type" in raw:
         kind = _kind(raw_type)
+    elif "properties" in raw:
+        kind = "OBJECT"
+    elif "items" in raw:
+        kind = "ARRAY"
+    else:
+        raise McpError("MCP property schema needs an explicit supported type.")
+
     clean: dict[str, Any] = {"type": kind}
-    if raw.get("description"):
-        clean["description"] = str(raw["description"])[:500]
-    values = _enum_values(raw.get("enum"))
-    if values:
-        clean["enum"] = values
+    description = raw.get("description")
+    if description is not None:
+        if not isinstance(description, str):
+            raise McpError("MCP schema description must be a string.")
+        clean["description"] = description[:500]
+    if "enum" in raw:
+        clean["enum"] = _enum_values(raw["enum"])
 
     if kind == "OBJECT":
-        raw_properties = raw.get("properties") or {}
+        raw_properties = raw.get("properties", {})
         if not isinstance(raw_properties, dict):
             raise McpError("MCP object schema has invalid properties; expected an object.")
         if len(raw_properties) > MAX_SCHEMA_PROPERTIES:
@@ -208,31 +238,41 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
                 raise McpError("MCP input schema contains an invalid property name.")
             properties[name] = _schema_node(spec, depth + 1)
         clean["properties"] = properties
-        wanted = raw.get("required") or []
-        if not isinstance(wanted, list):
-            raise McpError("MCP object schema has an invalid required list.")
-        required = [name for name in wanted
-                    if isinstance(name, str) and name in properties]
-        if required:
-            clean["required"] = required
+
+        if "required" in raw:
+            wanted = raw["required"]
+            if (not isinstance(wanted, list)
+                    or any(not isinstance(name, str) for name in wanted)
+                    or len(set(wanted)) != len(wanted)):
+                raise McpError("MCP object schema has an invalid required list.")
+            missing = [name for name in wanted if name not in properties]
+            if missing:
+                raise McpError(
+                    "MCP object schema requires undeclared properties: "
+                    + ", ".join(missing[:8])
+                )
+            if wanted:
+                clean["required"] = list(wanted)
     elif kind == "ARRAY":
-        items = raw.get("items")
-        if items is None:
-            clean["items"] = {"type": "STRING"}
-        else:
-            clean["items"] = _schema_node(items, depth + 1)
+        if "items" not in raw:
+            raise McpError("MCP array schema must declare an item schema.")
+        clean["items"] = _schema_node(raw["items"], depth + 1)
     return clean
 
 
 def schema(raw: Any) -> dict[str, Any]:
-    """Translate supported MCP JSON Schema, including nested objects and arrays.
+    """Translate supported MCP JSON Schema; refuse any shape that would be weakened.
 
-    The translation is bounded. Unsupported or malformed shapes fail with McpError
-    instead of being silently flattened into a different tool contract.
+    Supported: object, string, number, integer, boolean, and array nodes; nested
+    properties/items; required names; descriptions; and scalar enums. Structural
+    combinators, unions, references, validation constraints, and unknown keywords
+    fail closed instead of being silently removed.
     """
     if not isinstance(raw, dict):
+        raise McpError("MCP tool input schema must be an object.")
+    if not raw:
         return {"type": "OBJECT", "properties": {}}
-    if str(raw.get("type") or "object").lower() != "object":
+    if "type" in raw and raw["type"] != "object":
         raise McpError("MCP tool input schema must have an object at its root.")
     return _schema_node(raw, 0)
 
