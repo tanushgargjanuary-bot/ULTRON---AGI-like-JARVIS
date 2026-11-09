@@ -16,6 +16,7 @@ exactly the kind of thing that could break it.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -82,7 +83,24 @@ class WithAFakeProject(unittest.TestCase):
 
 
 class Staging(WithAFakeProject):
+    def test_proposals_write_does_not_follow_the_old_fixed_temp_hardlink(self):
+        store = self_change.store()
+        external = self.project.parent / "external-proposals.txt"
+        external.write_text("preserve this file", encoding="utf-8")
+        legacy_temp = store / "proposals.tmp"
+        try:
+            os.link(external, legacy_temp)
+        except OSError as error:
+            self.skipTest(f"hard links are unavailable: {error}")
+
+        self.staged()
+
+        self.assertEqual(external.read_text(encoding="utf-8"), "preserve this file")
+        self.assertEqual(legacy_temp.read_text(encoding="utf-8"), "preserve this file")
+        self.assertTrue((store / "proposals.json").is_file())
+
     def test_a_proposal_writes_nothing_to_the_project(self):
+
         proposal = self.staged()
         self.assertEqual(self.read("app.py"), APP)
         self.assertEqual(proposal["stage"], "proposed")
@@ -253,7 +271,41 @@ class Confirming(WithAFakeProject):
 
 
 class Applying(WithAFakeProject):
+    def test_apply_does_not_write_through_the_old_fixed_temp_hardlink(self):
+        proposal = self.ready()
+        external = self.project.parent / "external-apply.txt"
+        external.write_text("preserve this file", encoding="utf-8")
+        legacy_temp = (self.project / "app.py").with_suffix(".py.ultron-tmp")
+        try:
+            os.link(external, legacy_temp)
+        except OSError as error:
+            self.skipTest(f"hard links are unavailable: {error}")
+
+        self_change.apply(proposal["id"])
+
+        self.assertEqual(self.read("app.py"), NEW_APP)
+        self.assertEqual(external.read_text(encoding="utf-8"), "preserve this file")
+        self.assertEqual(legacy_temp.read_text(encoding="utf-8"), "preserve this file")
+
+    def test_apply_replaces_a_linked_backup_without_writing_through_it(self):
+        proposal = self.ready()
+        backup_dir = self.project.parent / "store" / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup = backup_dir / f"{proposal['id']}.bak"
+        external = self.project.parent / "external-backup.txt"
+        external.write_text("preserve this file", encoding="utf-8")
+        try:
+            os.link(external, backup)
+        except OSError as error:
+            self.skipTest(f"hard links are unavailable: {error}")
+
+        self_change.apply(proposal["id"])
+
+        self.assertEqual(external.read_text(encoding="utf-8"), "preserve this file")
+        self.assertEqual(backup.read_text(encoding="utf-8"), APP)
+
     def test_a_change_that_was_never_rehearsed_is_not_written(self):
+
         proposal = self.staged()
         self_change.confirm(proposal["id"], "voice")
         self_change.confirm(proposal["id"], "panel")
@@ -310,7 +362,25 @@ class Applying(WithAFakeProject):
 
 
 class Reverting(WithAFakeProject):
+    def test_revert_does_not_write_through_the_old_fixed_temp_hardlink(self):
+        proposal = self.ready()
+        self_change.apply(proposal["id"])
+        external = self.project.parent / "external-revert.txt"
+        external.write_text("preserve this file", encoding="utf-8")
+        legacy_temp = (self.project / "app.py").with_suffix(".py.ultron-tmp")
+        try:
+            os.link(external, legacy_temp)
+        except OSError as error:
+            self.skipTest(f"hard links are unavailable: {error}")
+
+        self_change.revert(proposal["id"])
+
+        self.assertEqual(self.read("app.py"), APP)
+        self.assertEqual(external.read_text(encoding="utf-8"), "preserve this file")
+        self.assertEqual(legacy_temp.read_text(encoding="utf-8"), "preserve this file")
+
     def test_revert_puts_back_exactly_what_was_there(self):
+
         proposal = self.ready()
         self_change.apply(proposal["id"])
         said = self_change.revert(proposal["id"])
