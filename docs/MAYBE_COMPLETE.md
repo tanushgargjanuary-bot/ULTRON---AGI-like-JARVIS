@@ -43,7 +43,7 @@ Four security defects were found and fixed in the focused MCP/self-change review
 1. Nested MCP object and array schemas were being flattened. The converter preserves supported nested properties and rejects malformed, over-deep, or unsupported schemas rather than mapping them to a different type.
 2. Distinct MCP names could normalize to the same tool name and silently overwrite one another. Registration now rejects collisions, including collisions with native action/plugin names.
 3. MCP servers could emit oversized protocol lines. The reader now caps a line at 1 MB, kills a server that exceeds the limit, bounds stderr reads, and rejects oversized client messages.
-4. A self-change path could reach a protected referee file through a symlink alias, or be redirected after approval by retargeting the link. The path guard now checks protected resolved targets and proposals store the canonical resolved path, with file-link, directory-link, and retargeting regression tests.
+4. A self-change path could reach a protected referee file through a symlink alias, or be redirected after approval by retargeting the link. The path guard now refuses symlink and junction paths, checks protected resolved targets, and stores canonical project-relative paths. Regression tests cover file links, directory links, and post-approval link replacement.
 
 Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, and the Ollama warm-up stream setting. Regression tests were added.
 
