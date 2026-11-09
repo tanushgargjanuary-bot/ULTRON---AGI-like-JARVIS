@@ -174,72 +174,80 @@ def _estimate_params_and_tier(name: str, size_bytes: int = 0) -> tuple[float, bo
     return param_size, has_vision, has_code, tier
 
 
+def _ollama_server_models(data: object, base: str, full_base: str) -> list[LocalModelInfo]:
+    """Parse Ollama's /api/tags response."""
+    if not isinstance(data, dict) or not isinstance(data.get("models"), list):
+        return []
+    detected = []
+    for item in data["models"][:_MAX_MODELS_PER_SCAN]:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()[:160]
+        if not name:
+            continue
+        try:
+            size_bytes = max(0, int(item.get("size", 0) or 0))
+        except (TypeError, ValueError):
+            size_bytes = 0
+        params, vision, code, tier = _estimate_params_and_tier(name, size_bytes)
+        detected.append(LocalModelInfo(
+            name=name,
+            provider_id="ollama",
+            base_url=full_base,
+            running=True,
+            size_bytes=size_bytes,
+            param_size_b=params,
+            has_vision=vision,
+            has_code=code,
+            tier=tier,
+            location=f"Ollama server ({base})",
+        ))
+    return detected
+
+
+def _openai_server_models(pid: str, data: object, base: str,
+                          full_base: str) -> list[LocalModelInfo]:
+    """Parse a standard OpenAI-compatible /v1/models response."""
+    if not isinstance(data, dict) or not isinstance(data.get("data"), list):
+        return []
+    detected = []
+    for item in data["data"][:_MAX_MODELS_PER_SCAN]:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("id") or item.get("name") or "").strip()[:160]
+        if not name:
+            continue
+        params, vision, code, tier = _estimate_params_and_tier(name)
+        detected.append(LocalModelInfo(
+            name=name,
+            provider_id=pid,
+            base_url=full_base,
+            running=True,
+            size_bytes=0,
+            param_size_b=params,
+            has_vision=vision,
+            has_code=code,
+            tier=tier,
+            location=f"{pid.upper()} server ({base})",
+        ))
+    return detected
+
+
 def scan_running_servers() -> list[LocalModelInfo]:
     """Check running loopback endpoints for loaded/available models."""
     detected: list[LocalModelInfo] = []
-    
     for pid, base, endpoint, api_v1 in LOCAL_ENDPOINTS:
-        url = f"{base}{endpoint}"
-        data = _quick_http_get(url, timeout=0.4)
+        if len(detected) >= _MAX_MODELS_PER_SCAN:
+            break
+        data = _quick_http_get(f"{base}{endpoint}", timeout=0.4)
         if not data:
             continue
-            
         full_base = f"{base}{api_v1}"
-        
-        # Ollama API: /api/tags returns {"models": [{"name": "...", "size": ...}, ...]}
-        if pid == "ollama" and isinstance(data, dict) and isinstance(data.get("models"), list):
-            for item in data.get("models", [])[:_MAX_MODELS_PER_SCAN]:
-                if not isinstance(item, dict):
-                    continue
-                m_name = str(item.get("name") or "").strip()[:160]
-                if not m_name:
-                    continue
-                try:
-                    m_size = max(0, int(item.get("size", 0) or 0))
-                except (TypeError, ValueError):
-                    m_size = 0
-                p_size, is_vis, is_code, tier = _estimate_params_and_tier(m_name, m_size)
-                detected.append(
-                    LocalModelInfo(
-                        name=m_name,
-                        provider_id="ollama",
-                        base_url=full_base,
-                        running=True,
-                        size_bytes=m_size,
-                        param_size_b=p_size,
-                        has_vision=is_vis,
-                        has_code=is_code,
-                        tier=tier,
-                        location=f"Ollama server ({base})",
-                    )
-                )
-                
-        # OpenAI-compatible /v1/models returns {"data": [{"id": "...", ...}]}
-        elif isinstance(data, dict) and "data" in data and isinstance(data["data"], list):
-            for item in data["data"][:_MAX_MODELS_PER_SCAN]:
-                if not isinstance(item, dict):
-                    continue
-                m_id = str(item.get("id") or item.get("name") or "").strip()[:160]
-                if not m_id:
-                    continue
-                p_size, is_vis, is_code, tier = _estimate_params_and_tier(m_id)
-                detected.append(
-                    LocalModelInfo(
-                        name=m_id,
-                        provider_id=pid,
-                        base_url=full_base,
-                        running=True,
-                        size_bytes=0,
-                        param_size_b=p_size,
-                        has_vision=is_vis,
-                        has_code=is_code,
-                        tier=tier,
-                        location=f"{pid.upper()} server ({base})",
-                    )
-                )
-
-    return detected
-
+        if pid == "ollama":
+            detected.extend(_ollama_server_models(data, base, full_base))
+        else:
+            detected.extend(_openai_server_models(pid, data, base, full_base))
+    return detected[:_MAX_MODELS_PER_SCAN]
 
 def _parse_manifest_entry(manifest_file: Path, base_dir: Path) -> tuple[str, int]:
     rel = manifest_file.relative_to(base_dir)
