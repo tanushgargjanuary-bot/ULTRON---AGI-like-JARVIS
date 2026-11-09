@@ -322,6 +322,7 @@ class StayingWarm(_Server):
         self.assertEqual(path, "/api/generate")
         self.assertEqual(payload["keep_alive"], local_fallback.KEEP_ALIVE)
         self.assertEqual(payload["model"], "qwen3:4b")
+        self.assertIs(payload["stream"], False)
 
     def test_no_model_means_no_call(self):
         self.assertFalse(local_fallback.warm(self.url, ""))
