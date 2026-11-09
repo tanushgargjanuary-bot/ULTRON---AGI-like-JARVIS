@@ -59,10 +59,13 @@ them" answer at protocol level, and it is the only item on this page that change
   never seen that name, and its fail-closed default is `guarded` — **the owner is asked.**
   The client cannot classify its own tools. A test reads the source and fails if it tries.
 
-The server's schema is translated once: lower-case JSON Schema to the upper-case form the
-provider accepts, and a `required` list that only names arguments that exist. A server that
-dies is one sentence, a server that hangs times out, and closing the app closes the child's
-input so a well-behaved server exits on its own.
+The server's schema is translated once: supported lower-case JSON Schema types become
+the upper-case form the provider accepts. Nested objects and arrays are preserved. Unknown
+types, unions, references, combinators, unsupported constraints, invalid required names,
+and invalid enums are refused rather than silently weakened. Schema depth, property count,
+and protocol message size are bounded. A server that dies is one sentence, a server that
+hangs times out, and closing the app closes the child's input so a well-behaved server exits
+on its own.
 
 What it does not do: install anything, connect to a remote MCP endpoint, run a command
 through a shell, or approve its own tools. It does start the commands you configured, with
