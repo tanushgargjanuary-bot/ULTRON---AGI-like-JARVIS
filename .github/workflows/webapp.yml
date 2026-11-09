@@ -1,0 +1,46 @@
+name: ULTRON Web checks
+
+on:
+  push:
+    paths:
+      - "webapp/**"
+      - ".github/workflows/webapp.yml"
+  pull_request:
+    paths:
+      - "webapp/**"
+      - ".github/workflows/webapp.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ultron-web-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: webapp/package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
