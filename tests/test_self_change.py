@@ -162,21 +162,29 @@ class TheReferee(WithAFakeProject):
         self.assertEqual(self.read("core/policy.py"), "PROTECTED = True\n")
 
 
-    def test_a_proposal_pins_the_resolved_target_if_its_symlink_is_retargeted(self):
+    def test_a_symlink_to_an_allowed_file_is_refused(self):
         alias = self.project / "change-alias.py"
         try:
             alias.symlink_to(self.project / "app.py")
         except (OSError, NotImplementedError) as error:
             self.skipTest(f"symlink creation is unavailable: {error}")
 
-        proposal = self.ready(path="change-alias.py")
-        self.assertEqual(proposal["path"], "app.py")
+        with self.assertRaisesRegex(ValueError, "outside"):
+            self_change.propose("change-alias.py", "change through a link",
+                                new_text=NEW_APP)
+        self.assertEqual(self.read("app.py"), APP)
 
-        alias.unlink()
-        alias.symlink_to(self.project / "notes.md")
-        self_change.apply(proposal["id"])
+    def test_a_target_replaced_by_a_symlink_after_approval_is_not_written(self):
+        proposal = self.ready(path="app.py")
+        app = self.project / "app.py"
+        try:
+            app.unlink()
+            app.symlink_to(self.project / "notes.md")
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"symlink creation is unavailable: {error}")
 
-        self.assertEqual(self.read("app.py"), NEW_APP)
+        with self.assertRaisesRegex(ValueError, "no longer a file"):
+            self_change.apply(proposal["id"])
         self.assertEqual(self.read("notes.md"), "# notes\n")
 
 
