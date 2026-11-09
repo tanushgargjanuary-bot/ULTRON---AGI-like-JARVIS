@@ -244,6 +244,58 @@ class TheSchema(unittest.TestCase):
         clean = mcp_client.schema({"type": "object", "properties": {"a": {"type": "whatever"}}})
         self.assertEqual(clean["properties"]["a"]["type"], "STRING")
 
+    def test_nested_object_properties_are_preserved(self):
+        clean = mcp_client.schema({
+            "type": "object",
+            "properties": {
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "age": {"type": "integer"},
+                    },
+                    "required": ["name"],
+                }
+            },
+        })
+        user = clean["properties"]["user"]
+        self.assertEqual(user["properties"]["name"]["type"], "STRING")
+        self.assertEqual(user["properties"]["age"]["type"], "INTEGER")
+        self.assertEqual(user["required"], ["name"])
+
+    def test_array_of_objects_preserves_item_schema(self):
+        clean = mcp_client.schema({
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"path": {"type": "string"}},
+                        "required": ["path"],
+                    },
+                }
+            },
+        })
+        item = clean["properties"]["files"]["items"]
+        self.assertEqual(item["type"], "OBJECT")
+        self.assertEqual(item["properties"]["path"]["type"], "STRING")
+        self.assertEqual(item["required"], ["path"])
+
+    def test_invalid_nested_properties_are_rejected_not_erased(self):
+        with self.assertRaisesRegex(McpError, "invalid properties"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"user": {"type": "object", "properties": ["not", "a", "dict"]}},
+            })
+
+    def test_excessive_schema_nesting_is_rejected(self):
+        node = {"type": "string"}
+        for _ in range(mcp_client.MAX_SCHEMA_DEPTH + 1):
+            node = {"type": "object", "properties": {"nested": node}}
+        with self.assertRaisesRegex(McpError, "nesting limit"):
+            mcp_client.schema({"type": "object", "properties": {"root": node}})
+
     def test_enum_values_keep_their_json_types(self):
         clean = mcp_client.schema({
             "type": "object",
@@ -254,6 +306,34 @@ class TheSchema(unittest.TestCase):
         self.assertIs(type(values[0]), int)
         self.assertIs(type(values[2]), bool)
         self.assertIs(type(values[3]), bool)
+
+
+class TheMcpNameRegistry(unittest.TestCase):
+    def test_distinct_server_names_that_normalize_to_one_name_are_rejected(self):
+        first_name = mcp_client.tool_name("files-prod", "list")
+        second_name = mcp_client.tool_name("files_prod", "list")
+        self.assertEqual(first_name, second_name)
+
+        registry = {}
+        collisions = set()
+        first = {"name": first_name, "handler": lambda _args: "first"}
+        second = {"name": second_name, "handler": lambda _args: "second"}
+
+        self.assertIsNone(mcp_client.register_declaration(registry, collisions, first))
+        message = mcp_client.register_declaration(registry, collisions, second)
+        self.assertIn("collision", message)
+        self.assertNotIn(first_name, registry)
+        self.assertIn(first_name, collisions)
+
+    def test_a_third_duplicate_cannot_reintroduce_a_rejected_name(self):
+        name = mcp_client.tool_name("files-prod", "list")
+        registry = {}
+        collisions = set()
+        mcp_client.register_declaration(registry, collisions, {"name": name, "id": 1})
+        mcp_client.register_declaration(registry, collisions, {"name": name, "id": 2})
+        mcp_client.register_declaration(registry, collisions, {"name": name, "id": 3})
+        self.assertNotIn(name, registry)
+        self.assertIn(name, collisions)
 
 
 class ThePolicyStaysThePolicy(_Folder):
