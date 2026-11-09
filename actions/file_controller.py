@@ -157,14 +157,32 @@ def _denial_message(target: Path) -> str:
 
 
 def _is_safe_path(target: Path) -> bool:
-    """Is the given path inside _SAFE_ROOTS and not a credential store?"""
+    """Is the given path inside _SAFE_ROOTS and not a credential store?
+
+    Known user folders (Downloads, Documents, ...) count as safe roots too.
+    OneDrive and others redirect them outside the home folder (for example
+    `~/Downloads` resolves to `D:/Downloads`). The credential check runs
+    first, so a file inside those folders is still refused when it is a
+    credential store.
+    """
     try:
         resolved = target.resolve()
         if _is_sensitive(resolved):
             return False
+        roots = list(_SAFE_ROOTS)
+        # `_get_*` are defined below; resolve them lazily so this check
+        # stays cheap and keeps working if a folder is redirected.
+        for helper in (_get_desktop, _get_downloads, _get_documents,
+                       _get_pictures, _get_music, _get_videos):
+            try:
+                path = helper()
+            except Exception:
+                continue
+            if path not in roots:
+                roots.append(path)
         return any(
             resolved == root.resolve() or resolved.is_relative_to(root.resolve())
-            for root in _SAFE_ROOTS
+            for root in roots
         )
     except Exception:
         return False

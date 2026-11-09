@@ -584,15 +584,24 @@ class PipelineFallbackIsHonestTests(unittest.TestCase):
         self.assertIn("self._pipeline_error = reason", SOURCE)
         self.assertIn('self._pipeline_error = ""', SOURCE)
 
-    def test_the_message_depends_on_whether_a_key_exists(self):
+    def _engine_caps_body(self):
+        # Locate the whole method, not a fixed-size window. The method grew
+        # past 4000 chars, which put the key check and the once-only report
+        # outside the old window and made these tests fail on good code.
         start = SOURCE.index("def _resolve_engine_caps")
-        body = SOURCE[start:start + 4000]
+        candidates = [idx for idx in (SOURCE.find("\n    async def ", start),
+                                      SOURCE.find("\n    def ", start + 10))
+                      if idx != -1]
+        end = min(candidates) if candidates else len(SOURCE)
+        return SOURCE[start:end]
+
+    def test_the_message_depends_on_whether_a_key_exists(self):
+        body = self._engine_caps_body()
         self.assertIn("if _has_gemini_key():", body)
         self.assertIn("ENGINE & PROVIDERS", body)
 
     def test_a_failure_is_reported_once_not_once_per_attempt(self):
-        start = SOURCE.index("def _resolve_engine_caps")
-        body = SOURCE[start:start + 4000]
+        body = self._engine_caps_body()
         self.assertIn("_pipeline_reported", body)
 
 

@@ -870,7 +870,6 @@ def file_processor(parameters: dict, player=None, speak=None) -> str:
     params      = {**parameters, "instruction": instruction}
 
     log_msg = f"[FileProcessor] {file_type.upper()} | {path.name} | action={action or 'auto'}"
-    print(log_msg)
     if player:
         player.write_log(log_msg)
 

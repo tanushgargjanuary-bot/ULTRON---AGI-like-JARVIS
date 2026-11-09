@@ -464,7 +464,7 @@ def _close_app(app_name: str, confirmed_index: int | None = None) -> str:
 def _screen_find(description: str) -> tuple[int, int] | None:
     api_key = _get_api_key()
     if not api_key:
-        print("[ComputerControl] ⚠️ No API key for screen_find")
+        failures.note("computer_control.screen_find", "No API key for screen_find")
         return None
 
     try:
@@ -502,7 +502,7 @@ def _screen_find(description: str) -> tuple[int, int] | None:
             return int(match.group(1)), int(match.group(2))
 
     except Exception as e:
-        print(f"[ComputerControl] ⚠️ screen_find failed: {e}")
+        failures.note("computer_control.screen_find", e)
 
     return None
 
@@ -670,7 +670,6 @@ def computer_control(
 
     except Exception as e:
         failures.note(f"computer_control.{action}", e)
-        print(f"[ComputerControl] ❌ {action}: {e}")
         return f"computer_control '{action}' failed: {e}"
 
 

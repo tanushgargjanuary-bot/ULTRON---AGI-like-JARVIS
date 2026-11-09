@@ -1,3 +1,5 @@
+"""Tests that file processing refuses unsafe paths."""
+
 import shutil
 import tempfile
 import unittest

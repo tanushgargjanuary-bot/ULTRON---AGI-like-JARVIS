@@ -1,3 +1,5 @@
+"""Tests that processed files can be restored with undo."""
+
 import tempfile
 import unittest
 from pathlib import Path

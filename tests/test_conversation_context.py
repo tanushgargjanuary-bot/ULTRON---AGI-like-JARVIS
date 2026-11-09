@@ -1,3 +1,5 @@
+"""Tests that prior conversation is carried into a new session."""
+
 import unittest
 
 from core.conversation_context import carryover_block

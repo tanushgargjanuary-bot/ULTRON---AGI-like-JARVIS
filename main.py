@@ -1420,7 +1420,7 @@ class JarvisLive:
         except Exception:
             _cfg = {}
             _persona = personas_mod.get_persona("ultron")
-            self._asst_name = "Ultron"
+            self._asst_name = identity.NAME
             _user_name = ""
 
         memory     = load_memory()

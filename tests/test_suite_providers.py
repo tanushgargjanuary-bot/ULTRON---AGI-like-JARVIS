@@ -599,7 +599,7 @@ class ProbeWhenAbsent(unittest.TestCase):
 
 class CliRunner(unittest.TestCase):
     def test_runs_a_real_process_and_captures_stdout(self):
-        code, out, err = bridges.run_cli(["python3", "-c", "print('hello')"], timeout=10)
+        code, out, err = bridges.run_cli([sys.executable, "-c", "print('hello')"], timeout=10)
         self.assertEqual(code, 0)
         self.assertEqual(out.strip(), "hello")
         self.assertIsInstance(err, str)
@@ -611,12 +611,12 @@ class CliRunner(unittest.TestCase):
 
     def test_output_is_capped(self):
         code, out, err = bridges.run_cli(
-            ["python3", "-c", "print('x' * 20000)"], timeout=10)
+            [sys.executable, "-c", "print('x' * 20000)"], timeout=10)
         self.assertEqual(code, 0)
         self.assertLessEqual(len(out), bridges.OUTPUT_LIMIT + 32)
 
     def test_timeout_is_reported(self):
-        code, out, err = bridges.run_cli(["python3", "-c", "import time; time.sleep(5)"],
+        code, out, err = bridges.run_cli([sys.executable, "-c", "import time; time.sleep(5)"],
                                          timeout=0.5)
         self.assertNotEqual(code, 0)
         self.assertIn("did not answer", err.lower())

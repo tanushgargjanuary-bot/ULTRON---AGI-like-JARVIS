@@ -15,6 +15,7 @@ because "I could not test half of it" is not "it works".
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 import unittest
@@ -103,9 +104,15 @@ class ClaimTableTests(unittest.TestCase):
                 self.assertIn(required, keys)
 
     def test_a_subset_run_exits_zero_and_says_a_verdict(self):
+        # The gate prints a non-ASCII marker; a legacy Windows console
+        # (cp1252) cannot encode it. CI sets PYTHONUTF8=1 for exactly this.
+        # Ask for UTF-8 here too, so the test does not depend on the outer
+        # console code page. The gate file itself is a referee and must not
+        # be edited without owner approval.
+        env = dict(os.environ, PYTHONUTF8="1")
         done = subprocess.run([sys.executable, str(SCRIPTS / "proof_gate.py"),
                                "--only", "persona"], capture_output=True, text=True,
-                              timeout=300, cwd=str(ROOT))
+                              timeout=300, cwd=str(ROOT), env=env)
         self.assertEqual(done.returncode, 0, done.stderr[-600:])
         self.assertIn("PROOF GATE", done.stdout)
         self.assertIn("persona", done.stdout)

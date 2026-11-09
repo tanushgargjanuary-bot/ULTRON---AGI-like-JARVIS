@@ -414,6 +414,20 @@ def register_addon_tools(registry: ToolRegistry) -> None:
         }
         return ToolResult(True, output=json.dumps(data), data=data)
 
+    def _hits_in_text(candidate, root, raw: bytes, pattern, limit: int,
+                      hits: list, capped: bool) -> bool:
+        """Add hits from one decoded file; `capped` says the limit was hit."""
+        for number, line in enumerate(raw.decode("utf-8", "replace").splitlines(), 1):
+            if pattern.search(line):
+                hits.append({
+                    "file": str(candidate.relative_to(root)),
+                    "line": number,
+                    "text": line.strip()[:200],
+                })
+                if len(hits) >= limit:
+                    return True
+        return capped
+
     @register(
         "search_text",
         "Search file contents for a literal string or regular expression and return "
@@ -460,17 +474,9 @@ def register_addon_tools(registry: ToolRegistry) -> None:
             if b"\x00" in raw[:2048]:          # binary
                 continue
             scanned += 1
-            for number, line in enumerate(
-                    raw.decode("utf-8", "replace").splitlines(), 1):
-                if pattern.search(line):
-                    hits.append({
-                        "file": str(candidate.relative_to(root)),
-                        "line": number,
-                        "text": line.strip()[:200],
-                    })
-                    if len(hits) >= limit:
-                        capped = True
-                        break
+            if _hits_in_text(candidate, root, raw, pattern, limit, hits, capped):
+                capped = True
+                break
         data = {"query": text, "files_scanned": scanned, "hits": hits,
                 "truncated": capped}
         summary = (f"{len(hits)} hit(s) in {scanned} file(s)"

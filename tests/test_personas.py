@@ -1,3 +1,5 @@
+"""Tests for persona names, labels, and prompts."""
+
 import unittest
 
 from core.personas import PERSONAS, get_persona, persona_prompt

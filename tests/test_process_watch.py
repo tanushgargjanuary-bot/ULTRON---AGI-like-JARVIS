@@ -118,8 +118,11 @@ class WatchByPid(unittest.TestCase):
 
     def test_it_reports_a_finish_once(self):
         # Long enough that a busy runner cannot finish it before the first look.
+        # The first process-table sweep can take several seconds on a busy
+        # Windows box, so 2.5 s was too short: the child finished before it
+        # was ever seen. 15 s keeps the same intent on a slower machine.
         child = subprocess.Popen([sys.executable, "-c",
-                                  "import time; time.sleep(2.5)"])
+                                  "import time; time.sleep(15)"])
         self.addCleanup(lambda: child.poll() is None and child.kill())
         watcher = Watcher()
         watcher.watch_pid(child.pid, "a short job")

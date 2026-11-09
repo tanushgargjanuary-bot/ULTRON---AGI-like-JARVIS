@@ -1,3 +1,5 @@
+"""Tests for on-device text reading from images."""
+
 import unittest
 from pathlib import Path
 

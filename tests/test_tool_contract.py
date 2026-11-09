@@ -56,13 +56,8 @@ def action_modules():
     return out
 
 
-def keys_read_from_parameters(fn) -> set[str]:
-    """String keys a handler pulls out of its `parameters` argument."""
-    try:
-        src = inspect.getsource(fn)
-    except (OSError, TypeError):
-        return set()
-    tree = ast.parse(ast.unparse(ast.parse(src)))
+def _parameter_aliases(tree) -> set[str]:
+    """Names that stand for the `parameters` argument, one level deep."""
     aliases = {"parameters"}
     for node in ast.walk(tree):
         # `params = parameters or {}` is the house style, one level deep.
@@ -70,6 +65,11 @@ def keys_read_from_parameters(fn) -> set[str]:
                 and isinstance(node.targets[0], ast.Name)
                 and "parameters" in ast.unparse(node.value)):
             aliases.add(node.targets[0].id)
+    return aliases
+
+
+def _string_keys_read(tree, aliases) -> set[str]:
+    """String keys read from `parameters` (via a name it owns) in the tree."""
     found = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
@@ -86,6 +86,16 @@ def keys_read_from_parameters(fn) -> set[str]:
             if recv.split(".")[0] in aliases or "parameters" in recv:
                 found.add(node.slice.value)
     return found
+
+
+def keys_read_from_parameters(fn) -> set[str]:
+    """String keys a handler pulls out of its `parameters` argument."""
+    try:
+        src = inspect.getsource(fn)
+    except (OSError, TypeError):
+        return set()
+    tree = ast.parse(ast.unparse(ast.parse(src)))
+    return _string_keys_read(tree, _parameter_aliases(tree))
 
 
 class ToolSchemaAgreementTests(unittest.TestCase):

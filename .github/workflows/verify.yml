@@ -8,7 +8,7 @@ on:
   push:
     # ArenaAi is the branch this work is delivered on. Without it here, a push to it
     # started no job and a green tick meant only that nothing had run.
-    branches: [main, master, ArenaAi]
+    branches: [main, master, ArenaAi, integration/best-of-all-2026-11-09]
   pull_request:
   workflow_dispatch:
 
