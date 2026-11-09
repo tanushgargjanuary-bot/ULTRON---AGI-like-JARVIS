@@ -6318,8 +6318,9 @@ class MainWindow(QMainWindow):
         if not isinstance(voice_map, dict):
             voice_map = {}
         # Remember the outgoing persona's voice so a later return restores it.
-        voice_map[self._persona_id] = current_voice
-        if persona.id == self._persona_id:
+        _current_persona_id = getattr(self, "_persona_id", "ultron")
+        voice_map[_current_persona_id] = current_voice
+        if persona.id == _current_persona_id:
             target_voice = current_voice
         else:
             candidate = voice_map.get(persona.id, persona.voice)
@@ -7902,7 +7903,8 @@ class MainWindow(QMainWindow):
         display = self._assistant_name.upper()
         self.setWindowTitle(f"{display} — {APP_VERSION}")
         self._title_lbl.setText(display)
-        self._sub_lbl.setText(personas_mod.get_persona(self._persona_id).audience_label)
+        _current_persona_id = getattr(self, "_persona_id", "ultron")
+        self._sub_lbl.setText(personas_mod.get_persona(_current_persona_id).audience_label)
         self._log._ai_name_lc = self._assistant_name.lower()
         self.hud._assistant_name = display
 
