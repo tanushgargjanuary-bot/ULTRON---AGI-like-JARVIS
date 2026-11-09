@@ -91,6 +91,16 @@ DIES = textwrap.dedent(
     '''
 )
 
+OVERSIZED = textwrap.dedent(
+    f'''
+    import sys
+    sys.stdin.readline()
+    sys.stdout.write("x" * {mcp_client.MAX_MESSAGE_CHARS + 1} + "\\n")
+    sys.stdout.flush()
+    sys.stdin.readline()
+    '''
+)
+
 
 class _Folder(unittest.TestCase):
     def setUp(self):
@@ -386,6 +396,16 @@ class ADyingServer(_Folder):
         try:
             with self.assertRaisesRegex(McpError, "no answer"):
                 client.start()
+        finally:
+            client.close()
+
+    def test_oversized_server_messages_terminate_the_server(self):
+        client = Client(self.entry(OVERSIZED), timeout=0.5)
+        try:
+            with self.assertRaises(McpError):
+                client.start()
+            self.assertIn("oversized JSON-RPC line", client._dead)
+            self.assertFalse(client.alive())
         finally:
             client.close()
 
