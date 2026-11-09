@@ -876,6 +876,12 @@ class JarvisLive:
         # is one line in the log; it does not stop the other servers or this start.
         self._mcp_tools = {}
         _mcp_name_collisions = set()
+        _mcp_reserved_names = set(_inline_names) | set(self._action_registry.names())
+        _mcp_reserved_names.update(
+            str(row.get("name") or "")
+            for row in self._plugin_registry.get_tool_declarations()
+            if isinstance(row, dict) and row.get("name")
+        )
         try:
             self._mcp_clients, _mcp_notes = _mcp.connect_all(_base_dir)
         except Exception as _mcp_error:      # a bad file here must not cost a start
@@ -884,7 +890,8 @@ class JarvisLive:
             try:
                 for _declaration in _client.declarations():
                     _collision = _mcp.register_declaration(
-                        self._mcp_tools, _mcp_name_collisions, _declaration
+                        self._mcp_tools, _mcp_name_collisions, _declaration,
+                        reserved_names=_mcp_reserved_names,
                     )
                     if _collision:
                         _mcp_notes.append(_collision)
