@@ -233,6 +233,9 @@ def propose(path: str, reason: str, new_text: str | None = None,
     target = _inside(relative)
     if target is None:
         raise ValueError(f"'{relative}' is outside the files I may change.")
+    # Store the resolved project-relative target. Re-resolving the model-supplied
+    # symlink name later could otherwise redirect an approved proposal to another file.
+    canonical_path = target.relative_to(root().resolve()).as_posix()
     old = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
     new = _apply_edit(old, find, replace, new_text)
     if len(new) > MAX_PATCH:
@@ -242,7 +245,7 @@ def propose(path: str, reason: str, new_text: str | None = None,
         raise ValueError("That change would leave the file exactly as it is.")
     proposal = {
         "id": "c" + uuid.uuid4().hex[:12],
-        "path": relative,
+        "path": canonical_path,
         "reason": reason,
         "at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "stage": "proposed",
