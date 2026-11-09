@@ -80,6 +80,8 @@ Reviewers must inspect changed code, relevant callers, and tests. Each actionabl
 
 Reviewers must separate confirmed defects from questions and improvement ideas. A test passing does not cancel a source-level defect. A test failure is not automatically a product defect until the cause is identified.
 
+For generated-code or self-repair features, check the execution boundary separately from the file-writing boundary. A temporary worktree is not an OS sandbox. Confirm which user identity runs candidate code and which files, processes, and network destinations it can reach.
+
 ## PR completion rule
 
 Do not merge only because the CI checks are green. Resolve all Critical and High findings. Resolve Medium findings or record an explicit reason to defer them. Confirm that the final review covers the latest PR head, not an earlier commit.
