@@ -1,15 +1,17 @@
 # ULTRON — “Maybe complete?” checkpoint
 
-**Checkpoint:** Branch consolidation candidate  
+**Checkpoint:** Curated consolidation candidate  
 **Promotion review:** [#15 — Curated ULTRON promotion candidate — fast-forward only](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
+**Candidate branch:** `ultron/curated-promotion-2026-11`  
+**Candidate SHA at this review:** `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3`  
 **Target:** `main`  
-**State:** Not promoted. PR #15 is the review surface. After the final checks pass, fast-forward `main` to the exact reviewed candidate SHA. Do not use GitHub's merge button, merge source development branches, or create a merge commit.
+**State:** Not promoted. PR #15 remains open. Do not use GitHub's merge button. Promotion must be a non-forced fast-forward update to the exact reviewed SHA.
 
-This checkpoint means the current consolidation work is ready for a final promotion decision. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
+This checkpoint means the curated implementation has passed its current automated verification and is ready for the owner to review for promotion. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
 ## What is included
 
-- Curated integration from the reviewed development branches. No wholesale branch merge.
+- Curated integration from reviewed development branches. No wholesale branch merge.
 - Lazy provider import fix for the default Gemini path.
 - Memory search over saved session summaries.
 - Stale self-change proposal protection: apply and revert compare content hashes before overwriting. State updates use unique exclusive temporary files and recheck hashes immediately before atomic replacement.
@@ -22,23 +24,73 @@ This checkpoint means the current consolidation work is ready for a final promot
 - Loopback-only dashboard by default; LAN exposure requires an explicit setting and HTTPS.
 - Public web reader with URL, DNS, redirect, robots, content-type, and response-size checks.
 - Reviewdog + Ruff advisory PR checks.
-- Immutable archive tags through a guarded, manual-only workflow. It verifies that `main` contains the curated candidate. It does not require PR merge and does not delete branch refs.
+- **ULTRON Web first slice:** Next.js web client, Supabase Google OAuth, cookie-based sessions, protected workspace, sign-out, and a disabled composer until the Python agent service is connected. This is a separate web client, not a replacement for the Windows desktop app.
+- Web CI workflow for TypeScript checking and production build.
+- Guarded manual branch archive workflow. It records ten non-`main` branch tips, creates and verifies exact-SHA tags after promotion, skips branches used by open PRs, and only deletes when an explicit manual input and confirmation phrase are supplied.
 
 ## Verification evidence
 
-The current PR #15 head must have all of the following before fast-forward promotion:
+All checks below belong to PR #15 head `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3`.
 
-- Linux `verify` job: success.
-- Windows `verify` job: success.
-- Reviewdog job: completed. Reviewdog warnings are advisory; review them rather than treating a successful job as proof of clean code.
-- Proof-gate reports from both operating systems: inspect the PROVEN, PARTIAL, and FAILED counts and the claim-level output.
-- No unresolved Critical or High findings. Medium findings must be fixed or explicitly deferred with a reason.
+| Check | Run | Result |
+|---|---:|---|
+| Linux `verify` suite and proof gate | [42691410701](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410701) | Passed |
+| Windows `verify` suite and proof gate | [42691410701](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410701) | Passed |
+| ULTRON Web typecheck and production build | [42691410461](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410461) | Passed |
+| Reviewdog / Ruff | [42691410137](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410137) | Completed successfully; 101 advisory warnings triaged |
 
-The CI result must belong to the **latest PR #15 head**, not an earlier commit. Older green runs do not verify later edits. The first run after the candidate additions exposed a test-debt increase and a missing Linux PortAudio runtime. Both causes were corrected; the replacement CI run must pass before promotion.
+### Proof-gate results
+
+| Runner | PROVEN | PARTIAL |
+|---|---:|---:|
+| Linux | 24 | 13 |
+| Windows | 28 | 9 |
+
+PARTIAL is not a pass. It records claims that the hosted runner cannot fully verify. The two reports are saved as workflow artifacts named `verification-linux` and `verification-windows`.
+
+### Instrument-scan results
+
+These scans are separate from the main suite and are configured as non-blocking environment reports.
+
+| Runner | Passed | Failed | Skipped |
+|---|---:|---:|---:|
+| Linux | 17 | 2 | 15 |
+| Windows | 24 | 0 | 12 |
+
+The Linux failures are environmental: screen capture cannot connect to a display, and PortAudio cannot connect to PulseAudio. Linux also skips camera capture because OpenCV is absent and browser checks because Playwright is absent.
+
+The Windows scan has no audio devices. It skips camera/browser checks because OpenCV and Playwright are absent. These skipped hardware checks are not tested successfully; test them on the target machine before claiming those paths work.
+
+### Reviewdog warning triage
+
+Reviewdog reported 101 advisory warnings on changed lines:
+
+| Rule | Count | Assessment |
+|---|---:|---|
+| BLE001 — broad exception catches | 50 | Needs targeted cleanup; many are fail-soft boundaries, but not all are automatically safe |
+| E402 — imports after setup | 15 | Test modules often set environment or stubs before importing the target module |
+| S603 — subprocess without shell | 6 | Calls use argument arrays and no shell; MCP commands are owner-configured and run with owner privileges |
+| F401 — unused imports | 5 | Low-risk cleanup debt |
+| S310 — URL opening | 4 | Audited guards use a fixed GitHub HTTPS endpoint or literal loopback addresses, disable proxies/redirects, and bound responses |
+| S607 — partial executable paths | 4 | Local utilities are resolved or intentionally invoked by name; keep PATH trust in mind |
+| S110 — exception/pass | 3 | File rollback attempts are best-effort; failures must not replace the original write error |
+| S311 — pseudo-random values | 3 | Used for avatar/visual animation, not credentials or cryptographic tokens |
+| S104 — bind to all interfaces | 2 | Dashboard binds to 0.0.0.0 only when the owner enables LAN access and HTTPS is enabled; the other warning is a test |
+| Other style/reliability rules | 9 | Includes unused variables, test import order, test fixture secrets, and formatting |
+
+The security-pattern warnings were inspected in context. No shell execution was found in the flagged subprocess calls. The GitHub scout uses a fixed HTTPS API URL; local model probes use literal loopback addresses, no proxy, no redirect, and bounded response bodies. The dashboard's LAN bind has an explicit owner setting and TLS guard. The hardcoded token warning is a fake test fixture.
+
+This is a warning triage, not a full security audit. Do not bulk-suppress Ruff rules. Review remaining broad exception handling and unused imports in separate small tasks.
+
+## Fast-forward status
+
+At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **169 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
+
+Repeat this comparison immediately before promotion. Never force-update `main`.
 
 ## Code-review status
 
-A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 180 files.
+A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 180+ files.
 
 Four security defects were found and fixed in the focused MCP/self-change review:
 
@@ -49,8 +101,6 @@ Four security defects were found and fixed in the focused MCP/self-change review
 
 Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, the Ollama warm-up stream setting, atomic self-change file replacement, and observable temporary-file cleanup. Regression tests were added.
 
-Reviewdog reports static-analysis warnings. Several are expected patterns or false positives, for example fail-closed exception handling, explicit local subprocess launches, loopback probes, and avatar animation randomness. Each warning still requires context. Do not bulk-apply lint fixes or suppress the entire security ruleset.
-
 ## Known limits — not complete
 
 ### Provider routing
@@ -58,6 +108,21 @@ Reviewdog reports static-analysis warnings. Several are expected patterns or fal
 The routing library supports route selection, quota groups, and privacy/cost restrictions. The live application wires primary conversation/evolution/critic routes and explicit conversation switching. It does **not** yet configure a general live fallback ladder or quota-limit handling in the application request path.
 
 Do not advertise automatic multi-provider failover as complete. Do not add paid or data-sharing fallback without a separate user-controlled setting and tests. The local fallback is a separate, explicit-consent path.
+
+### ULTRON Web
+
+The current web client is an authentication and workspace shell. It does not yet execute the ULTRON Python agent, store chat messages, or provide cross-device memory. Its composer remains disabled.
+
+Before enabling chat:
+- Host the Python worker as a separate service.
+- Verify the Supabase session server-side for every request.
+- Derive the account identity from verified claims; never trust a browser-supplied user ID.
+- Add per-user database policies, retention, export, and deletion controls before storing messages.
+- Keep provider keys server-side. A later BYOK feature must not expose keys to browser JavaScript.
+
+No Vercel project has been confirmed or deployed yet. Team authorization is still required before project discovery and setup. Supabase and Google OAuth provider configuration is also required before sign-in can work.
+
+Do not collect or sell raw user conversations, personal details, or user memories. Use explicit, minimal, opt-in analytics only.
 
 ### Self-modification and health repair
 
@@ -67,7 +132,7 @@ The tool has path restrictions, protected files (including symlink aliases to re
 
 ### MCP process trust
 
-The app starts the commands listed in `config/mcp_servers.json`. Each process runs with the current user's permissions and inherits ULTRON's process environment, which may contain credentials. The shared tool-policy gate asks before an unknown MCP tool is invoked, but it does not sandbox the MCP server process itself or restrict its environment.
+The app starts the commands listed in `config/mcp_servers.json`. Each process runs with the current user's permissions and inherits the app's process environment, which may contain credentials. The shared tool-policy gate asks before an unknown MCP tool is invoked, but it does not sandbox the MCP server process itself or restrict its environment.
 
 Only configure MCP commands and arguments from servers you trust. Do not configure untrusted MCP servers in a process that holds credentials in environment variables.
 
@@ -85,22 +150,40 @@ Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent
 
 ## Branch cleanup
 
-The original development branches remain present after promotion. The manual archive workflow creates and verifies tags at the reviewed branch tips. It does not delete branch refs. A moved branch stops the workflow before tags are created. `main` is not in the archive or deletion list.
+The repository currently has **11 branches**: `main` plus ten other refs. No archive tags have been created yet and no branches have been deleted.
 
-After fast-forward promotion, manually dispatch the archive workflow and verify every tag. The workflow preserves all source branch refs; any branch deletion is a separate manual owner decision.
+The workflow `.github/workflows/archive-reviewed-branches.yml`:
+- Runs manually from `main` only.
+- Refuses to continue unless `main` contains the current curated candidate tip.
+- Checks every reviewed source branch against its exact recorded SHA. A moved branch stops the run before archive tags are made.
+- Creates and verifies ten exact-SHA archive tags before any deletion is considered.
+- Defaults to archive-only mode. It deletes nothing unless `delete_branches=true` and the exact phrase `DELETE ARCHIVED BRANCHES` is supplied.
+- Skips any branch used by an open PR and checks again before each deletion.
+- Never includes `main` in the deletion list.
+
+The candidate branch is used by PR #15. Close PR #15 without merging after the fast-forward promotion, then run the archive-only workflow, inspect all tags, and only then run the separately confirmed deletion mode.
+
+## Next checkpoints
+
+See [NEXT_CHECKPOINTS.md](NEXT_CHECKPOINTS.md) for the small-step execution sequence and current blockers.
 
 ## Promotion checklist
 
-- [ ] Latest Linux verification passes.
-- [ ] Latest Windows verification passes.
-- [ ] Latest Reviewdog run completes and the remaining warnings have been triaged.
-- [ ] Latest Linux and Windows proof-gate reports have been inspected.
-- [ ] No unresolved Critical or High review findings remain.
+- [x] Latest Linux verification passes.
+- [x] Latest Windows verification passes.
+- [x] Latest web typecheck and production build pass.
+- [x] Latest Reviewdog run completed and warnings were triaged in context.
+- [x] Latest Linux and Windows proof-gate reports were inspected.
+- [ ] Complete a final review of all Critical/High-risk changed code paths; this checkpoint's manual review was risk-focused, not line-by-line.
 - [ ] Medium findings are fixed or explicitly deferred.
-- [ ] The owner has reviewed PR #15 and approves the exact candidate SHA for promotion.
+- [ ] Vercel team access and preview deployment are configured, or explicitly deferred from this promotion.
+- [ ] The owner reviews PR #15 and approves the exact candidate SHA.
+- [ ] Re-check that the candidate is still ahead of `main` and 0 commits behind.
 - [ ] Fast-forward `main` to that SHA with a non-forced update and an expected-current-SHA check. Do not merge the PR.
-- [ ] Manually dispatch the archive workflow on `main`. Verify all eight tags and inspect the branch list. Keep or delete branch refs only by a separate manual decision.
+- [ ] Close PR #15 without merging.
+- [ ] Run archive-only mode from `main`; verify all ten exact-SHA tags.
+- [ ] Run the separate deletion mode with the exact confirmation phrase; verify that `main` remains and only eligible branches are removed.
 
 ## Meaning of this checkpoint
 
-When the checklist is complete, ULTRON is at a **curated, tested consolidation checkpoint**. That is a reasonable “maybe complete?” milestone for this release. It is not a claim that every planned capability, security boundary, update mechanism, or autonomous behaviour is finished.
+When the checklist is complete, ULTRON is at a **curated, tested consolidation checkpoint**. That is a reasonable “maybe complete?” milestone for this release. It is not a claim that every planned capability, security boundary, update mechanism, web-agent integration, or autonomous behaviour is finished.
