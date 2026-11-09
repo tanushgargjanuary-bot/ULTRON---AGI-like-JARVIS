@@ -147,11 +147,13 @@ def configured_provider_id(purpose: Purpose | str) -> str:
     """Resolve and report the provider selected for a configured request purpose."""
     try:
         from memory.config_manager import get_providers, get_provider_config
-        from providers import registry
         block = get_providers()
         provider_id = configured_slot_id(purpose, block)
         if not provider_id:
             return ""
+        # Keep the Gemini-only default path independent of optional providers.
+        # Import the registry only after a provider is explicitly configured.
+        from providers import registry
         config = get_provider_config(provider_id)
         model = str(config.get("model") or "").strip()
         catalog = registry.catalog_entry(provider_id)
