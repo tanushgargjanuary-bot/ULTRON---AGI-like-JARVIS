@@ -59,6 +59,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | Dated branch audits, selected work, and rejected candidates |
 | [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) | Exact archived branch tips, cleanup rules, and restore commands |
+| [`CODE_REVIEW.md`](CODE_REVIEW.md) | CI, Reviewdog/Ruff, optional PR-Agent, and manual review standards |
 | [`RUST_MIGRATION.md`](RUST_MIGRATION.md) | Evidence-first policy for selective Rust ports; Python remains the control plane |
 | [`reference/ALGORITHMS.md`](reference/ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
 | [`reference/CUSTOM_ULTRON.md`](reference/CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
