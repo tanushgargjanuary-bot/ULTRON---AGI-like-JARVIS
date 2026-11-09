@@ -753,6 +753,23 @@ class DashboardServer:
         self._app_html                    = _read("app.html")
         self.app                          = self._build_app()
 
+    @staticmethod
+    def _allow_lan() -> bool:
+        """LAN access is off unless the owner explicitly enables it."""
+        try:
+            import json as _json
+            with open(BASE_DIR / "config" / "api_keys.json", "r",
+                      encoding="utf-8") as handle:
+                return _json.load(handle).get("dashboard_allow_lan") is True
+        except Exception:
+            return False
+
+    def _bind_host(self) -> str:
+        return "0.0.0.0" if self._allow_lan() else "127.0.0.1"
+
+    def _display_host(self) -> str:
+        return self._ip if self._allow_lan() else "127.0.0.1"
+
     # ── one-time key management ───────────────────────────────────────────
 
     def new_key(self, expiry_secs: int = 600) -> str:
@@ -803,9 +820,10 @@ class DashboardServer:
     def get_url(self) -> str:
         """The full URL the QR code carries — always with its scheme, so a
         scanner never has to guess."""
+        host = self._display_host()
         if self._ssl_enabled():
-            return f"https://{self._ip}:{SECURE_PORT}"
-        return f"http://{self._ip}:{PORT}"
+            return f"https://{host}:{SECURE_PORT}"
+        return f"http://{host}:{PORT}"
 
     def get_manual_url(self) -> str:
         """What to type into a phone browser by hand.
@@ -815,7 +833,7 @@ class DashboardServer:
         looks exactly like the server being switched off. The redirector speaks
         HTTP, so it answers, and sends the browser on to the secure page.
         """
-        return f"{self._ip}:{PORT}"
+        return f"{self._display_host()}:{PORT}"
 
     def _aes_key(self, session_key: str) -> bytes:
         if session_key not in self._aes_cache:
@@ -1225,10 +1243,10 @@ class DashboardServer:
         async def _to_https(path: str, request: Request):
             query = f"?{request.url.query}" if request.url.query else ""
             return RedirectResponse(
-                f"https://{self._ip}:{SECURE_PORT}/{path}{query}",
+                f"https://{self._display_host()}:{SECURE_PORT}/{path}{query}",
                 status_code=307)
 
-        cfg = uvicorn.Config(bounce, host="0.0.0.0", port=PORT,
+        cfg = uvicorn.Config(bounce, host=self._bind_host(), port=PORT,
                              log_level="warning")
         print(f"[Dashboard] Type by hand:  {self._ip}:{PORT}  "
               f"(sends you to the secure page)")
@@ -1240,11 +1258,18 @@ class DashboardServer:
             print("[Dashboard] Run:  pip install fastapi 'uvicorn[standard]' cryptography")
             return
 
-        # Startup only CHECKS — see report_network_access for why it never
-        # asks for administrator rights here. In a thread: reading the
-        # firewall rules takes about a second.
-        asyncio.get_running_loop().run_in_executor(
-            None, report_network_access, PORT, SECURE_PORT)
+        allow_lan = self._allow_lan()
+        # LAN command access requires both explicit LAN permission and TLS.
+        # Loopback HTTP remains available when remote access is not enabled.
+        if allow_lan and not self._ssl_enabled():
+            print("[Dashboard] LAN access refused: set dashboard_https=true and "
+                  "install a valid local certificate before enabling dashboard_allow_lan.")
+            return
+
+        # Only LAN mode needs a firewall reachability check.
+        if allow_lan:
+            asyncio.get_running_loop().run_in_executor(
+                None, report_network_access, PORT, SECURE_PORT)
 
         # Only make a certificate if HTTPS was actually asked for. Generating
         # one nobody uses just leaves a private key on disk.
@@ -1276,15 +1301,16 @@ class DashboardServer:
         # so on screen rather than pretending.
         if use_ssl:
             asyncio.create_task(self._serve_redirector())
+        elif allow_lan:
+            print("[Dashboard] Refusing an unencrypted LAN command listener.")
+            return
         else:
-            print("[Dashboard] Plain HTTP on your local network. Commands are "
-                  "not encrypted; the pairing key still gates access.")
-            print('[Dashboard] For HTTPS set "dashboard_https": true in '
-                  'config/api_keys.json (your phone will ask you to trust the '
-                  'certificate once).')
+            print("[Dashboard] HTTP is available on this machine only (loopback).")
+            print('[Dashboard] For remote access, set "dashboard_https": true and '
+                  '"dashboard_allow_lan": true in config/api_keys.json.')
 
         cfg = uvicorn.Config(
-            self.app, host="0.0.0.0",
+            self.app, host=self._bind_host(),
             port=SECURE_PORT if use_ssl else PORT, log_level="warning",
             **({"ssl_keyfile": str(ssl_key), "ssl_certfile": str(ssl_cert)}
                if use_ssl else {}),
@@ -1306,11 +1332,11 @@ class DashboardServer:
         # being tested for, so setting it made the probe always succeed.
         _probe = _socket.socket()
         try:
-            _probe.bind(("0.0.0.0", SECURE_PORT if use_ssl else PORT))
+            _probe.bind((self._bind_host(), SECURE_PORT if use_ssl else PORT))
         except OSError as exc:
             _probe.close()
             self._bind_error = (
-                f"port {SECURE_PORT if use_ssl else PORT} is already in use — "
+                f"port {SECURE_PORT if use_ssl else PORT} on {self._bind_host()} is already in use — "
                 f"another copy of JARVIS is probably running. Close it and "
                 f"restart, or the phone dashboard will stay unreachable "
                 f"({exc.__class__.__name__})")

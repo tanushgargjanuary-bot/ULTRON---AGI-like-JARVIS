@@ -33,7 +33,14 @@ class _Fake(BaseHTTPRequestHandler):
         size = int(self.headers.get("Content-Length") or 0)
         payload = json.loads(self.rfile.read(size) or b"{}")
         _Fake.calls.append((self.path, payload))
-        self._answer(200, b'{"done": true}')
+        if self.path == "/api/show":
+            name = str(payload.get("model") or "")
+            quant = "Q4_K_M" if "-q4_K_M" in name else "F16"
+            self._answer(200, json.dumps({
+                "details": {"quantization_level": quant}
+            }).encode())
+        else:
+            self._answer(200, b'{"done": true}')
 
     def _answer(self, status, body):
         self.send_response(status)
@@ -62,11 +69,11 @@ class _Server(unittest.TestCase):
 
 
 class TheQuestion(_Server):
-    models = ["lfm2:latest", "qwen3:4b", "llama3:70b"]
+    models = ["lfm2:2b-q4_K_M", "qwen3:2b-q4_K_M", "llama3:70b"]
 
     def test_installed_models_are_read(self):
         self.assertEqual(sorted(local_fallback.installed(self.url)),
-                         ["lfm2:latest", "llama3:70b", "qwen3:4b"])
+                         ["lfm2:2b-q4_K_M", "llama3:70b", "qwen3:2b-q4_K_M"])
 
     def test_a_server_that_answers_is_running(self):
         self.assertTrue(local_fallback.running(self.url))
@@ -82,28 +89,37 @@ class TheQuestion(_Server):
 
 class WhichModel(unittest.TestCase):
     def test_qwen_wins_over_lfm(self):
-        self.assertEqual(local_fallback.pick(["lfm2:latest", "qwen3:4b"]), "qwen3:4b")
+        self.assertEqual(
+            local_fallback.pick(["lfm2:2b-q4_K_M", "qwen3:2b-q4_K_M"]),
+            "qwen3:2b-q4_K_M",
+        )
 
     def test_a_seventy_billion_model_is_not_chosen_on_a_laptop(self):
         self.assertEqual(
-            local_fallback.pick(["llama3:70b", "lfm2:latest"]), "lfm2:latest"
+            local_fallback.pick(["llama3:70b", "lfm2:2b-q4_K_M"]), "lfm2:2b-q4_K_M"
         )
         self.assertIsNone(local_fallback.pick(["llama3:70b"]))
 
-    def test_four_billion_beat_seventy(self):
+    def test_two_billion_model_is_preferred_over_seventy(self):
         self.assertEqual(
-            local_fallback.pick(["llama3:70b", "qwen3:4b"]), "qwen3:4b"
+            local_fallback.pick(["llama3:70b", "qwen3:2b-q4_K_M"]),
+            "qwen3:2b-q4_K_M",
         )
 
+    def test_four_billion_model_is_outside_the_approved_window(self):
+        self.assertIsNone(local_fallback.pick(["qwen3:4b"]))
+
     def test_the_only_model_is_the_answer(self):
-        self.assertEqual(local_fallback.pick(["mistral:7b"]), "mistral:7b")
+        self.assertIsNone(local_fallback.pick(["mistral:7b"]))
 
     def test_nothing_installed_has_no_answer(self):
         self.assertIsNone(local_fallback.pick([]))
 
     def test_embedding_models_are_never_chosen_for_chat(self):
-        self.assertEqual(local_fallback.pick(["nomic-embed-text", "qwen3:4b"]),
-                         "qwen3:4b")
+        self.assertEqual(
+            local_fallback.pick(["nomic-embed-text", "qwen3:2b-q4_K_M"]),
+            "qwen3:2b-q4_K_M",
+        )
         self.assertIsNone(local_fallback.pick(["nomic-embed-text", "bge-m3"]))
 
     def test_a_size_is_read_from_the_name(self):
@@ -111,36 +127,53 @@ class WhichModel(unittest.TestCase):
         self.assertEqual(local_fallback.size_of("lfm2:latest"), 0.0)
 
 
+class LocalFallbackConsentTests(unittest.TestCase):
+    def test_default_plan_refuses_without_consent(self):
+        with mock.patch.object(local_fallback, "installed") as installed:
+            result = local_fallback.plan()
+        self.assertFalse(result["ok"])
+        self.assertIn("local_fallback_consent", result["note"])
+        installed.assert_not_called()
+
+
 class ThePlan(_Server):
-    models = ["lfm2:latest", "qwen3:4b"]
+    models = ["lfm2:2b-q4_K_M", "qwen3:2b-q4_K_M"]
 
     def test_with_a_model_and_hearing_the_plan_is_complete(self):
         with mock.patch.object(local_fallback, "find_spec", return_value=object()):
-            plan = local_fallback.plan(self.url)
+            plan = local_fallback.plan(self.url, consent=True)
         self.assertTrue(plan["ok"])
-        self.assertEqual(plan["model"], "qwen3:4b")
+        self.assertEqual(plan["model"], "qwen3:2b-q4_K_M")
         self.assertEqual(plan["pipeline"], {"llm": "openai_compat@ollama",
                                             "stt": "whisper@local",
                                             "tts": "system_tts"})
-        self.assertEqual(plan["creds"]["openai_compat@ollama"]["model"], "qwen3:4b")
+        self.assertEqual(plan["creds"]["openai_compat@ollama"]["model"], "qwen3:2b-q4_K_M")
         self.assertTrue(plan["creds"]["openai_compat@ollama"]["base_url"].startswith(self.url))
+
+    def test_unquantized_model_is_refused(self):
+        with mock.patch.object(local_fallback, "_post", return_value={
+            "details": {"quantization_level": "F16"}
+        }):
+            self.assertEqual(
+                local_fallback.approved_models(self.url, ["qwen3:2b-q4_K_M"]), []
+            )
 
     def test_over_capacity_models_are_excluded_before_ranking(self):
         self.assertIsNone(local_fallback.pick(["llama3:70b", "qwen3:32b"]))
         with mock.patch.object(local_fallback, "find_spec", return_value=object()):
-            plan = local_fallback.plan(self.url, models=["llama3:70b"])
+            plan = local_fallback.plan(self.url, models=["llama3:70b"], consent=True)
         self.assertFalse(plan["ok"])
-        self.assertIn("14B", plan["note"])
+        self.assertIn("1.5B–3B", plan["note"])
 
     def test_no_model_installed_is_one_sentence(self):
         with mock.patch.object(local_fallback, "find_spec", return_value=object()):
-            plan = local_fallback.plan(self.url, models=[])
+            plan = local_fallback.plan(self.url, models=[], consent=True)
         self.assertFalse(plan["ok"])
         self.assertIn("ollama pull", plan["note"])
 
     def test_no_hearing_and_no_installed_recogniser_is_refused_not_faked(self):
         with mock.patch.object(local_fallback, "find_spec", return_value=None):
-            plan = local_fallback.plan(self.url, current={})
+            plan = local_fallback.plan(self.url, current={}, consent=True)
         self.assertFalse(plan["ok"])
         self.assertIn("faster-whisper", plan["note"])
 
@@ -159,6 +192,7 @@ class ThePlan(_Server):
     def test_switch_warmup_exceptions_leave_the_cloud_path_available(self):
         logs = []
         result = asyncio.run(local_fallback.prepare_switch(
+            consent=True,
             url=self.url,
             plan_builder=lambda **_kwargs: {
                 "ok": True, "url": self.url, "model": "qwen3:4b",
@@ -172,6 +206,7 @@ class ThePlan(_Server):
     def test_switch_refuses_a_plan_when_stt_is_not_ready(self):
         logs = []
         result = asyncio.run(local_fallback.prepare_switch(
+            consent=True,
             url=self.url,
             plan_builder=lambda **_kwargs: {
                 "ok": True, "url": self.url, "model": "qwen3:4b",

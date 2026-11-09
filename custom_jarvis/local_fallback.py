@@ -1,9 +1,8 @@
-"""When the cloud runs out of quota, the conversation moves to this machine.
+"""Prepare an explicitly approved, small local model as a temporary fallback.
 
-The ladder in `core/gemini.py` already steps down through the live models. This is the
-rung after the last one: Ollama on `localhost`, the model that is already installed,
-and the pipeline engine — the second way to hold a conversation, which exists exactly
-for the day the quota is gone.
+The cloud ladder remains the default. Local fallback is available only when the owner
+has enabled `local_fallback_consent` in config/api_keys.json. The selected model must
+be quantized and between 1.5B and 3B parameters.
 
 Three things this module does, and one it refuses to do.
 
@@ -130,25 +129,13 @@ def size_of(name: str) -> float:
 
 
 def score(name: str) -> int:
-    """Which installed model to talk to when the cloud is gone.
-
-    Two families are known to be worth their memory on a small machine — Qwen and LFM —
-    and a model that needs more than this laptop has is not a candidate at any score.
-    Everything else can still win by being the only thing installed.
-    """
+    """Rank only models within the approved 1.5B–3B size window."""
     text = str(name).lower()
     points = 0
     if "qwen" in text:
         points += 30
     if "lfm" in text:
         points += 20
-    size = size_of(text)
-    if 0 < size <= 8:
-        points += 10
-    elif 8 < size <= 14:
-        points += 2
-    elif size > 14:
-        points -= 20
     if "tools" in text or "instruct" in text:
         points += 2
     return points
@@ -158,15 +145,34 @@ _NON_CHAT = ("embed", "nomic-embed", "mxbai", "bge-", "rerank")
 
 
 def pick(models: list[str]) -> Optional[str]:
-    """Choose the highest-ranked installed chat model within the size cap."""
-    # Ollama also lists vector encoders and rerankers. They answer embeddings,
-    # not chat, so a name match alone must never send the conversation to one.
-    candidates = [name for name in models
-                  if not any(marker in str(name).lower() for marker in _NON_CHAT)
-                  and size_of(str(name)) <= 14]
+    """Choose the highest-ranked chat model in the approved 1.5B–3B size window."""
+    candidates = [
+        name for name in models
+        if not any(marker in str(name).lower() for marker in _NON_CHAT)
+        and 1.5 <= size_of(str(name)) <= 3.0
+    ]
     if not candidates:
         return None
     return sorted(candidates, key=lambda name: (-score(name), len(name), name))[0]
+
+
+_QUANTIZED = re.compile(r"^(?:Q[2-8](?:_|$)|IQ[1-8](?:_|$))", re.IGNORECASE)
+
+
+def approved_models(url: str, models: list[str]) -> list[str]:
+    """Keep only 1.5B–3B chat models whose Ollama metadata confirms quantization."""
+    approved = []
+    for name in models:
+        if not 1.5 <= size_of(name) <= 3.0:
+            continue
+        if any(marker in str(name).lower() for marker in _NON_CHAT):
+            continue
+        details = _post(f"{url}/api/show", {"model": name}, timeout=SHORT)
+        row = details.get("details") if isinstance(details, dict) else None
+        quantization = str((row or {}).get("quantization_level") or "").strip().upper()
+        if _QUANTIZED.match(quantization):
+            approved.append(name)
+    return approved
 
 
 def warm(url: str = DEFAULT_URL, model: str = "") -> bool:
@@ -188,6 +194,7 @@ def _notify(log: Optional[Callable[[str], Any]], message: str) -> None:
 async def prepare_switch(
     current: Optional[dict] = None,
     *,
+    consent: bool = False,
     url: str = DEFAULT_URL,
     log: Optional[Callable[[str], Any]] = None,
     plan_builder: Optional[Callable[..., dict]] = None,
@@ -195,12 +202,15 @@ async def prepare_switch(
     stt_ready: Optional[Callable[[dict], Any]] = None,
 ) -> Optional[dict]:
     """Plan, warm, and validate a local fallback before handing it to the app."""
+    if consent is not True:
+        _notify(log, "SYS: Local fallback is disabled because explicit consent is not set.")
+        return None
     loop = asyncio.get_running_loop()
     builder = plan_builder or plan
     warmer = warm_model or warm
     try:
         proposed = await loop.run_in_executor(
-            None, lambda: builder(url=url, current=current)
+            None, lambda: builder(url=url, current=current, consent=consent)
         )
     except Exception as error:
         _notify(log, f"ERR: could not look for a local model — {error}")
@@ -257,23 +267,25 @@ def _no_model_note(names: list[str]) -> str:
     )]
     if names and not chat_names:
         return ("Ollama has models installed, but they are embedding-only. "
-                "In a terminal: ollama pull qwen3:4b — then say continue.")
-    if chat_names and all(size_of(name) > 14 for name in chat_names):
-        return ("The installed chat models exceed the 14B local-fallback size cap. "
-                "In a terminal: ollama pull qwen3:4b — then say continue.")
+                "Install a quantized 1.5B–3B chat model to enable local fallback.")
     if names:
-        return ("Ollama has no supported chat model installed. "
-                "In a terminal: ollama pull qwen3:4b — then say continue.")
-    return ("Ollama is running but no model is installed. In a terminal: "
-            "ollama pull qwen3:4b — then say continue.")
+        return ("No installed chat model meets the local-fallback policy. "
+                "Use a quantized 1.5B–3B model; other sizes and unquantized models are refused.")
+    return ("Ollama is running but no model is installed. "
+            "Install a quantized 1.5B–3B chat model to enable local fallback.")
 
 
 def plan(url: str = DEFAULT_URL, current: Optional[dict] = None,
-         models: Optional[list[str]] = None) -> dict:
-    """Everything needed to move the conversation here, or the reason it cannot move.
+         models: Optional[list[str]] = None, *, consent: bool = False) -> dict:
+    """Build a temporary local plan, or explain why policy refuses the switch.
 
     `models` is for tests and for a caller that already asked. Nothing is written.
     """
+    if consent is not True:
+        return {"ok": False, "note": (
+            "Local fallback is disabled. Enable local_fallback_consent in "
+            "config/api_keys.json only after approving local processing."
+        )}
     # Asking for a server that was never probed is a guess, and a guess here starts a
     # program in the middle of a conversation. Only the real path may do that.
     probed = models is None
@@ -284,7 +296,8 @@ def plan(url: str = DEFAULT_URL, current: Optional[dict] = None,
                 "The cloud is out of quota and Ollama is not answering. Install it from "
                 "ollama.com, or start it with 'ollama serve', and I will switch over.")}
         names = installed(url)
-    model = pick(names)
+    eligible = approved_models(url, names)
+    model = pick(eligible)
     if not model:
         return {"ok": False, "note": _no_model_note(names)}
 

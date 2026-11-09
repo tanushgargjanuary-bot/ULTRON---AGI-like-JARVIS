@@ -1,5 +1,22 @@
 # Running a local model
 
+## Automatic local fallback
+
+The application does not switch to a local model unless you explicitly approve it.
+To enable this feature, add the following setting to `config/api_keys.json`:
+
+```json
+"local_fallback_consent": true
+```
+
+This consent allows a temporary fallback after the cloud quota is exhausted. The
+fallback accepts only quantized chat models between 1.5B and 3B parameters. It reads
+the quantization level from Ollama's model metadata. It refuses unquantized models,
+models outside that size range, and embedding-only models. The saved cloud provider
+configuration is not changed.
+
+To disable the feature, remove the key or set it to `false`.
+
 Ultron already talks to a model on this machine. `core/llm_client.py` reads three keys from
 `config/api_keys.json` and defaults to Ollama:
 

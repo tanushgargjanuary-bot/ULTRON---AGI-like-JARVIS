@@ -2910,12 +2910,20 @@ class JarvisLive:
         weights are disk and network work, and this is the middle of a conversation.
         """
         try:
-            from memory.config_manager import get_pipeline, get_provider_config
+            from memory.config_manager import get_pipeline, get_provider_config, load_api_keys
             current = get_pipeline()
             stt = str(current.get("stt") or "").strip()
             current["provider_config"] = {stt: get_provider_config(stt)} if stt else {}
+            consent = load_api_keys().get("local_fallback_consent") is True
         except Exception:
             current = {}
+            consent = False
+        if not consent:
+            self.ui.write_log(
+                "SYS: Local fallback is disabled. Enable local_fallback_consent in "
+                "config/api_keys.json only after approving local processing."
+            )
+            return None
         async def local_stt_ready(plan):
             """Build and load the planned recognizer before choosing local mode."""
             # A package being importable is not proof its model can load. Build and
@@ -2931,6 +2939,7 @@ class JarvisLive:
 
         return await _local.prepare_switch(
             current=current,
+            consent=consent,
             log=self.ui.write_log,
             stt_ready=local_stt_ready,
         )
