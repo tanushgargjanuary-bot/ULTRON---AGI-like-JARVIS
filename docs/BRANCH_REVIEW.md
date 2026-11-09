@@ -259,15 +259,15 @@ This section is the current decision. It supersedes the earlier 7–8 November r
 | `chatgpt` | 20 | 5 | 7 | Capability guide and GitHub scout are present in the integration line; local inventory is retained in safer, read-only form. |
 | `code-quality-and-security-improvements-af08a` | 1 | 0 | 2 | Test and README delta only. No distinct implementation change. |
 | `integration/best-of-all-2026-11-09` | 55 | 0 | 163 | Chosen consolidation base. |
-| `ultron/consolidation-2026-11` | 143 | 0 | 176 | Selected integration plus fixes, tests, and repository workflow updates. |
+| `ultron/consolidation-2026-11` | 148 | 0 | 178 | Selected integration plus fixes, tests, and repository workflow updates. |
 
-The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The consolidation branch is 88 commits ahead of the integration base, with 38 files changed against that base. These figures are commit-graph comparisons with `main`, not a claim that every changed line from each divergent branch was copied verbatim.
+The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The current consolidation branch is 148 commits ahead of `main`, and 93 commits ahead of the integration base, with 41 files changed against that base. These figures are commit-graph comparisons, not a claim that every changed line from each divergent branch was copied verbatim.
 
 ### Carried work and deliberate exclusions
 
 - **Integration base:** retained as the base. The web reader, capability guide, read-only GitHub scout, MCP bridge, plan checkpoints, health center, bounded fuzzy matching, crash redaction, and related tests remain in the candidate.
 - **ChatGPT branch:** the capability lookup and read-only repository scout are retained. The local-model inventory is read-only. The provider-configuration action is not exposed as a status operation.
-- **Antigravity branch:** session-summary search was adapted into `memory/memory_manager.py`. The ADHD, Caveman, token-saver, and diff-minimalist skills were already present with identical content. The bandit and metacognition implementation were already present in the integration line. The NTFS alternate-data-stream path guard was adapted into `actions/file_controller.py` with a platform-specific regression test.
+- **Antigravity branch:** session-summary search was adapted into `memory/memory_manager.py`. The ADHD, Caveman, token-saver, and diff-minimalist skills were already present with identical content. The base bandit and metacognition implementation were already present; a later audit found that decayed history was being applied as a smaller reward while still counting as a full pull. Fractional sample weights were adapted into `core/bandit.py` and the metacognition replay caller, with regression tests for UCB1, Thompson sampling, and the decayed replay call. The NTFS alternate-data-stream path guard was adapted into `actions/file_controller.py` with a platform-specific regression test.
 - **Antigravity exclusions:** plugin forge, crawler bridge, OCR bridge, clipboard context detection, keyword intent router, and agent monitor bridge were not promoted. Their current designs add policy, SSRF, path/consent, call-site, or observability risks. Its expanded undo API was not copied because its metadata argument and removal helpers do not match the current `core/undo.py` interface.
 - **Code-quality branch:** its security test file contains stale imports and a live external-network test; its README count is stale. The useful ideas were reviewed and implemented separately with deterministic tests: bounded fuzzy distance, TLS verification without an insecure retry, bearer-token redaction, and safer executable launch.
 - **Self-modification:** the consolidation adds content hashes to proposals. Apply refuses to overwrite a file changed since proposal creation. Revert refuses to overwrite a file changed after apply.
@@ -278,10 +278,24 @@ A branch's code was either carried forward as a tested implementation, found alr
 
 The earlier consolidation CI runs 112 and 113 passed on commit `f93b8f6cbb55a5baa44fe95f409cf52948f5fbc4` on both Linux and Windows. Later commits add the NTFS path guard, its tests, documentation, all-branch CI, and the archive workflow. Those later commits require a fresh CI result before promotion.
 
-PR #14 (`ultron/consolidation-2026-11` → `main`) is the promotion path. Merge only after Linux and Windows pass on its latest head.
+PR #14 (`ultron/consolidation-2026-11` → `main`) is the review surface. The intended promotion is a fast-forward-only update of `main` to the approved candidate SHA. Do not merge source branches or create a merge commit. Promote only after Linux, Windows, Reviewdog, the proof-gate reports, and the final code review pass on the latest head.
 
-### Archive and deletion decision
+### Commit-history integrity audit (2026-11-09)
 
-After PR #14 merges, `.github/workflows/archive-reviewed-branches.yml` creates immutable tags for the exact reviewed tips, verifies every tag, then removes only the seven named temporary branch refs. It aborts if a source branch moved from its reviewed SHA. `main` is not in the deletion list.
+The complete PR commit list was enumerated at the pre-audit head `3f4deb60a5b0a055ce3580c47e52fcce35edc5be`:
+
+- 145 PR commits were present at that head.
+- 0 merge commits were present.
+- 1 commit was empty: `b048f52b108d9a753142f62862c27f01e5004f20`. Its tree SHA is identical to its parent `82f530d2cda2e260adabb06526a3fff53e0d76e1`.
+- 14 commits shared repeated subjects across five documentation tasks. The repeated commits generally changed the tree; they were not a series of empty commits.
+- 66 commits were authored in the 16:00–16:59 UTC hour on 9 November 2026. This is a high commit rate and created documentation churn, but it does not indicate an empty-commit loop.
+
+The screenshot's `224 Commits` was the total reachable history at that time: 79 commits already on `main` plus 145 PR commits ahead. After the three focused weighted-bandit commits, PR #14 contains 148 commits ahead of `main` (227 reachable commits including the 79-commit base).
+
+**Recommendation:** do not rewrite or force-push the candidate history to remove one empty commit. Preserve it for traceability. Keep future commits grouped by coherent change; do not make repeated documentation-only commits for each intermediate count refresh.
+
+### Archive decision
+
+After the candidate is fast-forwarded into `main`, `.github/workflows/archive-reviewed-branches.yml` creates and verifies immutable tags for the exact reviewed source tips. It does not delete any branch refs. If a source branch moved from its reviewed SHA, the workflow stops. Branch deletion remains a separate, manual owner decision.
 
 The archive tag names and restore commands are in [BRANCH_ARCHIVE.md](BRANCH_ARCHIVE.md). The intended end state is one working branch, `main`, plus immutable archive tags. New work uses short-lived feature/fix branches and CI runs for every pushed branch.
