@@ -240,19 +240,74 @@ class TheSchema(unittest.TestCase):
         )
         self.assertEqual(repairs, [])
 
-    def test_required_never_names_an_argument_that_does_not_exist(self):
-        clean = mcp_client.schema(
-            {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a", "ghost"]}
-        )
-        self.assertEqual(clean["required"], ["a"])
+    def test_required_cannot_name_an_undeclared_argument(self):
+        with self.assertRaisesRegex(McpError, "undeclared properties"):
+            mcp_client.schema(
+                {"type": "object", "properties": {"a": {"type": "string"}},
+                 "required": ["a", "ghost"]}
+            )
+
+    def test_required_list_rejects_non_string_and_duplicate_entries(self):
+        with self.assertRaisesRegex(McpError, "invalid required list"):
+            mcp_client.schema({"type": "object", "properties": {"a": {"type": "string"}},
+                               "required": ["a", 3]})
+        with self.assertRaisesRegex(McpError, "invalid required list"):
+            mcp_client.schema({"type": "object", "properties": {"a": {"type": "string"}},
+                               "required": ["a", "a"]})
 
     def test_a_tool_with_no_arguments_stays_a_tool_with_no_arguments(self):
         clean = mcp_client.schema({"type": "object"})
         self.assertEqual(clean, {"type": "OBJECT", "properties": {}})
 
-    def test_an_unknown_type_becomes_a_string(self):
-        clean = mcp_client.schema({"type": "object", "properties": {"a": {"type": "whatever"}}})
-        self.assertEqual(clean["properties"]["a"]["type"], "STRING")
+    def test_an_unknown_type_is_rejected(self):
+        with self.assertRaisesRegex(McpError, "not supported"):
+            mcp_client.schema({"type": "object", "properties": {"a": {"type": "whatever"}}})
+
+    def test_union_types_are_rejected_instead_of_flattened(self):
+        with self.assertRaisesRegex(McpError, "supported string type"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"value": {"type": ["string", "null"]}},
+            })
+
+    def test_structural_combinators_and_constraints_are_rejected(self):
+        with self.assertRaisesRegex(McpError, "unsupported keyword"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"value": {"oneOf": [{"type": "string"}, {"type": "number"}]}},
+            })
+        with self.assertRaisesRegex(McpError, "unsupported keyword"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"value": {"type": "string", "minLength": 3}},
+            })
+
+    def test_array_without_item_schema_is_rejected(self):
+        with self.assertRaisesRegex(McpError, "must declare an item schema"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"values": {"type": "array"}},
+            })
+
+    def test_invalid_root_schema_is_rejected(self):
+        with self.assertRaisesRegex(McpError, "must be an object"):
+            mcp_client.schema(["not", "an", "object"])
+        with self.assertRaisesRegex(McpError, "object at its root"):
+            mcp_client.schema({"type": ["object", "null"], "properties": {}})
+
+    def test_enum_values_must_match_the_declared_type(self):
+        with self.assertRaisesRegex(McpError, "do not match"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"value": {"type": "number", "enum": [1, "one"]}},
+            })
+
+    def test_enum_values_are_not_silently_truncated(self):
+        with self.assertRaisesRegex(McpError, "50-value limit"):
+            mcp_client.schema({
+                "type": "object",
+                "properties": {"value": {"type": "string", "enum": [str(i) for i in range(51)]}},
+            })
 
     def test_object_shape_is_inferred_when_type_is_omitted(self):
         clean = mcp_client.schema({
@@ -316,16 +371,24 @@ class TheSchema(unittest.TestCase):
         with self.assertRaisesRegex(McpError, "nesting limit"):
             mcp_client.schema({"type": "object", "properties": {"root": node}})
 
-    def test_enum_values_keep_their_json_types(self):
+    def test_enum_values_keep_their_json_numeric_types(self):
         clean = mcp_client.schema({
             "type": "object",
-            "properties": {"value": {"type": "number", "enum": [0, 1.5, True, False, "x"]}},
+            "properties": {"value": {"type": "number", "enum": [0, 1.5, 2]}},
         })
         values = clean["properties"]["value"]["enum"]
-        self.assertEqual(values, [0, 1.5, True, False, "x"])
+        self.assertEqual(values, [0, 1.5, 2])
         self.assertIs(type(values[0]), int)
-        self.assertIs(type(values[2]), bool)
-        self.assertIs(type(values[3]), bool)
+        self.assertIs(type(values[1]), float)
+
+    def test_boolean_enum_values_remain_booleans(self):
+        clean = mcp_client.schema({
+            "type": "object",
+            "properties": {"enabled": {"type": "boolean", "enum": [True, False]}},
+        })
+        values = clean["properties"]["enabled"]["enum"]
+        self.assertEqual(values, [True, False])
+        self.assertIs(type(values[0]), bool)
 
 
 class TheMcpNameRegistry(unittest.TestCase):
