@@ -159,7 +159,7 @@ The workflow `.github/workflows/archive-reviewed-branches.yml`:
 - Creates and verifies ten exact-SHA archive tags.
 - Defaults to archive-only mode.
 - Requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED` before deletion.
-- Requires the owner to protect `refs/tags/archive/**` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
+- Requires the owner to protect ``archive/**/*` (tag-name pattern)` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
 - The workflow requires the owner's attestation. It does not query or verify that the ruleset exists.
 - Skips branches used by open PRs, rechecks each branch SHA and tag target, and never deletes `main`.
 

@@ -14,7 +14,7 @@ on:
         required: false
         type: string
       confirm_archive_tags:
-        description: 'Type ARCHIVE TAGS PROTECTED after a ruleset protects refs/tags/archive/**'
+        description: 'Type ARCHIVE TAGS PROTECTED after a tag ruleset protects archive/**/*'
         required: false
         type: string
 
@@ -50,7 +50,7 @@ jobs:
               throw new Error('Deletion refused: the confirmation phrase does not match.');
             }
             if (deleteBranches && tagProtectionConfirmation !== 'ARCHIVE TAGS PROTECTED') {
-              throw new Error('Deletion refused: first protect refs/tags/archive/** against tag updates and deletion with a GitHub ruleset, then attest with the exact phrase.');
+              throw new Error('Deletion refused: first protect the archive/**/* tag-name pattern against updates and deletion with a GitHub ruleset, then attest with the exact phrase.');
             }
 
             const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });

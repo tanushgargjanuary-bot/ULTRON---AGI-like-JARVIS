@@ -56,7 +56,7 @@
 | 3.4 | Close PR #15 without merging | Pending |
 | 3.5 | Run archive workflow in archive-only mode | Pending |
 | 3.6 | Verify all ten archive tags point to their exact reviewed commits | Pending |
-| 3.7 | Add a GitHub tag ruleset for `refs/tags/archive/**` that blocks updates and deletion | Pending — owner action |
+| 3.7 | Add a GitHub tag ruleset for ``archive/**/*` (tag-name pattern)` that blocks updates and deletion | Pending — owner action |
 | 3.8 | Run deletion mode with both exact confirmation phrases | Pending |
 | 3.9 | Verify only `main` remains as a branch, with all historical tips recoverable from protected tags | Pending |
 
@@ -73,5 +73,5 @@ The second phrase is an owner attestation. The workflow cannot inspect repositor
 - A moved source branch must be re-reviewed; do not reset it to an earlier SHA.
 - The cleanup workflow skips branches used by open PRs.
 - Archive tags must exist and match exact commit SHAs before branch deletion.
-- A GitHub ruleset must block updates and deletion for `refs/tags/archive/**` before branch deletion is enabled.
+- A GitHub ruleset must block updates and deletion for ``archive/**/*` (tag-name pattern)` before branch deletion is enabled.
 - The workflow requires the exact owner attestation `ARCHIVE TAGS PROTECTED`; it does not verify the ruleset through API.

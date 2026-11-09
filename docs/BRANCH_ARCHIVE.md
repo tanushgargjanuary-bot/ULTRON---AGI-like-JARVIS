@@ -37,14 +37,14 @@ Workflow: `.github/workflows/archive-reviewed-branches.yml`.
 4. It checks all reviewed branches against exact SHAs before creating tags.
 5. It creates and verifies ten deterministic exact-SHA tags.
 6. The default mode is archive-only and deletes nothing.
-7. Before deletion, the owner must enable a GitHub tag ruleset matching `refs/tags/archive/**`. It must block tag updates and deletion while allowing tag creation.
+7. Before deletion, the owner must enable a GitHub tag ruleset matching ``archive/**/*` (tag-name pattern)`. It must block tag updates and deletion while allowing tag creation.
 8. Deletion requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`.
 9. The last phrase is an owner attestation. The workflow does not query or prove the ruleset exists.
 10. Branches used by open PRs are skipped. The workflow rechecks the PR list before deletion.
 11. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
 12. `main` is never in the deletion list.
 
-Git tags are not immutable by default. They can be moved or deleted until the owner protects `refs/tags/archive/**` with a ruleset. Do not enable branch deletion before that ruleset is active.
+Git tags are not immutable by default. They can be moved or deleted until the owner protects ``archive/**/*` (tag-name pattern)` with a ruleset. Do not enable branch deletion before that ruleset is active.
 
 GitHub's ref API does not provide an atomic compare-and-delete operation. The workflow performs an immediate SHA recheck before each deletion. Do not push to reviewed branches while cleanup is running.
 
@@ -55,7 +55,7 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 3. Close PR #15 without merging.
 4. Manually run the archive workflow on `main` with default `delete_branches=false`.
 5. Verify all ten archive tags.
-6. In repository Settings → Rules → Rulesets, create and enable a tag ruleset matching `refs/tags/archive/**`. Block updates and deletion. Leave creation allowed.
+6. In repository Settings → Rules → Rulesets, create and enable a tag ruleset matching ``archive/**/*` (tag-name pattern)`. Block updates and deletion. Leave creation allowed.
 7. Run deletion mode with both exact phrases: `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
 8. Verify the report. Any branch with an open PR, changed SHA, or tag mismatch is preserved.
 
