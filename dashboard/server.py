@@ -765,10 +765,10 @@ class DashboardServer:
             return False
 
     def _bind_host(self) -> str:
-        return "0.0.0.0" if self._allow_lan() else "127.0.0.1"
+        return "0.0.0.0" if self._allow_lan() and self._ssl_enabled() else "127.0.0.1"
 
     def _display_host(self) -> str:
-        return self._ip if self._allow_lan() else "127.0.0.1"
+        return self._ip if self._allow_lan() and self._ssl_enabled() else "127.0.0.1"
 
     # ── one-time key management ───────────────────────────────────────────
 
@@ -1248,7 +1248,7 @@ class DashboardServer:
 
         cfg = uvicorn.Config(bounce, host=self._bind_host(), port=PORT,
                              log_level="warning")
-        print(f"[Dashboard] Type by hand:  {self._ip}:{PORT}  "
+        print(f"[Dashboard] Type by hand:  {self._display_host()}:{PORT}  "
               f"(sends you to the secure page)")
         await uvicorn.Server(cfg).serve()
 
@@ -1259,17 +1259,6 @@ class DashboardServer:
             return
 
         allow_lan = self._allow_lan()
-        # LAN command access requires both explicit LAN permission and TLS.
-        # Loopback HTTP remains available when remote access is not enabled.
-        if allow_lan and not self._ssl_enabled():
-            print("[Dashboard] LAN access refused: set dashboard_https=true and "
-                  "install a valid local certificate before enabling dashboard_allow_lan.")
-            return
-
-        # Only LAN mode needs a firewall reachability check.
-        if allow_lan:
-            asyncio.get_running_loop().run_in_executor(
-                None, report_network_access, PORT, SECURE_PORT)
 
         # Only make a certificate if HTTPS was actually asked for. Generating
         # one nobody uses just leaves a private key on disk.
@@ -1285,6 +1274,16 @@ class DashboardServer:
         use_ssl  = self._ssl_enabled()
         ssl_key  = BASE_DIR / "config" / "certs" / "jarvis.key"
         ssl_cert = BASE_DIR / "config" / "certs" / "jarvis.crt"
+
+        # Cert creation runs first, so a first-time HTTPS opt-in can work.
+        # An incomplete or failed certificate setup must never expose LAN commands.
+        if allow_lan and not use_ssl:
+            print("[Dashboard] LAN access refused: dashboard_https must be true and "
+                  "a valid local certificate must exist before dashboard_allow_lan.")
+            return
+        if allow_lan:
+            asyncio.get_running_loop().run_in_executor(
+                None, report_network_access, PORT, SECURE_PORT)
 
         # TLS IS WANTED, BUT NOT AT THE COST OF NOT STARTING.
         #

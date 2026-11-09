@@ -37,12 +37,17 @@ class DashboardNetworkPolicyTests(unittest.TestCase):
             self.write_config({"dashboard_allow_lan": value})
             self.assertFalse(server.DashboardServer._allow_lan())
 
-    def test_explicit_lan_permission_binds_to_all_interfaces(self):
-        self.write_config({"dashboard_allow_lan": True})
+    def test_explicit_lan_permission_binds_to_all_interfaces_only_with_tls(self):
+        self.write_config({"dashboard_allow_lan": True, "dashboard_https": True})
+        certs = Path(self.temp.name) / "config" / "certs"
+        certs.mkdir()
+        (certs / "jarvis.key").write_text("test-key", encoding="utf-8")
+        (certs / "jarvis.crt").write_text("test-cert", encoding="utf-8")
         dashboard = server.DashboardServer()
         self.assertTrue(dashboard._allow_lan())
         self.assertEqual(dashboard._bind_host(), "0.0.0.0")
         self.assertEqual(dashboard._display_host(), dashboard._ip)
+        self.assertTrue(dashboard.get_url().startswith("https://"))
 
     def test_local_https_url_uses_loopback_without_lan_permission(self):
         dashboard = server.DashboardServer()

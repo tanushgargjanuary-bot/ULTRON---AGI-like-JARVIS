@@ -135,6 +135,12 @@ class LocalFallbackConsentTests(unittest.TestCase):
         self.assertIn("local_fallback_consent", result["note"])
         installed.assert_not_called()
 
+    def test_prepare_switch_refuses_without_consent(self):
+        builder = mock.Mock()
+        result = asyncio.run(local_fallback.prepare_switch(plan_builder=builder))
+        self.assertIsNone(result)
+        builder.assert_not_called()
+
 
 class ThePlan(_Server):
     models = ["lfm2:2b-q4_K_M", "qwen3:2b-q4_K_M"]
@@ -169,7 +175,7 @@ class ThePlan(_Server):
         with mock.patch.object(local_fallback, "find_spec", return_value=object()):
             plan = local_fallback.plan(self.url, models=[], consent=True)
         self.assertFalse(plan["ok"])
-        self.assertIn("ollama pull", plan["note"])
+        self.assertIn("quantized 1.5B–3B", plan["note"])
 
     def test_no_hearing_and_no_installed_recogniser_is_refused_not_faked(self):
         with mock.patch.object(local_fallback, "find_spec", return_value=None):
@@ -182,7 +188,7 @@ class ThePlan(_Server):
             plan = local_fallback.plan(self.url, current={
                 "stt": "whisper@groq",
                 "provider_config": {"whisper@groq": {"api_key": "kept", "base_url": "https://example.test"}},
-            })
+            }, consent=True)
         self.assertTrue(plan["ok"])
         self.assertEqual(plan["pipeline"]["stt"], "whisper@groq")
         self.assertEqual(plan["creds"]["whisper@groq"]["api_key"], "kept")
@@ -257,11 +263,13 @@ class ThePlan(_Server):
                 with mock.patch.object(local_fallback, "find_spec", return_value=None):
                     plan = asyncio.run(local_fallback.prepare_switch(
                         current,
+                        consent=True,
                         url=self.url,
                         plan_builder=lambda **kwargs: local_fallback.plan(
                             url=self.url,
                             current=kwargs.get("current"),
-                            models=["qwen3:4b"],
+                            models=["qwen3:2b-q4_K_M"],
+                            consent=kwargs.get("consent", False),
                         ),
                         stt_ready=lambda _plan: True,
                     ))

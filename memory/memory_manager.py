@@ -459,7 +459,7 @@ def _search_sessions(sessions: list, words: list[str]) -> list[tuple[int, str, s
         else:
             score = 1
         if score > 0:
-            results.append((score, "session", date, summary))
+            results.append((score, "session", date, summary, ""))
     return results
 
 
