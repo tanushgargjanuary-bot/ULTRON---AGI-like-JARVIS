@@ -43,10 +43,15 @@ them" answer at protocol level, and it is the only item on this page that change
 
 **Built.** `custom_jarvis/mcp_client.py`, one file, with the four rules written into it:
 
-- **You list the server; the app does not install it.** `config/mcp_servers.json` holds a
-  `command` and an `args` list. Nothing is downloaded, fetched or installed.
+- **You choose and list the server; the app starts it.** `config/mcp_servers.json` holds a
+  `command` and an `args` list. At application startup, each valid listed command is
+  launched as a child process. Nothing is downloaded, fetched or installed.
 - **Local process only.** An entry with a `url`, `host`, `port`, `socket` or `transport` is
   refused by name, with the reason — not ignored, and not quietly dialled.
+- **Not an OS sandbox.** The child runs with the current user's permissions. It can access
+  files, processes and network resources available to that account. Configure only MCP
+  programs and arguments you trust. The protocol's policy gate does not restrict the
+  server process itself.
 - **No shell.** A command with a space in it is refused and told to split itself into
   `command` + `args`. `shell=True` is not a shortcut; it is the door.
 - **No exemption from policy.** A tool arrives as `mcp_<server>_<tool>`; `core/policy.py` has
@@ -58,8 +63,9 @@ provider accepts, and a `required` list that only names arguments that exist. A 
 dies is one sentence, a server that hangs times out, and closing the app closes the child's
 input so a well-behaved server exits on its own.
 
-What it does not do: install anything, reach a network endpoint, run a command through a
-shell, or approve its own tools. Issue #10.
+What it does not do: install anything, connect to a remote MCP endpoint, run a command
+through a shell, or approve its own tools. It does start the commands you configured, with
+your operating-system permissions. Issue #10.
 
 ## The five that earn their place this quarter
 
