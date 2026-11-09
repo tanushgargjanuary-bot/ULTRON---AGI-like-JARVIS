@@ -36,7 +36,7 @@ The CI result must belong to the **latest PR head**, not an earlier commit. See 
 
 ## Code-review status
 
-A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 177 files.
+A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 176 files.
 
 Four security defects were found and fixed in the focused MCP/self-change review:
 
