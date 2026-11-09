@@ -244,3 +244,44 @@ One additional antigravity finding was worth carrying narrowly: `Ledger.calibrat
 The code-quality branch's useful long-input finding is now carried as a small local fix, not by importing its whole test file. `core/fuzzy.py` caps the full Damerau–Levenshtein matrix at 200,000 cells; an over-budget, non-empty pair returns `max(len(a), len(b))` as a conservative non-match sentinel (and therefore similarity zero). Exact matches and empty-string cases remain exact. The regression uses a 500-character near-match to test the cutoff without risking a huge allocation if the guard is later removed. The branch's external-network test, loopback-only dashboard assertion, and stale README count remain deliberately unadopted.
 
 Verification on the current worktree: `python -m unittest tests.test_fuzzy tests.test_app_resolver -q` — 53 passed; `git diff --check` — passed. These two source/test edits and this note are local and uncommitted; they have not been pushed, so PR #12 checks do not cover them. PR #13 is closed. **Branch recommendation:** `origin/code-quality-and-security-improvements-af08a` is a deletion candidate once the owner is satisfied that the safe fuzziness fix is present and the rejected tests/README are intentionally discarded. No branch was deleted.
+
+## Final consolidation review and branch cleanup (2026-11-09)
+
+This section is the current decision. It supersedes the earlier 7–8 November recommendations that said to keep some development branches open pending review.
+
+### Measured branch graph
+
+| Branch | Ahead of main | Behind main | Three-dot changed files | Result |
+|---|---:|---:|---:|---|
+| `ArenaAi` | 18 | 0 | 41 | Its commits are ancestors of the integration base. |
+| `arena/4c973188-ultron-agi-like-jarvis` | 50 | 0 | 148 | Five commits behind integration; no branch-unique commit remains outside integration. |
+| `antigravity` | 10 | 8 | 57 | Ten graph-unique commits reviewed. Selected work was adapted; unsafe or incompatible items are explicitly deferred. |
+| `chatgpt` | 20 | 5 | 7 | Capability guide and GitHub scout are present in the integration line; local inventory is retained in safer, read-only form. |
+| `code-quality-and-security-improvements-af08a` | 1 | 0 | 2 | Test and README delta only. No distinct implementation change. |
+| `integration/best-of-all-2026-11-09` | 55 | 0 | 163 | Chosen consolidation base. |
+| `ultron/consolidation-2026-11` | 74 | 0 | 174 | Selected integration plus fixes, tests, and repository workflow updates. |
+
+The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The consolidation branch is 19 commits ahead of the integration base. These figures are commit-graph comparisons with `main`, not a claim that every changed line from each divergent branch was copied verbatim.
+
+### Carried work and deliberate exclusions
+
+- **Integration base:** retained as the base. The web reader, capability guide, read-only GitHub scout, MCP bridge, plan checkpoints, health center, bounded fuzzy matching, crash redaction, and related tests remain in the candidate.
+- **ChatGPT branch:** the capability lookup and read-only repository scout are retained. The local-model inventory is read-only. The provider-configuration action is not exposed as a status operation.
+- **Antigravity branch:** session-summary search was adapted into `memory/memory_manager.py`. The ADHD, Caveman, token-saver, and diff-minimalist skills were already present with identical content. The bandit and metacognition implementation were already present in the integration line. The NTFS alternate-data-stream path guard was adapted into `actions/file_controller.py` with a platform-specific regression test.
+- **Antigravity exclusions:** plugin forge, crawler bridge, OCR bridge, clipboard context detection, keyword intent router, and agent monitor bridge were not promoted. Their current designs add policy, SSRF, path/consent, call-site, or observability risks. Its expanded undo API was not copied because its metadata argument and removal helpers do not match the current `core/undo.py` interface.
+- **Code-quality branch:** its security test file contains stale imports and a live external-network test; its README count is stale. The useful ideas were reviewed and implemented separately with deterministic tests: bounded fuzzy distance, TLS verification without an insecure retry, bearer-token redaction, and safer executable launch.
+- **Self-modification:** the consolidation adds content hashes to proposals. Apply refuses to overwrite a file changed since proposal creation. Revert refuses to overwrite a file changed after apply.
+
+A branch's code was either carried forward as a tested implementation, found already present in the integration base, or explicitly rejected with a recorded reason. No wholesale merge was used.
+
+### Verification and promotion
+
+The earlier consolidation CI runs 112 and 113 passed on commit `f93b8f6cbb55a5baa44fe95f409cf52948f5fbc4` on both Linux and Windows. Later commits add the NTFS path guard, its tests, documentation, all-branch CI, and the archive workflow. Those later commits require a fresh CI result before promotion.
+
+PR #14 (`ultron/consolidation-2026-11` → `main`) is the promotion path. Merge only after Linux and Windows pass on its latest head.
+
+### Archive and deletion decision
+
+After PR #14 merges, `.github/workflows/archive-reviewed-branches.yml` creates immutable tags for the exact reviewed tips, verifies every tag, then removes only the seven named temporary branch refs. It aborts if a source branch moved from its reviewed SHA. `main` is not in the deletion list.
+
+The archive tag names and restore commands are in [BRANCH_ARCHIVE.md](BRANCH_ARCHIVE.md). The intended end state is one working branch, `main`, plus immutable archive tags. New work uses short-lived feature/fix branches and CI runs for every pushed branch.
