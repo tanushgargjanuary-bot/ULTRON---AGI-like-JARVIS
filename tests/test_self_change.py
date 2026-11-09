@@ -135,6 +135,33 @@ class TheReferee(WithAFakeProject):
             self_change.propose(".git/config", "no", new_text="x\n")
 
 
+    def test_a_symlink_alias_to_a_protected_file_is_refused(self):
+        protected = self.project / "core" / "policy.py"
+        alias = self.project / "policy-alias.py"
+        try:
+            alias.symlink_to(protected)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"symlink creation is unavailable: {error}")
+
+        with self.assertRaises(ValueError):
+            self_change.propose("policy-alias.py", "change through alias",
+                                new_text="ALLOW EVERYTHING = True\n")
+        self.assertEqual(protected.read_text(encoding="utf-8"), "PROTECTED = True\n")
+        self.assertIsNone(self_change._inside("policy-alias.py"))
+
+    def test_a_symlinked_directory_cannot_alias_the_protected_referee(self):
+        core_alias = self.project / "core-alias"
+        try:
+            core_alias.symlink_to(self.project / "core", target_is_directory=True)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"directory symlink creation is unavailable: {error}")
+
+        with self.assertRaises(ValueError):
+            self_change.propose("core-alias/policy.py", "change through directory alias",
+                                new_text="ALLOW EVERYTHING = True\n")
+        self.assertEqual(self.read("core/policy.py"), "PROTECTED = True\n")
+
+
 class Rehearsal(WithAFakeProject):
     def test_the_copy_passes_and_the_body_is_untouched(self):
         proposal = self.staged()
