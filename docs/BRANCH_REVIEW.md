@@ -259,9 +259,10 @@ This section is the current decision. It supersedes the earlier 7–8 November r
 | `chatgpt` | 20 | 5 | 7 | Capability guide and GitHub scout are present in the integration line; local inventory is retained in safer, read-only form. |
 | `code-quality-and-security-improvements-af08a` | 1 | 0 | 2 | Test and README delta only. No distinct implementation change. |
 | `integration/best-of-all-2026-11-09` | 55 | 0 | 163 | Chosen consolidation base. |
-| `ultron/consolidation-2026-11` | 152 | 0 | 178 | Selected integration plus fixes, tests, and repository workflow updates (snapshot at `9a76c4f9`). |
+| `ultron/consolidation-2026-11` | 159 | 0 | 180 | Reviewed consolidation tip at `e058f26d`; superseded by the curated promotion branch. |
+| `ultron/curated-promotion-2026-11` | 164 | 0 | 180 | Current fast-forward-only promotion candidate; 5 follow-on commits from the consolidation tip. |
 
-The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. At measured candidate head `9a76c4f9`, the branch was 152 commits ahead of `main` and 97 commits ahead of the integration base, with 41 files changed against that base. These are a dated snapshot; use the live PR metadata for the current tip. These figures are commit-graph comparisons, not a claim that every changed line from each divergent branch was copied verbatim.
+The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The reviewed consolidation tip `e058f26d` was 159 commits ahead of `main`, 0 behind, with 180 changed files. The current promotion branch is 164 commits ahead, 0 behind, with the same 180 changed files. It adds five follow-on commits for atomic self-change cleanup, Linux PortAudio CI support, fast-forward-aware archival, and checkpoint documentation. These are commit-graph comparisons, not a claim that every changed line from each divergent branch was copied verbatim.
 
 ### Carried work and deliberate exclusions
 
@@ -278,7 +279,7 @@ A branch's code was either carried forward as a tested implementation, found alr
 
 The earlier consolidation CI runs 112 and 113 passed on commit `f93b8f6cbb55a5baa44fe95f409cf52948f5fbc4` on both Linux and Windows. Later commits add the NTFS path guard, its tests, documentation, all-branch CI, and the archive workflow. Those later commits require a fresh CI result before promotion.
 
-PR #14 (`ultron/consolidation-2026-11` → `main`) is the review surface. The intended promotion is a fast-forward-only update of `main` to the approved candidate SHA. Do not merge source branches or create a merge commit. Promote only after Linux, Windows, Reviewdog, the proof-gate reports, and the final code review pass on the latest head.
+PR #15 (`ultron/curated-promotion-2026-11` → `main`) is the review surface. PR #14 is closed as superseded and was not merged. The intended promotion is a fast-forward-only update of `main` to the approved candidate SHA. Do not use the GitHub merge button, merge source branches, or create a merge commit. Promote only after Linux, Windows, Reviewdog, the proof-gate reports, and the final code review pass on the latest head.
 
 ### Commit-history integrity audit (2026-11-09)
 
@@ -290,12 +291,19 @@ The complete PR commit list was enumerated at the pre-audit head `3f4deb60a5b0a0
 - 14 commits shared repeated subjects across five documentation tasks. The repeated commits generally changed the tree; they were not a series of empty commits.
 - 66 commits were authored in the 16:00–16:59 UTC hour on 9 November 2026. This is a high commit rate and created documentation churn, but it does not indicate an empty-commit loop.
 
-The screenshot's `224 Commits` was the total reachable history at that time: 79 commits already on `main` plus 145 PR commits ahead. After the three focused weighted-bandit commits, PR #14 contains 148 commits ahead of `main` (227 reachable commits including the 79-commit base).
+The screenshot's `224 Commits` was the total reachable history at that time: 79 commits already on `main` plus 145 PR commits ahead. The 14 commits after `3f4deb60` were enumerated individually; all 14 changed tracked files and had one parent. This brought the consolidation branch to 159 commits ahead of `main`. The current promotion candidate adds five more single-parent commits, all with tracked-file changes, bringing it to 164 commits ahead of `main`. The full audited candidate chain contains 0 merge commits and one previously identified empty commit; no new empty commit was found. The one empty commit remains in history for traceability.
 
 **Recommendation:** do not rewrite or force-push the candidate history to remove one empty commit. Preserve it for traceability. Keep future commits grouped by coherent change; do not make repeated documentation-only commits for each intermediate count refresh.
 
 ### Archive decision
 
-After the candidate is fast-forwarded into `main`, `.github/workflows/archive-reviewed-branches.yml` creates and verifies immutable tags for the exact reviewed source tips. It does not delete any branch refs. If a source branch moved from its reviewed SHA, the workflow stops. Branch deletion remains a separate, manual owner decision.
+After the candidate is fast-forwarded into `main`, `.github/workflows/archive-reviewed-branches.yml` verifies that `main` contains the curated candidate tip and checks all reviewed source branch SHAs. It creates eight immutable tags for the six source branches, the prior consolidation tip, and the curated promotion tip. It does not delete any branch refs. If a source branch moved from its reviewed SHA, the workflow stops. Branch deletion remains a separate, manual owner decision.
 
 The archive tag names and restore commands are in [BRANCH_ARCHIVE.md](BRANCH_ARCHIVE.md). The intended end state is one working branch, `main`, plus immutable archive tags. New work uses short-lived feature/fix branches and CI runs for every pushed branch.
+
+
+### Current promotion candidate — 2026-11-10
+
+The candidate branch was created from the exact reviewed consolidation tip `e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a`, so the existing work was preserved. The current head is `c389bb1e612d692d029393b67c2bcfdd4e90878d`. The candidate remains 164 commits ahead of `main`, 0 behind, with 180 changed files. PR #15 is the review surface; its GitHub merge operation is not the promotion method.
+
+The first verification run on the post-consolidation head failed on both operating systems. The suite found three additional `typed-exception-discarded` findings in the self-change temporary-file cleanup and could not import `sounddevice` on Linux because PortAudio was absent. The candidate now records cleanup failures and marks descriptor ownership transfer so it cannot double-close a reused descriptor. Linux CI installs `libportaudio2`. The replacement CI run on the final PR head must pass before promotion.
