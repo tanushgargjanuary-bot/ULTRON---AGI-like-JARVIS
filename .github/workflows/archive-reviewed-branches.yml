@@ -1,84 +1,75 @@
 name: Archive reviewed branch tips
 
 on:
-  # Manual only. This workflow creates and verifies archive tags.
-  # It never deletes branch refs.
+  # Run only after main contains the curated candidate.
   workflow_dispatch:
+    inputs:
+      delete_branches:
+        description: "Delete archived branch refs after tag verification"
+        required: false
+        type: boolean
+        default: false
+      confirm_delete:
+        description: 'Type DELETE ARCHIVED BRANCHES to authorise deletion'
+        required: false
+        type: string
 
 permissions:
   contents: write
+
+concurrency:
+  group: ultron-reviewed-branch-cleanup
+  cancel-in-progress: false
 
 jobs:
   archive-reviewed-tips:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Archive reviewed branch tips after fast-forward promotion
+      - name: Archive exact reviewed tips and optionally delete their branch refs
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const deleteBranches = core.getInput('delete_branches') === 'true';
+            const confirmation = core.getInput('confirm_delete');
 
-            // Promotion is a fast-forward update, not a GitHub merge. Confirm that
-            // main contains the exact reviewed candidate branch tip before tagging.
-            const promotionRef = await github.rest.git.getRef({
-              owner, repo, ref: "heads/ultron/curated-promotion-2026-11",
-            });
-            const mainRef = await github.rest.git.getRef({
-              owner, repo, ref: "heads/main",
-            });
-            const promotionSha = promotionRef.data.object.sha;
-            const ancestry = await github.rest.repos.compareCommits({
-              owner, repo, base: promotionSha, head: mainRef.data.object.sha,
-            });
-            if (ancestry.data.behind_by !== 0) {
-              throw new Error(
-                "Refusing archive: main does not contain the curated promotion candidate."
-              );
+            if (context.ref !== 'refs/heads/main') {
+              throw new Error('Run this workflow from main only.');
+            }
+            if (deleteBranches && confirmation !== 'DELETE ARCHIVED BRANCHES') {
+              throw new Error('Deletion refused: the confirmation phrase does not match.');
             }
 
+            const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });
+            const candidateRef = await github.rest.git.getRef({
+              owner, repo, ref: 'heads/ultron/curated-promotion-2026-11',
+            });
+            const candidateSha = candidateRef.data.object.sha;
+            const mainSha = mainRef.data.object.sha;
+            const ancestry = await github.rest.repos.compareCommits({
+              owner, repo, base: candidateSha, head: mainSha,
+            });
+            if (ancestry.data.behind_by !== 0) {
+              throw new Error('Refusing cleanup: main does not contain the current curated candidate tip.');
+            }
+
+            // These are the exact branch tips measured during the review on 2026-11-10.
+            // If any branch moves, the workflow stops before creating archive tags.
             const entries = [
-              {
-                name: "ArenaAi",
-                sha: "8f4803b8812e4cae1e79755381eda69f5b76ee81",
-                tag: "archive/2026-11-09/ArenaAi-8f4803b8",
-              },
-              {
-                name: "antigravity",
-                sha: "b8e9334484bb214fd1f18021eade35c62ba5329b",
-                tag: "archive/2026-11-09/antigravity-b8e93344",
-              },
-              {
-                name: "arena/4c973188-ultron-agi-like-jarvis",
-                sha: "8b20ceff3421add70b65cc4eacca1dac1f3b5b36",
-                tag: "archive/2026-11-09/arena-4c973188-ultron-agi-like-jarvis-8b20ceff",
-              },
-              {
-                name: "chatgpt",
-                sha: "c98ea0ff81a440ba4b2f56b1aef0f726384f521d",
-                tag: "archive/2026-11-09/chatgpt-c98ea0ff",
-              },
-              {
-                name: "code-quality-and-security-improvements-af08a",
-                sha: "bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420",
-                tag: "archive/2026-11-09/code-quality-and-security-improvements-af08a-bc65a274",
-              },
-              {
-                name: "integration/best-of-all-2026-11-09",
-                sha: "5118dede0ca4c29206a24a08ec9f9ae6699011f5",
-                tag: "archive/2026-11-09/integration-best-of-all-2026-11-09-5118dede",
-              },
-              {
-                name: "ultron/consolidation-2026-11",
-                sha: "e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a",
-                tag: "archive/2026-11-10/ultron-consolidation-e058f26d",
-              },
-              {
-                name: "ultron/curated-promotion-2026-11",
-                sha: promotionSha,
-                tag: `archive/2026-11-10/ultron-curated-promotion-${promotionSha.slice(0, 8)}`,
-              },
+              { name: 'ArenaAi', sha: '8f4803b8812e4cae1e79755381eda69f5b76ee81' },
+              { name: 'antigravity', sha: 'b8e9334484bb214fd1f18021eade35c62ba5329b' },
+              { name: 'arena/4c973188-ultron-agi-like-jarvis', sha: '8b20ceff3421add70b65cc4eacca1dac1f3b5b36' },
+              { name: 'chatgpt', sha: 'c98ea0ff81a440ba4b2f56b1aef0f726384f521d' },
+              { name: 'code-quality-and-security-improvements-af08a', sha: 'bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420' },
+              { name: 'feature/web-companion-mvp', sha: '309529147821728554896f84141333dd9fb512e8' },
+              { name: 'feature/web-mvp-auth', sha: 'a862f7650ddc36ac04d1178884d6802e2b3cb4c1' },
+              { name: 'integration/best-of-all-2026-11-09', sha: '5118dede0ca4c29206a24a08ec9f9ae6699011f5' },
+              { name: 'ultron/consolidation-2026-11', sha: 'e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a' },
+              // The promoted candidate can receive later reviewed commits. Its current tip
+              // is archived dynamically, after verifying that main contains that exact tip.
+              { name: 'ultron/curated-promotion-2026-11', sha: candidateSha },
             ];
 
             const getRefOrNull = async (ref) => {
@@ -89,55 +80,112 @@ jobs:
                 throw error;
               }
             };
+            const tagFor = (entry) => {
+              const slug = entry.name.toLowerCase().replace(/\//g, '-').replace(/[^a-z0-9._-]/g, '-');
+              return 'archive/2026-11-10/' + slug + '-' + entry.sha.slice(0, 8);
+            };
 
-            // Preflight all source refs and tags before creating anything.
-            // A moved branch is a hard stop; it must be reviewed again.
+            // Preflight every source ref and every deterministic archive tag first.
             for (const entry of entries) {
-              const branchRef = await getRefOrNull(`heads/${entry.name}`);
+              const branchRef = await getRefOrNull('heads/' + entry.name);
               if (branchRef && branchRef.data.object.sha !== entry.sha) {
-                throw new Error(
-                  `Refusing cleanup: ${entry.name} moved to ${branchRef.data.object.sha}; expected ${entry.sha}.`
-                );
+                throw new Error('Refusing cleanup: ' + entry.name + ' moved to ' + branchRef.data.object.sha + '; expected ' + entry.sha + '.');
               }
-              const tagRef = await getRefOrNull(`tags/${entry.tag}`);
-              if (tagRef && tagRef.data.object.sha !== entry.sha) {
-                throw new Error(
-                  `Refusing cleanup: tag ${entry.tag} points to ${tagRef.data.object.sha}; expected ${entry.sha}.`
-                );
+              const existingTag = await getRefOrNull('tags/' + tagFor(entry));
+              if (existingTag && existingTag.data.object.sha !== entry.sha) {
+                throw new Error('Refusing cleanup: archive tag already points elsewhere: ' + tagFor(entry));
               }
             }
 
-            // Create every archive tag first. Existing matching tags make reruns safe.
+            // Create all archive tags before considering deletion. Tags point to exact commits.
             for (const entry of entries) {
-              const existing = await getRefOrNull(`tags/${entry.tag}`);
+              const tagName = tagFor(entry);
+              const existing = await getRefOrNull('tags/' + tagName);
               if (!existing) {
                 await github.rest.git.createRef({
-                  owner, repo,
-                  ref: `refs/tags/${entry.tag}`,
-                  sha: entry.sha,
+                  owner, repo, ref: 'refs/tags/' + tagName, sha: entry.sha,
                 });
               }
-              const verified = await github.rest.git.getRef({
-                owner, repo, ref: `tags/${entry.tag}`,
-              });
+              const verified = await github.rest.git.getRef({ owner, repo, ref: 'tags/' + tagName });
               if (verified.data.object.sha !== entry.sha) {
-                throw new Error(`Archive tag verification failed: ${entry.tag}`);
+                throw new Error('Archive tag verification failed: ' + tagName);
               }
             }
 
-            // This workflow only creates and verifies tags. It never deletes branches.
-            // Branch deletion is a separate owner decision and must be done manually.
+            const archived = entries.map((entry) => ({ ...entry, tag: tagFor(entry) }));
+            if (!deleteBranches) {
+              await core.summary
+                .addHeading('Archive complete — no branches deleted')
+                .addTable([
+                  [{ data: 'Branch', header: true }, { data: 'Archived commit', header: true }, { data: 'Tag', header: true }],
+                  ...archived.map((entry) => [entry.name, entry.sha, entry.tag]),
+                ])
+                .addList(['Verified archive tags: ' + archived.length, 'All branch refs were preserved.', 'main was not changed.'])
+                .write();
+              return;
+            }
+
+            // A branch used by an open PR is never deleted by this workflow.
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const activeHeads = new Set(openPulls
+              .filter((pull) => pull.head && pull.head.repo && pull.head.repo.full_name === owner + '/' + repo)
+              .map((pull) => pull.head.ref));
+            const deleted = [];
+            const skipped = [];
+
+            for (const entry of archived) {
+              if (entry.name === 'main') {
+                throw new Error('Safety guard: main must never be in the deletion list.');
+              }
+              if (activeHeads.has(entry.name)) {
+                skipped.push({ name: entry.name, reason: 'open pull request' });
+                continue;
+              }
+              const tagRef = await github.rest.git.getRef({ owner, repo, ref: 'tags/' + entry.tag });
+              if (tagRef.data.object.sha !== entry.sha) {
+                skipped.push({ name: entry.name, reason: 'archive tag no longer matches' });
+                continue;
+              }
+              const branchRef = await getRefOrNull('heads/' + entry.name);
+              if (!branchRef) {
+                skipped.push({ name: entry.name, reason: 'branch already absent; archive tag retained' });
+                continue;
+              }
+              if (branchRef.data.object.sha !== entry.sha) {
+                skipped.push({ name: entry.name, reason: 'branch moved after archive preflight; retained' });
+                continue;
+              }
+              // Recheck open PRs immediately before deleting this branch.
+              const latestPulls = await github.paginate(github.rest.pulls.list, {
+                owner, repo, state: 'open', per_page: 100,
+              });
+              const nowActive = latestPulls.some((pull) => pull.head && pull.head.repo &&
+                pull.head.repo.full_name === owner + '/' + repo && pull.head.ref === entry.name);
+              if (nowActive) {
+                skipped.push({ name: entry.name, reason: 'open pull request appeared during cleanup' });
+                continue;
+              }
+              // The verified tag keeps the exact commit reachable before the branch ref is removed.
+              await github.rest.git.deleteRef({ owner, repo, ref: 'heads/' + entry.name });
+              deleted.push({ name: entry.name, sha: entry.sha, tag: entry.tag });
+            }
 
             await core.summary
-              .addHeading("Branch archive complete — branch refs preserved")
+              .addHeading('Branch cleanup result')
               .addTable([
-                [{ data: "Branch", header: true }, { data: "Archived tip", header: true }, { data: "Tag", header: true }],
-                ...entries.map(entry => [entry.name, entry.sha, entry.tag]),
+                [{ data: 'Deleted branch', header: true }, { data: 'Archived commit', header: true }, { data: 'Recovery tag', header: true }],
+                ...deleted.map((entry) => [entry.name, entry.sha, entry.tag]),
               ])
-              .addList([
-                `Verified archive tags: ${entries.length}`,
-                "All source branch refs were preserved.",
-                "main was not changed or deleted.",
-                "Any branch deletion requires a separate manual owner decision.",
+              .addHeading('Preserved branches')
+              .addTable([
+                [{ data: 'Branch', header: true }, { data: 'Reason', header: true }],
+                ...skipped.map((entry) => [entry.name, entry.reason]),
               ])
+              .addList(['Deleted: ' + deleted.length, 'Skipped and preserved: ' + skipped.length, 'main was not changed or deleted.'])
               .write();
+
+            if (skipped.length) {
+              core.warning('Some branches were preserved. Review the workflow summary before another cleanup run.');
+            }
