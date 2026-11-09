@@ -221,7 +221,22 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
             raise McpError("MCP schema description must be a string.")
         clean["description"] = description[:500]
     if "enum" in raw:
-        clean["enum"] = _enum_values(raw["enum"])
+        enum_values = _enum_values(raw["enum"])
+        matches = {
+            "STRING": lambda value: isinstance(value, str),
+            "NUMBER": lambda value: isinstance(value, (int, float))
+                and not isinstance(value, bool) and math.isfinite(value),
+            "INTEGER": lambda value: (
+                isinstance(value, int) and not isinstance(value, bool)
+            ) or (
+                isinstance(value, float) and math.isfinite(value) and value.is_integer()
+            ),
+            "BOOLEAN": lambda value: isinstance(value, bool),
+        }
+        accepts = matches.get(kind)
+        if accepts is None or not all(accepts(value) for value in enum_values):
+            raise McpError(f"MCP enum values do not match the declared {kind} type.")
+        clean["enum"] = enum_values
 
     if kind == "OBJECT":
         raw_properties = raw.get("properties", {})
@@ -272,8 +287,10 @@ def schema(raw: Any) -> dict[str, Any]:
         raise McpError("MCP tool input schema must be an object.")
     if not raw:
         return {"type": "OBJECT", "properties": {}}
-    if "type" in raw and raw["type"] != "object":
-        raise McpError("MCP tool input schema must have an object at its root.")
+    if "type" in raw:
+        root_type = raw["type"]
+        if not isinstance(root_type, str) or root_type.lower() != "object":
+            raise McpError("MCP tool input schema must have an object at its root.")
     return _schema_node(raw, 0)
 
 
