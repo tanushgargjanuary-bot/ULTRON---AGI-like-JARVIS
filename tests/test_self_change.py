@@ -215,6 +215,14 @@ class Applying(WithAFakeProject):
         self.assertTrue(result["ok"])
         self.assertEqual(self.read("app.py"), NEW_APP)
 
+    def test_apply_refuses_to_overwrite_a_file_changed_after_proposal(self):
+        proposal = self.ready()
+        newer = "def greeting():\n    return 'newer edit'\n"
+        (self.project / "app.py").write_text(newer, encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "changed after this proposal"):
+            self_change.apply(proposal["id"])
+        self.assertEqual(self.read("app.py"), newer)
+
     def test_a_code_change_asks_for_a_restart(self):
         proposal = self.ready()
         result = self_change.apply(proposal["id"])
@@ -255,6 +263,15 @@ class Reverting(WithAFakeProject):
         said = self_change.revert(proposal["id"])
         self.assertIn("Put back", said)
         self.assertEqual(self.read("app.py"), APP)
+
+    def test_revert_refuses_to_overwrite_a_file_changed_after_apply(self):
+        proposal = self.ready()
+        self_change.apply(proposal["id"])
+        newer = "def greeting():\n    return 'newer edit'\n"
+        (self.project / "app.py").write_text(newer, encoding="utf-8")
+        said = self_change.revert(proposal["id"])
+        self.assertIn("changed after", said)
+        self.assertEqual(self.read("app.py"), newer)
 
     def test_revert_of_something_never_applied_is_refused(self):
         proposal = self.staged()
