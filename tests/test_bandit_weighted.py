@@ -26,6 +26,16 @@ class WeightedBandits(unittest.TestCase):
         self.assertAlmostEqual(stats["pulls"], 1.0)
         self.assertAlmostEqual(stats["mean"], 0.25)
 
+    def test_subunit_total_weight_keeps_ucb_scores_finite(self):
+        bandit = UCB1(["stale", "new"])
+        bandit.update("stale", 1.0, weight=0.25)
+
+        scores = bandit.scores()
+        self.assertEqual(scores[0][0], "new")
+        self.assertTrue(all(math.isfinite(score) or score == math.inf
+                            for _name, score in scores))
+        self.assertEqual(bandit.choose(), "new")
+
     def test_zero_and_negative_weights_do_not_create_evidence(self):
         bandit = UCB1(["strategy"])
         bandit.update("strategy", 1.0, weight=0.0)
