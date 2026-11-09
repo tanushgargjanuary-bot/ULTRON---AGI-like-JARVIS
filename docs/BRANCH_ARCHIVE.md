@@ -11,7 +11,7 @@ The consolidation pull request is the only candidate for promotion. It uses the 
 
 ## Reviewed branch tips
 
-The cleanup workflow creates a tag for each exact branch tip before it deletes the branch ref. The expected commit is part of the cleanup guard. If a source branch moved after this review, the workflow stops before it deletes any branch.
+The archive workflow creates and verifies a tag for each exact reviewed branch tip. It runs only after a manual workflow dispatch on `main` and only after PR #14 is merged. It preserves every branch ref. If a source branch moved after this review, the workflow stops before it creates any tags.
 
 | Source branch | Reviewed tip | Archive tag |
 |---|---|---|
@@ -62,7 +62,7 @@ Replace the branch and tag with the row you need. The tag points to the exact re
 - Use short-lived `feature/<topic>` and `fix/<topic>` branches for work.
 - Open a pull request to `main`; do not use permanent branches per agent or coding model.
 - CI runs on every pushed branch and every pull request.
-- After merge, archive only when historical recovery is useful, then delete the temporary branch.
+- Archive reviewed branch tips with the manual workflow. Delete a temporary branch only as a separate manual owner action.
 - Never delete a branch if its current SHA differs from the reviewed SHA. Re-review it first.
 
-The workflow `.github/workflows/archive-reviewed-branches.yml` performs the guarded archive-and-delete operation after PR #14 merges into `main`. It is idempotent: it verifies existing tags and skips branch refs already removed. It does not delete `main`.
+The workflow `.github/workflows/archive-reviewed-branches.yml` performs a guarded, manual archive operation after PR #14 merges into `main`. It creates and verifies the seven tags. It never deletes a branch. Branch deletion is a separate manual owner decision after the archived tags have been checked.
