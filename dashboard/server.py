@@ -3,8 +3,8 @@ dashboard/server.py — JARVIS Local HTTP Dashboard
 
 HTTPS on port 8000 with a self-signed certificate generated on first run, plus
 a second layer inside it: commands are encrypted with AES-256-GCM under a key
-derived from the pairing code with PBKDF2. Both layers are required — the
-server refuses to start without TLS rather than quietly serving in clear.
+derived from the pairing code with PBKDF2. LAN command access requires explicit owner permission and HTTPS with a
+locally generated certificate. The dashboard binds to loopback by default.
 
 Install deps:  pip install fastapi "uvicorn[standard]" cryptography
 """

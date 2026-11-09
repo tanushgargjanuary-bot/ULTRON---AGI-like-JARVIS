@@ -437,9 +437,9 @@ def _score(query_words: list[str], cat: str, key: str, value: str) -> int:
     return score
 
 
-def _search_sessions(sessions: list, words: list[str]) -> list[tuple[int, str, str, str]]:
+def _search_sessions(sessions: list, words: list[str]) -> list[tuple[int, str, str, str, str]]:
     """Rank saved session summaries for recall, including temporal queries."""
-    results: list[tuple[int, str, str, str]] = []
+    results: list[tuple[int, str, str, str, str]] = []
     if not isinstance(sessions, list):
         return results
     temporal_cues = {"yesterday", "last", "session", "previous", "history", "earlier", "past", "day"}
