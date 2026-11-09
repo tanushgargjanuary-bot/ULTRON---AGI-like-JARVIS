@@ -165,6 +165,11 @@ def _is_safe_path(target: Path) -> bool:
     first, so a file inside those folders is still refused when it is a
     credential store.
     """
+    # NTFS alternate data streams use a colon after the file name
+    # (for example, report.txt:secret). They are not ordinary files and must
+    # not bypass the workspace path policy.
+    if _OS == "Windows" and ":" in target.name:
+        return False
     try:
         resolved = target.resolve()
         if _is_sensitive(resolved):
