@@ -10,7 +10,7 @@ The `verify` workflow runs the project test suite and proof gate on Linux and Wi
 
 The `reviewdog` workflow runs Ruff and reports findings on changed lines as a GitHub PR check.
 
-- Ruff catches common Python defects and style issues.
+- Ruff checks syntax-related errors, Pyflakes, Bugbear, blind exception handling, and Bandit-style Python security rules. Import-order and broad style rules are excluded to reduce noise.
 - Reviewdog filters the report to lines added by the pull request and posts findings to GitHub.
 - This workflow uses the repository's `GITHUB_TOKEN`; it does not need a paid model API.
 - This is static analysis, not semantic AI review. A clean result does not prove that the design is correct.
