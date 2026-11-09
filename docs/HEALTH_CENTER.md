@@ -20,4 +20,6 @@ A `fix` request includes an issue ID and a candidate patch (`path`, `reason`, pl
 
 A successful job only creates a rehearsed proposal. It does **not** write source files, confirm, or apply. The owner reviews the diff with `self_modify show`, confirms in two separate channels, and then explicitly applies. There is one background self-change rehearsal at a time to avoid conflicting proposals. Failed, timed-out, or missing verification blocks application.
 
+**Security limit:** rehearsal runs a Python subprocess in a temporary project copy, but it does not run inside an OS sandbox. The process has the same user permissions as Ultron and can access files or network resources outside that copy. The tool requires an owner-approved guarded action, but that approval is not a technical sandbox. Do not use background repair to test untrusted or adversarial code. A restricted OS worker is still required for that.
+
 There is no dedicated dashboard button in this first slice; the health action and activity-log instructions provide the controls. A model can suggest a candidate patch, but its confidence is not a gate and the full test harness remains mandatory.
