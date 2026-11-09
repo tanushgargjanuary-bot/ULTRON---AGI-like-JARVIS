@@ -201,6 +201,85 @@ MAX_SCHEMA_DEPTH = 6
 MAX_SCHEMA_PROPERTIES = 100
 
 
+def _schema_kind(raw: dict[str, Any]) -> str:
+    """Choose an explicit supported type, or infer object/array structure."""
+    if "type" in raw:
+        return _kind(raw["type"])
+    if "properties" in raw:
+        return "OBJECT"
+    if "items" in raw:
+        return "ARRAY"
+    raise McpError("MCP property schema needs an explicit supported type.")
+
+
+def _schema_enum(raw: dict[str, Any], kind: str) -> list[Any]:
+    """Validate enum values against the declared scalar type."""
+    enum_values = _enum_values(raw["enum"])
+    matches = {
+        "STRING": lambda value: isinstance(value, str),
+        "NUMBER": _finite_number,
+        "INTEGER": lambda value: (
+            isinstance(value, int) and not isinstance(value, bool)
+        ) or (
+            isinstance(value, float) and math.isfinite(value) and value.is_integer()
+        ),
+        "BOOLEAN": lambda value: isinstance(value, bool),
+    }
+    accepts = matches.get(kind)
+    if accepts is None or not all(accepts(value) for value in enum_values):
+        raise McpError(f"MCP enum values do not match the declared {kind} type.")
+    return enum_values
+
+
+def _schema_required(raw: dict[str, Any], properties: dict[str, Any]) -> dict[str, Any]:
+    """Keep a required list only when every name refers to a declared property."""
+    if "required" not in raw:
+        return {}
+    wanted = raw["required"]
+    invalid = (
+        not isinstance(wanted, list)
+        or any(not isinstance(name, str) for name in wanted)
+        or len(set(wanted)) != len(wanted)
+    )
+    if invalid:
+        raise McpError("MCP object schema has an invalid required list.")
+    missing = [name for name in wanted if name not in properties]
+    if missing:
+        raise McpError(
+            "MCP object schema requires undeclared properties: "
+            + ", ".join(missing[:8])
+        )
+    return {"required": list(wanted)} if wanted else {}
+
+
+def _schema_object(raw: dict[str, Any], depth: int) -> dict[str, Any]:
+    """Translate a bounded object and validate its required names."""
+    raw_properties = raw.get("properties", {})
+    if not isinstance(raw_properties, dict):
+        raise McpError("MCP object schema has invalid properties; expected an object.")
+    if len(raw_properties) > MAX_SCHEMA_PROPERTIES:
+        raise McpError(
+            f"MCP object schema exceeds the {MAX_SCHEMA_PROPERTIES}-property limit."
+        )
+    properties: dict[str, Any] = {}
+    for key, spec in raw_properties.items():
+        name = str(key)
+        invalid = not name or len(name) > 128 or any(ord(char) < 32 for char in name)
+        if invalid:
+            raise McpError("MCP input schema contains an invalid property name.")
+        properties[name] = _schema_node(spec, depth + 1)
+    result = {"properties": properties}
+    result.update(_schema_required(raw, properties))
+    return result
+
+
+def _schema_array(raw: dict[str, Any], depth: int) -> dict[str, Any]:
+    """Translate an array only when the element schema is explicit."""
+    if "items" not in raw:
+        raise McpError("MCP array schema must declare an item schema.")
+    return {"items": _schema_node(raw["items"], depth + 1)}
+
+
 def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
     """Translate only the JSON Schema subset this provider can represent."""
     if depth > MAX_SCHEMA_DEPTH:
@@ -213,16 +292,7 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
         names = ", ".join(unsupported[:8])
         raise McpError(f"MCP input schema uses unsupported keyword(s): {names}.")
 
-    raw_type = raw.get("type")
-    if "type" in raw:
-        kind = _kind(raw_type)
-    elif "properties" in raw:
-        kind = "OBJECT"
-    elif "items" in raw:
-        kind = "ARRAY"
-    else:
-        raise McpError("MCP property schema needs an explicit supported type.")
-
+    kind = _schema_kind(raw)
     clean: dict[str, Any] = {"type": kind}
     description = raw.get("description")
     if description is not None:
@@ -230,56 +300,12 @@ def _schema_node(raw: Any, depth: int) -> dict[str, Any]:
             raise McpError("MCP schema description must be a string.")
         clean["description"] = description[:500]
     if "enum" in raw:
-        enum_values = _enum_values(raw["enum"])
-        matches = {
-            "STRING": lambda value: isinstance(value, str),
-            "NUMBER": _finite_number,
-            "INTEGER": lambda value: (
-                isinstance(value, int) and not isinstance(value, bool)
-            ) or (
-                isinstance(value, float) and math.isfinite(value) and value.is_integer()
-            ),
-            "BOOLEAN": lambda value: isinstance(value, bool),
-        }
-        accepts = matches.get(kind)
-        if accepts is None or not all(accepts(value) for value in enum_values):
-            raise McpError(f"MCP enum values do not match the declared {kind} type.")
-        clean["enum"] = enum_values
+        clean["enum"] = _schema_enum(raw, kind)
 
     if kind == "OBJECT":
-        raw_properties = raw.get("properties", {})
-        if not isinstance(raw_properties, dict):
-            raise McpError("MCP object schema has invalid properties; expected an object.")
-        if len(raw_properties) > MAX_SCHEMA_PROPERTIES:
-            raise McpError(
-                f"MCP object schema exceeds the {MAX_SCHEMA_PROPERTIES}-property limit."
-            )
-        properties: dict[str, Any] = {}
-        for key, spec in raw_properties.items():
-            name = str(key)
-            if not name or len(name) > 128 or any(ord(char) < 32 for char in name):
-                raise McpError("MCP input schema contains an invalid property name.")
-            properties[name] = _schema_node(spec, depth + 1)
-        clean["properties"] = properties
-
-        if "required" in raw:
-            wanted = raw["required"]
-            if (not isinstance(wanted, list)
-                    or any(not isinstance(name, str) for name in wanted)
-                    or len(set(wanted)) != len(wanted)):
-                raise McpError("MCP object schema has an invalid required list.")
-            missing = [name for name in wanted if name not in properties]
-            if missing:
-                raise McpError(
-                    "MCP object schema requires undeclared properties: "
-                    + ", ".join(missing[:8])
-                )
-            if wanted:
-                clean["required"] = list(wanted)
+        clean.update(_schema_object(raw, depth))
     elif kind == "ARRAY":
-        if "items" not in raw:
-            raise McpError("MCP array schema must declare an item schema.")
-        clean["items"] = _schema_node(raw["items"], depth + 1)
+        clean.update(_schema_array(raw, depth))
     return clean
 
 
