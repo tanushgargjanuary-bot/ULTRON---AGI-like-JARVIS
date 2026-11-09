@@ -16,6 +16,8 @@ from typing import Callable, Optional
 import numpy as np
 import sounddevice as sd
 
+from core import failures
+
 
 
 # USE_TF=0 stops transformers from importing TensorFlow (saves 4-8 s startup).
@@ -407,9 +409,25 @@ class TTSPlayer:
                 self._playing = True
             if on_start:
                 on_start()
-            self._engine.speak(text)
-        except Exception as e:
-            print(f"[TTS] Error: {e}")
+            try:
+                self._engine.speak(text)
+            except Exception as primary_error:
+                failures.note("tts.primary", primary_error)
+                try:
+                    # Keep speech available when a network-backed or neural
+                    # engine fails. This provider uses the operating system's
+                    # installed voice and does not require a model download.
+                    from providers import tts_system
+
+                    system_tts = tts_system.SystemTTS({})
+                    audio_bytes = system_tts._synth_blocking(text)
+                    if not audio_bytes:
+                        raise RuntimeError("the system speech engine returned no audio")
+                    _play_audio_bytes(audio_bytes)
+                except Exception as fallback_error:
+                    failures.note("tts.fallback", fallback_error)
+        except Exception as error:
+            failures.note("tts.lifecycle", error)
         finally:
             with self._lock:
                 self._playing = False
