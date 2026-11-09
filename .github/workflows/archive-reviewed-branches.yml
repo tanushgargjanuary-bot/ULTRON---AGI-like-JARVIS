@@ -7,27 +7,35 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   archive-reviewed-tips:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Archive reviewed branch tips after explicit manual dispatch
+      - name: Archive reviewed branch tips after fast-forward promotion
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prNumber = 14;
 
-            const pull = await github.rest.pulls.get({
-              owner, repo, pull_number: prNumber,
+            // Promotion is a fast-forward update, not a GitHub merge. Confirm that
+            // main contains the exact reviewed candidate branch tip before tagging.
+            const promotionRef = await github.rest.git.getRef({
+              owner, repo, ref: "heads/ultron/curated-promotion-2026-11",
             });
-            if (!pull.data.merged || pull.data.base.ref !== "main" ||
-                pull.data.head.ref !== "ultron/consolidation-2026-11") {
-              throw new Error("PR #14 must be merged into main before branch cleanup.");
+            const mainRef = await github.rest.git.getRef({
+              owner, repo, ref: "heads/main",
+            });
+            const promotionSha = promotionRef.data.object.sha;
+            const ancestry = await github.rest.repos.compareCommits({
+              owner, repo, base: promotionSha, head: mainRef.data.object.sha,
+            });
+            if (ancestry.data.behind_by !== 0) {
+              throw new Error(
+                "Refusing archive: main does not contain the curated promotion candidate."
+              );
             }
 
             const entries = [
@@ -62,9 +70,14 @@ jobs:
                 tag: "archive/2026-11-09/integration-best-of-all-2026-11-09-5118dede",
               },
               {
-                name: pull.data.head.ref,
-                sha: pull.data.head.sha,
-                tag: `archive/2026-11-09/ultron-consolidation-${pull.data.head.sha.slice(0, 8)}`,
+                name: "ultron/consolidation-2026-11",
+                sha: "e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a",
+                tag: "archive/2026-11-10/ultron-consolidation-e058f26d",
+              },
+              {
+                name: "ultron/curated-promotion-2026-11",
+                sha: promotionSha,
+                tag: `archive/2026-11-10/ultron-curated-promotion-${promotionSha.slice(0, 8)}`,
               },
             ];
 
