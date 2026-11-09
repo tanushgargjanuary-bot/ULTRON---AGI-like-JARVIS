@@ -344,7 +344,7 @@ class Ledger:
                     age_days = max(0.0, (time.time() - float(attempt.get("at", 0.0)))
                                    / 86400.0)
                     weight = 0.5 ** (age_days / HALF_LIFE_DAYS)
-                    bandit.update(name, (1.0 if attempt.get("ok") else 0.0) * weight)
+                    bandit.update(name, 1.0 if attempt.get("ok") else 0.0, weight=weight)
             else:
                 for _ in range(int(row["wins"])):
                     bandit.update(name, 1.0)
