@@ -1,9 +1,9 @@
 # ULTRON — “Maybe complete?” checkpoint
 
 **Checkpoint:** Branch consolidation candidate  
-**Promotion PR:** [#14 — Consolidate reviewed branches and archive development refs](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/14)  
+**Promotion review:** [#15 — Curated ULTRON promotion candidate — fast-forward only](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Target:** `main`  
-**State:** Not promoted. PR #14 is the review surface. After the final checks pass, the owner can fast-forward `main` to the reviewed candidate SHA. Do not merge the source development branches or create a merge commit.
+**State:** Not promoted. PR #15 is the review surface. After the final checks pass, fast-forward `main` to the exact reviewed candidate SHA. Do not use GitHub's merge button, merge source development branches, or create a merge commit.
 
 This checkpoint means the current consolidation work is ready for a final promotion decision. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
@@ -12,19 +12,21 @@ This checkpoint means the current consolidation work is ready for a final promot
 - Curated integration from the reviewed development branches. No wholesale branch merge.
 - Lazy provider import fix for the default Gemini path.
 - Memory search over saved session summaries.
-- Stale self-change proposal protection: apply and revert compare content hashes before overwriting.
+- Stale self-change proposal protection: apply and revert compare content hashes before overwriting. State updates use unique exclusive temporary files and recheck hashes immediately before atomic replacement.
 - Windows NTFS alternate-data-stream path rejection.
 - MCP client with recursive bounded input schemas, strict rejection of unsupported schema shapes, collision rejection across MCP/native tools, guarded unknown-tool policy, 1 MB JSON-RPC line limits, and bounded stderr diagnostics.
 - Local fallback restricted to explicit consent, quantized 1.5B–3B chat models, loopback-only HTTP, no redirects, and bounded JSON responses.
 - Non-streaming Ollama warm-up response so the code receives one JSON object.
+- Weighted bandit evidence for decayed strategy history, with tests for fractional UCB1 and Thompson updates.
+- System-voice TTS fallback when the primary speech engine fails, with fallback and lifecycle tests.
 - Loopback-only dashboard by default; LAN exposure requires an explicit setting and HTTPS.
 - Public web reader with URL, DNS, redirect, robots, content-type, and response-size checks.
 - Reviewdog + Ruff advisory PR checks.
-- Immutable branch archive tags through a guarded, manual-only workflow. The workflow does not delete branch refs.
+- Immutable archive tags through a guarded, manual-only workflow. It verifies that `main` contains the curated candidate. It does not require PR merge and does not delete branch refs.
 
 ## Verification evidence
 
-The current PR head must have all of the following before merge:
+The current PR #15 head must have all of the following before fast-forward promotion:
 
 - Linux `verify` job: success.
 - Windows `verify` job: success.
@@ -32,11 +34,11 @@ The current PR head must have all of the following before merge:
 - Proof-gate reports from both operating systems: inspect the PROVEN, PARTIAL, and FAILED counts and the claim-level output.
 - No unresolved Critical or High findings. Medium findings must be fixed or explicitly deferred with a reason.
 
-The CI result must belong to the **latest PR head**, not an earlier commit. See the checks and artifacts attached to PR #14. Older green runs do not verify later edits.
+The CI result must belong to the **latest PR #15 head**, not an earlier commit. Older green runs do not verify later edits. The first run after the candidate additions exposed a test-debt increase and a missing Linux PortAudio runtime. Both causes were corrected; the replacement CI run must pass before promotion.
 
 ## Code-review status
 
-A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 178 files.
+A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 180 files.
 
 Four security defects were found and fixed in the focused MCP/self-change review:
 
@@ -45,7 +47,7 @@ Four security defects were found and fixed in the focused MCP/self-change review
 3. MCP servers could emit oversized protocol lines. The reader now caps a line at 1 MB, kills a server that exceeds the limit, bounds stderr reads, and rejects oversized client messages.
 4. A self-change path could reach a protected referee file through a symlink alias, or be redirected after approval by retargeting the link. The path guard now refuses symlink and junction paths, checks protected resolved targets, and stores canonical project-relative paths. Regression tests cover file links, directory links, and post-approval link replacement.
 
-Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, and the Ollama warm-up stream setting. Regression tests were added.
+Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, the Ollama warm-up stream setting, atomic self-change file replacement, and observable temporary-file cleanup. Regression tests were added.
 
 Reviewdog reports static-analysis warnings. Several are expected patterns or false positives, for example fail-closed exception handling, explicit local subprocess launches, loopback probes, and avatar animation randomness. Each warning still requires context. Do not bulk-apply lint fixes or suppress the entire security ruleset.
 
@@ -95,8 +97,9 @@ After fast-forward promotion, manually dispatch the archive workflow and verify 
 - [ ] Latest Linux and Windows proof-gate reports have been inspected.
 - [ ] No unresolved Critical or High review findings remain.
 - [ ] Medium findings are fixed or explicitly deferred.
-- [ ] The owner has reviewed PR #14 and approves the change to `main`.
-- [ ] After merge, manually dispatch the archive workflow, verify all tags, and inspect the branch list. Keep or delete branch refs only by a separate manual decision.
+- [ ] The owner has reviewed PR #15 and approves the exact candidate SHA for promotion.
+- [ ] Fast-forward `main` to that SHA with a non-forced update and an expected-current-SHA check. Do not merge the PR.
+- [ ] Manually dispatch the archive workflow on `main`. Verify all eight tags and inspect the branch list. Keep or delete branch refs only by a separate manual decision.
 
 ## Meaning of this checkpoint
 
