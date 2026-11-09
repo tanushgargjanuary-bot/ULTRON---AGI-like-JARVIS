@@ -34,7 +34,7 @@ scripts/proof_gate.py   the harness that judges the claims
 config/api_keys.json    your keys and settings
 ```
 
-The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal. The same refusal applies when a relative path resolves through a file or directory symlink to one of these protected targets.
+The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal. The same refusal applies when a relative path resolves through a file or directory symlink to one of these protected targets. For allowed symlink targets, the proposal stores the resolved project-relative path. Retargeting the link later cannot redirect apply or revert to another file.
 
 **A system that can rewrite its own referee has no referee.** That is the exact failure the films this assistant borrows from are about — and giving it real power everywhere *except* here is the difference between a tool that evolves and a tool that unshackles.
 
