@@ -437,6 +437,32 @@ def _score(query_words: list[str], cat: str, key: str, value: str) -> int:
     return score
 
 
+def _search_sessions(sessions: list, words: list[str]) -> list[tuple[int, str, str, str]]:
+    """Rank saved session summaries for recall, including temporal queries."""
+    results: list[tuple[int, str, str, str]] = []
+    if not isinstance(sessions, list):
+        return results
+    temporal_cues = {"yesterday", "last", "session", "previous", "history", "earlier", "past", "day"}
+    is_temporal = any(word in temporal_cues for word in words)
+    for index, session in enumerate(reversed(sessions)):
+        if not isinstance(session, dict):
+            continue
+        date = str(session.get("date", ""))
+        summary = str(session.get("summary", ""))
+        if not summary:
+            continue
+        score = 3 if is_temporal and index < 3 else 0
+        if words:
+            for word in words:
+                if word in date.lower() or word in summary.lower():
+                    score += 2
+        else:
+            score = 1
+        if score > 0:
+            results.append((score, "session", date, summary))
+    return results
+
+
 def search_memory(query: str, limit: int = 8) -> str:
     """Find stored facts matching `query`. Backs the recall_memory tool.
 
@@ -458,6 +484,8 @@ def search_memory(query: str, limit: int = 8) -> str:
                 updated = ((entry.get("updated_at") or entry.get("updated", ""))
                            if isinstance(entry, dict) else "")
                 rows.append((s, cat, key, val, updated))
+
+    rows.extend(_search_sessions(memory.get("sessions", []), words))
 
     if not rows:
         return (f"Nothing stored about '{query}'." if query
