@@ -187,10 +187,22 @@ def _inside(relative: str) -> Path | None:
     a self-change tool that can write to `C:\\Windows` because a model was eloquent
     is not a self-change tool.
     """
-    if not relative or Path(relative).is_absolute():
+    if not relative:
+        return None
+    relative_path = Path(relative)
+    if relative_path.is_absolute() or any(part in {".", ".."} for part in relative_path.parts):
         return None
     base = root().resolve()
-    target = (base / relative).resolve()
+    candidate = base
+    for part in relative_path.parts:
+        candidate = candidate / part
+        try:
+            is_junction = getattr(candidate, "is_junction", lambda: False)()
+            if candidate.is_symlink() or is_junction:
+                return None
+        except OSError:
+            return None
+    target = candidate.resolve()
     try:
         inside = target.relative_to(base)
     except ValueError:
