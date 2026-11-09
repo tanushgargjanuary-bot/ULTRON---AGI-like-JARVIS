@@ -96,7 +96,7 @@ After merge, verify the archive workflow run and the branch list. Do not assume 
 - [ ] No unresolved Critical or High review findings remain.
 - [ ] Medium findings are fixed or explicitly deferred.
 - [ ] The owner has reviewed PR #14 and approves the change to `main`.
-- [ ] After merge, the archive workflow succeeds and the branch list is checked.
+- [ ] After merge, manually dispatch the archive workflow, verify all tags, and inspect the branch list. Keep or delete branch refs only by a separate manual decision.
 
 ## Meaning of this checkpoint
 
