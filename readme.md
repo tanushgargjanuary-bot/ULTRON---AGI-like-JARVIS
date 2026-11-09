@@ -53,6 +53,13 @@ python scripts/verify.py
 
 The focused command is offline. The full project verification may require platform or optional packages; run it in the intended installation environment before promoting a change.
 
+### Branch workflow
+
+- `main` is the stable branch.
+- Use short-lived `feature/<topic>` and `fix/<topic>` branches. Do not keep one permanent branch per agent or model.
+- Open a pull request to `main`. CI runs on every pushed branch and every pull request.
+- After merge, remove the temporary branch. Historical branch tips that need recovery are stored as tags. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
+
 To reproduce the terminal demo GIF (requires the optional demo tools):
 
 ```bash
@@ -72,5 +79,6 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 - [`docs/HEALTH_CENTER.md`](docs/HEALTH_CENTER.md) — notices and background repairs
 - [`docs/SELF-CHANGE.md`](docs/SELF-CHANGE.md) — guarded source changes
 - [`docs/UPDATE_ARCHITECTURE.md`](docs/UPDATE_ARCHITECTURE.md) — private development/public promotion and update design
+- [`docs/BRANCH_ARCHIVE.md`](docs/BRANCH_ARCHIVE.md) — branch history, restore tags, and cleanup policy
 - [`DECISIONS.md`](DECISIONS.md) — recorded project decisions
 - [`LICENSE`](LICENSE) — license terms
