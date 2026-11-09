@@ -3,7 +3,7 @@
 **Checkpoint:** Curated consolidation candidate  
 **Promotion review:** [#15 — Curated ULTRON promotion candidate — fast-forward only](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Candidate branch:** `ultron/curated-promotion-2026-11`  
-**Candidate SHA at this review:** `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3`  
+**Last fully CI-verified candidate SHA:** `9346f2d50b135384c15bfaf24bb242336d28092c`  
 **Target:** `main`  
 **State:** Not promoted. PR #15 remains open. Do not use GitHub's merge button. Promotion must be a non-forced fast-forward update to the exact reviewed SHA.
 
@@ -30,14 +30,14 @@ This checkpoint means the curated implementation has passed its current automate
 
 ## Verification evidence
 
-All checks below belong to PR #15 head `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3`.
+All checks below belong to PR #15 head `9346f2d50b135384c15bfaf24bb242336d28092c`. The follow-up workflow patch changes only branch-cleanup automation; its CI must pass before promotion.
 
 | Check | Run | Result |
 |---|---:|---|
-| Linux `verify` suite and proof gate | [42691410701](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410701) | Passed |
-| Windows `verify` suite and proof gate | [42691410701](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410701) | Passed |
-| ULTRON Web typecheck and production build | [42691410461](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410461) | Passed |
-| Reviewdog / Ruff | [42691410137](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42691410137) | Completed successfully; 101 advisory warnings triaged |
+| Linux `verify` suite and proof gate | [42694718527](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718527) | Passed |
+| Windows `verify` suite and proof gate | [42694718527](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718527) | Passed |
+| ULTRON Web typecheck and production build | [42694718173](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718173) | Passed |
+| Reviewdog / Ruff | [42694718131](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718131) | Completed successfully; 101 advisory warnings triaged |
 
 ### Proof-gate results
 
@@ -84,7 +84,7 @@ This is a warning triage, not a full security audit. Do not bulk-suppress Ruff r
 
 ## Fast-forward status
 
-At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **169 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
+At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **170 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
 
 Repeat this comparison immediately before promotion. Never force-update `main`.
 
@@ -153,19 +153,21 @@ Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent
 The repository currently has **11 branches**: `main` plus ten other refs. No archive tags have been created yet and no branches have been deleted.
 
 The workflow `.github/workflows/archive-reviewed-branches.yml`:
-- Runs manually from `main` only.
-- Refuses to continue unless `main` contains the current curated candidate tip.
-- Checks every reviewed source branch against its exact recorded SHA. A moved branch stops the run before archive tags are made.
-- Creates and verifies ten exact-SHA archive tags before any deletion is considered.
-- Defaults to archive-only mode. It deletes nothing unless `delete_branches=true` and the exact phrase `DELETE ARCHIVED BRANCHES` is supplied.
-- Skips any branch used by an open PR and checks again before each deletion.
-- Never includes `main` in the deletion list.
+- Runs manually from `main` only and requires `main` to contain the current candidate.
+- Reads `workflow_dispatch` values from the event payload.
+- Checks every reviewed branch against its exact SHA before creating any tags.
+- Creates and verifies ten exact-SHA archive tags.
+- Defaults to archive-only mode.
+- Requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED` before deletion.
+- Requires the owner to protect `refs/tags/archive/**` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
+- The workflow requires the owner's attestation. It does not query or verify that the ruleset exists.
+- Skips branches used by open PRs, rechecks each branch SHA and tag target, and never deletes `main`.
 
-The candidate branch is used by PR #15. Close PR #15 without merging after the fast-forward promotion, then run the archive-only workflow, inspect all tags, and only then run the separately confirmed deletion mode.
+A Git tag is not immutable by default. Until the tag ruleset is active, a tag can be moved or deleted. Do not enable branch deletion before the owner confirms the ruleset.
 
-## Next checkpoints
+The candidate branch is used by PR #15. Close PR #15 without merging after the fast-forward promotion, run archive-only mode, inspect all ten tags, protect the tag namespace, and only then run deletion mode.
 
-See [NEXT_CHECKPOINTS.md](NEXT_CHECKPOINTS.md) for the small-step execution sequence and current blockers.
+
 
 ## Promotion checklist
 

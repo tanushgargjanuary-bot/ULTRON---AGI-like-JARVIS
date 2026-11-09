@@ -1,7 +1,7 @@
 # ULTRON — Next checkpoints
 
 **Current candidate:** `ultron/curated-promotion-2026-11`  
-**Current candidate SHA:** `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3`  
+**Last fully CI-verified candidate SHA:** `9346f2d50b135384c15bfaf24bb242336d28092c`  
 **Active review:** [PR #15](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Rule:** One small checkpoint at a time. Update this file and `MAYBE_COMPLETE.md` when evidence or state changes.
 
@@ -11,15 +11,16 @@
 
 | Step | Task | Status |
 |---|---|---|
-| 1.1 | Confirm PR #15 head SHA matches the candidate SHA | Done — `c57a8f3acc1cf4fd44c7cf38438962f4a20e08d3` |
-| 1.2 | Confirm candidate is a fast-forward from main | Done — 169 ahead, 0 behind at last comparison |
-| 1.3 | Run Linux suite and proof gate | Passed — CI run `42691410701`; 24 PROVEN, 13 PARTIAL |
-| 1.4 | Run Windows suite and proof gate | Passed — CI run `42691410701`; 28 PROVEN, 9 PARTIAL |
-| 1.5 | Run ULTRON Web typecheck and production build | Passed — CI run `42691410461` |
-| 1.6 | Run Reviewdog / Ruff and inspect warnings | Passed and triaged — CI run `42691410137`; 101 advisory findings recorded in `MAYBE_COMPLETE.md` |
+| 1.1 | Confirm PR #15 head SHA matches the candidate SHA | Done — `9346f2d50b135384c15bfaf24bb242336d28092c` |
+| 1.2 | Confirm candidate is a fast-forward from main | Done — 170 ahead, 0 behind at last comparison |
+| 1.3 | Run Linux suite and proof gate | Passed — CI run `42694718527`; 24 PROVEN, 13 PARTIAL |
+| 1.4 | Run Windows suite and proof gate | Passed — CI run `42694718527`; 28 PROVEN, 9 PARTIAL |
+| 1.5 | Run ULTRON Web typecheck and production build | Passed — CI run `42694718173` |
+| 1.6 | Run Reviewdog / Ruff and inspect warnings | Passed and triaged — CI run `42694718131`; 101 advisory findings recorded in `MAYBE_COMPLETE.md` |
 | 1.7 | Inspect Linux and Windows proof-gate reports | Done — both reports inspected; PARTIAL claims remain documented |
 | 1.8 | Review PR #15 file inventory and remaining findings | No PR review submissions or review comments found; manual risk review is scoped, not a full line-by-line audit |
-| 1.9 | Update checkpoint documents with final evidence | Done in this documentation update |
+| 1.9 | Update checkpoint documents with final evidence | Done; latest repeat run is `42694718527` |
+| 1.10 | Correct archive workflow dispatch-input parsing and require tag protection before deletion | Prepared in this update; needs fresh CI |
 
 **Exit condition:** Automated Linux, Windows, and web checks pass; both proof-gate reports are inspected; Reviewdog warnings are triaged; remaining review scope and hardware limits are explicit.
 
@@ -55,8 +56,15 @@
 | 3.4 | Close PR #15 without merging | Pending |
 | 3.5 | Run archive workflow in archive-only mode | Pending |
 | 3.6 | Verify all ten archive tags point to their exact reviewed commits | Pending |
-| 3.7 | Run deletion mode with exact confirmation phrase | Pending |
-| 3.8 | Verify only `main` remains as a branch, with all historical tips recoverable from tags | Pending |
+| 3.7 | Add a GitHub tag ruleset for `refs/tags/archive/**` that blocks updates and deletion | Pending — owner action |
+| 3.8 | Run deletion mode with both exact confirmation phrases | Pending |
+| 3.9 | Verify only `main` remains as a branch, with all historical tips recoverable from protected tags | Pending |
+
+**Deletion requires both exact confirmation phrases:**
+- `DELETE ARCHIVED BRANCHES`
+- `ARCHIVE TAGS PROTECTED`
+
+The second phrase is an owner attestation. The workflow cannot inspect repository rulesets. Do not supply it until the tag ruleset is active.
 
 **Safety rules:**
 - Never delete `main`.
@@ -65,3 +73,5 @@
 - A moved source branch must be re-reviewed; do not reset it to an earlier SHA.
 - The cleanup workflow skips branches used by open PRs.
 - Archive tags must exist and match exact commit SHAs before branch deletion.
+- A GitHub ruleset must block updates and deletion for `refs/tags/archive/**` before branch deletion is enabled.
+- The workflow requires the exact owner attestation `ARCHIVE TAGS PROTECTED`; it does not verify the ruleset through API.

@@ -13,6 +13,10 @@ on:
         description: 'Type DELETE ARCHIVED BRANCHES to authorise deletion'
         required: false
         type: string
+      confirm_archive_tags:
+        description: 'Type ARCHIVE TAGS PROTECTED after a ruleset protects refs/tags/archive/**'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -32,14 +36,21 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const deleteBranches = core.getInput('delete_branches') === 'true';
-            const confirmation = core.getInput('confirm_delete');
+            // workflow_dispatch inputs are event payload data, not action inputs.
+            const dispatchInputs = context.payload.inputs || {};
+            const deleteValue = dispatchInputs.delete_branches;
+            const deleteBranches = deleteValue === true || String(deleteValue).toLowerCase() === 'true';
+            const confirmation = String(dispatchInputs.confirm_delete || '');
+            const tagProtectionConfirmation = String(dispatchInputs.confirm_archive_tags || '');
 
             if (context.ref !== 'refs/heads/main') {
               throw new Error('Run this workflow from main only.');
             }
             if (deleteBranches && confirmation !== 'DELETE ARCHIVED BRANCHES') {
               throw new Error('Deletion refused: the confirmation phrase does not match.');
+            }
+            if (deleteBranches && tagProtectionConfirmation !== 'ARCHIVE TAGS PROTECTED') {
+              throw new Error('Deletion refused: first protect refs/tags/archive/** against tag updates and deletion with a GitHub ruleset, then attest with the exact phrase.');
             }
 
             const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });

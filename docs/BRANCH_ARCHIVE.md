@@ -1,7 +1,7 @@
 # Branch archive and cleanup
 
 **Review date:** 2026-11-10  
-**Target end state:** `main` is the only permanent branch. Historical tips remain recoverable through exact-SHA archive tags.
+**Target end state:** `main` is the only permanent branch. Historical tips remain recoverable through exact-SHA archive tags protected by a GitHub ruleset.
 
 ## Current repository state
 
@@ -32,26 +32,34 @@ These values were refreshed from GitHub immediately before the cleanup workflow 
 Workflow: `.github/workflows/archive-reviewed-branches.yml`.
 
 1. It runs manually on `main` only.
-2. It first confirms that `main` contains the current curated-promotion branch tip.
-3. It checks every reviewed source branch against its expected SHA. A moved branch stops the workflow before any archive tags are created.
-4. It creates a deterministic `archive/2026-11-10/<branch>-<sha>` tag for every reviewed tip and verifies each tag.
-5. The default run is **archive only**. It does not delete branches.
-6. Deletion requires `delete_branches=true` and the exact confirmation phrase `DELETE ARCHIVED BRANCHES`.
-7. Branches used by open PRs are skipped. The workflow checks this before each deletion.
-8. It rechecks the branch SHA and archive tag immediately before deleting the branch ref.
-9. `main` is never in the deletion list.
+2. It confirms that `main` contains the current curated candidate.
+3. It reads workflow dispatch fields from the event payload.
+4. It checks all reviewed branches against exact SHAs before creating tags.
+5. It creates and verifies ten deterministic exact-SHA tags.
+6. The default mode is archive-only and deletes nothing.
+7. Before deletion, the owner must enable a GitHub tag ruleset matching `refs/tags/archive/**`. It must block tag updates and deletion while allowing tag creation.
+8. Deletion requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`.
+9. The last phrase is an owner attestation. The workflow does not query or prove the ruleset exists.
+10. Branches used by open PRs are skipped. The workflow rechecks the PR list before deletion.
+11. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
+12. `main` is never in the deletion list.
 
-GitHub's ref API does not provide an atomic compare-and-delete operation. The workflow performs an immediate SHA recheck before each deletion, and exact recovery tags are created first. Do not push to reviewed branches while cleanup is running.
+Git tags are not immutable by default. They can be moved or deleted until the owner protects `refs/tags/archive/**` with a ruleset. Do not enable branch deletion before that ruleset is active.
+
+GitHub's ref API does not provide an atomic compare-and-delete operation. The workflow performs an immediate SHA recheck before each deletion. Do not push to reviewed branches while cleanup is running.
 
 ## Safe operating sequence
 
 1. Finish PR #15 review.
-2. Fast-forward `main` to the exact approved candidate SHA. Do not use GitHub's merge button and do not create a merge commit.
-3. Close PR #15 after the fast-forward. It is not a native merge.
-4. Manually run `Archive reviewed branch tips` from `main` with the default `delete_branches=false`.
-5. Inspect the workflow summary and verify all ten archive tags.
-6. Run it again with `delete_branches=true` and `confirm_delete=DELETE ARCHIVED BRANCHES`.
-7. Verify the report. Any branch with an open PR, changed SHA, or tag mismatch is preserved.
+2. Fast-forward `main` to the exact approved candidate SHA. Do not use GitHub's merge button or create a merge commit.
+3. Close PR #15 without merging.
+4. Manually run the archive workflow on `main` with default `delete_branches=false`.
+5. Verify all ten archive tags.
+6. In repository Settings → Rules → Rulesets, create and enable a tag ruleset matching `refs/tags/archive/**`. Block updates and deletion. Leave creation allowed.
+7. Run deletion mode with both exact phrases: `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
+8. Verify the report. Any branch with an open PR, changed SHA, or tag mismatch is preserved.
+
+
 
 ## Restore a branch tip
 
