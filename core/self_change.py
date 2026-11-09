@@ -195,7 +195,13 @@ def _inside(relative: str) -> Path | None:
         inside = target.relative_to(base)
     except ValueError:
         return None
-    if any(part in SKIP_DIRS for part in inside.parts):
+    # Check the resolved target, not only the model-supplied path. Otherwise a
+    # harmless-looking symlink can alias a protected referee file.
+    protected = {name.replace("\\", "/").casefold() for name in PROTECTED}
+    if inside.as_posix().casefold() in protected:
+        return None
+    if any(part.casefold() in {name.casefold() for name in SKIP_DIRS}
+           for part in inside.parts):
         return None
     return target
 
