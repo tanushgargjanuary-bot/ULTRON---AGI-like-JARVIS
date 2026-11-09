@@ -21,7 +21,8 @@ class SessionMemorySearchTests(unittest.TestCase):
                 },
             },
             "sessions": [
-                {"date": "2026-11-06", "summary": "Discussed local model routing."},
+                {"date": "2026-11-05", "summary": "Planned the old project schedule."},
+            {"date": "2026-11-06", "summary": "Discussed local model routing."},
                 {"date": "2026-11-07", "summary": "Reviewed the MCP server design."},
                 {"date": "2026-11-08", "summary": "Worked on ULTRON branch consolidation."},
             ],
@@ -39,7 +40,7 @@ class SessionMemorySearchTests(unittest.TestCase):
     def test_temporal_query_returns_recent_session_summaries(self):
         result = self.search("yesterday")
         self.assertIn("session/2026-11-08", result)
-        self.assertNotIn("session/2026-11-06", result)
+        self.assertNotIn("session/2026-11-05", result)
 
     def test_date_can_be_used_as_a_search_term(self):
         result = self.search("2026-11-06")
