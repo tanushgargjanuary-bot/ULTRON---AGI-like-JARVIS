@@ -7,10 +7,14 @@ supporting a hundred tools then belongs to the people who wrote those tools.
 
 Four rules, and each one is here because the alternative is a hole:
 
-- **The owner starts the server, not the app.** A command comes from
-  `config/mcp_servers.json`. Nothing is installed, downloaded, or fetched.
-- **Local process only.** No URL, no socket, no port. A config entry with a `url` is
-  refused with the reason, not ignored.
+- **The owner chooses the command; the app starts it.** A command comes from
+  `config/mcp_servers.json`. At application startup, every valid listed entry is
+  launched as a child process. Nothing is installed, downloaded, or fetched.
+- **Local process only.** No URL, no socket, no remote transport. A config entry with a
+  `url`, host, or port is refused with the reason, not ignored.
+- **Not an OS sandbox.** The child runs with the current user's operating-system
+  permissions. It may access any resource that account can access. Only configure
+  commands and arguments from MCP servers you trust.
 - **No shell.** A command is a program and a list of arguments. A command with a space
   in it is refused, because "split this yourself" is a real answer and `shell=True` is
   not.
