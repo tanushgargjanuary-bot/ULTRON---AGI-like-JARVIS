@@ -34,7 +34,7 @@ scripts/proof_gate.py   the harness that judges the claims
 config/api_keys.json    your keys and settings
 ```
 
-The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal. The same refusal applies when a relative path resolves through a file or directory symlink to one of these protected targets. For allowed symlink targets, the proposal stores the resolved project-relative path. Retargeting the link later cannot redirect apply or revert to another file.
+The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal. Ultron refuses any path that crosses a file symlink or directory junction, even when the target is an ordinary project file. It checks the resolved target against the referee list and stores the canonical project-relative path. Replacing a normal target with a symlink after approval also blocks apply and revert.
 
 **A system that can rewrite its own referee has no referee.** That is the exact failure the films this assistant borrows from are about — and giving it real power everywhere *except* here is the difference between a tool that evolves and a tool that unshackles.
 
@@ -55,7 +55,7 @@ The **session survives** the restart, because the session lives in files — mem
 | Not allowed | Why |
 |---|---|
 | Edit `core/policy.py` or `core/confirm.py` | That is the referee |
-| Reach a protected file through a symlink alias | The resolved target is checked against the referee list, not only the supplied path |
+| Use a path that crosses a symlink or junction | Symlink and junction paths are refused; the resolved target is checked against the referee list |
 | Edit `scripts/proof_gate.py` | That is the judge |
 | Write outside the project | A self-change tool that can reach `C:\Windows` is not a self-change tool |
 | Write into `.git` | History is not a scratch pad |
