@@ -51,7 +51,7 @@ class Arm:
     """One option: a provider id, a tool name, a suggestion."""
 
     name: str
-    pulls: int = 0
+    pulls: float = 0.0
     total_reward: float = 0.0
 
     @property
@@ -79,7 +79,11 @@ class _Base:
 
     def stats(self) -> dict[str, dict]:
         with self._lock:
-            return {name: {"pulls": arm.pulls, "mean": round(arm.mean, 4)}
+            pulls = {}
+            for name, arm in self._arms.items():
+                count = float(arm.pulls)
+                pulls[name] = int(count) if count.is_integer() else round(count, 4)
+            return {name: {"pulls": pulls[name], "mean": round(arm.mean, 4)}
                     for name, arm in self._arms.items()}
 
     def add_arm(self, name: str) -> None:
@@ -91,16 +95,24 @@ class _Base:
             self._arms.pop(str(name), None)
 
     # ── learning ─────────────────────────────────────────────────────────────
-    def update(self, name: str, reward: float) -> None:
-        """Record a reward in 0..1. Clamped rather than trusted: a caller bug
-        that passes 12 must not be able to make one arm permanently unbeatable."""
-        reward = max(0.0, min(1.0, float(reward)))
+    def update(self, name: str, reward: float, weight: float = 1.0) -> None:
+        """Record a reward in 0..1 with an optional non-negative sample weight.
+
+        Fractional weights let callers discount older evidence without counting
+        every historical observation as a full-strength pull.
+        """
+        reward = float(reward)
+        weight = float(weight)
+        if not math.isfinite(reward) or not math.isfinite(weight):
+            raise ValueError("reward and weight must be finite numbers")
+        reward = max(0.0, min(1.0, reward))
+        weight = max(0.0, weight)
         with self._lock:
             arm = self._arms.get(str(name))
             if arm is None:
                 arm = self._arms[str(name)] = Arm(name=str(name))
-            arm.pulls += 1
-            arm.total_reward += reward
+            arm.pulls += weight
+            arm.total_reward += reward * weight
 
     def _eligible(self, blocked) -> list[Arm]:
         blocked = {str(name) for name in (blocked or ())}
@@ -179,13 +191,18 @@ class Thompson(_Base):
     def _params(self, name: str) -> tuple[float, float]:
         return (self._alpha.get(name, self._alpha0), self._beta.get(name, self._beta0))
 
-    def update(self, name: str, reward: float) -> None:
-        reward = max(0.0, min(1.0, float(reward)))
+    def update(self, name: str, reward: float, weight: float = 1.0) -> None:
+        reward = float(reward)
+        weight = float(weight)
+        if not math.isfinite(reward) or not math.isfinite(weight):
+            raise ValueError("reward and weight must be finite numbers")
+        reward = max(0.0, min(1.0, reward))
+        weight = max(0.0, weight)
         with self._lock:
             alpha, beta = self._params(str(name))
-            self._alpha[str(name)] = alpha + reward
-            self._beta[str(name)] = beta + (1.0 - reward)
-            super().update(name, reward)
+            self._alpha[str(name)] = alpha + (reward * weight)
+            self._beta[str(name)] = beta + ((1.0 - reward) * weight)
+            super().update(name, reward, weight=weight)
 
     def posterior(self, name: str) -> tuple[float, float]:
         with self._lock:
