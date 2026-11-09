@@ -22,7 +22,7 @@ For a fork pull request, GitHub may restrict write permissions. Reviewdog then f
 
 [PR-Agent](https://github.com/The-PR-Agent/pr-agent) is an open-source AI pull-request review tool. It can produce a CodeRabbit-style review, but it needs both GitHub access and an LLM endpoint.
 
-The project does not enable automatic PR-Agent runs in GitHub-hosted Actions. A hosted runner cannot connect to Ollama on the owner's laptop. A cloud model would also require a provider key and may add cost.
+The project does not enable automatic PR-Agent runs in GitHub-hosted Actions. A hosted runner cannot connect to Ollama on the owner's laptop unless a separately secured, reachable Ollama host is provided. A cloud model would require a provider key and may add cost. See the [PR-Agent Ollama model guide](https://docs.pr-agent.ai/usage-guide/changing_a_model/) and [local CLI guide](https://docs.pr-agent.ai/installation/locally/).
 
 To run PR-Agent locally with Ollama on Windows:
 
@@ -40,6 +40,7 @@ py -m pip install "pr-agent[github]"
 $env:ULTRON_GITHUB_TOKEN = "YOUR_GITHUB_TOKEN"
 $env:ULTRON_PR_URL = "https://github.com/OWNER/REPOSITORY/pull/NUMBER"
 $env:ULTRON_OLLAMA_MODEL = "YOUR_INSTALLED_MODEL"
+$env:OLLAMA_CONTEXT_LENGTH = "8192"
 ```
 
 5. Run the following command:
@@ -61,7 +62,7 @@ cli.run_command(os.environ["ULTRON_PR_URL"], "/review")
 '@ | py -
 ```
 
-The review appears on the pull request. The command sends source and diff content to the selected model endpoint. Check the endpoint and model before use.
+The review appears on the pull request. The command sends source and diff content to the selected model endpoint. Check the endpoint and model before use. Ollama's default context window may be too small for a large PR; set `OLLAMA_CONTEXT_LENGTH` before starting Ollama, then restart the Ollama server. The example uses 8K tokens as a starting point, not a universal optimum.
 
 ### Local model limits
 
