@@ -1,0 +1,152 @@
+name: Archive and prune reviewed branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/archive-reviewed-branches.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  archive-and-prune:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Archive reviewed branch tips, then remove temporary branch refs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = 14;
+
+            const pull = await github.rest.pulls.get({
+              owner, repo, pull_number: prNumber,
+            });
+            if (!pull.data.merged || pull.data.base.ref !== "main" ||
+                pull.data.head.ref !== "ultron/consolidation-2026-11") {
+              throw new Error("PR #14 must be merged into main before branch cleanup.");
+            }
+
+            const entries = [
+              {
+                name: "ArenaAi",
+                sha: "8f4803b8812e4cae1e79755381eda69f5b76ee81",
+                tag: "archive/2026-11-09/ArenaAi-8f4803b8",
+              },
+              {
+                name: "antigravity",
+                sha: "b8e9334484bb214fd1f18021eade35c62ba5329b",
+                tag: "archive/2026-11-09/antigravity-b8e93344",
+              },
+              {
+                name: "arena/4c973188-ultron-agi-like-jarvis",
+                sha: "8b20ceff3421add70b65cc4eacca1dac1f3b5b36",
+                tag: "archive/2026-11-09/arena-4c973188-ultron-agi-like-jarvis-8b20ceff",
+              },
+              {
+                name: "chatgpt",
+                sha: "c98ea0ff81a440ba4b2f56b1aef0f726384f521d",
+                tag: "archive/2026-11-09/chatgpt-c98ea0ff",
+              },
+              {
+                name: "code-quality-and-security-improvements-af08a",
+                sha: "bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420",
+                tag: "archive/2026-11-09/code-quality-and-security-improvements-af08a-bc65a274",
+              },
+              {
+                name: "integration/best-of-all-2026-11-09",
+                sha: "5118dede0ca4c29206a24a08ec9f9ae6699011f5",
+                tag: "archive/2026-11-09/integration-best-of-all-2026-11-09-5118dede",
+              },
+              {
+                name: pull.data.head.ref,
+                sha: pull.data.head.sha,
+                tag: `archive/2026-11-09/ultron-consolidation-${pull.data.head.sha.slice(0, 8)}`,
+              },
+            ];
+
+            const getRefOrNull = async (ref) => {
+              try {
+                return await github.rest.git.getRef({ owner, repo, ref });
+              } catch (error) {
+                if (error.status === 404) return null;
+                throw error;
+              }
+            };
+
+            // Preflight all source refs and tags before creating or deleting anything.
+            // A moved branch is a hard stop; it must be reviewed again.
+            for (const entry of entries) {
+              const branchRef = await getRefOrNull(`heads/${entry.name}`);
+              if (branchRef && branchRef.data.object.sha !== entry.sha) {
+                throw new Error(
+                  `Refusing cleanup: ${entry.name} moved to ${branchRef.data.object.sha}; expected ${entry.sha}.`
+                );
+              }
+              const tagRef = await getRefOrNull(`tags/${entry.tag}`);
+              if (tagRef && tagRef.data.object.sha !== entry.sha) {
+                throw new Error(
+                  `Refusing cleanup: tag ${entry.tag} points to ${tagRef.data.object.sha}; expected ${entry.sha}.`
+                );
+              }
+            }
+
+            // Create every archive tag first. Existing matching tags make reruns safe.
+            for (const entry of entries) {
+              const existing = await getRefOrNull(`tags/${entry.tag}`);
+              if (!existing) {
+                await github.rest.git.createRef({
+                  owner, repo,
+                  ref: `refs/tags/${entry.tag}`,
+                  sha: entry.sha,
+                });
+              }
+              const verified = await github.rest.git.getRef({
+                owner, repo, ref: `tags/${entry.tag}`,
+              });
+              if (verified.data.object.sha !== entry.sha) {
+                throw new Error(`Archive tag verification failed: ${entry.tag}`);
+              }
+            }
+
+            // Only now delete temporary branches, and re-check each SHA immediately.
+            const deleted = [];
+            const alreadyAbsent = [];
+            for (const entry of entries) {
+              const branchRef = await getRefOrNull(`heads/${entry.name}`);
+              if (!branchRef) {
+                alreadyAbsent.push(entry.name);
+                continue;
+              }
+              if (branchRef.data.object.sha !== entry.sha) {
+                throw new Error(`Refusing to delete moved branch ${entry.name}.`);
+              }
+              await github.rest.git.deleteRef({
+                owner, repo, ref: `heads/${entry.name}`,
+              });
+              deleted.push(entry.name);
+            }
+
+            // Verify deletion. main is deliberately not in the deletion list.
+            for (const entry of entries) {
+              const stillThere = await getRefOrNull(`heads/${entry.name}`);
+              if (stillThere) throw new Error(`Branch still exists: ${entry.name}`);
+            }
+
+            await core.summary
+              .addHeading("Branch archive complete")
+              .addTable([
+                [{ data: "Branch", header: true }, { data: "Archived tip", header: true }, { data: "Tag", header: true }],
+                ...entries.map(entry => [entry.name, entry.sha, entry.tag]),
+              ])
+              .addList([
+                `Deleted: ${deleted.join(", ") || "none"}`,
+                `Already absent: ${alreadyAbsent.join(", ") || "none"}`,
+                "main was not changed or deleted.",
+              ])
+              .write();
