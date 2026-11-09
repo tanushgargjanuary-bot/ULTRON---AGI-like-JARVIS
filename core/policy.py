@@ -77,6 +77,7 @@ class Decision:
 OBSERVE_TOOLS: frozenset[str] = frozenset(
     {
         "recall_memory",
+        "local_models",
         "system_status",
         "web_search",
         "weather_report",
