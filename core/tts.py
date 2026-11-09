@@ -14,7 +14,6 @@ import threading
 from typing import Callable, Optional
 
 import numpy as np
-import sounddevice as sd
 
 from core import failures
 
@@ -31,6 +30,18 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 # ---------------------------------------------------------------------------
 # Audio playback helpers
 # ---------------------------------------------------------------------------
+
+def _sounddevice():
+    """Load the audio backend only when playback is requested.
+
+    Importing sounddevice initializes PortAudio. A test, headless process, or
+    machine without an audio server must still be able to inspect and configure
+    TTS without opening an audio device.
+    """
+    import sounddevice
+
+    return sounddevice
+
 
 def _to_numpy(samples) -> np.ndarray:
     """Convert samples to float32 numpy array.
@@ -83,8 +94,9 @@ def _play_np(samples, sample_rate: int) -> None:
     """Play float32 mono (or stereo) audio via sounddevice.
     Accepts numpy arrays or PyTorch tensors.
     """
-    sd.play(_to_numpy(samples), sample_rate)
-    sd.wait()
+    audio = _sounddevice()
+    audio.play(_to_numpy(samples), sample_rate)
+    audio.wait()
 
 
 def _play_audio_bytes(audio_bytes: bytes) -> None:
@@ -96,8 +108,9 @@ def _play_audio_bytes(audio_bytes: bytes) -> None:
         nchannels=1,
     )
     samples = np.array(decoded.samples, dtype=np.float32)
-    sd.play(samples, decoded.sample_rate)
-    sd.wait()
+    audio = _sounddevice()
+    audio.play(samples, decoded.sample_rate)
+    audio.wait()
 
 
 # ---------------------------------------------------------------------------
@@ -435,7 +448,7 @@ class TTSPlayer:
                 on_done()
 
     def stop(self) -> None:
-        sd.stop()
+        _sounddevice().stop()
         with self._lock:
             self._playing = False
 
