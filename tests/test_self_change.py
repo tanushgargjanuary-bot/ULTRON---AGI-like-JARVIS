@@ -162,6 +162,24 @@ class TheReferee(WithAFakeProject):
         self.assertEqual(self.read("core/policy.py"), "PROTECTED = True\n")
 
 
+    def test_a_proposal_pins_the_resolved_target_if_its_symlink_is_retargeted(self):
+        alias = self.project / "change-alias.py"
+        try:
+            alias.symlink_to(self.project / "app.py")
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"symlink creation is unavailable: {error}")
+
+        proposal = self.ready(path="change-alias.py")
+        self.assertEqual(proposal["path"], "app.py")
+
+        alias.unlink()
+        alias.symlink_to(self.project / "notes.md")
+        self_change.apply(proposal["id"])
+
+        self.assertEqual(self.read("app.py"), NEW_APP)
+        self.assertEqual(self.read("notes.md"), "# notes\n")
+
+
 class Rehearsal(WithAFakeProject):
     def test_the_copy_passes_and_the_body_is_untouched(self):
         proposal = self.staged()
