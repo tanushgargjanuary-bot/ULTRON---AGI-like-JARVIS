@@ -21,8 +21,14 @@ class _Fake(BaseHTTPRequestHandler):
     calls: list = []
 
     def do_GET(self):                                    # noqa: N802 — stdlib name
-        """Serve the fake Ollama model-list response for the test server."""
-        if self.path == "/api/tags":
+        """Serve model-list, redirect, and oversized-response fixtures."""
+        if self.path == "/redirect":
+            self.send_response(302)
+            self.send_header("Location", "http://example.com/redirect-target")
+            self.end_headers()
+        elif self.path == "/oversized":
+            self._answer(200, b"x" * (local_fallback.MAX_RESPONSE_BYTES + 1))
+        elif self.path == "/api/tags":
             body = json.dumps({"models": [{"name": name} for name in self.models]}).encode()
             self._answer(200, body)
         else:
@@ -31,7 +37,13 @@ class _Fake(BaseHTTPRequestHandler):
     def do_POST(self):                                   # noqa: N802 — stdlib name
         """Record and answer fake Ollama generation requests."""
         size = int(self.headers.get("Content-Length") or 0)
-        payload = json.loads(self.rfile.read(size) or b"{}")
+        raw = self.rfile.read(size) if size else b"{}"
+        if self.path == "/redirect":
+            self.send_response(302)
+            self.send_header("Location", "http://example.com/redirect-target")
+            self.end_headers()
+            return
+        payload = json.loads(raw or b"{}")
         _Fake.calls.append((self.path, payload))
         if self.path == "/api/show":
             name = str(payload.get("model") or "")
@@ -66,6 +78,30 @@ class _Server(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
+
+
+class LocalRequestBoundaryTests(_Server):
+    def test_non_loopback_urls_are_rejected_before_opening_a_connection(self):
+        with mock.patch.object(local_fallback.urllib.request, "build_opener") as build:
+            self.assertIsNone(local_fallback._get("http://example.com/api/tags"))
+            self.assertIsNone(local_fallback._post("https://example.com/api/show", {}))
+        build.assert_not_called()
+
+    def test_urls_with_credentials_are_rejected(self):
+        with mock.patch.object(local_fallback.urllib.request, "build_opener") as build:
+            self.assertIsNone(local_fallback._get(
+                f"http://user:password@127.0.0.1:{self.server.server_port}/api/tags"
+            ))
+        build.assert_not_called()
+
+    def test_get_redirects_are_not_followed(self):
+        self.assertIsNone(local_fallback._get(f"{self.url}/redirect"))
+
+    def test_post_redirects_are_not_followed(self):
+        self.assertIsNone(local_fallback._post(f"{self.url}/redirect", {}))
+
+    def test_response_bodies_are_bounded(self):
+        self.assertIsNone(local_fallback._get(f"{self.url}/oversized"))
 
 
 class TheQuestion(_Server):
