@@ -59,7 +59,7 @@ The focused command is offline. The full project verification may require platfo
 - `main` is the stable branch.
 - Use short-lived `feature/<topic>` and `fix/<topic>` branches. Do not keep one permanent branch per agent or model.
 - Open a pull request to `main`. CI runs on every pushed branch and every pull request.
-- After merge, remove the temporary branch. Historical branch tips that need recovery are stored as tags. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
+- After merge, archive reviewed branch tips through the manual workflow. Delete temporary branches only as a separate manual owner action. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
 
 To reproduce the terminal demo GIF (requires the optional demo tools):
 
