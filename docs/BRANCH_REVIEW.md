@@ -259,9 +259,9 @@ This section is the current decision. It supersedes the earlier 7–8 November r
 | `chatgpt` | 20 | 5 | 7 | Capability guide and GitHub scout are present in the integration line; local inventory is retained in safer, read-only form. |
 | `code-quality-and-security-improvements-af08a` | 1 | 0 | 2 | Test and README delta only. No distinct implementation change. |
 | `integration/best-of-all-2026-11-09` | 55 | 0 | 163 | Chosen consolidation base. |
-| `ultron/consolidation-2026-11` | 74 | 0 | 174 | Selected integration plus fixes, tests, and repository workflow updates. |
+| `ultron/consolidation-2026-11` | 105 | 0 | 177 | Selected integration plus fixes, tests, and repository workflow updates. |
 
-The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The consolidation branch is 19 commits ahead of the integration base. These figures are commit-graph comparisons with `main`, not a claim that every changed line from each divergent branch was copied verbatim.
+The comparison confirms that `ArenaAi` and `arena/4c973188-ultron-agi-like-jarvis` are already contained in the integration line. The consolidation branch is 50 commits ahead of the integration base, with 35 files changed against that base. These figures are commit-graph comparisons with `main`, not a claim that every changed line from each divergent branch was copied verbatim.
 
 ### Carried work and deliberate exclusions
 
