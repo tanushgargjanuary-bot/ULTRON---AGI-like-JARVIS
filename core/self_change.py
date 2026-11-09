@@ -39,6 +39,7 @@ WHAT STAGE C CANNOT DO
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -106,6 +107,11 @@ def store() -> Path:
     folder = _store or (root() / "config" / "self_change")
     folder.mkdir(parents=True, exist_ok=True)
     return folder
+
+
+def _content_digest(text: str) -> str:
+    """Stable digest used to reject stale apply and revert operations."""
+    return hashlib.sha256(str(text).encode("utf-8")).hexdigest()
 
 
 def _proposals_file() -> Path:
@@ -236,6 +242,7 @@ def propose(path: str, reason: str, new_text: str | None = None,
         "stage": "proposed",
         "before": len(old),
         "after": len(new),
+        "old_sha256": _content_digest(old),
         "confirmations": [],
         "rehearsal": None,
         # The crashes known when this was proposed. Kept in the ledger so that months
@@ -334,6 +341,13 @@ def apply(proposal_id: str) -> dict:
     target = _inside(proposal["path"])
     if target is None:
         raise ValueError(f"'{proposal['path']}' is no longer a file I may change.")
+    current = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
+    expected_old = proposal.get("old_sha256") or _content_digest(proposal.get("old", ""))
+    if _content_digest(current) != expected_old:
+        raise ValueError(
+            f"{proposal['path']} changed after this proposal was created. "
+            "Nothing was overwritten. Create and rehearse a new proposal."
+        )
     backup = store() / "backups"
     backup.mkdir(parents=True, exist_ok=True)
     (backup / f"{proposal_id}.bak").write_text(proposal["old"], encoding="utf-8")
@@ -341,6 +355,7 @@ def apply(proposal_id: str) -> dict:
     tmp = target.with_suffix(target.suffix + ".ultron-tmp")
     tmp.write_text(proposal["new"], encoding="utf-8")
     os.replace(tmp, target)
+    proposal["applied_sha256"] = _content_digest(proposal["new"])
     proposal["stage"] = "applied"
     proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     data[proposal_id] = proposal
@@ -370,6 +385,13 @@ def revert(proposal_id: str) -> str:
     target = _inside(proposal["path"])
     if target is None:
         return f"'{proposal['path']}' is no longer a file I may write."
+    current = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
+    expected_applied = proposal.get("applied_sha256") or _content_digest(proposal.get("new", ""))
+    if _content_digest(current) != expected_applied:
+        return (
+            f"Cannot revert {proposal['path']}: it changed after {proposal_id} was applied. "
+            "The current file was left untouched."
+        )
     tmp = target.with_suffix(target.suffix + ".ultron-tmp")
     tmp.write_text(kept.read_text(encoding="utf-8"), encoding="utf-8")
     os.replace(tmp, target)
