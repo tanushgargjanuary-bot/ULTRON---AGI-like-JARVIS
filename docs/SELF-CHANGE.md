@@ -34,7 +34,7 @@ scripts/proof_gate.py   the harness that judges the claims
 config/api_keys.json    your keys and settings
 ```
 
-The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal.
+The refusal is code, not advice. Ultron cannot propose a change to any of them, so the change never reaches rehearsal. The same refusal applies when a relative path resolves through a file or directory symlink to one of these protected targets.
 
 **A system that can rewrite its own referee has no referee.** That is the exact failure the films this assistant borrows from are about — and giving it real power everywhere *except* here is the difference between a tool that evolves and a tool that unshackles.
 
@@ -55,6 +55,7 @@ The **session survives** the restart, because the session lives in files — mem
 | Not allowed | Why |
 |---|---|
 | Edit `core/policy.py` or `core/confirm.py` | That is the referee |
+| Reach a protected file through a symlink alias | The resolved target is checked against the referee list, not only the supplied path |
 | Edit `scripts/proof_gate.py` | That is the judge |
 | Write outside the project | A self-change tool that can reach `C:\Windows` is not a self-change tool |
 | Write into `.git` | History is not a scratch pad |
