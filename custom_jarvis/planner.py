@@ -583,8 +583,8 @@ class AutonomousPlanner:
             # record is for audit/resume state, not a reusable authorization token.
             previous_approval_observer = getattr(self.tool_registry, "on_approval", None)
             if hasattr(self.tool_registry, "on_approval"):
-                def record_approval(_name, _arguments):
-                    step.approval_recorded = True
+                def record_approval(_name, _arguments, _step=step):
+                    _step.approval_recorded = True
                     return self._checkpoint(plan)
 
                 self.tool_registry.on_approval = record_approval
