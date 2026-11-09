@@ -38,12 +38,14 @@ The CI result must belong to the **latest PR head**, not an earlier commit. See 
 
 A risk-focused review inspected the main security and integration paths and the full PR file inventory. It was not a line-by-line review of all changed lines across all 177 files.
 
-Three security defects were found and fixed in the focused MCP/self-change review:
+Four security defects were found and fixed in the focused MCP/self-change review:
 
 1. Nested MCP object and array schemas were being flattened. The converter now preserves supported nested properties and rejects malformed or over-deep schemas.
 2. Distinct MCP names could normalize to the same tool name and silently overwrite one another. Registration now rejects collisions, including collisions with native action/plugin names.
+3. MCP servers could emit oversized protocol lines. The reader now caps a line at 1 MB, kills a server that exceeds the limit, bounds stderr reads, and rejects oversized client messages.
+4. A self-change path could reach a protected referee file through a symlink alias. The path guard now checks the resolved target, with file-link and directory-link regression tests.
 
-Other targeted fixes include stale self-change protection, the planner callback binding, local-fallback URL/body limits, and the Ollama warm-up stream setting. Regression tests were added.
+Other targeted fixes include stale self-change proposal protection, the planner callback binding, local-fallback URL/body limits, and the Ollama warm-up stream setting. Regression tests were added.
 
 Reviewdog reports static-analysis warnings. Several are expected patterns or false positives, for example fail-closed exception handling, explicit local subprocess launches, loopback probes, and avatar animation randomness. Each warning still requires context. Do not bulk-apply lint fixes or suppress the entire security ruleset.
 
