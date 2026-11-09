@@ -6240,6 +6240,7 @@ class MainWindow(QMainWindow):
     def _open_persona_menu(self):
         """Show one-action persona/theme combinations; both choices stay independent."""
         menu = QMenu(self)
+        _current_persona_id = getattr(self, "_persona_id", "ultron")
         quick = (
             ("Ultron — Normal · Classic Cyan", "ultron", "classic_cyan"),
             ("Nova — Teenager · Holographic", "teenager", "holographic"),
@@ -6268,7 +6269,7 @@ class MainWindow(QMainWindow):
         for theme_id, theme in themes_mod.THEMES.items():
             action = theme_only.addAction(theme["label"])
             action.triggered.connect(
-                lambda _checked=False, p=self._persona_id, t=theme_id:
+                lambda _checked=False, p=_current_persona_id, t=theme_id:
                     self._select_persona_theme(p, t)
             )
         current_config = _read_full_config()
@@ -6276,7 +6277,7 @@ class MainWindow(QMainWindow):
         if current_theme == "custom" and current_config.get("ui_color"):
             custom_action = theme_only.addAction("Custom current color")
             custom_action.triggered.connect(
-                lambda _checked=False, p=self._persona_id:
+                lambda _checked=False, p=_current_persona_id:
                     self._select_persona_theme(p, "custom")
             )
         persona_only = menu.addMenu("Keep current theme, change persona")
@@ -6326,7 +6327,7 @@ class MainWindow(QMainWindow):
             candidate = voice_map.get(persona.id, persona.voice)
             target_voice = candidate if candidate in AVAILABLE_VOICES else persona.voice
 
-        persona_changed = persona.id != self._persona_id
+        persona_changed = persona.id != _current_persona_id
         old_palette = current_palette()
         if themes_mod.theme(theme_id):
             apply_ui_theme(theme_id)
@@ -7938,7 +7939,7 @@ class MainWindow(QMainWindow):
                 voice_map = data.get("persona_voices")
                 if not isinstance(voice_map, dict):
                     voice_map = {}
-                voice_map[self._persona_id] = voice
+                voice_map[_current_persona_id] = voice
                 data["persona_voices"] = voice_map
             API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
             self._log.append_log(f"SYS: Identity updated — {display}")
