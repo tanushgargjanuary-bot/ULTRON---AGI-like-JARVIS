@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import ipaddress
 import json
 import re
 import shutil
@@ -33,8 +34,10 @@ import urllib.error
 import urllib.request
 from importlib.util import find_spec
 from typing import Any, Callable, Optional
+from urllib.parse import urlsplit
 
-DEFAULT_URL = "http://localhost:11434"
+DEFAULT_URL = "http://127.0.0.1:11434"
+MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 OPENAI_ENDPOINT = "/v1/chat/completions"
 KEEP_ALIVE = "30m"
 START_WAIT = 10.0
@@ -50,26 +53,76 @@ TTS_ID = "system_tts"
 _SIZE = re.compile(r"(\d+(?:\.\d+)?)b", re.IGNORECASE)
 
 
-def _get(url: str, timeout: float = SHORT) -> Optional[dict]:
-    """Fetch a bounded JSON response from the local model service."""
-    try:
-        with urllib.request.urlopen(url, timeout=timeout) as answer:
-            return json.loads(answer.read().decode("utf-8", "replace"))
-    except (urllib.error.URLError, OSError, ValueError):
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """A local inference probe must not redirect to another service."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+def _local_url(url: str) -> bool:
+    """Accept only a literal loopback HTTP address with no URL credentials."""
+    try:
+        parsed = urlsplit(str(url))
+        address = ipaddress.ip_address(parsed.hostname or "")
+        return (
+            parsed.scheme.lower() == "http"
+            and address.is_loopback
+            and parsed.port is not None
+            and parsed.username is None
+            and parsed.password is None
+            and not parsed.query
+            and not parsed.fragment
+        )
+    except (TypeError, ValueError):
+        return False
+
+
+def _request_json(request: urllib.request.Request | str, timeout: float) -> Optional[dict]:
+    """Use loopback only, reject redirects, and cap every response body."""
+    target = request.full_url if isinstance(request, urllib.request.Request) else str(request)
+    if not _local_url(target):
+        return None
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}), _NoRedirect()
+    )
+    try:
+        with opener.open(request, timeout=max(0.05, min(float(timeout), 60.0))) as answer:
+            if answer.status != 200:
+                return None
+            content_length = answer.headers.get("Content-Length")
+            if content_length:
+                try:
+                    if int(content_length) > MAX_RESPONSE_BYTES:
+                        return None
+                except ValueError:
+                    return None
+            body = answer.read(MAX_RESPONSE_BYTES + 1)
+            if len(body) > MAX_RESPONSE_BYTES:
+                return None
+            value = json.loads(body.decode("utf-8", "replace"))
+            return value if isinstance(value, dict) else None
+    except (urllib.error.URLError, OSError, TimeoutError, ValueError):
+        return None
+
+
+def _get(url: str, timeout: float = SHORT) -> Optional[dict]:
+    """Fetch a bounded JSON response from a literal loopback address."""
+    return _request_json(url, timeout)
 
 
 def _post(url: str, payload: dict, timeout: float = 30.0) -> Optional[dict]:
-    """Post JSON to the local model service and decode its response."""
-    body = json.dumps(payload).encode("utf-8")
+    """Post JSON to a literal loopback address and decode a bounded response."""
+    try:
+        body = json.dumps(payload).encode("utf-8")
+    except (TypeError, ValueError):
+        return None
+    if len(body) > MAX_RESPONSE_BYTES:
+        return None
     request = urllib.request.Request(
         url, data=body, headers={"Content-Type": "application/json"}, method="POST"
     )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as answer:
-            return json.loads(answer.read().decode("utf-8", "replace"))
-    except (urllib.error.URLError, OSError, ValueError):
-        return None
+    return _request_json(request, timeout)
 
 
 def installed(url: str = DEFAULT_URL) -> list[str]:
