@@ -172,6 +172,8 @@ These limits matter. Do not advertise the product beyond them.
 - Active archive ruleset is ID 26923169. Final branch state: one branch, ten archive tags, zero open PRs.
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
+The GitHub About description was blank at the latest metadata check. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub interface can read metadata but does not expose the repository-settings write needed to change this field; owner action remains required.
+
 ## 10. Upstream MARK/JARVIS resources
 
 The original project lineage and current upstream material are documented in [`docs/UPSTREAM_RESEARCH.md`](../docs/UPSTREAM_RESEARCH.md).
@@ -179,7 +181,7 @@ The original project lineage and current upstream material are documented in [`d
 Key facts from the 2026-11-10 audit:
 
 - Eight public repositories were returned by the FatihMakes account search. The primary current source is [`FatihMakes/Mark-LVI`](https://github.com/FatihMakes/Mark-LVI), main commit `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`.
-- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed. Focused diff reviews have covered 28 files; 34 remain. No code from the reviewed shared files was copied because ULTRON already contained the relevant handling or the normalized text was identical.
+- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed. Focused diff reviews have covered 34 files; 28 remain. No code from the reviewed shared files was copied because ULTRON already contained the relevant handling or the normalized text was identical.
 - ULTRON had 355 additional paths at the compared baseline. Its safety, planning, verification, and documentation layers must not be replaced by older upstream implementations.
 - The audit covered a sample of 100 issue results and 40 PR results. It also found many community forks, but it did not review every fork or every GitHub mention.
 - The current source licence is CC BY-NC 4.0. The checked-in `LICENSE` attributes the source to FatihMakes and prohibits commercial use. Preserve notices. Do not assume older snapshots or third-party assets have the same licence.

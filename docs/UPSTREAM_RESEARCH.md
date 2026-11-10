@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Twenty-eight of the 62 changed shared files have now had focused diff comparisons; 34 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Thirty-four of the 62 changed shared files have now had focused diff comparisons; 28 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -87,7 +87,7 @@ A first focused review covered 12 high-risk shared files. It was a targeted comp
 | `core/plugin_loader.py` | Integrates candidate-generation loading, explicit registry inspection, and failure tracking for safe action/plugin refresh. | Keep the ULTRON leaf-generation model. |
 | `providers/engine_pipeline.py` | Adds a bounded partial-tool-result grace period and turn-detection/voice-style handling, while recording failures. | Keep the existing pipeline and its regression tests. |
 
-No upstream-only behavior from these 12 focused comparisons was identified as a safe direct copy. The useful result was validation of ULTRON-specific improvements and several concrete tests or threat cases. The next audit still has **50 of the 62 changed shared paths** to inspect. Start with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py`.
+No upstream-only behavior from these 12 focused comparisons was identified as a safe direct copy. The useful result was validation of ULTRON-specific improvements and several concrete tests or threat cases. At the first 12-file checkpoint, **50 of the 62 changed shared paths** remained to inspect. Start with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py`.
 
 ### Additional focused diff scan: six integration files
 
@@ -102,7 +102,7 @@ A second pass checked six more large or security-relevant shared files. This sca
 | `actions/browser_control.py` | Adds failure/timeout reporting and declares parameters the handler already reads, instead of silently forcing defaults. | Keep the corrected schema and failure records. |
 | `actions/dev_agent.py` | Resolves the VS Code executable and invokes it with `shell=False`; the upstream version shown in the diff uses `shell=True`. | Keep the shell-free launch. Do not regress to shell interpolation. |
 
-The focused scan has now covered 18 shared files in total. It continues to support selective ULTRON-first integration. **No upstream code from these 18 files has been copied.** The next 44 shared paths still need review.
+At the 18-file checkpoint, the review continued to support selective ULTRON-first integration. **No upstream code from those 18 files was copied.** Forty-four changed shared paths remained at that point.
 
 ### Additional focused review: ten provider, memory, speech, and desktop files
 
@@ -122,6 +122,23 @@ This pass checked ten more shared files by exact source blobs. The comparison us
 | `providers/tts_elevenlabs.py` | Uses the shared connection pool for synchronous and asynchronous requests. | Keep connection reuse. |
 
 The focused diff review now covers **28 of 62** changed shared paths. **34 changed shared paths remain**. No code from these ten upstream files was copied because the ULTRON versions already contain the relevant changes or have the same normalized content.
+
+### Additional focused review: six actions and client files
+
+This pass checked six more changed shared files by exact upstream and ULTRON blobs. It compared normalized lines and inspected relevant code paths. It remains a focused source-delta review, not a full independent security audit.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `actions/code_helper.py` | Core implementation is nearly identical in the normalized comparison. Differences are limited to the tool description and a small image/screenshot path detail; no new upstream safety behavior was identified. | No upstream port identified. Keep the ULTRON-specific tool description. |
+| `actions/open_app.py` | ULTRON resolves the target and uses direct executable/shortcut launching. It avoids the upstream `shell=True` launch pattern and reports when the target cannot be confirmed as open. | Keep the shell-free resolver path. Do not restore shell-based launch. |
+| `actions/send_message.py` | ULTRON distinguishes confirmed completion from unverified typing/delivery, and avoids claiming a message was sent when it cannot confirm the result. | Keep the explicit outcome contract. A message action needs trustworthy confirmation, not just successful keystrokes. |
+| `core/llm_client.py` | Adds failure notes for one-shot, text, and streamed provider calls. | Keep failure visibility. |
+| `core/confirm.py` | Retains the interface-issued confirmation path that the model cannot forge and adds failure notes for logging and resolution errors. | Keep the UI-owned confirmation boundary and diagnostics. |
+| `core/outcome.py` | The normalized source lines are identical to upstream; the different blob SHA is explained by formatting/line-ending differences. | Already present. No change required. |
+
+The six-file pass found no upstream-only implementation that should be copied directly. It brings the focused review total to **34 of 62** changed shared files. **Twenty-eight changed shared paths remain**. No source code was imported in this pass.
+
+The current test tree has broad provider, safety, tool-contract, and assistant suites, but it does not have a dedicated test module for each of these six files. Treat dedicated regression coverage for these exact file-level differences as unconfirmed, not as proven.
 
 ### Existing capability map
 
@@ -225,7 +242,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. The first task is the comparative review of the 62 changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Continue the comparative review of the 28 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 
