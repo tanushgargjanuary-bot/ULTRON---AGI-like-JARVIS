@@ -190,6 +190,8 @@ Key facts from the 2026-11-10 audit:
 - MCP, tool routing, multi-step planning, audit, and tool-description triggers already exist in ULTRON. Do not build duplicates merely because an upstream proposal asks for them.
 - Upstream PR #169's morning-brief change was adopted independently: startup briefing now defaults off, saved boolean choices are preserved, and malformed values fail closed. Regression tests are in `tests/test_suite_assistant.py`.
 
+Third-party asset provenance is kept separately in [`licenses/THIRD_PARTY_NOTICES.md`](../licenses/THIRD_PARTY_NOTICES.md), with the full MediaPipe licence bundle in [`licenses/MEDIAPIPE-LICENSE.txt`](../licenses/MEDIAPIPE-LICENSE.txt). Do not assume the root CC BY-NC licence replaces a third-party component's own terms.
+
 The strategy is selective reuse. Review the exact source SHA and licence, compare the code against ULTRON, port the smallest useful change, and test it. See the upstream research file for the repository list, PR/issue decisions, risks, and next priorities.
 
 ## 11. Agent operating instructions for a new chat

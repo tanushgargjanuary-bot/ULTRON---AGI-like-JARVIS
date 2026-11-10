@@ -209,7 +209,7 @@ The final four changed shared paths were reviewed against the same MARK-LVI main
 | `core/viseme.py` | Normalized source content is identical to upstream. | Already present. No change required. |
 | `core/face_model.obj` | Both assets contain 468 vertices and 898 faces. Face indices match exactly. ULTRON coordinates differ by at most 0.00005 because they are stored to four decimal places. The file header identifies MediaPipe and Apache 2.0. | Keep the geometry. Preserve its separate attribution and licence. A complete copy of the inspected MediaPipe `LICENSE` bundle and a dedicated provenance notice are recorded under `licenses/`. |
 
-**Comparison complete:** all **62 of 62** shared file paths with different blob SHAs have had focused diff comparisons. This is not a full independent security audit of every function. A different blob SHA can reflect line endings or formatting rather than a semantic change. All 78 upstream file paths were present in ULTRON. No whole upstream branch or code batch was imported. The only source material added in this task is the MediaPipe licence copy and its provenance notice.
+**Comparison complete:** all **62 of 62** shared file paths with different blob SHAs have had focused diff comparisons. This is not a full independent security audit of every function. A different blob SHA can reflect line endings or formatting rather than a semantic change. All 78 upstream file paths were present in ULTRON. No whole upstream branch or code batch was imported. The only upstream-derived resource added in this task is the complete MediaPipe licence bundle and its provenance notice: [`../licenses/MEDIAPIPE-LICENSE.txt`](../licenses/MEDIAPIPE-LICENSE.txt) and [`../licenses/THIRD_PARTY_NOTICES.md`](../licenses/THIRD_PARTY_NOTICES.md).
 
 
 
@@ -308,7 +308,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 
 | Priority | Work | Reason | Acceptance evidence |
 |---|---|---|---|
-| 1 | Compare the remaining 34 of 62 changed shared files against ULTRON | Twenty-eight high-risk/integration files have had focused diff scans; the remaining source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
+| 1 | Re-run the source comparison after a meaningful upstream release or an owner-identified issue, PR, fork, or asset | All 62 changed shared paths and all 78 upstream paths were reviewed at the audited SHAs | Record exact SHAs, licence terms, adoption decision, and relevant verification |
 | 2 | Audit provider credential storage and consider OS credential-store support | Issue #117 raises a valid security concern; ULTRON still uses managed local config | Threat model, migration and rollback, no plaintext leak in logs/commits, platform tests |
 | 3 | Add reconnect/audio regression scenarios from issues #123/#134/#160/#162 | These are recurring upstream failure classes | Deterministic fake-device tests plus real owner-machine verification |
 | 4 | Design multi-agent role delegation as a separate ULTRON feature | PR #165 is conflicted/unverified; ULTRON has planning but not this full role-agent model | Role-specific tool allowlists, independent budgets, isolated context, audit trail, judge/evaluation tests |
