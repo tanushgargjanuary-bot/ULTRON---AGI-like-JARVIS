@@ -20,13 +20,13 @@
 - Default branch: **main**.
 - Curated candidate ancestry: `main` is 8 commits ahead and 0 behind the candidate; the candidate tip is contained in `main`.
 - Branches deleted: **0**.
-- Repository tag rulesets: **0**.
+- Repository tag rulesets: **1 Active archive-protection ruleset** (`26923169`).
 
 The ten exact matching tags preserve these branch tips: `ArenaAi`, `antigravity`, `arena/4c973188-ultron-agi-like-jarvis`, `chatgpt`, `code-quality-and-security-improvements-af08a`, `feature/web-companion-mvp`, `feature/web-mvp-auth`, `integration/best-of-all-2026-11-09`, `ultron/consolidation-2026-11`, and `ultron/curated-promotion-2026-11`.
 
 PR #16 remains closed without merging. Its final web-app tree is included in the promoted candidate. Its source branch tip remains recoverable from its exact-SHA tag.
 
-**Deletion is not approved by this audit.** The archive tags are not protected because no tag ruleset exists. Do not delete branch refs until an Active ruleset protects `archive/**/*` against updates and deletions. The manual workflow's confirmation phrase is an owner attestation; the workflow itself does not verify that the ruleset exists.
+**Archive protection verified — 2026-11-10.** Ruleset `26923169` (`ULTRON archive tag protection`) is Active, targets tags matching `refs/tags/archive/**/*`, blocks updates and deletions, allows creation, and has no bypass actors. The cleanup workflow independently checks this live configuration before deleting any branch.
 
 
 ## Reviewed branch tips
@@ -80,13 +80,12 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 
 ### Remaining
 
-1. In Settings → Rules → Rulesets, create an Active tag ruleset for `archive/**/*`.
-2. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** off. Add no bypass actors.
-3. In Actions → Archive reviewed branch tips, select `main` and run with `delete_branches=true`.
-4. Enter `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
-5. Inspect the summary. It must preserve `main`, retain all ten tags, and delete only eligible non-`main` refs.
+1. Confirm the Active tag ruleset `26923169` remains in place.
+2. Run **Archive reviewed branch tips** from `main` with `delete_branches=true`.
+3. Enter `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
+4. Inspect the summary. It must preserve `main`, retain all ten tags, and delete only eligible non-`main` refs.
 
-The repository currently has no tag ruleset. The workflow now checks the live ruleset configuration itself and fails closed if the protection is absent or incomplete. Do not run deletion until the owner creates and verifies the rule. Git tags are mutable until protected.
+The repository now has an Active tag ruleset (`26923169`) that protects `refs/tags/archive/**/*` against updates and deletions, allows creation, and has no bypass actors. The workflow checks the live ruleset configuration and fails closed if protection is absent or incomplete.
 
 
 ## Restore a branch tip
