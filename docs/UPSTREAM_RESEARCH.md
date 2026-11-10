@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Forty of the 62 changed shared files have now had focused diff comparisons; 22 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Forty-six of the 62 changed shared files have now had focused diff comparisons; 16 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -154,6 +154,21 @@ This pass compared six more changed shared paths by exact Git blobs and normaliz
 | `actions/youtube_video.py` | Removes unused `pyautogui` and `numpy` imports; checks optional packages without importing them and lazily loads `requests` and transcript support. | Keep the removal of unused imports and lazy optional dependencies. |
 
 No upstream-only runtime behavior from these six files was identified as a safe direct port. This pass brings the focused review total to **40 of 62** changed shared paths. **Twenty-two changed shared paths remain**. No source code was copied in this pass.
+
+### Additional focused review: six system and playback files
+
+This pass checked six more changed shared files by exact blobs and normalized lines. It is a focused comparison, not a full independent security audit.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `actions/flight_finder.py` | The normalized implementation is effectively the same; the small line differences do not identify a new upstream capability. | Already present. No port required. |
+| `actions/game_updater.py` | The normalized source is effectively the same. | Already present. No port required. |
+| `actions/system_monitor.py` | Allows the first alert for a monitor key immediately. The upstream cooldown check compares against a default timestamp of zero, which can suppress the first alert during the first cooldown interval after system start. | Keep the first-alert correction. |
+| `actions/video_player.py` | Adds failure telemetry and rejects malformed non-text action/source arguments instead of continuing with invalid values. | Keep the error visibility and input validation. |
+| `actions/weather_report.py` | Declares the requested day in the tool schema, matching a value the handler already reads. This prevents tomorrow/other-day requests from silently becoming today's forecast. | Keep the corrected schema/handler contract. |
+| `core/hotkey.py` | Records failures from the held-key setter rather than silently swallowing them. | Keep failure telemetry. |
+
+No upstream-only runtime feature from these six files was identified for direct import. The focused review now covers **46 of 62** changed shared paths. **Sixteen changed shared paths remain**. No source code was copied in this pass.
 
 ### Existing capability map
 
@@ -257,7 +272,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. Continue the comparative review of the 22 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Continue the comparative review of the 16 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 

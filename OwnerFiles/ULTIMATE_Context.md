@@ -181,7 +181,7 @@ The original project lineage and current upstream material are documented in [`d
 Key facts from the 2026-11-10 audit:
 
 - Eight public repositories were returned by the FatihMakes account search. The primary current source is [`FatihMakes/Mark-LVI`](https://github.com/FatihMakes/Mark-LVI), main commit `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`.
-- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed. Focused diff reviews have covered 40 files; 22 remain. No code from the reviewed shared files was copied because ULTRON already contained the relevant handling or the normalized text was identical.
+- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed. Focused diff reviews have covered 46 files; 16 remain. No code from the reviewed shared files was copied because ULTRON already contained the relevant handling or the normalized text was identical.
 - ULTRON had 355 additional paths at the compared baseline. Its safety, planning, verification, and documentation layers must not be replaced by older upstream implementations.
 - The audit covered a sample of 100 issue results and 40 PR results. It also found many community forks, but it did not review every fork or every GitHub mention.
 - The current source licence is CC BY-NC 4.0. The checked-in `LICENSE` attributes the source to FatihMakes and prohibits commercial use. Preserve notices. Do not assume older snapshots or third-party assets have the same licence.

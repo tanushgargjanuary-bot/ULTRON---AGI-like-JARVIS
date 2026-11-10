@@ -531,3 +531,12 @@ The next six changed shared paths reviewed were `core/installer.py`, `actions/de
 ULTRON includes the Windows `uiautomation` dependency used by its accessibility-tree driver; it applies explicit consent limits to proactive suggestions; and it uses lazy optional imports for PIL, requests, and YouTube transcript support. The reminder improvement is limited to clearer tool wording. No upstream code was imported.
 
 The focused review now covers 40 of 62 changed shared paths. Twenty-two remain. This was a focused diff comparison, not a full security audit. Hardware-specific behavior still requires the normal ULTRON verification on the target machine.
+
+
+### 2026-11-10 — six more MARK-LVI system and playback comparisons
+
+The next six changed shared paths reviewed were `actions/flight_finder.py`, `actions/game_updater.py`, `actions/system_monitor.py`, `actions/video_player.py`, `actions/weather_report.py`, and `core/hotkey.py`.
+
+The normalized flight-finder and game-updater code is effectively the same. ULTRON keeps the first-alert correction in the system monitor, validates video-player arguments and records failures, declares the requested forecast day in the weather tool schema, and records keyboard-hook failures. No upstream source code was copied.
+
+The focused review now covers 46 of 62 changed shared paths. Sixteen remain. This was a focused diff comparison, not a full security audit.
