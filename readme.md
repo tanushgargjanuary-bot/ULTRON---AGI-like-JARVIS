@@ -94,3 +94,5 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 - [`DECISIONS.md`](DECISIONS.md) — recorded project decisions
 - [`LICENSE`](LICENSE) — ULTRON/MARK-LVI project licence (CC BY-NC 4.0)
 - [`licenses/THIRD_PARTY_NOTICES.md`](licenses/THIRD_PARTY_NOTICES.md) — third-party components and separate licence terms
+
+<!-- CodeRabbit review trigger -->
