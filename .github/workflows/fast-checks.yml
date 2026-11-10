@@ -83,8 +83,9 @@ jobs:
             echo "Ruff: no changed Python files in this update."
           fi
 
-      - name: Install the stress suite's small import dependency
-        run: python -m pip install --disable-pip-version-check "requests>=2.31,<3"
+      - name: Install the stress suite's small import dependencies
+        run: |
+          python -m pip install --disable-pip-version-check             "requests>=2.31,<3" "jsonschema>=4.23,<5"
 
       - name: Run fast offline regressions and edge cases
         run: python scripts/fast_verify.py
