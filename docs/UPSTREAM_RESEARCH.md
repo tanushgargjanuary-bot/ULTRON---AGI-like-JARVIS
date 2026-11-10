@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Twelve high-risk shared files have now had a focused semantic comparison; 50 changed shared paths remain. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Eighteen of the 62 changed shared files have now had focused diff comparisons; 44 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -88,6 +88,21 @@ A first focused review covered 12 high-risk shared files. It was a targeted comp
 | `providers/engine_pipeline.py` | Adds a bounded partial-tool-result grace period and turn-detection/voice-style handling, while recording failures. | Keep the existing pipeline and its regression tests. |
 
 No upstream-only behavior from these 12 focused comparisons was identified as a safe direct copy. The useful result was validation of ULTRON-specific improvements and several concrete tests or threat cases. The next audit still has **50 of the 62 changed shared paths** to inspect. Start with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py`.
+
+### Additional focused diff scan: six integration files
+
+A second pass checked six more large or security-relevant shared files. This scan used exact upstream and ULTRON blobs at the audited commits and compared normalized lines. It identifies differences for follow-up; it is not a full manual audit of every function.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `main.py` | Adds explicit reconnect policy, local fallback state, action audit, declaration sanitization, and a controlled response when a local engine cannot start. | Keep ULTRON's orchestration and failure path. Do not replace it with the upstream lifecycle wholesale. |
+| `ui.py` | Uses runtime identity and supports multiple configured provider APIs in first-run setup. It also includes additional UI/threading and recovery behavior. | Keep the provider-flexible UI and existing Qt-thread rules. |
+| `core/appidentity.py` | Adds failure records when process/window identity probes fail. | Keep the diagnostics. |
+| `core/action_loader.py` | Sanitizes tool declarations to the provider's accepted schema, coerces malformed arguments safely, reports discovery/runtime failures, and supports generation-aware import. | Keep these checks. They address real provider rejection and tool-call faults. |
+| `actions/browser_control.py` | Adds failure/timeout reporting and declares parameters the handler already reads, instead of silently forcing defaults. | Keep the corrected schema and failure records. |
+| `actions/dev_agent.py` | Resolves the VS Code executable and invokes it with `shell=False`; the upstream version shown in the diff uses `shell=True`. | Keep the shell-free launch. Do not regress to shell interpolation. |
+
+The focused scan has now covered 18 shared files in total. It continues to support selective ULTRON-first integration. **No upstream code from these 18 files has been copied.** The next 44 shared paths still need review.
 
 ### Existing capability map
 
@@ -183,7 +198,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 
 | Priority | Work | Reason | Acceptance evidence |
 |---|---|---|---|
-| 1 | Compare the remaining 50 of 62 changed shared files against ULTRON, starting with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py` | Twelve high-risk files have had a first focused review; the rest of the source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
+| 1 | Compare the remaining 44 of 62 changed shared files against ULTRON | Eighteen high-risk/integration files have had focused diff scans; the rest of the source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
 | 2 | Audit provider credential storage and consider OS credential-store support | Issue #117 raises a valid security concern; ULTRON still uses managed local config | Threat model, migration and rollback, no plaintext leak in logs/commits, platform tests |
 | 3 | Add reconnect/audio regression scenarios from issues #123/#134/#160/#162 | These are recurring upstream failure classes | Deterministic fake-device tests plus real owner-machine verification |
 | 4 | Design multi-agent role delegation as a separate ULTRON feature | PR #165 is conflicted/unverified; ULTRON has planning but not this full role-agent model | Role-specific tool allowlists, independent budgets, isolated context, audit trail, judge/evaluation tests |
