@@ -1,0 +1,98 @@
+name: fast branch checks
+
+on:
+  # This lane runs for every branch push, including main.
+  push:
+    branches: ['**']
+  # Fork branch updates cannot trigger a push in this repository. Their PR
+  # events therefore run the same read-only fast gate.
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    name: fast offline gate
+    if: >-
+      (github.event_name != 'push' || github.event.deleted != true) &&
+      (github.event_name != 'pull_request' ||
+       github.event.action != 'synchronize' ||
+       github.event.pull_request.head.repo.full_name != github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the focused static checker
+        run: python -m pip install --disable-pip-version-check "ruff>=0.14,<1"
+
+      - name: Check the exact change range
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before || '' }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch || 'main' }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            BASE_SHA="$PR_BASE_SHA"
+            CHECK_SHA="$HEAD_SHA"
+          else
+            CHECK_SHA="$HEAD_SHA"
+            if [[ -n "$PUSH_BEFORE" && ! "$PUSH_BEFORE" =~ ^0+$ ]] \
+              && git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+              BASE_SHA="$PUSH_BEFORE"
+            else
+              git fetch --no-tags origin \
+                "refs/heads/${DEFAULT_BRANCH}:refs/remotes/origin/${DEFAULT_BRANCH}"
+              BASE_SHA="$(git merge-base "$CHECK_SHA" "origin/${DEFAULT_BRANCH}")"
+            fi
+          fi
+
+          git cat-file -e "${BASE_SHA}^{commit}"
+          git cat-file -e "${CHECK_SHA}^{commit}"
+          git diff --check "$BASE_SHA" "$CHECK_SHA"
+
+          mapfile -d '' PY_FILES < <(
+            git diff --name-only -z --diff-filter=ACMR \
+              "$BASE_SHA" "$CHECK_SHA" -- '*.py'
+          )
+          if ((${#PY_FILES[@]})); then
+            echo "Ruff: checking ${#PY_FILES[@]} changed Python file(s)."
+            python -m ruff check --select E4,E7,E9,F "${PY_FILES[@]}"
+          else
+            echo "Ruff: no changed Python files in this update."
+          fi
+
+      - name: Run fast offline regressions and edge cases
+        run: python scripts/fast_verify.py
+
+      - name: Record the fast-gate result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Fast branch gate"
+            echo "- Event: $GITHUB_EVENT_NAME"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- This is the fast offline preflight. The full Linux/Windows gate remains separate."
+          } >> "$GITHUB_STEP_SUMMARY"

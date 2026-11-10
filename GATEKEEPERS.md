@@ -170,9 +170,10 @@ Two things no instrument can settle, and both are real:
 
 This section used to say: **"There is no CI, so not one test has ever run on Windows
 automatically."** That was true when it was written and it is not any more.
-`.github/workflows/verify.yml` runs the suite, the machine verifier and the proof gate on
-`ubuntu-latest` and `windows-latest` on every push, and both jobs are green on the last
-push of build 1.2.36.
+`.github/workflows/fast-checks.yml` runs the offline preflight on every branch push.
+`.github/workflows/verify.yml` runs the full suite, machine verifier and proof gate on
+`ubuntu-latest` and `windows-latest` for pull requests to `main` and pushes to `main`.
+The fast gate does not replace the full two-platform gate. See `docs/TEST_AUTOMATION.md`.
 
 It paid for itself on the first night. It found four defects Linux could not see: a
 workflow flag no script declared, a report folder missing on a fresh clone, three

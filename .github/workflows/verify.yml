@@ -1,14 +1,14 @@
 name: verify
 
-# The cheapest unlock in this project. Until now nothing had ever run on Windows
-# automatically, and twelve proof-gate claims said "PARTIAL — needs your machine".
-# These two jobs are that machine.
+# Full regression and platform verification. Every branch push runs the faster
+# offline gate in fast-checks.yml; this heavier workflow runs for main and PRs to
+# main so deep Linux/Windows evidence stays attached to promotion candidates.
 
 on:
-  # Test every branch. Permanent agent-specific branch allowlists become stale and
-  # can make an untested branch look healthy.
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

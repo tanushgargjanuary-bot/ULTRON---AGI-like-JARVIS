@@ -69,6 +69,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | Dated branch audits, selected work, and rejected candidates |
 | [`UPSTREAM_RESEARCH.md`](UPSTREAM_RESEARCH.md) | FatihMakes MARK/JARVIS repositories, source comparison, issues/PRs, reuse decisions, and licence controls |
 | [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) | Exact archived branch tips, cleanup rules, and restore commands |
+| [`TEST_AUTOMATION.md`](TEST_AUTOMATION.md) | Fast checks on every branch update, full Linux/Windows regression gates, local commands, and edge-case coverage |
 | [`CODE_REVIEW.md`](CODE_REVIEW.md) | CI, Reviewdog/Ruff, optional PR-Agent, and manual review standards |
 | [`MAYBE_COMPLETE.md`](MAYBE_COMPLETE.md) | Release checkpoint, verified scope, known limits, and promotion checklist |
 | [`RUST_MIGRATION.md`](RUST_MIGRATION.md) | Evidence-first policy for selective Rust ports; Python remains the control plane |

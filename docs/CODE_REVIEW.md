@@ -4,7 +4,7 @@ Ultron uses three separate review layers. They answer different questions and mu
 
 ## 1. GitHub Actions — correctness gates
 
-The `verify` workflow runs the project test suite and proof gate on Linux and Windows. A green result means those configured checks passed on that commit. It does not prove that the code has no defects.
+The `fast-checks` workflow runs on every branch push. It checks the changed Python files, parses all Python source, runs focused policy/README regressions, and executes the deterministic stress suite. The `verify` workflow runs the full project test suite and proof gate on Linux and Windows for pull requests to `main` and pushes to `main`. A green result means only those configured checks passed on that commit. It does not prove that the code has no defects. See [Test automation](TEST_AUTOMATION.md) for triggers and scope.
 
 ## 2. Reviewdog + Ruff — deterministic static findings
 

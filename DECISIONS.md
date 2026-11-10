@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-10** (repository consolidation and agent-governance update).
+Last updated: **2026-11-10** (repository consolidation, proportional branch policy, and automatic test gates).
 
 ---
 
@@ -70,7 +70,7 @@ new visual language need to be asked for, not assumed.
   worse than one that does not. (The *OS* is the opposite case, below.)
 
 | **An outside project is native, an adaptor, or a name — never a bundle** | Two hundred projects were offered on 7 Nov 2026. Most are servers, not libraries, and every vendored dependency costs startup time, licence work, an update watch and a new way to crash. The rule: native only when Ultron cannot do the job without it and it must work offline; an adaptor when it is already a program on the machine; knowledge otherwise. One protocol beats a hundred integrations — an MCP client is worth more than any single entry on that list. Security and OSINT scanners are catalogue-only, because they act on systems nobody here owns. A second rule was added the same day, after a longer list: a weakness counts only when a file and a line can be shown, and a framework never replaces a layer that already exists. | `docs/ECOSYSTEM.md`, `core/tool_catalog.py`, `custom_jarvis/mcp_client.py` |
-| **`main` moves in small slices, only when you say so** | A long-lived branch is not caution, it is merge debt. `chatgpt` is about 20 commits ahead and `antigravity` is about 5,900 lines ahead; neither can be merged whole any more, and that happened by waiting. So the delivery branch stays small — run `python scripts/branch_report.py` for today's count; it was 8 ahead and 0 behind `main` when this was written — the pull request stays a draft, and `main` moves only on your word, one slice at a time. Keeping `main` red is the price of waiting; the draft PR is the receipt. | `docs/BRANCH_REVIEW.md`, PR #8, `docs/AGENT_NOTION.md` |
+| **`main` is the only permanent integration branch.** Main-only is the default for small, low-risk, non-parallel work when the owner authorizes it. Use a short-lived branch only when parallel work, isolation, or rollback risk gives a clear benefit. Keep branches narrow, target `main`, and delete them after successful integration. Never keep permanent branches per agent or model. | `AGENTS.md`, `docs/AGENT_PLAYBOOK.md`, `docs/TEST_AUTOMATION.md` |
 
 ## 5. The interface (decided and corrected 2026-11-06)
 

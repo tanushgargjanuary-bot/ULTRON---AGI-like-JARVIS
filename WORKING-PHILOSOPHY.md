@@ -68,10 +68,11 @@ The order is not negotiable, because each step has caught something the others m
 5. **Run the three instruments** (section 5). Red is a real defect, not noise.
 6. **Update the record**: `log.txt` (what changed and why), `HANDOFF.md` (the phase),
    `docs/`, `AGENTS.md` if a rule appears, `OwnerFiles/` if the owner's intent moved.
-7. **One commit per improvement.** A commit that mixes a fix, a doc and a version bump
-   inside three unrelated features cannot be reverted.
-8. **Push, then watch CI on both jobs.** A green push is not a green build until the Windows
-   job has finished, because Windows is the machine the claims are about.
+7. **One commit per isolated improvement.** A commit that mixes unrelated changes
+   cannot be reviewed or reverted safely.
+8. **Use the correct CI lane.** Every branch push gets the fast offline gate. A pull
+   request to `main` and every push to `main` get the full Linux/Windows regression
+   gate. Read the results for the exact commit. See `docs/TEST_AUTOMATION.md`.
 
 ---
 
