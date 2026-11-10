@@ -494,3 +494,20 @@ The portable `ULTIMATE_Context.zip` remains in the folder as a tracked deliverab
 ### Follow-up — archive workflow remains valid after branch deletion
 
 The first documentation push after branch cleanup exposed a workflow assumption: push-triggered archive-only runs still tried to read the now-deleted curated candidate branch. GitHub returned 404 and the archive job failed before it could complete its no-deletion path. The workflow now falls back only to the protected candidate archive tag and verifies that it still points to the exact reviewed promotion SHA `bd4b43d16fdf27b495209678ed72b41f21408d7c`. Any other missing-ref error or unexpected tag target stops the run. This preserves the one-branch end state and keeps future `main` pushes idempotent.
+
+
+## 2026-11-10 — FatihMakes MARK/JARVIS upstream resource audit
+
+**Asked for.** Use the resources published around FatihMakes, MARK, and JARVIS to improve ULTRON. Preserve the original lineage while avoiding blind code imports.
+
+**Sources reviewed.** Eight public repositories were returned by the FatihMakes account search: Mark-LVI, Mark-XXXIX-OR, Mark-X, Mark-X.1, Mark-X-TR, Jarvis-Mark-X, AI-Assistant-for-Computer, and AI-Assistant-1.1. The current primary source was MARK-LVI main commit `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`. The review also searched 100 issue results and 40 pull-request results, then read selected PR source files. A global Mark-LVI repository search returned many forks; it was not an exhaustive fork audit.
+
+**Direct comparison.** At ULTRON main `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`, the MARK-LVI tree had 78 files and every path already existed in ULTRON. Sixteen shared paths were byte-identical; 62 shared paths differed; ULTRON had 355 additional paths. No upstream source file was missing by path. The remaining code intake task is a semantic review of the 62 shared files, starting with credentials/config, provider lifecycle, audio, reconnect, browser, and UI control.
+
+**Important upstream candidates.** MCP, planning, routing, audit, and tool-selection triggers already exist in ULTRON. Issue #117 makes credential-store support a valid security review. Issue #123 and microphone/wake-word reports provide regression scenarios. Multiple-monitor support still needs target-machine proof. Gesture PRs #167/#168 have no regression tests in their file lists and need stronger policy integration. Multi-agent PR #165 was open/non-mergeable at audit, says testing is unverified, and includes a tracked `config/api_keys.json`. PR #121 overlaps ULTRON's existing safety layer. None was merged or copied wholesale.
+
+**Licence and provenance.** MARK-LVI's checked-in `LICENSE` names FatihMakes and CC BY-NC 4.0. Commercial use is prohibited without separate written permission. GitHub's SPDX metadata says NOASSERTION; the checked-in text is the source to preserve. Older repositories and separate model/binary assets need their own provenance checks.
+
+**Durable record.** `docs/UPSTREAM_RESEARCH.md` records the repository list, source commit, file-tree comparison, issue/PR triage, licence controls, intake process, and search limits. It is indexed in `docs/INDEX.md`, linked from the README and owner handoff, and required by `docs/AGENT_MAINTENANCE.md` for future upstream intake. No new product code was imported in this audit.
+
+**Verification state.** Main `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c` passed Linux and Windows in run [`42786030989`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030989). Archive-only workflow run [`42786030636`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030636) also passed. Linux proof gate: 24 PROVEN / 13 PARTIAL / 0 FAILED. Windows: 28 PROVEN / 9 PARTIAL / 0 FAILED. Hardware/environment limits remain unchanged.

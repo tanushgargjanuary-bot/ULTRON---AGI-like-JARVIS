@@ -134,6 +134,17 @@ new visual language need to be asked for, not assumed.
 
 Enforced/documented by: `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`, `OwnerFiles/ULTIMATE_Context.md`, and `.github/PULL_REQUEST_TEMPLATE.md`.
 
+## 8. Upstream MARK/JARVIS resource intake
+
+- **Use FatihMakes MARK/JARVIS work as a source, not as an automatic merge base.** Review the exact repository, commit SHA, issue/PR status, file contents, and licence before adopting it.
+- **ULTRON's current safety and evidence architecture remains authoritative.** Do not replace `core/policy.py`, path confinement, evidence, confirmations, proof gates, or ULTRON's tests with an older upstream implementation.
+- **Port the smallest useful change.** Prefer one tested improvement to a wholesale branch merge or a parallel subsystem.
+- **Preserve licence and attribution.** The checked-in MARK-LVI licence specifies CC BY-NC 4.0. Commercial use is not permitted without separate written permission. Check older repositories and third-party models/assets separately.
+- **No blind community-fork imports.** A fork or PR is a candidate, not a trusted release. Check code, author, licence, tests, secrets, model provenance, and security boundaries.
+- **Record the decision.** Mark every reviewed proposal as adopted, already present, reimplemented, deferred, or rejected in `docs/UPSTREAM_RESEARCH.md`.
+
+Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, and the source-level rules in `AGENTS.md`.
+
 ## Open questions (deliberately unanswered)
 
 | **Capabilities are proven by instruments that ship with the app**, not by the suite | A green suite says the logic is right; it cannot say the machine has a microphone. `scripts/verify_all.py` plus five verifiers ask the hardware directly, and their output is the evidence. | `scripts/verify_*.py`, `tests/test_verifiers.py` |

@@ -198,6 +198,14 @@ The cross-platform verification snapshot was checked in run [42775101593](https:
 
 The owner then required the repository to explain itself after the chat is deleted. `OwnerFiles/ULTIMATE_Context.md` became the canonical comprehensive handoff. `docs/AGENT_MAINTENANCE.md` defines task-size-aware documentation updates, cleanup review, and structural standards. Root `AGENTS.md`, `docs/AGENT_PLAYBOOK.md`, the documentation index, and the pull-request template make that procedure mandatory for medium and large work. The change preserves established source paths and historical records rather than moving or deleting files for appearance.
 
+## 2026-11-10 — MARK/JARVIS upstream resources become a controlled input
+
+The owner asked ULTRON to use the work published around FatihMakes, MARK, and JARVIS. The audit found eight public FatihMakes repositories and compared the latest primary MARK-LVI tree with ULTRON. All 78 upstream file paths already exist in ULTRON. Sixteen shared files are byte-identical; 62 differ; ULTRON has 355 additional paths for its own expanded architecture and records.
+
+This changes the integration strategy. The task is no longer to copy the upstream tree. It is to inspect meaningful differences, source new ideas from issues and PRs, and port only changes that improve the existing ULTRON design. MCP, planning, routing, audit, and tool-trigger systems already exist here. Gesture control and general role-agent delegation remain candidates, not accepted code.
+
+The new `docs/UPSTREAM_RESEARCH.md` records the eight-repository lineage, selected issue/PR findings, exact source SHA, tree comparison, licence conditions, and search limits. The licence remains CC BY-NC 4.0; commercial use is not permitted without separate written permission. The audit does not claim to have read every community fork or every GitHub mention.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered

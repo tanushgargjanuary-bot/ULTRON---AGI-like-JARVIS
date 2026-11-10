@@ -4,7 +4,7 @@
 **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`  
 **Visibility:** Public  
 **Stable branch:** `main` — the only remaining branch  
-**Code baseline checked:** `a7be7daed4aa8457d138299a4e527ea131f9979e`  
+**Main SHA at upstream-source audit:** `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`  
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
 **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
@@ -23,7 +23,7 @@ This file is the durable handoff. A new chat or agent must be able to continue f
 
 ### Current cross-platform CI evidence
 
-The latest inspected cross-platform verification for the pre-documentation code baseline is [run 42775101593](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593). Both Linux and Windows jobs completed successfully.
+The latest inspected cross-platform verification is [run 42786030989](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030989), on main SHA `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`. Both Linux and Windows jobs completed successfully. The archive-only workflow also passed in [run 42786030636](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030636).
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
@@ -169,7 +169,24 @@ These limits matter. Do not advertise the product beyond them.
 - Active archive ruleset is ID 26923169. Final branch state: one branch, ten archive tags, zero open PRs.
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
-## 10. Agent operating instructions for a new chat
+## 10. Upstream MARK/JARVIS resources
+
+The original project lineage and current upstream material are documented in [`docs/UPSTREAM_RESEARCH.md`](../docs/UPSTREAM_RESEARCH.md).
+
+Key facts from the 2026-11-10 audit:
+
+- Eight public repositories were returned by the FatihMakes account search. The primary current source is [`FatihMakes/Mark-LVI`](https://github.com/FatihMakes/Mark-LVI), main commit `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`.
+- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed and need semantic comparison before any port.
+- ULTRON had 355 additional paths at the compared baseline. Its safety, planning, verification, and documentation layers must not be replaced by older upstream implementations.
+- The audit covered a sample of 100 issue results and 40 PR results. It also found many community forks, but it did not review every fork or every GitHub mention.
+- The current source licence is CC BY-NC 4.0. The checked-in `LICENSE` attributes the source to FatihMakes and prohibits commercial use. Preserve notices. Do not assume older snapshots or third-party assets have the same licence.
+- Gesture PRs #167/#168 are candidates only. Their PR file lists did not include regression tests; they need central policy/sensor consent and model-integrity work.
+- Multi-agent PR #165 was open/non-mergeable at audit and included a tracked `config/api_keys.json`. Do not import it wholesale.
+- MCP, tool routing, multi-step planning, audit, and tool-description triggers already exist in ULTRON. Do not build duplicates merely because an upstream proposal asks for them.
+
+The strategy is selective reuse. Review the exact source SHA and licence, compare the code against ULTRON, port the smallest useful change, and test it. See the upstream research file for the repository list, PR/issue decisions, risks, and next priorities.
+
+## 11. Agent operating instructions for a new chat
 
 1. Read this file, then `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `WORKING-PHILOSOPHY.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`.
 2. Inspect current main SHA, branch refs, worktree, PRs, and latest Actions results. Do not trust dates/counts copied from older handovers without rechecking.
@@ -179,15 +196,16 @@ These limits matter. Do not advertise the product beyond them.
 6. Report exact commands, commits, CI run IDs, proof counts, failures, skipped checks, known limits, and what was not inspected.
 7. No secrets, tokens, local personal files, or private machine data belong in this public repository.
 
-## 11. Read-first navigation
+## 12. Read-first navigation
 
 1. [Repository README](../readme.md)
 2. [Agent maintenance system](../docs/AGENT_MAINTENANCE.md)
-3. [Architecture](../ARCHITECTURE.md)
-4. [Owner decisions](../DECISIONS.md)
-5. [Proof status](../GATEKEEPERS.md)
-6. [Documentation index](../docs/INDEX.md)
-7. [Branch review and archive](../docs/BRANCH_REVIEW.md), [archive restore details](../docs/BRANCH_ARCHIVE.md)
-8. [Engineering journey](history/journey.md), [session record](history/session-log.md)
+3. [MARK/JARVIS upstream research](../docs/UPSTREAM_RESEARCH.md)
+4. [Architecture](../ARCHITECTURE.md)
+5. [Owner decisions](../DECISIONS.md)
+6. [Proof status](../GATEKEEPERS.md)
+7. [Documentation index](../docs/INDEX.md)
+8. [Branch review and archive](../docs/BRANCH_REVIEW.md), [archive restore details](../docs/BRANCH_ARCHIVE.md)
+9. [Engineering journey](history/journey.md), [session record](history/session-log.md)
 
 A new chat must be able to delete its predecessor without losing project knowledge. This file and the linked repository records are the handoff.
