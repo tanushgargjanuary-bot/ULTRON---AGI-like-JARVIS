@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-07** (build 1.2.37).
+Last updated: **2026-11-10** (repository consolidation and agent-governance update).
 
 ---
 
@@ -122,6 +122,17 @@ new visual language need to be asked for, not assumed.
 | Multi-provider first run | `ui.SetupOverlay`, `config_manager.apply_first_run` |
 | No hardcoded model names | `providers/*` declarations and `_gemini` model lists |
 | **There is no repository size budget** | Withdrawn by the owner on 2026-11-07: the repository is on GitHub, and a 100 MB / 5,000-file ceiling was blocking work it never protected. The script, its test and its step in `scripts/verify.py` were deleted in the same change, so nothing claims a number that nothing enforces. | `scripts/verify.py` (no budget step), `docs/SPACE.md` |
+
+## 7. Repository continuity and agent maintenance
+
+- **`main` is the sole permanent branch after consolidation.** Use short-lived `feature/<topic>` and `fix/<topic>` branches for active work. Do not keep permanent branches per agent or model.
+- **Historical branch tips remain protected recovery tags.** The ten 2026-11-10 archive tags are protected by Active ruleset `26923169`; do not move or delete them during routine cleanup.
+- **A chat is not a project record.** `OwnerFiles/ULTIMATE_Context.md` is the canonical current handoff. A new agent starts there and checks live Git/PR/CI state before relying on dated facts.
+- **Medium and large work must update the durable record.** Agents classify task size, review the documentation impact map, update the affected guides and canonical handoff, review repository hygiene, and record evidence. `docs/AGENT_MAINTENANCE.md` is mandatory and is referenced from `AGENTS.md`, the agent playbook, and the pull-request template.
+- **Repository cleanup must be evidence-led.** Do not delete a file because it is large or looks old. Check imports, dynamic discovery, tests, workflows, packaging, docs, and user commands. Preserve logs, backups, history, and owner data.
+- **No workspace size or file-count ceiling is active.** The owner withdrew the 100 MB / 5,000-file budget on 2026-11-07. Keep build output, caches, and machine state out of Git without restoring an arbitrary limit.
+
+Enforced/documented by: `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`, `OwnerFiles/ULTIMATE_Context.md`, and `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## Open questions (deliberately unanswered)
 

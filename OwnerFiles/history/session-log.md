@@ -474,3 +474,18 @@ CodeRabbit completed a review of PR #12, covering the diff from `8f4803b` throug
 The owner asked for the context folder to be less cluttered and easier for agents to navigate. The five older handover/history/notes/review documents are now grouped under `history/`, `owner/`, and `reviews/`; the old handover is explicitly marked historical. `OwnerFiles/README.md` is now a short index, and `OwnerFiles/ULTIMATE_Context.md` is the single current entry point. Existing references were updated rather than leaving broken links. No historical note was deleted.
 
 The portable `ULTIMATE_Context.zip` remains in the folder as a tracked deliverable. It was rebuilt from source snapshot `d7abf40` after checking the organized tree, excludes itself and credentials, and passed `unzip -t`. Its SHA-256 is recorded in the live metadata page. The current PR/CI state remains open/red: run `42529553481` failed Linux suite/self-checks and Windows native checks; exact runner logs still need human/agent review.
+
+
+## 2026-11-10 — final branch cleanup and durable project handoff
+
+**Asked for.** Finish consolidation so `main` is the only branch. Then make the repository self-explanatory enough that a new chat can continue after the old chat is deleted. Add a mandatory agent procedure that updates documentation and performs safe repository cleanup after meaningful medium/large work.
+
+**Repository result.** The curated application had already been promoted to `main` by a direct non-forced fast-forward. Ten obsolete branches were removed only after their full commit SHAs were preserved in ten archive tags and an Active tag ruleset was verified. Ruleset `26923169` protects `refs/tags/archive/**/*`: update and deletion are blocked, tag creation is allowed, and no bypass actor is present. Cleanup workflow [`42779866199`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully. The live post-cleanup audit found one branch (`main`), ten archive tags, all ten expected recovery SHAs, and zero open pull requests.
+
+**Verification evidence.** Cross-platform verification run [`42775101593`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593) completed on Linux and Windows. Linux proof gate: 24 PROVEN, 13 PARTIAL, 0 FAILED. Windows: 28 PROVEN, 9 PARTIAL, 0 FAILED. Separate instrument scans were non-blocking and recorded environment/hardware gaps. These results do not prove every owner-machine hardware path.
+
+**Documentation and agent governance.** The canonical project handoff is `OwnerFiles/ULTIMATE_Context.md`. The new `docs/AGENT_MAINTENANCE.md` defines task classification, required documentation impact review, canonical handoff format, safe cleanup checks, structure rules, and a close-out checklist. Root `AGENTS.md` and `docs/AGENT_PLAYBOOK.md` make it mandatory. `docs/INDEX.md`, `OwnerFiles/README.md`, `readme.md`, and `.github/PULL_REQUEST_TEMPLATE.md` point agents to the process. Historical branch and release status docs were reconciled with the final cleanup.
+
+**Decisions recorded.** `main` is the only permanent branch. Feature/fix branches are short-lived. The ten archive tags are protected historical recovery points. No workspace size/file-count ceiling is active; the owner withdrew the 100 MB / 5,000-file budget on 2026-11-07.
+
+**Still open.** Vercel team authorization and preview setup remain owner-gated. ULTRON Web remains an authentication/workspace shell, not a deployed Python agent. General provider failover, an OS-level rehearsal sandbox, fully sandboxed MCP processes, and a complete signed update pipeline remain unverified or incomplete. Do not treat this documentation milestone as product completion.

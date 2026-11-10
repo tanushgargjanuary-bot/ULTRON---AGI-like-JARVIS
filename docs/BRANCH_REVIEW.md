@@ -1,5 +1,8 @@
 # Branch review: what each branch holds, and what is worth taking
 
+> **Final state (2026-11-10):** This is a historical review record, not a live branch list. The curated candidate was promoted to `main`; the ten reviewed non-main refs were then deleted after their exact commit SHAs were saved in protected archive tags. The live repository now has one branch (`main`), ten protected recovery tags, and zero open PRs. See [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) for exact recovery SHAs and [`OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) for the current handoff.
+
+
 **Status:** Historical recommendations plus dated branch-tip and candidate audits. This is not blanket authorization to merge any branch; follow the owner's reviewed-PR and protected-file constraints.
 **Prepared:** 2026-11-07 · **Re-measured:** 2026-11-08
 **Audience:** Human owner and coding agents working on this repository.

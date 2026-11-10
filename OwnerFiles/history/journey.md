@@ -188,6 +188,16 @@ process; it does not rehearse generated proposals before approval, and rollback 
 an owner-facing control. No live UI session has exercised a real generation swap. See
 `OwnerFiles/history/session-log.md` for the exact scope and branch state.
 
+## 2026-11-09 and 10 — consolidation, safe branch deletion, and durable agent continuity
+
+The owner asked for the competing branches to be consolidated without losing work. The reviewed candidate was promoted to `main` with a non-forced fast-forward. The final web-app tree was retained, but no competing branch was merged wholesale. The rejected or deferred work and the reasons remain in `docs/BRANCH_REVIEW.md`.
+
+Ten historical branch tips were preserved as exact-SHA archive tags. Before branch deletion, the owner created Active ruleset `26923169` for `refs/tags/archive/**/*`. It blocks tag updates and deletion, permits creation, and has no bypass actors. The cleanup workflow was hardened to verify the live ruleset itself instead of trusting only a typed confirmation. Workflow run [42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully. The final live audit found one branch (`main`), ten protected recovery tags, and zero open pull requests. All ten historical full commit SHAs were verified after deletion.
+
+The cross-platform verification snapshot was checked in run [42775101593](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593): Linux proof gate 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. Hardware-related PARTIAL and SKIPPED results remain open; hosted CI is not the owner's physical machine.
+
+The owner then required the repository to explain itself after the chat is deleted. `OwnerFiles/ULTIMATE_Context.md` became the canonical comprehensive handoff. `docs/AGENT_MAINTENANCE.md` defines task-size-aware documentation updates, cleanup review, and structural standards. Root `AGENTS.md`, `docs/AGENT_PLAYBOOK.md`, the documentation index, and the pull-request template make that procedure mandatory for medium and large work. The change preserves established source paths and historical records rather than moving or deleting files for appearance.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered
