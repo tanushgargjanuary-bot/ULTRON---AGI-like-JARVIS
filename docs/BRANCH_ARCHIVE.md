@@ -25,7 +25,7 @@
 The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
 ### Current follow-up state — 2026-11-10
 
-- Current main SHA: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- Last fully verified application/test baseline: `b80919314f391e15ddd86e2860c2e4d66057b`. Re-read the live `main` HEAD before any cleanup.
 - Latest full verification: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003), Linux and Windows passed 2,073 tests each.
 - Latest fast gate: [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649), 5/5 groups in 12.68 seconds.
 - Latest archive run: [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028), success; 12 protected tags verified.

@@ -5,7 +5,7 @@
 - **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - **Visibility:** Public
 - **Permanent integration branch:** `main`
-- **Current main SHA:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
+- **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
 - **Latest full Linux/Windows run:** [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003) — both platforms passed.
 - **Latest fast branch gate:** [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649) — 5/5 groups passed in 12.68 seconds.
 - **Latest archive run:** [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) — passed; 12 exact-SHA archive tags verified.
@@ -20,7 +20,7 @@ This file is the durable handoff. A new chat or agent must be able to continue f
 
 ## 1. Current status
 
-This snapshot was read from GitHub on 2026-11-10. The current source of truth is `main` at `b80919314f391e15ddd86e2860c2e4d66057b15b`. Recheck all live state before acting.
+This snapshot was read from GitHub on 2026-11-10. `main` is the current source of truth. The last fully verified application/test baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`. The current `main` HEAD may be newer because later commits only updated documentation. Re-read `git fetch origin main` and `git rev-parse origin/main` before acting.
 
 - PR #15 was promoted to `main`; PR #16 was closed without merging, but its final web-app tree was included in the promoted candidate.
 - Documentation PR #17 and fast-test PR #18 are merged. PR #18 was squash-merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
@@ -34,9 +34,9 @@ This snapshot was read from GitHub on 2026-11-10. The current source of truth is
 - The GitHub repository About description is blank. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub tools can read metadata but do not expose a repository-settings write action.
 - The separate private owner-development repository exists but is empty. It has no commits or files and is not an active canary channel. The public repository remains the active source of truth.
 
-### Latest verification on the current main SHA
+### Latest full application/test verification
 
-Full Linux/Windows run: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003). Both jobs completed successfully on `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+Full Linux/Windows run: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003). Both jobs completed successfully on the application/test baseline `b80919314f391e15ddd86e2860c2e4d66057b15b`. Later commits in this handoff cycle were documentation-only.
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
