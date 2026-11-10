@@ -20,7 +20,7 @@ better without me babysitting it.
 - Change its own safety rules, or the files that decide what needs approval.
 - Hardcode a provider, a model or a feature list and pretend it is a choice.
 - Add launcher files. The installer already has `run.ps1`.
-- Grow the folder past 100 MB. *("We should never overgo over 100MBs.")*
+- ~~Grow the folder past 100 MB.~~ **Superseded 2026-11-07.** The owner withdrew the 100 MB / 5,000-file ceiling. Keep generated artifacts, caches, and machine state out of Git, but do not enforce a repository size cap. See `../docs/SPACE.md` and `../docs/AGENT_MAINTENANCE.md`.
 - Claim something works when it has not been run. No fabricated claims in the
   readme, ever.
 - Interrupt me mid-sentence, or ask me about trivial actions.
