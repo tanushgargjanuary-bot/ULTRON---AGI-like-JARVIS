@@ -214,6 +214,12 @@ The full main-branch verification passed 2,073 tests on both Linux and Windows, 
 
 PR #18 was squash-merged to `main`. The archive workflow now preserves the exact tips of PR #17 and PR #18 in protected archive tags. Twelve tags are verified. Their two branch refs remain until the owner runs the existing guarded deletion workflow. No application runtime behavior changed.
 
+## 2026-11-10 — handoff prepared for another AI agent
+
+The repository was audited and its current-facing documentation was brought forward to main baseline `077793d7fd846f871f269362759d97c198ec61c5`. The canonical handoff now records the exact passing fast/full/archive runs, proof counts, current three-branch/12-tag state, and the work that remains. The test guide, gatekeepers, README, code-review guide, decisions, branch archive/review records, current next-step list, and documentation index now use the two-lane CI design and current branch policy.
+
+Two repository tasks remain visible: delete the two merged, exact-SHA-archived temporary branch refs through the guarded workflow; and configure/read back the three required status checks on `main`. Required-check enforcement could not be verified because the GitHub branch-protection API returned HTTP 403. The Windows desktop hardware scan and Vercel preview also remain owner-machine or owner-authorization work. No application runtime code changed.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered
@@ -240,3 +246,4 @@ These are the instructions that shaped the build, in his words where possible:
   handle things like this itself."
 - "Only remember what I approve."
 - The assistant must not pretend. A push that did not happen is not a push.
+

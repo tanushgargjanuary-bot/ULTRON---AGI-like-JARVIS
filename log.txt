@@ -3187,3 +3187,17 @@ Selected three reproduced security defects from active source and committed only
   ddd788e  launch VS Code without a shell
 
 93 focused tests passed; compileall and git diff --check passed. Full verify: 1,295 tests, 25 errors, 13 skipped, 1 failure. The failure is the stale README Python-file count; sandbox errors include missing optional dependencies and Qt/platform modules. Live proof-gate and machine verification were not run because they can access audio, screen, or camera without explicit sensor authorization. PR #12's current Linux/Windows passes are for the old remote head, not these local commits. No main write or merge.
+
+
+=== 2026-11-10 — documentation handoff refresh for next AI agent ===
+
+Main baseline reviewed: 077793d7fd846f871f269362759d97c198ec61c5.
+Fast gate 42832819956: passed 5/5 groups in 13.12s.
+Full Linux/Windows gate 42832820093: 2,073 tests passed per platform; 1,000 seeded stress scenarios and 15 targeted mutations passed per platform. Linux proof: 24 PROVEN / 13 PARTIAL / 0 FAILED. Windows proof: 28 PROVEN / 9 PARTIAL / 0 FAILED.
+Archive workflow 42832819947: success; 12 exact-SHA archive tags verified.
+
+Documentation was aligned for a new AI agent. The canonical handoff is OwnerFiles/ULTIMATE_Context.md. Read AGENTS.md, WORKING-PHILOSOPHY.md and docs/AGENT_MAINTENANCE.md before editing. Current task list: docs/NEXT_CHECKPOINTS.md.
+
+Live refs: main plus docs/repository-doc-audit-2026-11-10 and ci/fast-branch-gate. The two temporary refs are merged, protected by exact-SHA archive tags, and pending guarded deletion. There are zero open PRs.
+Required-check merge blocking is not verified: GitHub returned 403 for the branch-protection API. Configure fast offline gate, linux — suite and instruments, and windows — the machine the claims are about as required checks in GitHub and read back the settings.
+No runtime code changed. docs/MAP.md did not need regeneration.

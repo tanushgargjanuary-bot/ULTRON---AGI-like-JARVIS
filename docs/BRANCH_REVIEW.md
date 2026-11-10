@@ -1,7 +1,4 @@
-# Branch review: what each branch holds, and what is worth taking
-
-> **Final state (2026-11-10):** This is a historical review record, not a live branch list. The curated candidate was promoted to `main`; the ten reviewed non-main refs were then deleted after their exact commit SHAs were saved in protected archive tags. The live repository now has one branch (`main`), ten protected recovery tags, and zero open PRs. See [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) for exact recovery SHAs and [`OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) for the current handoff.
-
+> **Historical review — 2026-11-10:** This document records the branch graph and recommendations from the consolidation review. Its initial post-cleanup snapshot was one branch (`main`) and ten protected recovery tags. PRs #17 and #18 were merged later. Their exact tips were added to the protected archive, but their branch refs remain. The current live state is **three branch refs** (`main` plus those two merged refs), **12 protected archive tags**, and **zero open PRs**. Last fully verified baseline: `077793d7fd846f871f269362759d97c198ec61c5`. Re-read live `main` before any action. See [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) and [`OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) before any cleanup.
 
 **Status:** Historical recommendations plus dated branch-tip and candidate audits. This is not blanket authorization to merge any branch; follow the owner's reviewed-PR and protected-file constraints.
 **Prepared:** 2026-11-07 · **Re-measured:** 2026-11-08
@@ -302,10 +299,10 @@ The screenshot's `224 Commits` was the total reachable history at that time: 79 
 
 After the candidate is fast-forwarded into `main`, `.github/workflows/archive-reviewed-branches.yml` verifies that `main` contains the curated candidate tip and checks all reviewed source branch SHAs. It creates eight immutable tags for the six source branches, the prior consolidation tip, and the curated promotion tip. It does not delete any branch refs. If a source branch moved from its reviewed SHA, the workflow stops. Branch deletion remains a separate, manual owner decision.
 
-The archive tag names and restore commands are in [BRANCH_ARCHIVE.md](BRANCH_ARCHIVE.md). The intended end state is one working branch, `main`, plus immutable archive tags. New work uses short-lived feature/fix branches and CI runs for every pushed branch.
+The archive tag names and restore commands are in [BRANCH_ARCHIVE.md](BRANCH_ARCHIVE.md). The intended end state is one working branch, `main`, plus immutable archive tags. New work uses short-lived feature/fix branches and CI runs for every pushed branch. The initial ten-branch cleanup did reach that state; the later docs/test PRs introduced two additional temporary refs, which are now archived but still pending deletion.
 
 
-### Current promotion candidate — 2026-11-10
+### Candidate state at promotion review — 2026-11-10 (historical snapshot)
 
 The candidate branch was created from the exact reviewed consolidation tip `e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a`, so the existing work was preserved. The current head is `6a5358ba776585d037e2009ff0338ec2553557a5`. The candidate remains 165 commits ahead of `main`, 0 behind, with 180 changed files. PR #15 is the review surface; its GitHub merge operation is not the promotion method.
 

@@ -7,6 +7,8 @@ passed a syntax check and did nothing when used.
 
 **Start from the durable handoff:** read [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) for current product scope, repository state, evidence, known limits, and next actions. The previous chat is not the source of truth.
 
+**Check the live next-action list:** read [`docs/NEXT_CHECKPOINTS.md`](docs/NEXT_CHECKPOINTS.md), then recheck the live refs, PRs, branch protection, and Actions before taking any listed action. The checkpoint is a snapshot, not permission to add product scope.
+
 **Mandatory documentation and repository maintenance:** before medium or large work, read [`docs/AGENT_MAINTENANCE.md`](docs/AGENT_MAINTENANCE.md). Classify the task, review every relevant documentation surface, update the current handoff, and perform the safe cleanup/structure review before declaring the task complete. This is a required part of the work, not an optional final suggestion.
 
 **Read [`WORKING-PHILOSOPHY.md`](WORKING-PHILOSOPHY.md) first.** It holds the one rule

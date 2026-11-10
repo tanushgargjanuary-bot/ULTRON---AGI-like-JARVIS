@@ -25,11 +25,11 @@
 The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
 ### Current follow-up state — 2026-11-10
 
-- Main baseline at this review: `4934d605fb1f3dbc332393191af083022162214b`.
+- Last fully verified application/test baseline at this review: `077793d7fd846f871f269362759d97c198ec61c5`.
 - PR #17 and PR #18 are merged. PR #18 merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
 - Current refs: **three branches** (`main` and two merged temporary refs); **zero open PRs**.
 - Verified archive tags: **12**, protected by Active ruleset `26923169`.
-- Archive run [42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517) archived and read back both new tips: `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
+- Archive run [42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947) archived and read back both new tips: `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
 - The two branch refs remain present. Delete them only through the guarded manual workflow after archive tags exist and no PR uses them.
 
 ## Reviewed branch tips
@@ -70,7 +70,7 @@ Workflow: `.github/workflows/archive-reviewed-branches.yml`. A push to `main` ru
 12. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
 13. `main` is never in the deletion list.
 
-The Active repository ruleset `26923169` currently protects `refs/tags/archive/**/*` against updates and deletions. No bypass actors are configured. Keep this rule Active and do not delete the ten recovery tags. The workflow stops if the live ruleset is removed or its required settings change.
+The Active repository ruleset `26923169` currently protects `refs/tags/archive/**/*` against updates and deletions. No bypass actors are configured. Keep this rule Active and do not delete any of the 12 recovery tags. The workflow stops if the live ruleset is removed or its required settings change.
 
 GitHub's ref API does not provide an atomic compare-and-delete operation. The workflow performs an immediate SHA recheck before each deletion. Do not push to reviewed branches while cleanup is running.
 
@@ -83,7 +83,7 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 3. Created Active archive ruleset `26923169`, with update/deletion restrictions, tag creation allowed, and no bypass actors.
 4. Dispatched the guarded deletion workflow from `main`. It checked the live ruleset and rechecked reviewed refs, tag targets, and open PRs.
 5. Workflow run [42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
-6. Re-read GitHub refs: only `main` remains; all ten recovery tags remain; zero open PRs.
+6. Re-read GitHub refs after the initial cleanup: only `main` remained; all ten initial recovery tags remained; zero open PRs. Two later PR branches were subsequently archived in a separate run.
 
 **Two branch refs still need deletion.** Use the GitHub Actions UI: open `Archive reviewed branch tips`, select branch `main`, and run with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow checks the live ruleset, exact branch/tag SHA matches, and open PRs before deleting. It skips already absent branches, retains moved refs, and never deletes `main`. Re-read the branch list after the run.
 

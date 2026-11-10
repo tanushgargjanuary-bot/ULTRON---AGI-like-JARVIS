@@ -2,7 +2,7 @@
 
 ## Latest hosted verification snapshot — 2026-11-10
 
-The latest inspected full Linux/Windows verification is [run 42830329187](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329187), on main SHA `4934d605fb1f3dbc332393191af083022162214b`. Both hosted jobs completed successfully. The main-branch fast gate passed in [run 42830329236](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329236), and the archive workflow passed in [run 42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517).
+The latest full Linux/Windows verification is [run 42832820093](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832820093), on main SHA `077793d7fd846f871f269362759d97c198ec61c5`. Both hosted jobs completed successfully. The fast gate passed in [run 42832819956](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819956), and the archive workflow passed in [run 42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947).
 
 | Hosted runner | Full suite tests | PROVEN | PARTIAL | FAILED |
 |---|---:|---:|---:|---:|
@@ -11,9 +11,9 @@ The latest inspected full Linux/Windows verification is [run 42830329187](https:
 
 Both platforms also passed 1,000 deterministic stress scenarios and 15 targeted seeded mutation checks. Windows native checks returned 99 passed and 0 failed. The Linux non-blocking instrument report returned 17 passed, 2 failed, and 15 skipped. The two instrument failures are screen capture without a display server and audio initialization without PulseAudio on the hosted runner.
 
-The fast gate on the same main commit parsed 309 Python files, passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, 1,000 seeded stress scenarios, Ruff on changed Python files, and the generated module-map check. It completed 5/5 groups in 11.31 seconds.
+The fast gate parsed 309 Python files, passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 seeded stress scenarios. Ruff on changed Python files and the generated module-map check passed. All 5 fast-gate groups passed in 13.12 seconds.
 
-**Merge enforcement is not verified.** The GitHub API returned HTTP 403 when reading `main` branch protection. The workflows run automatically, but this audit cannot claim their checks block merges. Configure `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` as required checks in GitHub, then verify the settings. See `docs/TEST_AUTOMATION.md`.
+**Merge enforcement is not verified.** The GitHub API returned HTTP 403 when reading `main` branch protection. The workflows run automatically, but this audit cannot claim that they block merges. Configure `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` as required checks in GitHub, then verify the settings. See `docs/TEST_AUTOMATION.md`.
 
 **The hosted jobs are green; that does not mean every capability is proven.** PARTIAL and SKIPPED are not passes. The owner's microphone, speaker, camera, GPU, display scaling, browser installation, and real provider/account workflow still need checks on the target machine. Read the current run before repeating these counts after another push.
 

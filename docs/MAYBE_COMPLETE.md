@@ -5,9 +5,9 @@
 **Candidate branch:** `ultron/curated-promotion-2026-11`  
 **Promoted commit on `main`:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
 **Target:** `main`  
-**State:** Promotion and branch cleanup are complete. The curated code was fast-forwarded to `main` without a merge commit. Ten obsolete branches were later deleted after exact-SHA archive tags were protected. Only `main` remains.
+**Historical state:** This checkpoint records the original promotion and cleanup of ten obsolete branches. Two later temporary branches were created for PRs #17 and #18. Both PRs are now merged; their exact tips are archived, but their branch refs remain pending guarded deletion. The current repository has three branch refs, 12 protected archive tags, and zero open PRs. Latest `main` is `077793d7fd846f871f269362759d97c198ec61c5`.
 
-This document is a dated consolidation checkpoint and evidence record. Promotion and branch cleanup are finished. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free. Current repository state lives in `OwnerFiles/ULTIMATE_Context.md`.
+This document is a dated consolidation checkpoint and evidence record. It is not the live source of truth. The initial promotion and ten-branch cleanup are historical milestones. Current CI, branch refs, archive tags, blockers, and next actions live in `OwnerFiles/ULTIMATE_Context.md` and `docs/NEXT_CHECKPOINTS.md`. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
 ## What is included
 
@@ -149,7 +149,7 @@ GitHub Actions tests the configured Linux and Windows suite. It cannot prove tha
 
 Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent is optional and is not installed or run by GitHub Actions in this repository. The documented local Ollama route requires a local model and a GitHub token. The manual review in this checkpoint is AI-assisted and risk-focused; it is not a substitute for an independent human review.
 
-## Branch cleanup — completed 2026-11-10
+## Initial ten-branch cleanup — completed 2026-11-10 (historical)
 
 The ten historical branch tips were preserved by exact-SHA recovery tags. Tag protection was then configured and verified before deletion.
 
@@ -157,8 +157,10 @@ The ten historical branch tips were preserved by exact-SHA recovery tags. Tag pr
 - Pattern: `refs/tags/archive/**/*`.
 - Rules: updates blocked, deletions blocked, tag creation allowed, no bypass actors.
 - Cleanup workflow: [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199), completed successfully.
-- Final live state: **one branch (`main`)**, **ten protected archive tags**, **zero open pull requests**.
+- Final live state immediately after this initial cleanup: **one branch (`main`)**, **ten protected archive tags**, **zero open pull requests**.
 - All ten recovery commit SHAs were rechecked after branch deletion.
+
+Later follow-up: PR #17 and PR #18 were merged. Their branch tips were archived in workflow [42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947). The current archive contains 12 tags. The two new branch refs remain pending guarded deletion; see `docs/BRANCH_ARCHIVE.md`.
 
 The workflow's deletion mode checks the live ruleset before it reads or changes refs. It also checks the reviewed source SHAs, tag targets, and open PRs. It never deletes `main`. The ten branch names and full archived SHAs remain in `docs/BRANCH_ARCHIVE.md`.
 
@@ -179,7 +181,7 @@ The workflow's deletion mode checks the live ruleset before it reads or changes 
 - [x] Archive-only workflow created and verified all ten exact-SHA tags.
 - [x] Configure and verify the Active `archive/**/*` tag ruleset.
 - [x] Dispatch guarded deletion mode with both exact confirmation phrases.
-- [x] Verify only `main` remains and all ten recovery tags remain.
+- [x] Verify only `main` remained immediately after the initial cleanup and all ten initial recovery tags remained.
 
 ## Meaning of this checkpoint
 

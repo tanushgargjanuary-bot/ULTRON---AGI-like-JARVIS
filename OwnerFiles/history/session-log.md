@@ -623,3 +623,36 @@ This log entry records the verified baseline. A follow-up documentation commit m
 **Current branch state.** Three refs remain: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`. Both temporary refs belong to merged PRs, have exact-SHA protected archive tags, and have no open PR. Their branch refs have not yet been deleted. To finish, manually run `Archive reviewed branch tips` from `main` with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow checks the live ruleset and ref state before deletion; `main` is not deletable.
 
 **Scope and limits.** No application runtime source changed in this work. The fast lane runs on Ubuntu/Python 3.12 and is a preflight, not a Windows or hardware proof. Package installation needs runner network access; test execution makes no live model or provider calls. PARTIAL and SKIPPED results are not passes. The GitHub connector used in this session did not expose workflow dispatch or branch deletion, so the final two-ref deletion is an owner UI action. The branch-protection endpoint also returned HTTP 403, so required-check merge blocking remains unverified. The required check names are documented in `docs/TEST_AUTOMATION.md`.
+
+
+## 2026-11-10 — second-agent documentation handoff refresh
+
+**Request.** Update the project documentation so a different AI agent can continue from the repository without access to this conversation.
+
+**Live baseline inspected.**
+- Main SHA before this documentation-only pass: `077793d7fd846f871f269362759d97c198ec61c5`.
+- GitHub branch refs: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`.
+- Pull requests open: 0.
+- Protected archive tags: 12, under Active ruleset `26923169`.
+- PRs #17 and #18 are merged. The two temporary branch refs are exact-SHA archived but have not been deleted.
+- Full verification [42832820093](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832820093) passed on Linux and Windows: 2,073 tests per platform, 1,000 seeded stress scenarios and 15 targeted mutations per platform. Proof gate: Linux 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED.
+- Fast gate [42832819956](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819956) passed 5/5 groups in 13.12 seconds: 309 Python files parsed, 19 runner edge tests, 30 policy tests, 8 README tests, 1,000 stress scenarios, Ruff, and generated-map validation.
+- Archive workflow [42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947) passed and rechecked all 12 archive tags.
+
+**Documentation updated.**
+- Canonical handoff: `OwnerFiles/ULTIMATE_Context.md`.
+- Agent entry points: `OwnerFiles/README.md`, `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`.
+- Test and review operating guides: `docs/TEST_AUTOMATION.md`, `docs/CODE_REVIEW.md`, `GATEKEEPERS.md`.
+- Current next actions: `docs/NEXT_CHECKPOINTS.md`.
+- Branch history and cleanup: `docs/BRANCH_ARCHIVE.md`, `docs/BRANCH_REVIEW.md`.
+- Historical checkpoint explicitly superseded: `docs/MAYBE_COMPLETE.md`.
+- Navigation/public development guidance: `docs/INDEX.md`, `readme.md`.
+- Durable decisions and chronology: `DECISIONS.md`, `OwnerFiles/history/session-log.md`, and `OwnerFiles/history/journey.md`.
+
+**Explicit unresolved actions.**
+1. Delete the two already-archived branch refs using the manual `Archive reviewed branch tips` workflow and its exact confirmation inputs. Do not delete `main) or any archive tag.
+2. Configure and read back required branch-protection checks on `main): `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about`. The GitHub branch-protection API returned HTTP 403. Automatic workflow runs do not prove merge blocking.
+3. Run `python scripts/verify_all.py` on the owner's Windows machine for hardware and interactive checks when available.
+4. Vercel preview remains owner-authorized work, not an approved automatic task. The web client is still an authentication/workspace shell with a disabled composer.
+
+**Scope.** This was documentation and repository-governance work. No application runtime source changed. `docs/MAP.md` was not regenerated because no Python module or test relationship changed. The old `HANDOFF.md` and `OwnerFiles/history/previous-handover.md` remain historical/superseded records; `OwnerFiles/ULTIMATE_Context.md` is the current handoff. PARTIAL and SKIPPED are not passes.

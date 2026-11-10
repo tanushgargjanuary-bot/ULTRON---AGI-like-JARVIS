@@ -71,7 +71,8 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) | Exact archived branch tips, cleanup rules, and restore commands |
 | [`TEST_AUTOMATION.md`](TEST_AUTOMATION.md) | Fast checks on every branch update, full Linux/Windows regression gates, local commands, and edge-case coverage |
 | [`CODE_REVIEW.md`](CODE_REVIEW.md) | CI, Reviewdog/Ruff, optional PR-Agent, and manual review standards |
-| [`MAYBE_COMPLETE.md`](MAYBE_COMPLETE.md) | Release checkpoint, verified scope, known limits, and promotion checklist |
+| [`MAYBE_COMPLETE.md`](MAYBE_COMPLETE.md) | Historical initial promotion checkpoint; use the canonical handoff for live status |
+| [`NEXT_CHECKPOINTS.md`](NEXT_CHECKPOINTS.md) | Current verified repository status and ordered owner/agent next actions |
 | [`RUST_MIGRATION.md`](RUST_MIGRATION.md) | Evidence-first policy for selective Rust ports; Python remains the control plane |
 | [`reference/ALGORITHMS.md`](reference/ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
 | [`reference/CUSTOM_ULTRON.md`](reference/CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
@@ -81,7 +82,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 
 | File | Purpose |
 |---|---|
-| [`../HANDOFF.md`](../HANDOFF.md) | Current handoff and chronological engineering history |
+| [`../HANDOFF.md`](../HANDOFF.md) | Historical phase notes; current state is in `OwnerFiles/ULTIMATE_Context.md` |
 | [`../log.txt`](../log.txt) | Append-only build and investigation log |
 | [`../OwnerFiles/history/journey.md`](../OwnerFiles/history/journey.md) | Owner-facing project journey, including defects and corrections |
 | [`../OwnerFiles/history/session-log.md`](../OwnerFiles/history/session-log.md) | Dated task and handoff notes |
@@ -94,7 +95,8 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 |---|---|
 | `python scripts/agent_workspace.py --base origin/main` | Report local branch changes, incoming base commits, and uncommitted edits |
 | `python scripts/branch_report.py` | Every branch, its tip, and which names point at the same commit — read-only |
-| `python scripts/verify.py` | Offline tests, stress checks, mutation checks, and module organization |
+| `python scripts/fast_verify.py` | Fast offline branch-update preflight: syntax, focused edge/policy/README tests, and deterministic stress |
+| `python scripts/verify.py` | Full regression tests, stress, mutation checks, and module organization |
 | `python scripts/proof_gate.py` | Verify capability claims and report `PROVEN`, `PARTIAL`, `FAILED`, or `NOT PRESENT` |
 | `python scripts/verify_all.py` | Check capabilities on the current machine; hardware/platform gaps remain explicit |
 | `python scripts/map.py --write` | Regenerate `docs/MAP.md` from source modules and tests |

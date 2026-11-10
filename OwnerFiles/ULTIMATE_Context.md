@@ -6,10 +6,10 @@
 **Stable integration branch:** `main` — the only permanent branch. Two merged temporary refs remain archived and pending deletion.
 **Main SHA at upstream-source comparison baseline:** `76484ebc4cbf4b5d4a23889ed72b41f21408d7c`  
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
-**Main SHA at latest full verification baseline:** `4934d605fb1f3dbc332393191af083022162214b`
-**Latest cross-platform CI:** [run 42830329187](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329187) on main SHA `4934d605fb1f3dbc332393191af083022162214b` — Linux and Windows passed.
-**Latest archive workflow:** [run 42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517) — passed; all 12 exact-SHA archive tags were verified.
-**Latest fast branch gate:** [run 42830329236](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329236) — 5/5 groups passed in 11.31 seconds.
+**Last fully verified application/test baseline:** `077793d7fd846f871f269362759d97c198ec61c5`
+**Latest cross-platform CI:** [run 42832820093](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832820093) on main SHA `077793d7fd846f871f269362759d97c198ec61c5` — Linux and Windows passed.
+**Latest archive workflow:** [run 42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947) — passed; all 12 exact-SHA archive tags were verified.
+**Latest fast branch gate:** [run 42832819956](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819956) — 5/5 groups passed in 13.12 seconds.
 **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
 This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because the test gates and main integration are complete. Two merged temporary branch refs still need the guarded deletion workflow.
@@ -28,7 +28,7 @@ This file is the durable handoff. A new chat or agent must be able to continue f
 
 ### Current cross-platform CI evidence
 
-The latest full verification on the current main baseline is [run 42830329187](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329187), on SHA `4934d605fb1f3dbc332393191af083022162214b`. Both Linux and Windows jobs passed. The fast push gate passed in [run 42830329236](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329236); the archive workflow passed in [run 42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517).
+The latest full verification on the current main baseline is [run 42832820093](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832820093), on SHA `077793d7fd846f871f269362759d97c198ec61c5`. Both Linux and Windows jobs passed. The fast push gate passed in [run 42832819956](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819956); the archive workflow passed in [run 42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947).
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
@@ -39,7 +39,7 @@ The latest full verification on the current main baseline is [run 42830329187](h
 
 The Linux instrument scan is non-blocking: 17 passed, 2 failed, and 15 skipped. The two failures are screen capture without a display server and audio initialization without a PulseAudio service on the hosted runner. The Windows native-check step reported 99 passed and 0 failed; its microphone, speaker, camera, and Playwright checks are skipped when the required devices or packages are absent. A green CI job does not prove the owner's microphone, camera, speaker, GPU, browser installation, or every desktop workflow. PARTIAL and SKIPPED are not passes.
 
-The fast gate parsed 309 Python files and passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, 1,000 seeded stress scenarios, Ruff on changed Python files, and the generated map check. It completed 5/5 groups in 11.31 seconds. The full run executed 2,073 tests on each platform, 1,000 stress scenarios and 15 seeded mutations per platform. Linux proof gate: 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows: 28 PROVEN / 9 PARTIAL / 0 FAILED. Windows native checks reported 99 passed / 0 failed.
+The fast gate parsed 309 Python files and passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, 1,000 seeded stress scenarios, Ruff on changed Python files, and the generated map check. It completed 5/5 groups in 13.12 seconds. The full run executed 2,073 tests on each platform, 1,000 stress scenarios and 15 seeded mutations per platform. Linux proof gate: 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows: 28 PROVEN / 9 PARTIAL / 0 FAILED. Windows native checks reported 99 passed / 0 failed.
 
 Historical promotion evidence remains in `docs/MAYBE_COMPLETE.md`: Linux/Windows suite run 42699779342, ULTRON Web type-check/build run 42699779160, and Reviewdog/Ruff run 42699779015. These are earlier milestone checks, not the latest verification.
 
@@ -181,7 +181,7 @@ These limits matter. Do not advertise the product beyond them.
 - Branch adoption/rejection rationale is preserved in `docs/BRANCH_REVIEW.md`.
 - The curated candidate `ultron/curated-promotion-2026-11` was promoted as application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
 - The original ten historical non-main tips were preserved as exact-SHA tags, then their refs were deleted in workflow run 42779866199. Two later merged PR branch tips were added to the archive list and verified in run 42830329517.
-- Active archive ruleset is ID 26923169. Current branch state: `main` plus two archived temporary refs, 12 archive tags, zero open PRs. Manual guarded deletion remains.
+- Active archive ruleset is ID 26923169. Current branch state: `main` plus two archived temporary refs, 12 archive tags, zero open PRs. Manual guarded deletion remains. The latest full, fast, and archive workflows passed on `077793d7fd846f871f269362759d97c198ec61c5`.
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
 The GitHub About description was blank at the latest metadata check. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub interface can read metadata but does not expose the repository-settings write needed to change this field; owner action remains required.
@@ -216,6 +216,7 @@ The strategy is selective reuse. Review the exact source SHA and licence, compar
 5. Preserve owner decisions and existing work. Do not add scope because an older roadmap suggested it.
 6. Report exact commands, commits, CI run IDs, proof counts, failures, skipped checks, known limits, and what was not inspected.
 7. No secrets, tokens, local personal files, or private machine data belong in this public repository.
+8. Before product work, complete the two visible repository-maintenance actions in this handoff: delete the two already-archived merged branch refs through the guarded archive workflow, and configure/read back the three required `main` status checks. Do not claim either action is complete until GitHub confirms it.
 
 ## 12. Read-first navigation
 
