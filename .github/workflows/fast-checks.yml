@@ -90,6 +90,17 @@ jobs:
       - name: Run fast offline regressions and edge cases
         run: python scripts/fast_verify.py
 
+      - name: Verify the generated module and test map
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/map.py --write > "$RUNNER_TEMP/ultron-map-output.txt"
+          if ! git diff --quiet -- docs/MAP.md; then
+            echo "docs/MAP.md is stale. Run python scripts/map.py --write and commit the result."
+            python -c 'import base64; from pathlib import Path; value=base64.b64encode(Path("docs/MAP.md").read_bytes()).decode(); [print(f"ULTRON_MAP_B64_{i // 3000:03d}={value[i:i + 3000]}") for i in range(0, len(value), 3000)]'
+            exit 1
+          fi
+
       - name: Record the fast-gate result
         if: always()
         shell: bash

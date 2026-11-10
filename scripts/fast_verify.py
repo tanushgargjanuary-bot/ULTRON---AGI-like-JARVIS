@@ -46,12 +46,13 @@ def resolve_python_files(root: Path, names: list[str]) -> list[Path]:
     for name in names:
         if not name.endswith(".py"):
             continue
+        raw_parts = name.split("/")
         if (
             not name
             or "\\" in name
             or name.startswith("/")
-            or "//" in name
-            or name.startswith("./")
+            or any(part in ("", ".", "..") for part in raw_parts)
+            or (len(raw_parts[0]) >= 2 and raw_parts[0][1] == ":")
         ):
             raise ValueError(f"Unsafe tracked Python path: {name!r}")
 
@@ -68,12 +69,15 @@ def resolve_python_files(root: Path, names: list[str]) -> list[Path]:
         seen.add(name)
 
         candidate = base.joinpath(*relative.parts)
-        if candidate.is_symlink():
-            raise ValueError(f"Python source must not be a symlink: {name}")
+        cursor = base
+        for part in relative.parts:
+            cursor = cursor / part
+            if cursor.is_symlink():
+                raise ValueError(f"Python source path traverses a symlink: {name}")
         try:
             resolved = candidate.resolve(strict=True)
-        except OSError as error:
-            raise ValueError(f"Tracked Python file is missing: {name}") from error
+        except (OSError, RuntimeError) as error:
+            raise ValueError(f"Tracked Python file is missing or unsafe: {name}") from error
         if not resolved.is_relative_to(base):
             raise ValueError(f"Python source escapes the repository: {name}")
         if not resolved.is_file():

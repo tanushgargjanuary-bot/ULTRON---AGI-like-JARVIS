@@ -18,7 +18,8 @@ The workflow:
 2. Runs **git diff --check** for whitespace and conflict-marker errors.
 3. Runs Ruff on changed Python files. It fails on selected Python correctness errors.
 4. Runs the offline fast verification script.
-5. Cancels an older in-progress run for the same branch or pull request when a newer update arrives.
+5. Regenerates the module/test map and fails when the committed `docs/MAP.md` is stale.
+6. Cancels an older in-progress run for the same branch or pull request when a newer update arrives.
 
 The workflow installs Ruff for the changed-file static check, plus `requests` and `jsonschema` for imports used by the existing stress suite. These packages are not used to make live provider or model requests.
 
@@ -26,6 +27,7 @@ The Python fast verification script:
 - reads tracked and untracked, non-ignored paths through Git's NUL-delimited output;
 - rejects malformed, duplicate, missing, symlinked, and path-traversing Python paths;
 - parses every discovered Python file without importing it;
+- verifies that the generated `docs/MAP.md` matches the current source/test tree;
 - tests its own path, syntax, timeout, missing-executable, and nonzero-exit handling;
 - runs the policy/confirmation regression tests;
 - checks README path and claim contracts;

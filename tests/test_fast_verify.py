@@ -55,7 +55,15 @@ class PythonPathBoundaryTests(unittest.TestCase):
     def test_rejects_path_traversal_and_absolute_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for name in ("../outside.py", "/tmp/outside.py", "C:/outside.py", "x\\..\\outside.py"):
+            for name in (
+                "../outside.py",
+                "/tmp/outside.py",
+                "C:/outside.py",
+                "C:outside.py",
+                "x\\..\\outside.py",
+                "folder/./outside.py",
+                "folder//outside.py",
+            ):
                 with self.subTest(name=name), self.assertRaises(ValueError):
                     fast_verify.resolve_python_files(root, [name])
 
@@ -85,6 +93,26 @@ class PythonPathBoundaryTests(unittest.TestCase):
                 self.skipTest("This platform cannot create symlinks for this user")
             with self.assertRaisesRegex(ValueError, "symlink"):
                 fast_verify.resolve_python_files(root, ["linked.py"])
+
+    def test_rejects_parent_directory_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repo"
+            root.mkdir()
+            outside = Path(temporary) / "outside"
+            outside.mkdir()
+            (outside / "source.py").write_text("value = 1\n", encoding="utf-8")
+            link = root / "linked_directory"
+            try:
+                link.symlink_to(outside, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("This platform cannot create directory symlinks for this user")
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                fast_verify.resolve_python_files(root, ["linked_directory/source.py"])
+
+    def test_rejects_no_python_files_in_inventory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "no Python source"):
+                fast_verify.resolve_python_files(Path(temporary), ["README.md"])
 
 
 class SyntaxValidationTests(unittest.TestCase):
