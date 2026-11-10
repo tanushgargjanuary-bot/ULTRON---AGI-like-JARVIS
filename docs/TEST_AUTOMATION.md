@@ -20,6 +20,8 @@ The workflow:
 4. Runs the offline fast verification script.
 5. Cancels an older in-progress run for the same branch or pull request when a newer update arrives.
 
+The workflow installs Ruff for the changed-file static check and the small `requests` dependency needed when the existing stress-test modules are imported. The checks do not make live provider or model requests.
+
 The Python fast verification script:
 - reads tracked and untracked, non-ignored paths through Git's NUL-delimited output;
 - rejects malformed, duplicate, missing, symlinked, and path-traversing Python paths;
