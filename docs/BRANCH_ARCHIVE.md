@@ -25,18 +25,25 @@
 The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
 ### Current follow-up state — 2026-11-10
 
-- Last fully verified application/test baseline at this review: `077793d7fd846f871f269362759d97c198ec61c5`.
-- PR #17 and PR #18 are merged. PR #18 merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
+- Current main SHA: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- Latest full verification: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003), Linux and Windows passed 2,073 tests each.
+- Latest fast gate: [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649), 5/5 groups in 12.68 seconds.
+- Latest archive run: [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028), success; 12 protected tags verified.
+- PR #17 and PR #18 are merged. PR #19 is closed without merge.
 - Current refs: **three branches** (`main` and two merged temporary refs); **zero open PRs**.
-- Verified archive tags: **12**, protected by Active ruleset `26923169`.
-- Archive run [42832819947](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42832819947) archived and read back both new tips: `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
-- The two branch refs remain present. Delete them only through the guarded manual workflow after archive tags exist and no PR uses them.
+- Current main ref: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- The two remaining refs are `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
+- Their recovery tags are `archive/2026-11-10/docs-repository-doc-audit-2026-11-10-9074b986` and `archive/2026-11-10/ci-fast-branch-gate-e0072889`. The archive workflow verified both exact targets.
+- Active archive ruleset `26923169` protects `refs/tags/archive/**/*` from updates and deletion, permits creation, and has no bypass actors.
+- The two branch refs have not been deleted. Use the guarded manual workflow below. Do not delete a ref directly or delete `main`.
+
+
 
 ## Reviewed branch tips
 
 | Branch | Exact reviewed tip | Treatment |
 |---|---|---|
-| `main` | `44ec6dbde86746a5a2ff1ff201ed646e54068cb9` at audit time | Keep; never delete |
+| `main` | `b80919314f391e15ddd86e2860c2e4d66057b15b` at latest verified check | Keep; never delete |
 | `docs/repository-doc-audit-2026-11-10` | `9074b986c9379ff2b2f320916616763a735df972` | PR #17 merged; exact tip archived; branch ref pending guarded deletion |
 | `ci/fast-branch-gate` | `e0072889ca333f5b8193f7d85b4ef912bf4aa10d` | PR #18 merged; exact tip archived; branch ref pending guarded deletion |
 | `ArenaAi` | `8f4803b8812e4cae1e79755381eda69f5b76ee81` | Deleted; exact tip retained by protected archive tag |

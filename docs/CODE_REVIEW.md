@@ -4,7 +4,7 @@ Ultron uses three separate review layers. They answer different questions and mu
 
 ## 1. GitHub Actions — correctness gates
 
-The `fast-checks` workflow runs on every branch push. It runs `git diff --check`, Ruff on changed Python files, parses all discovered Python files, runs 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, the 1,000-scenario deterministic stress suite, and the generated-map check. The `verify` workflow runs the full project suite, 15 targeted mutations, and proof gates on Linux and Windows for pull requests to `main` and pushes to `main`. The latest verified `main` baseline is `077793d7fd846f871f269362759d97c198ec61c5`: 2,073 tests passed on each platform. A green result means only those configured checks passed on that commit. It does not prove that the code has no defects. Required-check merge enforcement is not verified because the branch-protection API returned HTTP 403. See [Test automation](TEST_AUTOMATION.md) for triggers, scope, and required check names.
+The `fast-checks` workflow runs on every branch push. It runs `git diff --check`, Ruff on changed Python files, parses all discovered Python files, runs 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, the 1,000-scenario deterministic stress suite, and the generated-map check. The `verify` workflow runs the full project suite, 15 targeted mutations, and proof gates on Linux and Windows for pull requests to `main` and pushes to `main`. The latest verified `main` baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`: [full run 42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003) passed 2,073 tests on each platform. The fast gate [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649) passed 5/5 groups in 12.68 seconds. Archive run [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) passed. A green result means only those configured checks passed on that commit. It does not prove that the code has no defects. Required-check merge enforcement is not verified because the branch-protection API returned HTTP 403. See [Test automation](TEST_AUTOMATION.md) for triggers, scope, and required check names.
 
 ## 2. Reviewdog + Ruff — deterministic static findings
 
@@ -17,6 +17,10 @@ The `reviewdog` workflow runs Ruff and reports findings on changed lines as a Gi
 - The workflow is advisory. It reports warnings and does not replace the main verification workflow.
 
 For a fork pull request, GitHub may restrict write permissions. Reviewdog then falls back to Actions annotations where supported.
+
+## CodeRabbit status — not verified
+
+PR #19 (`chore: trigger CodeRabbit review`) was closed with `merged=false`. Its branch changes were not integrated into `main`. This PR does not establish that CodeRabbit is installed, enabled, or required. No CodeRabbit-required status check was verified. Do not describe AI review as an active gate unless a live PR proves the integration and its permissions have been checked.
 
 ## 3. PR-Agent — optional AI review
 

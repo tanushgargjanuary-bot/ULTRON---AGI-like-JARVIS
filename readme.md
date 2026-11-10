@@ -84,6 +84,8 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 - [`docs/NEXT_CHECKPOINTS.md`](docs/NEXT_CHECKPOINTS.md) — current verified repository status and ordered next actions
 - [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) — complete handoff for a new chat or agent
 - [`docs/AGENT_MAINTENANCE.md`](docs/AGENT_MAINTENANCE.md) — mandatory documentation and repository hygiene workflow
+- [`docs/AGENT_PLAYBOOK.md`](docs/AGENT_PLAYBOOK.md) — step-by-step task, implementation, test, and review workflow for AI coding agents
+- [`docs/TEST_AUTOMATION.md`](docs/TEST_AUTOMATION.md) — fast branch-push tests, full Linux/Windows gates, and merge-check limits
 - [`docs/HEALTH_CENTER.md`](docs/HEALTH_CENTER.md) — notices and background repairs
 - [`docs/SELF-CHANGE.md`](docs/SELF-CHANGE.md) — guarded source changes
 - [`docs/UPDATE_ARCHITECTURE.md`](docs/UPDATE_ARCHITECTURE.md) — private development/public promotion and update design

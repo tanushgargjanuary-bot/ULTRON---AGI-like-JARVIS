@@ -5,6 +5,12 @@ the build record (`log.txt`, `HANDOFF.md`), so every entry has an artifact behin
 it. It is not a marketing page: the defects are in here too, including the ones
 the assistant caused.
 
+## 2026-11-10 — handoff refresh for the next AI agent
+
+The current project record was refreshed against live GitHub state, not against the previous chat. Main is `b80919314f391e15ddd86e2860c2e4d66057b15b`. The latest fast, full Linux/Windows, and archive workflows all passed on this commit. The full suite passed 2,073 tests on each platform; 1,000 stress scenarios and 15 mutations also passed on each platform. The proof gate remains 24 PROVEN / 13 PARTIAL / 0 FAILED on Linux and 28 PROVEN / 9 PARTIAL / 0 FAILED on Windows.
+
+The agent handoff now points to the live current state and explicit next actions. Two merged temporary branch refs remain, but their exact tips are protected by archive tags. Required-check merge blocking is not verified because the branch-protection API returned HTTP 403. The GitHub About description is blank. PR #19, the CodeRabbit review trigger experiment, is closed without merge. No application runtime code changed.
+
 ## Where this started
 
 Ultron is built on **FatihMakes/Mark-LVI**, an open-source voice assistant with a

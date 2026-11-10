@@ -650,8 +650,8 @@ This log entry records the verified baseline. A follow-up documentation commit m
 - Durable decisions and chronology: `DECISIONS.md`, `OwnerFiles/history/session-log.md`, and `OwnerFiles/history/journey.md`.
 
 **Explicit unresolved actions.**
-1. Delete the two already-archived branch refs using the manual `Archive reviewed branch tips` workflow and its exact confirmation inputs. Do not delete `main) or any archive tag.
-2. Configure and read back required branch-protection checks on `main): `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about`. The GitHub branch-protection API returned HTTP 403. Automatic workflow runs do not prove merge blocking.
+1. Delete the two already-archived branch refs using the manual `Archive reviewed branch tips` workflow and its exact confirmation inputs. Do not delete `main` or any archive tag.
+2. Configure and read back required branch-protection checks on `main`: `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about`. The GitHub branch-protection API returned HTTP 403. Automatic workflow runs do not prove merge blocking.
 3. Run `python scripts/verify_all.py` on the owner's Windows machine for hardware and interactive checks when available.
 4. Vercel preview remains owner-authorized work, not an approved automatic task. The web client is still an authentication/workspace shell with a disabled composer.
 
@@ -661,3 +661,40 @@ This log entry records the verified baseline. A follow-up documentation commit m
 ### Fast-gate formatting correction — 2026-11-10
 
 Fast gate [42854158231](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42854158231) caught two trailing newline characters at the end of `OwnerFiles/history/journey.md` (`git diff --check`: “new blank line at EOF”). The extra blank line has been removed. No test assertion, source code, or workflow rule was changed. The full verification run [42854158323](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42854158323) passed Linux; Windows was still running when this correction was prepared. Fresh Actions runs will verify the corrected head.
+
+
+## 2026-11-10 — full documentation refresh for handoff to another AI agent
+
+**Request.** Update the project documentation so another AI coding agent can take over without relying on this conversation.
+
+**Live state checked from GitHub.**
+- Main SHA: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- Branch refs: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`.
+- Open PRs: zero. PR #17 and #18 are merged. PR #19 (`chore: trigger CodeRabbit review`) is closed without merge.
+- Archive tags: 12 exact-SHA tags. Active ruleset `26923169` protects `refs/tags/archive/**/*` from updates and deletion.
+- The two temporary branch refs are already archived and merged, but their refs remain pending guarded deletion.
+- The repository About description is blank (`description: null`).
+- The branch-protection endpoint returned HTTP 403. Required status-check enforcement remains unverified.
+
+**Latest verification on the exact main SHA.**
+- Fast gate [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649): success; 5/5 groups in 12.68 seconds; 309 Python files parsed; 19 runner edge tests, 30 policy tests, 8 README tests, and 1,000 seeded stress cases passed.
+- Full Linux/Windows [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003): both jobs passed; 2,073 tests, 1,000 seeded stress cases, and 15 targeted mutations per platform. Proof gate: Linux 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. Windows native checks 99 passed / 0 failed. Linux instrument report 17 passed / 2 failed / 15 skipped (no display server and no PulseAudio).
+- Archive [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028): success; 12 archive tags verified.
+
+**Documentation reviewed and updated.**
+- `OwnerFiles/ULTIMATE_Context.md`: current main SHA, runs, branch and PR state, proof counts, known limits, and next-agent instructions.
+- `docs/NEXT_CHECKPOINTS.md`: ordered repository and owner-gated actions.
+- `GATEKEEPERS.md`, `docs/TEST_AUTOMATION.md`, and `docs/CODE_REVIEW.md`: current test evidence, required-check limitation, and PR #19 status.
+- `docs/BRANCH_ARCHIVE.md`: current branch refs, archive tags, and guarded deletion procedure.
+- `readme.md`: project map now links directly to the agent playbook and test automation guide.
+- Existing root `AGENTS.md`, `WORKING-PHILOSOPHY.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`, `docs/AGENT_WORKSPACE.md`, `docs/AGENT_NOTION.md`, `docs/INDEX.md`, and `OwnerFiles/README.md` were read and found consistent with the current main-only default, mandatory handoff, and test lanes. They were not rewritten unnecessarily.
+- `HANDOFF.md`, `docs/MAYBE_COMPLETE.md`, and `docs/BRANCH_REVIEW.md` remain historical records. Their older SHAs are not current status claims.
+
+**Next actions for the incoming agent/owner.**
+1. Delete `docs/repository-doc-audit-2026-11-10` and `ci/fast-branch-gate` through the guarded archive workflow. Preserve `main` and all 12 archive tags.
+2. Configure and read back the required `main` checks: `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about`. Do not claim merge blocking until the settings are verified.
+3. Set the GitHub About description using repository settings; suggested text is in the canonical handoff.
+4. Run `python scripts/verify_all.py` and the live proof gate on the actual owner Windows machine when authorized.
+5. Treat Vercel preview as owner-authorized work only. Do not create projects or add secrets without approval.
+
+**Scope.** Documentation and handoff only. No application runtime source or test code changed. `docs/MAP.md` was not regenerated because no Python module/test relationship changed. No branch refs or archive tags were deleted. No external AI review integration was enabled.
