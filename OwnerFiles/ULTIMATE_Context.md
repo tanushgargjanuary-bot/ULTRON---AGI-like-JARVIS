@@ -6,9 +6,9 @@
 **Stable branch:** `main` — the only remaining branch  
 **Main SHA at upstream-source comparison baseline:** `76484ebc4cbf4b5d4a23889ed72b41f21408d7c`  
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
-**Main SHA at last verified documentation baseline:** `8154ad553f94190c0f84dc7cbf8ec0dc2e4c3abf`  
-**Latest cross-platform CI:** [run 42799637908](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637908) — Linux and Windows passed.  
-**Latest archive-only workflow:** [run 42799637975](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637975) — passed.  
+**Main SHA at latest verified repository baseline:** `116b0317fdd5eec654ff009ee65281fff27e34ec`  
+**Latest cross-platform CI:** [run 42803012589](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012589) on main SHA `116b0317fdd5eec654ff009ee65281fff27e34ec` — Linux and Windows passed.  
+**Latest archive-only workflow:** [run 42803012590](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012590) — passed.  
 **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
 This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because consolidation and branch cleanup are complete.
@@ -26,16 +26,16 @@ This file is the durable handoff. A new chat or agent must be able to continue f
 
 ### Current cross-platform CI evidence
 
-The latest successful cross-platform verification recorded at this handoff baseline is [run 42799637908](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637908), on main SHA `8154ad553f94190c0f84dc7cbf8ec0dc2e4c3abf`. Both Linux and Windows jobs completed successfully. The archive-only workflow for the same SHA passed in [run 42799637975](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637975).
+The latest successful cross-platform verification at this audit baseline is [run 42803012589](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012589), on main SHA `116b0317fdd5eec654ff009ee65281fff27e34ec`. Both Linux and Windows jobs completed successfully. The archive-only workflow for the same SHA passed in [run 42803012590](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012590).
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
 | Proof-gate claims marked PROVEN | 24 | 28 |
 | Proof-gate claims marked PARTIAL | 13 | 9 |
 | Proof-gate claims marked FAILED | 0 | 0 |
-| Instrument scan | 17 passed, 2 failed, 15 skipped | 24 passed, 0 failed, 12 skipped |
+| Instrument / native checks | 17 passed, 2 failed, 15 skipped | 99 native checks passed, 0 failed; unavailable device checks skipped |
 
-The instrument scan is a non-blocking environment report. Linux screen/audio failures reflect hosted-runner display/PortAudio constraints. The Windows scan had no attached real audio devices. A green CI job does not prove the owner's microphone, camera, speaker, GPU, browser installation, or every desktop workflow. PARTIAL and SKIPPED are not passes.
+The Linux instrument scan is non-blocking: 17 passed, 2 failed, and 15 skipped. The two failures are screen capture without a display server and audio initialization without a PulseAudio service on the hosted runner. The Windows native-check step reported 99 passed and 0 failed; its microphone, speaker, camera, and Playwright checks are skipped when the required devices or packages are absent. A green CI job does not prove the owner's microphone, camera, speaker, GPU, browser installation, or every desktop workflow. PARTIAL and SKIPPED are not passes.
 
 Historical promotion evidence remains in `docs/MAYBE_COMPLETE.md`: Linux/Windows suite run 42699779342, ULTRON Web type-check/build run 42699779160, and Reviewdog/Ruff run 42699779015. These are earlier milestone checks, not the latest verification.
 
@@ -165,6 +165,7 @@ These limits matter. Do not advertise the product beyond them.
 7. **Hardware proof:** CI cannot verify every actual owner device, microphone, speaker, camera, GPU, DPI, browser installation, or real provider/account workflow.
 8. **Independent review:** Reviewdog/Ruff are static checks. They are not a full semantic security audit or independent human review.
 9. **Code review depth:** previous promotion review was risk-focused, not a line-by-line independent review of every changed line.
+10. **Private owner-development repository:** it exists but is empty (no commits or files). No private development or canary workflow is active. The public repository remains the active source of truth.
 
 ## 9. Project history and branch consolidation
 
@@ -176,6 +177,7 @@ These limits matter. Do not advertise the product beyond them.
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
 The GitHub About description was blank at the latest metadata check. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub interface can read metadata but does not expose the repository-settings write needed to change this field; owner action remains required.
+- The separate private owner-development repository exists but is empty. It has no commits or files and is not an active canary channel. The public repository remains the active source of truth until the private workflow is deliberately configured and verified.
 
 ## 10. Upstream MARK/JARVIS resources
 
