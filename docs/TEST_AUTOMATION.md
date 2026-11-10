@@ -6,6 +6,8 @@ Every branch update needs quick feedback. A complete ULTRON verification run is 
 
 The repository now uses two lanes. The fast lane runs on every branch push. The full lane runs on pushes to **main** and pull requests that target **main**.
 
+These workflows produce automatic status checks. They do **not** guarantee that GitHub blocks a merge when a check fails. On 2026-11-10, the connected GitHub integration returned HTTP 403 when reading `main` branch protection. Required-check enforcement is therefore **not verified** by this audit.
+
 ## Lane 1 — fast branch gate
 
 Workflow: **.github/workflows/fast-checks.yml**
@@ -79,6 +81,16 @@ A fast pass is not a full pass. A skipped hardware check is not a pass. A green 
 - Every temporary branch must have a narrow scope and target **main**. Never create permanent branches for agents or models.
 - A branch push runs the fast gate. A PR to **main** runs both fast and full verification. A push to **main** runs both the fast and full gates.
 - Delete temporary branches after successful integration. Preserve protected archive tags and historical project records.
+
+## Merge-blocking status checks
+
+To make the test system a hard merge gate, configure branch protection for `main` to require these exact status checks:
+
+- `fast offline gate`
+- `linux — suite and instruments`
+- `windows — the machine the claims are about`
+
+The fast gate also runs on every branch push. The full checks run on pull requests to `main` and pushes to `main`. Verify the required-check list in GitHub after changing repository settings. This session could not inspect or change branch protection because the API returned HTTP 403. Do not claim that failed checks block merges until the settings have been read back and verified.
 
 ## Failure handling
 

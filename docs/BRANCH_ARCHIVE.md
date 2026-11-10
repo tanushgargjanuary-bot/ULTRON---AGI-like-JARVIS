@@ -9,9 +9,9 @@
 **Main head at the start of the documentation audit:** `a7be7daed4aa8457d138299a4e527ea131f9979e`.  
 **Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. PR #15 closed after its head became reachable from `main`. No merge commit was created.
 
-**Final archive cleanup:** [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
+**Initial ten-branch archive cleanup:** [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
 
-### Final cleanup verification — 2026-11-10
+### Historical cleanup verification — 2026-11-10 (initial ten branches)
 
 - Branches: **1** — `main` only.
 - Historical recovery tags: **10**, all expected full commit SHAs verified.
@@ -23,11 +23,22 @@
 - The ruleset targets `refs/tags/archive/**/*`, blocks updates and deletions, allows tag creation, and has no bypass actors.
 
 The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
+### Current follow-up state — 2026-11-10
+
+- Main baseline at this review: `4934d605fb1f3dbc332393191af083022162214b`.
+- PR #17 and PR #18 are merged. PR #18 merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
+- Current refs: **three branches** (`main` and two merged temporary refs); **zero open PRs**.
+- Verified archive tags: **12**, protected by Active ruleset `26923169`.
+- Archive run [42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517) archived and read back both new tips: `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
+- The two branch refs remain present. Delete them only through the guarded manual workflow after archive tags exist and no PR uses them.
+
 ## Reviewed branch tips
 
 | Branch | Exact reviewed tip | Treatment |
 |---|---|---|
 | `main` | `44ec6dbde86746a5a2ff1ff201ed646e54068cb9` at audit time | Keep; never delete |
+| `docs/repository-doc-audit-2026-11-10` | `9074b986c9379ff2b2f320916616763a735df972` | PR #17 merged; exact tip archived; branch ref pending guarded deletion |
+| `ci/fast-branch-gate` | `e0072889ca333f5b8193f7d85b4ef912bf4aa10d` | PR #18 merged; exact tip archived; branch ref pending guarded deletion |
 | `ArenaAi` | `8f4803b8812e4cae1e79755381eda69f5b76ee81` | Deleted; exact tip retained by protected archive tag |
 | `antigravity` | `b8e9334484bb214fd1f18021eade35c62ba5329b` | Deleted; exact tip retained by protected archive tag |
 | `arena/4c973188-ultron-agi-like-jarvis` | `8b20ceff3421add70b65cc4eacca1dac1f3b5b36` | Deleted; exact tip retained by protected archive tag |
@@ -49,7 +60,7 @@ Workflow: `.github/workflows/archive-reviewed-branches.yml`. A push to `main` ru
 2. It confirms that `main` contains the reviewed curated candidate. While the candidate branch exists, it reads that branch. After deletion, it reads the protected candidate archive tag and checks its exact reviewed SHA.
 3. It reads workflow dispatch fields from the event payload.
 4. It checks all reviewed branches against exact SHAs before creating tags.
-5. It creates and verifies ten deterministic exact-SHA tags.
+5. It creates and verifies every reviewed exact-SHA tag. The current reviewed set has twelve tags: ten from the initial cleanup and two later merged PR tips.
 6. The default mode is archive-only and deletes nothing.
 7. The required Active archive ruleset is repository ruleset `26923169`. The workflow verifies its live definition on every deletion run. Keep enforcement Active, block updates and deletions, allow tag creation, and add no bypass actors.
 8. Deletion requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`.
@@ -74,7 +85,7 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 5. Workflow run [42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
 6. Re-read GitHub refs: only `main` remains; all ten recovery tags remain; zero open PRs.
 
-**No branch cleanup steps remain.**
+**Two branch refs still need deletion.** Use the GitHub Actions UI: open `Archive reviewed branch tips`, select branch `main`, and run with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow checks the live ruleset, exact branch/tag SHA matches, and open PRs before deleting. It skips already absent branches, retains moved refs, and never deletes `main`. Re-read the branch list after the run.
 
 ## Restore a branch tip
 

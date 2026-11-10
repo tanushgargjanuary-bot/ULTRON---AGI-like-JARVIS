@@ -599,3 +599,27 @@ This log entry records the verified baseline. A follow-up documentation commit m
 **Not changed.** No application source, owner decision, architecture, permission rule, or capability claim was changed. The existing maintenance system remains the required process; no duplicate continuity guide was added. `docs/MAP.md` was not regenerated because no Python module or test changed. `docs/INDEX.md` needed no change because no document was added, moved, or renamed. Historical build records and the project journey were preserved.
 
 **Verification limits.** A local checkout was not available in this execution environment, so no local Python test command or workspace report is claimed. The documentation PR's GitHub Actions checks are the verification for these changes. Do not treat the pre-change main verification run above as evidence that this documentation patch itself passed.
+
+## 2026-11-10 — automatic branch-update tests and hard regression gate
+
+**Request.** Add a subsystem that automatically runs checks within seconds or minutes whenever a branch is updated. Break the work into small phases, test it rigorously, and preserve a handoff that a new chat can continue from.
+
+**Design.** The repository now has two test lanes. `.github/workflows/fast-checks.yml` runs on every branch push. It checks the exact update diff, runs Ruff on changed Python files, parses the discovered Python tree, runs focused edge/policy/README regressions, executes the deterministic stress suite, and verifies generated `docs/MAP.md`. The job has an eight-minute hard limit and per-branch concurrency; a newer push cancels a superseded run. `.github/workflows/verify.yml` retains the full Linux/Windows suite and proof gates for pull requests to `main` and pushes to `main`. No full test group was removed.
+
+**Implementation and defects found.**
+- Added `scripts/fast_verify.py` and `tests/test_fast_verify.py`.
+- The fast runner rejects malformed NUL-delimited Git path output, invalid UTF-8 paths, duplicate/missing paths, traversal, drive-relative paths, file and directory symlink escapes, empty Python inventories, invalid source encodings, command failures, missing executables, and timeouts.
+- The first full PR run found that the new runner exceeded ULTRON's existing function-size and complexity ceilings. The runner was refactored into smaller functions; the ceilings were not raised.
+- The Windows run found a path-format difference: `Path.resolve()` returned a short Windows path alias, so `relative_to()` raised while reporting a syntax error. The diagnostic now falls back to a safe basename, and a regression test covers an external path with a different spelling.
+- The expanded runner test count is 19. It also runs 30 policy/confirmation tests, 8 README contract tests, and 1,000 seeded repair stress scenarios.
+- The generated module map check found stale `docs/MAP.md`; the map was regenerated with `scripts/map.py`, not hand-edited.
+
+**Evidence.**
+- PR #18 merged by squash as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
+- Latest full main run [42830329187](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329187), on main baseline `4934d605fb1f3dbc332393191af083022162214b`: Linux and Windows passed. Each ran 2,073 tests, 1,000 stress scenarios, and 15 targeted seeded mutations. Proof gate: Linux 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. Windows native checks: 99 passed / 0 failed. Linux non-blocking instrument report: 17 passed / 2 failed / 15 skipped (no display server and no PulseAudio).
+- Latest fast gate [42830329236](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329236): 309 Python files parsed; 19 + 30 + 8 focused tests passed; 1,000 stress scenarios passed; generated map check passed; 5/5 groups in 11.31 seconds.
+- Archive run [42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517) succeeded. It verified 12 exact-SHA archive tags, including the two later merged branch tips. Active tag ruleset `26923169` protects archive tags against updates and deletion.
+
+**Current branch state.** Three refs remain: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`. Both temporary refs belong to merged PRs, have exact-SHA protected archive tags, and have no open PR. Their branch refs have not yet been deleted. To finish, manually run `Archive reviewed branch tips` from `main` with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow checks the live ruleset and ref state before deletion; `main` is not deletable.
+
+**Scope and limits.** No application runtime source changed in this work. The fast lane runs on Ubuntu/Python 3.12 and is a preflight, not a Windows or hardware proof. Package installation needs runner network access; test execution makes no live model or provider calls. PARTIAL and SKIPPED results are not passes. The GitHub connector used in this session did not expose workflow dispatch or branch deletion, so the final two-ref deletion is an owner UI action. The branch-protection endpoint also returned HTTP 403, so required-check merge blocking remains unverified. The required check names are documented in `docs/TEST_AUTOMATION.md`.

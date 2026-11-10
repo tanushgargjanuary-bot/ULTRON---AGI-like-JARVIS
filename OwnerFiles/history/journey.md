@@ -206,6 +206,14 @@ This changes the integration strategy. The task is no longer to copy the upstrea
 
 The new `docs/UPSTREAM_RESEARCH.md` records the eight-repository lineage, selected issue/PR findings, exact source SHA, tree comparison, licence conditions, and search limits. The licence remains CC BY-NC 4.0; commercial use is not permitted without separate written permission. The audit does not claim to have read every community fork or every GitHub mention.
 
+## 2026-11-10 — fast branch tests, full integration gates, and archive-safe cleanup
+
+The owner asked for automatic testing within seconds or minutes after each branch update. ULTRON now runs an offline fast gate on every branch push and keeps the full Linux/Windows suite for pull requests to `main` and pushes to `main`. The fast lane parsed 309 Python files and passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 deterministic stress scenarios. Ruff and the generated module-map check also passed. The latest fast run completed 5/5 groups in 11.31 seconds.
+
+The full main-branch verification passed 2,073 tests on both Linux and Windows, plus 1,000 stress scenarios and 15 targeted seeded mutations on each platform. The proof gate reported Linux 24 PROVEN / 13 PARTIAL / 0 FAILED and Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. The hosted Linux display/audio instrument limits remain non-blocking and visible. The implementation also fixed two defects found by testing: a runner that exceeded existing structural ceilings and Windows path-alias handling in syntax diagnostics. Neither the ceilings nor test assertions were weakened.
+
+PR #18 was squash-merged to `main`. The archive workflow now preserves the exact tips of PR #17 and PR #18 in protected archive tags. Twelve tags are verified. Their two branch refs remain until the owner runs the existing guarded deletion workflow. No application runtime behavior changed.
+
 ## What has not changed
 
 The shell is still Python. The referee is still off limits. Nothing is remembered

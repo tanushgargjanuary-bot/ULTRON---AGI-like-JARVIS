@@ -2,14 +2,18 @@
 
 ## Latest hosted verification snapshot — 2026-11-10
 
-The latest inspected Linux/Windows verification is [run 42803012589](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012589), on main SHA `116b0317fdd5eec654ff009ee65281fff27e34ec`. Both hosted jobs completed successfully.
+The latest inspected full Linux/Windows verification is [run 42830329187](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329187), on main SHA `4934d605fb1f3dbc332393191af083022162214b`. Both hosted jobs completed successfully. The main-branch fast gate passed in [run 42830329236](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329236), and the archive workflow passed in [run 42830329517](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42830329517).
 
-| Hosted runner | PROVEN | PARTIAL | FAILED |
-|---|---:|---:|---:|
-| Linux | 24 | 13 | 0 |
-| Windows | 28 | 9 | 0 |
+| Hosted runner | Full suite tests | PROVEN | PARTIAL | FAILED |
+|---|---:|---:|---:|---:|
+| Linux | 2,073 | 24 | 13 | 0 |
+| Windows | 2,073 | 28 | 9 | 0 |
 
-The Linux non-blocking instrument report returned 17 passed, 2 failed, and 15 skipped. Its display and audio limits reflect the hosted runner, not a test-suite failure. The Windows native-check step returned 99 passed and 0 failed. The Windows proof gate still reports 9 PARTIAL claims. Missing owner devices, optional packages, and live account/provider checks remain unproven.
+Both platforms also passed 1,000 deterministic stress scenarios and 15 targeted seeded mutation checks. Windows native checks returned 99 passed and 0 failed. The Linux non-blocking instrument report returned 17 passed, 2 failed, and 15 skipped. The two instrument failures are screen capture without a display server and audio initialization without PulseAudio on the hosted runner.
+
+The fast gate on the same main commit parsed 309 Python files, passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, 1,000 seeded stress scenarios, Ruff on changed Python files, and the generated module-map check. It completed 5/5 groups in 11.31 seconds.
+
+**Merge enforcement is not verified.** The GitHub API returned HTTP 403 when reading `main` branch protection. The workflows run automatically, but this audit cannot claim their checks block merges. Configure `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` as required checks in GitHub, then verify the settings. See `docs/TEST_AUTOMATION.md`.
 
 **The hosted jobs are green; that does not mean every capability is proven.** PARTIAL and SKIPPED are not passes. The owner's microphone, speaker, camera, GPU, display scaling, browser installation, and real provider/account workflow still need checks on the target machine. Read the current run before repeating these counts after another push.
 
