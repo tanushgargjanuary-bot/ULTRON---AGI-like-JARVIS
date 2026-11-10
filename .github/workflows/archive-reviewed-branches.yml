@@ -1,7 +1,11 @@
 name: Archive reviewed branch tips
 
 on:
-  # Run only after main contains the curated candidate.
+  # Promotion push automatically creates recovery tags; it never deletes branches.
+  push:
+    branches:
+      - main
+  # Deletion remains a separate, manually confirmed run from main.
   workflow_dispatch:
     inputs:
       delete_branches:
@@ -27,7 +31,7 @@ concurrency:
 
 jobs:
   archive-reviewed-tips:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Archive exact reviewed tips and optionally delete their branch refs

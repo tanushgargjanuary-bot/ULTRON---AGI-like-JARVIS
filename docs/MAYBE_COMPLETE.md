@@ -3,7 +3,7 @@
 **Checkpoint:** Curated consolidation candidate  
 **Promotion review:** [#15 — Curated ULTRON promotion candidate — fast-forward only](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Candidate branch:** `ultron/curated-promotion-2026-11`  
-**Last fully CI-verified candidate SHA:** `9346f2d50b135384c15bfaf24bb242336d28092c`  
+**Last fully CI-verified candidate SHA:** `1205550828025d7505389043818fe584a92be5cf`  
 **Target:** `main`  
 **State:** Not promoted. PR #15 remains open. Do not use GitHub's merge button. Promotion must be a non-forced fast-forward update to the exact reviewed SHA.
 
@@ -30,14 +30,14 @@ This checkpoint means the curated implementation has passed its current automate
 
 ## Verification evidence
 
-All checks below belong to PR #15 head `9346f2d50b135384c15bfaf24bb242336d28092c`. The follow-up workflow patch changes only branch-cleanup automation; its CI must pass before promotion.
+All checks below belong to PR #15 head `1205550828025d7505389043818fe584a92be5cf`. The follow-up workflow patch changes only branch-cleanup automation; its CI must pass before promotion.
 
 | Check | Run | Result |
 |---|---:|---|
-| Linux `verify` suite and proof gate | [42694718527](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718527) | Passed |
-| Windows `verify` suite and proof gate | [42694718527](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718527) | Passed |
-| ULTRON Web typecheck and production build | [42694718173](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718173) | Passed |
-| Reviewdog / Ruff | [42694718131](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718131) | Completed successfully; 101 advisory warnings triaged |
+| Linux `verify` suite and proof gate | [42699779342](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779342) | Passed |
+| Windows `verify` suite and proof gate | [42699779342](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779342) | Passed |
+| ULTRON Web typecheck and production build | [42699779160](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718173) | Passed |
+| Reviewdog / Ruff | [42699779015](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718131) | Completed successfully; 101 advisory warnings triaged |
 
 ### Proof-gate results
 
@@ -84,7 +84,7 @@ This is a warning triage, not a full security audit. Do not bulk-suppress Ruff r
 
 ## Fast-forward status
 
-At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **170 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
+At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **172 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
 
 Repeat this comparison immediately before promotion. Never force-update `main`.
 
@@ -159,7 +159,7 @@ The workflow `.github/workflows/archive-reviewed-branches.yml`:
 - Creates and verifies ten exact-SHA archive tags.
 - Defaults to archive-only mode.
 - Requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED` before deletion.
-- Requires the owner to protect ``archive/**/*` (tag-name pattern)` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
+- Requires the owner to protect `archive/**/*` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
 - The workflow requires the owner's attestation. It does not query or verify that the ruleset exists.
 - Skips branches used by open PRs, rechecks each branch SHA and tag target, and never deletes `main`.
 

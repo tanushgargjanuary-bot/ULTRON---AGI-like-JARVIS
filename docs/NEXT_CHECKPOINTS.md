@@ -1,7 +1,7 @@
 # ULTRON — Next checkpoints
 
 **Current candidate:** `ultron/curated-promotion-2026-11`  
-**Last fully CI-verified candidate SHA:** `9346f2d50b135384c15bfaf24bb242336d28092c`  
+**Last fully CI-verified candidate SHA:** `1205550828025d7505389043818fe584a92be5cf`  
 **Active review:** [PR #15](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Rule:** One small checkpoint at a time. Update this file and `MAYBE_COMPLETE.md` when evidence or state changes.
 
@@ -11,15 +11,15 @@
 
 | Step | Task | Status |
 |---|---|---|
-| 1.1 | Confirm PR #15 head SHA matches the candidate SHA | Done — `9346f2d50b135384c15bfaf24bb242336d28092c` |
-| 1.2 | Confirm candidate is a fast-forward from main | Done — 170 ahead, 0 behind at last comparison |
-| 1.3 | Run Linux suite and proof gate | Passed — CI run `42694718527`; 24 PROVEN, 13 PARTIAL |
-| 1.4 | Run Windows suite and proof gate | Passed — CI run `42694718527`; 28 PROVEN, 9 PARTIAL |
-| 1.5 | Run ULTRON Web typecheck and production build | Passed — CI run `42694718173` |
-| 1.6 | Run Reviewdog / Ruff and inspect warnings | Passed and triaged — CI run `42694718131`; 101 advisory findings recorded in `MAYBE_COMPLETE.md` |
+| 1.1 | Confirm PR #15 head SHA matches the candidate SHA | Done — `1205550828025d7505389043818fe584a92be5cf` |
+| 1.2 | Confirm candidate is a fast-forward from main | Done — 172 ahead, 0 behind at last comparison |
+| 1.3 | Run Linux suite and proof gate | Passed — CI run `42699779342`; 24 PROVEN, 13 PARTIAL |
+| 1.4 | Run Windows suite and proof gate | Passed — CI run `42699779342`; 28 PROVEN, 9 PARTIAL |
+| 1.5 | Run ULTRON Web typecheck and production build | Passed — CI run `42699779160` |
+| 1.6 | Run Reviewdog / Ruff and inspect warnings | Passed and triaged — CI run `42699779015`; 101 advisory findings recorded in `MAYBE_COMPLETE.md` |
 | 1.7 | Inspect Linux and Windows proof-gate reports | Done — both reports inspected; PARTIAL claims remain documented |
 | 1.8 | Review PR #15 file inventory and remaining findings | No PR review submissions or review comments found; manual risk review is scoped, not a full line-by-line audit |
-| 1.9 | Update checkpoint documents with final evidence | Done; latest repeat run is `42694718527` |
+| 1.9 | Update checkpoint documents with final evidence | Done; latest repeat run is `42699779342` |
 | 1.10 | Correct archive workflow dispatch-input parsing and require tag protection before deletion | Prepared in this update; needs fresh CI |
 
 **Exit condition:** Automated Linux, Windows, and web checks pass; both proof-gate reports are inspected; Reviewdog warnings are triaged; remaining review scope and hardware limits are explicit.
@@ -56,7 +56,7 @@
 | 3.4 | Close PR #15 without merging | Pending |
 | 3.5 | Run archive workflow in archive-only mode | Pending |
 | 3.6 | Verify all ten archive tags point to their exact reviewed commits | Pending |
-| 3.7 | Add a GitHub tag ruleset for ``archive/**/*` (tag-name pattern)` that blocks updates and deletion | Pending — owner action |
+| 3.7 | Add a GitHub tag ruleset for `archive/**/*` that blocks updates and deletion | Pending — owner action |
 | 3.8 | Run deletion mode with both exact confirmation phrases | Pending |
 | 3.9 | Verify only `main` remains as a branch, with all historical tips recoverable from protected tags | Pending |
 
@@ -73,5 +73,5 @@ The second phrase is an owner attestation. The workflow cannot inspect repositor
 - A moved source branch must be re-reviewed; do not reset it to an earlier SHA.
 - The cleanup workflow skips branches used by open PRs.
 - Archive tags must exist and match exact commit SHAs before branch deletion.
-- A GitHub ruleset must block updates and deletion for ``archive/**/*` (tag-name pattern)` before branch deletion is enabled.
+- A GitHub ruleset must block updates and deletion for `archive/**/*` before branch deletion is enabled.
 - The workflow requires the exact owner attestation `ARCHIVE TAGS PROTECTED`; it does not verify the ruleset through API.
