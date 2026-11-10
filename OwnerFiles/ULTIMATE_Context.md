@@ -6,7 +6,7 @@
 
 - Repository: `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - Stable branch: `main`
-- Current `main` HEAD: `5f3beeefe7335e967029eaa5a2622ceb4160a8f1` (documentation-only follow-up).
+- Follow-up documentation commits record the promotion, verification, and cleanup state on `main`.
 - Promoted application commit: `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
 - Curated candidate: `ultron/curated-promotion-2026-11`. Its exact tip is contained in `main`; the branch is one documentation commit behind `main`.
 - PR #15 is closed. Its reviewed head is reachable from `main`; the promotion used a direct non-forced fast-forward, not a merge commit.
