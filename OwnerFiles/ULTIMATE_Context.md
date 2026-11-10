@@ -8,7 +8,7 @@
 - Stable branch: `main`
 - Follow-up documentation commits record the promotion, verification, and cleanup state on `main`.
 - Promoted application commit: `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
-- Curated candidate: `ultron/curated-promotion-2026-11`. Its exact tip is contained in `main`; the branch is one documentation commit behind `main`.
+- Curated candidate: `ultron/curated-promotion-2026-11`. Its exact tip is contained in `main`; `main` also contains the subsequent documentation-only audit and handoff updates.
 - PR #15 is closed. Its reviewed head is reachable from `main`; the promotion used a direct non-forced fast-forward, not a merge commit.
 - PR #16 is closed without merging. Its final web-app tree was copied into the curated candidate and promoted.
 - Open pull requests: zero at the latest check.
