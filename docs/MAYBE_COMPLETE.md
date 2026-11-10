@@ -30,14 +30,14 @@ This checkpoint means the curated implementation has passed its current automate
 
 ## Verification evidence
 
-Post-promotion checks for `main` are running on `bd4b43d16fdf27b495209678ed72b41f21408d7c`. Linux passed, Web CI passed, and the archive job passed. Windows was still in its suite step at the time of this update. The last full pre-promotion verification passed on the same application code tree; the promoted commit adds archive workflow and documentation changes.
+Post-promotion verification for the application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c` completed successfully. Linux and Windows suites passed in run `42699779342`; the Web type-check and production build passed in run `42699779160`; Reviewdog/Ruff completed successfully in run `42699779015`. The archive-only workflow completed successfully in run `42760721739`. The current `main` head `5f3beeefe7335e967029eaa5a2622ceb4160a8f1` is a documentation follow-up.
 
 | Check | Run | Result |
 |---|---:|---|
 | Linux `verify` suite and proof gate | [42699779342](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779342) | Passed |
 | Windows `verify` suite and proof gate | [42699779342](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779342) | Passed |
-| ULTRON Web typecheck and production build | [42699779160](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718173) | Passed |
-| Reviewdog / Ruff | [42699779015](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42694718131) | Completed successfully; 101 advisory warnings triaged |
+| ULTRON Web typecheck and production build | [42699779160](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779160) | Passed |
+| Reviewdog / Ruff | [42699779015](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42699779015) | Completed successfully; 101 advisory warnings triaged |
 
 ### Proof-gate results
 
