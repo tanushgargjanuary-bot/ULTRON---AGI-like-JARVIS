@@ -51,6 +51,9 @@ It is **not** a replacement kernel or a new operating system. It is an applicati
 
 ## 3. Main capability areas
 
+- **Morning briefing:** opt-in by default. A fresh install stays silent until the owner enables the HUD toggle. Existing saved boolean choices are preserved; malformed values fail closed to off.
+
+
 These are capability areas in the repository, not blanket claims that every hardware- or provider-dependent path has been proven on the owner's machine.
 
 - Voice session, provider selection, speech input/output, and reconnect handling.

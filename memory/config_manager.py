@@ -417,7 +417,9 @@ def save_curriculum_progress(value: dict) -> None:
 
 
 def get_brief_enabled() -> bool:
-    return load_api_keys().get("morning_brief_enabled", True)
+    """Return the owner's choice; startup speech is opt-in on a new install."""
+    value = load_api_keys().get("morning_brief_enabled", False)
+    return value if isinstance(value, bool) else False
 
 
 def save_brief_enabled(enabled: bool) -> None:

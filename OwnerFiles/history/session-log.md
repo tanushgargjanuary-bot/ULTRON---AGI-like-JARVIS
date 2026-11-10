@@ -511,3 +511,13 @@ The first documentation push after branch cleanup exposed a workflow assumption:
 **Durable record.** `docs/UPSTREAM_RESEARCH.md` records the repository list, source commit, file-tree comparison, issue/PR triage, licence controls, intake process, and search limits. It is indexed in `docs/INDEX.md`, linked from the README and owner handoff, and required by `docs/AGENT_MAINTENANCE.md` for future upstream intake. No new product code was imported in this audit.
 
 **Verification state.** Main `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c` passed Linux and Windows in run [`42786030989`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030989). Archive-only workflow run [`42786030636`](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030636) also passed. Linux proof gate: 24 PROVEN / 13 PARTIAL / 0 FAILED. Windows: 28 PROVEN / 9 PARTIAL / 0 FAILED. Hardware/environment limits remain unchanged.
+
+
+### Follow-up — adopted the opt-in morning briefing default
+
+Upstream PR [#169](https://github.com/FatihMakes/Mark-LVI/pull/169), head `77a486a7911beb6b44c8ead5055d49d3b0090dbf`, proposes disabling the automatic startup briefing unless the owner enables it. The PR was open and mergeable when inspected. Its one-line intent fits ULTRON's existing rule that background speech must not interrupt the owner.
+
+ULTRON implements the behavior independently. `get_brief_enabled()` now returns false when the setting is missing or malformed. It respects only explicit boolean true/false values. The HUD toggle continues to save the owner's choice. Existing saved choices remain unchanged.
+
+Added `BriefingOptInTests` to `tests/test_suite_assistant.py`: fresh config, an existing config without the key, explicit true, explicit false, malformed string, and toggle round-trip with another setting preserved. No upstream code was cherry-picked. The decision is recorded in `DECISIONS.md` and `docs/UPSTREAM_RESEARCH.md`.
+

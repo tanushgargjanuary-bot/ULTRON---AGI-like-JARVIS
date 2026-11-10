@@ -1210,6 +1210,38 @@ class ConfigSandbox(unittest.TestCase):
         return json.loads(cm.CONFIG_FILE.read_text(encoding="utf-8"))
 
 
+class BriefingOptInTests(ConfigSandbox):
+    """Startup speech is opt-in unless the owner has saved a boolean choice."""
+
+    def test_a_fresh_install_defaults_to_off(self):
+        self.assertFalse(cm.get_brief_enabled())
+
+    def test_an_existing_config_without_a_choice_defaults_to_off(self):
+        self.write({"assistant_name": "Ultron", "voice_name": "Aoede"})
+        self.assertFalse(cm.get_brief_enabled())
+
+    def test_an_explicit_true_choice_is_preserved(self):
+        self.write({"morning_brief_enabled": True})
+        self.assertTrue(cm.get_brief_enabled())
+
+    def test_an_explicit_false_choice_is_preserved(self):
+        self.write({"morning_brief_enabled": False})
+        self.assertFalse(cm.get_brief_enabled())
+
+    def test_a_malformed_non_boolean_choice_fails_closed(self):
+        self.write({"morning_brief_enabled": "true"})
+        self.assertFalse(cm.get_brief_enabled())
+
+    def test_the_owner_can_turn_the_brief_on_and_off(self):
+        self.write({"assistant_name": "Ultron"})
+        cm.save_brief_enabled(True)
+        self.assertTrue(cm.get_brief_enabled())
+        self.assertEqual(self.read()["assistant_name"], "Ultron")
+        cm.save_brief_enabled(False)
+        self.assertFalse(cm.get_brief_enabled())
+        self.assertEqual(self.read()["assistant_name"], "Ultron")
+
+
 class NothingIsLostTests(ConfigSandbox):
     def test_reopening_setup_keeps_the_name_voice_colour_and_scale(self):
         self.write({
