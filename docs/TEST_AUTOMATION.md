@@ -8,9 +8,9 @@ The repository now uses two lanes. The fast lane runs on every branch push. The 
 
 ## Lane 1 — fast branch gate
 
-Workflow: **.github/workflows/fast-checks.yml**  
-Runner: Ubuntu, Python 3.12  
-Hard job limit: 8 minutes  
+Workflow: **.github/workflows/fast-checks.yml**
+Runner: Ubuntu, Python 3.12
+Hard job limit: 8 minutes
 Local command: **python scripts/fast_verify.py**
 
 The workflow:
@@ -35,7 +35,7 @@ This lane is deliberately offline. It does not call a live model, provider API, 
 
 ## Lane 2 — full regression and platform gate
 
-Workflow: **.github/workflows/verify.yml**  
+Workflow: **.github/workflows/verify.yml**
 Triggers: push to **main**, pull request targeting **main**, or manual dispatch.
 
 It retains the existing deeper checks:
