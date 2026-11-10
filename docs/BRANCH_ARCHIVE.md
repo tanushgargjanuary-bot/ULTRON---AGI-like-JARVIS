@@ -46,12 +46,12 @@ These values were refreshed from GitHub immediately before the cleanup workflow 
 Workflow: `.github/workflows/archive-reviewed-branches.yml`. A push to `main` runs archive-only mode automatically. Manual dispatch is reserved for the separate deletion operation.
 
 1. It runs manually on `main` only.
-2. It confirms that `main` contains the current curated candidate.
+2. It confirms that `main` contains the reviewed curated candidate. While the candidate branch exists, it reads that branch. After deletion, it reads the protected candidate archive tag and checks its exact reviewed SHA.
 3. It reads workflow dispatch fields from the event payload.
 4. It checks all reviewed branches against exact SHAs before creating tags.
 5. It creates and verifies ten deterministic exact-SHA tags.
 6. The default mode is archive-only and deletes nothing.
-7. Before deletion, the owner must enable a GitHub tag ruleset targeting tag names matching `archive/**/*`. Set enforcement to **Active**. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** off so the workflow can create archive tags. Do not add bypass actors.
+7. The required Active archive ruleset is repository ruleset `26923169`. The workflow verifies its live definition on every deletion run. Keep enforcement Active, block updates and deletions, allow tag creation, and add no bypass actors.
 8. Deletion requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`.
 9. The last phrase is an additional owner confirmation, not proof of protection. Before it reads or changes refs in deletion mode, the workflow queries repository tag rulesets and fetches their full definitions.
 10. It requires an **Active** tag ruleset that includes `refs/tags/archive/**/*`, has no exclusions, blocks updates and deletions, does not block tag creation, and has no bypass actors. Otherwise it stops before deletion.
@@ -59,7 +59,7 @@ Workflow: `.github/workflows/archive-reviewed-branches.yml`. A push to `main` ru
 12. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
 13. `main` is never in the deletion list.
 
-Git tags are not immutable by default. They can be moved or deleted until the owner protects `archive/**/*` with a ruleset. Do not enable branch deletion before that ruleset is active.
+The Active repository ruleset `26923169` currently protects `refs/tags/archive/**/*` against updates and deletions. No bypass actors are configured. Keep this rule Active and do not delete the ten recovery tags. The workflow stops if the live ruleset is removed or its required settings change.
 
 GitHub's ref API does not provide an atomic compare-and-delete operation. The workflow performs an immediate SHA recheck before each deletion. Do not push to reviewed branches while cleanup is running.
 

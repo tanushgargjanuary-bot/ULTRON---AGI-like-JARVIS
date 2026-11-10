@@ -48,7 +48,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`UPDATE_ARCHITECTURE.md`](UPDATE_ARCHITECTURE.md) | Owner-canary releases, signed updates, and no-shutdown worker handoff design |
 | [`INSTALL.md`](INSTALL.md) | Installation, setup, and troubleshooting |
 | [`SIDECAR.md`](SIDECAR.md) | Go watcher responsibilities, build, and fallback behavior |
-| [`SPACE.md`](SPACE.md) | Workspace size/file-count limits and enforcement |
+| [`SPACE.md`](SPACE.md) | Why there is no size budget; keep generated output and machine state out of Git |
 
 ## Engineering evidence and decisions
 

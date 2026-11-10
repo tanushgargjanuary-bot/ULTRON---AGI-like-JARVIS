@@ -133,7 +133,7 @@ GitHub Actions:
 - `.github/workflows/verify.yml`: Linux and Windows tests, proof gates, and non-blocking instrument reports.
 - `.github/workflows/webapp.yml`: webapp checks.
 - `.github/workflows/reviewdog.yml`: static Reviewdog/Ruff reporting.
-- `.github/workflows/archive-reviewed-branches.yml`: guarded exact-SHA archive workflow. Pushes to `main` run archive-only mode; manual deletion mode checks the live tag ruleset, reviewed refs, tags, and open PRs, and never deletes `main`.
+- `.github/workflows/archive-reviewed-branches.yml`: guarded exact-SHA archive workflow. Pushes to `main` run archive-only mode; manual deletion mode checks the live tag ruleset, reviewed refs, tags, and open PRs, and never deletes `main`. After branch cleanup, archive-only runs resolve the curated candidate from its protected archive tag and verify its exact promotion SHA.
 
 ## 7. Repository hygiene
 
