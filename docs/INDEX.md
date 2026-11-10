@@ -8,11 +8,12 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 |---|---|---|
 | [`../readme.md`](../readme.md) | Everyone | What Ultron does, setup, privacy, and supported capabilities |
 | [`STRUCTURE.md`](STRUCTURE.md) | Contributors | Repository map, package responsibilities, and paths that must stay stable |
-| [`../OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) | New agents | Current state, first verification commands, and known traps |
+| [`../OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) | New agents | Canonical current handoff: product scope, repository state, evidence, known limits, and next actions |
 | [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | Contributors | Evidence-first work, debugging, and contribution process |
 | [`../AGENTS.md`](../AGENTS.md) | Coding agents | Hard coding, threading, plugin, and safety rules |
 | [`AGENT_WORKSPACE.md`](AGENT_WORKSPACE.md) | Agents resuming work | How to inspect commits, branch differences, and local edits |
 | [`AGENT_PLAYBOOK.md`](AGENT_PLAYBOOK.md) | Coding agents | Safe task planning, implementation, testing, and reporting |
+| [`AGENT_MAINTENANCE.md`](AGENT_MAINTENANCE.md) | Every agent | Mandatory documentation, durable handoffs, safe cleanup, and structure rules |
 | [`AGENT_NOTION.md`](AGENT_NOTION.md) | Every agent | How to write a Notion page another agent can use in ten seconds |
 | [`LOCAL_MODEL.md`](LOCAL_MODEL.md) | Owner, agent | Which local model this machine can run, and the four commands that set it up |
 | `docs/CAPABILITY_AWARENESS.md` | Owner, agent | The capability guide and the GitHub scout, what is tested, and what is not |

@@ -4,11 +4,12 @@ This folder keeps project context for a new person or agent. It is public. Keep 
 
 ## Start here
 
-1. [`ULTIMATE_Context.md`](ULTIMATE_Context.md) — current repository status, working branch, promotion state, and next actions.
-2. [`../docs/MAYBE_COMPLETE.md`](../docs/MAYBE_COMPLETE.md) — consolidation checkpoint and remaining limits.
-3. [`../docs/BRANCH_REVIEW.md`](../docs/BRANCH_REVIEW.md) — reviewed branch graph and promotion decisions.
-4. [`../docs/CODE_REVIEW.md`](../docs/CODE_REVIEW.md) — CI, static review, and manual review rules.
-5. [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md), [`../AGENTS.md`](../AGENTS.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md), [`../DECISIONS.md`](../DECISIONS.md), and [`../GATEKEEPERS.md`](../GATEKEEPERS.md) — work rules, system shape, decisions, and proof status.
+1. [`ULTIMATE_Context.md`](ULTIMATE_Context.md) — canonical current handoff for a new chat or agent: product scope, architecture, repository state, verification evidence, limitations, and next actions.
+2. [`../docs/AGENT_MAINTENANCE.md`](../docs/AGENT_MAINTENANCE.md) — mandatory process for updating documentation, preserving history, cleaning safely, and keeping repository structure professional.
+3. [`../docs/MAYBE_COMPLETE.md`](../docs/MAYBE_COMPLETE.md) — consolidation checkpoint and remaining limits.
+4. [`../docs/BRANCH_REVIEW.md`](../docs/BRANCH_REVIEW.md) — reviewed branch graph and promotion decisions.
+5. [`../docs/CODE_REVIEW.md`](../docs/CODE_REVIEW.md) — CI, static review, and manual review rules.
+6. [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md), [`../AGENTS.md`](../AGENTS.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md), [`../DECISIONS.md`](../DECISIONS.md), and [`../GATEKEEPERS.md`](../GATEKEEPERS.md) — work rules, system shape, decisions, and proof status.
 
 ## Folders
 

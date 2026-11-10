@@ -88,7 +88,7 @@ Each of these has been broken once, and the cost is in `OwnerFiles/history/journ
 | Edit the referee: `core/policy.py`, `core/confirm.py`, `core/self_change.py`, `scripts/proof_gate.py` | A system that can rewrite its own referee has none |
 | Add a launcher file | The installer reuses `run.ps1`; a second entry point is a second thing to break |
 | Keep a promise in a docstring that has no file behind it | Three docstrings described a WhatsApp driver that did not exist |
-| Let the workspace exceed 100 MB or 5,000 files | A save silently dropped 6,352 files once |
+| Enforce a workspace size/file-count ceiling | The owner withdrew the 100 MB / 5,000-file budget on 2026-11-07. Keep caches, build output, and machine state out of Git, but do not impose an arbitrary size limit. |
 | Add a network call, a download or a model change without consent | The owner decides what leaves the machine |
 | Report success from an exit code alone | Read the output, or it did not happen |
 
