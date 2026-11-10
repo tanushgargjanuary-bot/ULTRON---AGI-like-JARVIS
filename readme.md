@@ -89,4 +89,5 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 - [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md) — automated checks, optional AI review, and review standards
 - [`docs/MAYBE_COMPLETE.md`](docs/MAYBE_COMPLETE.md) — current consolidation checkpoint and promotion checklist
 - [`DECISIONS.md`](DECISIONS.md) — recorded project decisions
-- [`LICENSE`](LICENSE) — license terms
+- [`LICENSE`](LICENSE) — ULTRON/MARK-LVI project licence (CC BY-NC 4.0)
+- [`licenses/THIRD_PARTY_NOTICES.md`](licenses/THIRD_PARTY_NOTICES.md) — third-party components and separate licence terms

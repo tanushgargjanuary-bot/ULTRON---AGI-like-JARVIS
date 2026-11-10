@@ -558,3 +558,16 @@ The next six changed shared paths reviewed were `AGENTS.md`, `LICENSE`, `core/pr
 ULTRON retains its expanded agent-governance rules, its policy/consent/untrusted-content prompt, an authenticated dashboard session with AES-GCM client encryption, and a shorter README that states limitations. The `LICENSE` file is identical to upstream after normalization and continues to attribute FatihMakes under CC BY-NC 4.0. No upstream code or licence change was applied.
 
 The focused review now covers 58 of 62 changed shared paths. Four visual files remain: avatar code, avatar mesh, face model, and viseme. Dashboard review was a source comparison, not a penetration test. Licence review confirmed the text, but does not resolve rights for separate assets or binaries.
+
+
+### 2026-11-10 — completed the 62-file MARK-LVI source comparison
+
+The final four shared paths were `core/avatar.py`, `core/avatar_mesh.py`, `core/face_model.obj`, and `core/viseme.py`.
+
+ULTRON's avatar renderer adds persona-specific movement and semantic facial expressions. The mesh builder and viseme implementation are identical to upstream after line-ending normalization. The face model contains 468 vertices and 898 faces, with the same face indices as the inspected MediaPipe source. Coordinates are stored to four decimal places; the maximum coordinate difference is 0.00005.
+
+The source asset header identifies MediaPipe and Apache 2.0. The full MediaPipe root `LICENSE` bundle from commit `e1e239ad86fc9ee4e6c65e573924c45c0176d5c6` is now copied to `licenses/MEDIAPIPE-LICENSE.txt`; `licenses/THIRD_PARTY_NOTICES.md` records provenance, the geometry extraction, the separate licence boundary, and its limitations. The root CC BY-NC licence was not changed.
+
+**Comparison complete.** All 78 paths in the inspected MARK-LVI main tree were present in ULTRON. Sixteen shared paths had identical Git blob SHAs; the other 62 were reviewed by focused source-delta comparisons. No whole upstream branch or code batch was imported. This is not a full independent security audit of every function, dependency, fork, or issue in the upstream ecosystem.
+
+**GitHub About description.** The metadata remains blank. Proposed text: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected interface still lacks a repository-settings write operation, so the About field remains an owner action.

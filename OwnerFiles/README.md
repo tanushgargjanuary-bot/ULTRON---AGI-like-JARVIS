@@ -7,10 +7,11 @@ This folder keeps project context for a new person or agent. It is public. Keep 
 1. [`ULTIMATE_Context.md`](ULTIMATE_Context.md) — canonical current handoff for a new chat or agent: product scope, architecture, repository state, verification evidence, limitations, and next actions.
 2. [`../docs/AGENT_MAINTENANCE.md`](../docs/AGENT_MAINTENANCE.md) — mandatory process for updating documentation, preserving history, cleaning safely, and keeping repository structure professional.
 3. [`../docs/UPSTREAM_RESEARCH.md`](../docs/UPSTREAM_RESEARCH.md) — MARK/JARVIS source lineage, repository comparison, upstream issue/PR triage, and reuse decisions.
-4. [`../docs/MAYBE_COMPLETE.md`](../docs/MAYBE_COMPLETE.md) — consolidation checkpoint and remaining limits.
-5. [`../docs/BRANCH_REVIEW.md`](../docs/BRANCH_REVIEW.md) — reviewed branch graph and promotion decisions.
-6. [`../docs/CODE_REVIEW.md`](../docs/CODE_REVIEW.md) — CI, static review, and manual review rules.
-7. [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md), [`../AGENTS.md`](../AGENTS.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md), [`../DECISIONS.md`](../DECISIONS.md), and [`../GATEKEEPERS.md`](../GATEKEEPERS.md) — work rules, system shape, decisions, and proof status.
+4. [`../licenses/THIRD_PARTY_NOTICES.md`](../licenses/THIRD_PARTY_NOTICES.md) — third-party licence and asset provenance record.
+5. [`../docs/MAYBE_COMPLETE.md`](../docs/MAYBE_COMPLETE.md) — consolidation checkpoint and remaining limits.
+6. [`../docs/BRANCH_REVIEW.md`](../docs/BRANCH_REVIEW.md) — reviewed branch graph and promotion decisions.
+7. [`../docs/CODE_REVIEW.md`](../docs/CODE_REVIEW.md) — CI, static review, and manual review rules.
+8. [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md), [`../AGENTS.md`](../AGENTS.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md), [`../DECISIONS.md`](../DECISIONS.md), and [`../GATEKEEPERS.md`](../GATEKEEPERS.md) — work rules, system shape, decisions, and proof status.
 
 ## Folders
 

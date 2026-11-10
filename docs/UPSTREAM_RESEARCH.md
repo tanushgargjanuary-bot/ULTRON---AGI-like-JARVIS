@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Fifty-eight of the 62 changed shared files have now had focused diff comparisons; four changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. All 62 of the 62 changed shared files have now had focused diff comparisons. The four visual files have been reviewed separately; the MediaPipe-derived asset now has its own licence copy and provenance notice. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -198,7 +198,20 @@ This pass checked six more changed shared paths by exact blobs, normalized lines
 | `dashboard/static/login.html` | Reworks the login screen while retaining six-character session-key login and paired-device reconnection. It stores session credentials in session storage and retries a saved device token. | Keep the ULTRON login flow. Review token lifetime and device-token revocation with the server implementation. |
 | `readme.md` | Replaces the long upstream release-style README with a shorter ULTRON scope page. It documents actual desktop/web behavior, consent controls, platform limits, security caveats, setup, and license. | Keep the scoped claims and explicit limitations. Do not restore upstream feature claims unless ULTRON has current proof. |
 
-This pass brings the focused review total to **58 of 62** changed shared paths. **Four changed shared paths remain**: `core/avatar.py`, `core/avatar_mesh.py`, `core/face_model.obj`, and `core/viseme.py`. No upstream code was copied in this pass.
+### Final focused review: avatar and viseme files
+
+The final four changed shared paths were reviewed against the same MARK-LVI main tree.
+
+| File | Comparison | Decision |
+|---|---|---|
+| `core/avatar.py` | ULTRON adds persona-specific animation settings and a semantic-expression channel. It blends expression targets into the existing face animation instead of replacing the renderer. | Keep the ULTRON persona/expression integration. |
+| `core/avatar_mesh.py` | Normalized source content is identical to upstream. | Already present. No change required. |
+| `core/viseme.py` | Normalized source content is identical to upstream. | Already present. No change required. |
+| `core/face_model.obj` | Both assets contain 468 vertices and 898 faces. Face indices match exactly. ULTRON coordinates differ by at most 0.00005 because they are stored to four decimal places. The file header identifies MediaPipe and Apache 2.0. | Keep the geometry. Preserve its separate attribution and licence. A complete copy of the inspected MediaPipe `LICENSE` bundle and a dedicated provenance notice are recorded under `licenses/`. |
+
+**Comparison complete:** all **62 of 62** shared file paths with different blob SHAs have had focused diff comparisons. This is not a full independent security audit of every function. A different blob SHA can reflect line endings or formatting rather than a semantic change. All 78 upstream file paths were present in ULTRON. No whole upstream branch or code batch was imported. The only source material added in this task is the MediaPipe licence copy and its provenance notice.
+
+
 
 ### Existing capability map
 
@@ -302,7 +315,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. Continue the comparative review of the four remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Treat the source comparison as complete for the audited SHAs; re-open it when upstream changes or the owner identifies a specific resource. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 

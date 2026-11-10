@@ -37,6 +37,14 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`PHILOSOPHY.md`](PHILOSOPHY.md) | Assistant styles, methods, and boundaries |
 | [`PROMPT.md`](PROMPT.md) | User-readable system prompt and its guarded editing path |
 
+## Licensing and third-party provenance
+
+| Record | Subject |
+|---|---|
+| [`../LICENSE`](../LICENSE) | ULTRON/MARK-LVI project licence (CC BY-NC 4.0) |
+| [`../licenses/THIRD_PARTY_NOTICES.md`](../licenses/THIRD_PARTY_NOTICES.md) | Third-party components and separate licence boundaries |
+| [`../licenses/MEDIAPIPE-LICENSE.txt`](../licenses/MEDIAPIPE-LICENSE.txt) | MediaPipe licence bundle for the canonical face geometry |
+
 ## Reliability, safety, and operations
 
 | Guide | Subject |
