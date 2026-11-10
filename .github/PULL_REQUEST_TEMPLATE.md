@@ -8,6 +8,12 @@
 - Behavior, API, data, or configuration changes:
 - Safety and privacy impact:
 
+## Upstream or external source (if applicable)
+
+- Source repository / exact commit / PR:
+- Licence and attribution checked:
+- Adopted, reimplemented, deferred, or rejected rationale:
+
 ## Evidence
 
 - Tests and commands:

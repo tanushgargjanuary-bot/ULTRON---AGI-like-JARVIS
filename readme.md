@@ -85,6 +85,7 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 - [`docs/SELF-CHANGE.md`](docs/SELF-CHANGE.md) — guarded source changes
 - [`docs/UPDATE_ARCHITECTURE.md`](docs/UPDATE_ARCHITECTURE.md) — private development/public promotion and update design
 - [`docs/BRANCH_ARCHIVE.md`](docs/BRANCH_ARCHIVE.md) — branch history, restore tags, and cleanup policy
+- [`docs/UPSTREAM_RESEARCH.md`](docs/UPSTREAM_RESEARCH.md) — MARK/JARVIS source inventory, comparison, issues/PRs, licence rules, and integration decisions
 - [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md) — automated checks, optional AI review, and review standards
 - [`docs/MAYBE_COMPLETE.md`](docs/MAYBE_COMPLETE.md) — current consolidation checkpoint and promotion checklist
 - [`DECISIONS.md`](DECISIONS.md) — recorded project decisions

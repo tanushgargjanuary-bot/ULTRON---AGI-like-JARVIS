@@ -59,6 +59,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`LANGUAGE_DECISION.md`](LANGUAGE_DECISION.md) | Why the current implementation language is retained |
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | Dated branch audits, selected work, and rejected candidates |
+| [`UPSTREAM_RESEARCH.md`](UPSTREAM_RESEARCH.md) | FatihMakes MARK/JARVIS repositories, source comparison, issues/PRs, reuse decisions, and licence controls |
 | [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) | Exact archived branch tips, cleanup rules, and restore commands |
 | [`CODE_REVIEW.md`](CODE_REVIEW.md) | CI, Reviewdog/Ruff, optional PR-Agent, and manual review standards |
 | [`MAYBE_COMPLETE.md`](MAYBE_COMPLETE.md) | Release checkpoint, verified scope, known limits, and promotion checklist |
