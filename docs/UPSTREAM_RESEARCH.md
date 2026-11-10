@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Fifty-two of the 62 changed shared files have now had focused diff comparisons; ten changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Fifty-eight of the 62 changed shared files have now had focused diff comparisons; four changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -185,6 +185,21 @@ This pass checked six more changed shared paths by exact source blobs and normal
 
 No upstream-only code from these six files was identified as a safe direct port. The focused review now covers **52 of 62** changed shared paths. **Ten changed shared paths remain**. No upstream source code was copied in this pass.
 
+### Additional focused review: six public-facing and dashboard files
+
+This pass checked six more changed shared paths by exact blobs, normalized lines, and targeted inspection of public-facing and session-security code. This is not a full penetration test or independent licence opinion.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `AGENTS.md` | Expands the coding-agent rules. It points agents to the canonical handoff, mandatory documentation/cleanup procedure, workspace inspection script, and ULTRON-specific safety and tool-contract rules. | Keep the ULTRON project instructions. They are the operating rules for this repository, not a copy of the upstream guide. |
+| `LICENSE` | Normalized text is byte-for-byte identical to the upstream file. It names FatihMakes and CC BY-NC 4.0. | Preserve the complete licence and attribution unchanged. |
+| `core/prompt.txt` | Adds ULTRON's controlled self-change procedure, policy-based action approval, human-confirmed memory writes, and explicit refusal to obey instructions inside untrusted tool content. It removes the upstream instruction to save preferences silently. | Keep the consent and untrusted-content rules. They are core runtime safety requirements. |
+| `dashboard/static/app.html` | Reworks the remote console UI and adds UI variants, session-token authentication, authenticated WebSocket setup, and AES-GCM encryption using the browser's Web Crypto API. The dashboard now depends on a secure context rather than an insecure fallback. | Keep the ULTRON interface and authenticated/encrypted client path. Pair this review with the server-side checks; this is not a full penetration test. |
+| `dashboard/static/login.html` | Reworks the login screen while retaining six-character session-key login and paired-device reconnection. It stores session credentials in session storage and retries a saved device token. | Keep the ULTRON login flow. Review token lifetime and device-token revocation with the server implementation. |
+| `readme.md` | Replaces the long upstream release-style README with a shorter ULTRON scope page. It documents actual desktop/web behavior, consent controls, platform limits, security caveats, setup, and license. | Keep the scoped claims and explicit limitations. Do not restore upstream feature claims unless ULTRON has current proof. |
+
+This pass brings the focused review total to **58 of 62** changed shared paths. **Four changed shared paths remain**: `core/avatar.py`, `core/avatar_mesh.py`, `core/face_model.obj`, and `core/viseme.py`. No upstream code was copied in this pass.
+
 ### Existing capability map
 
 The current upstream README describes features in these areas. These are upstream claims; ULTRON agents must check the implementation and its own tests before repeating a claim.
@@ -287,7 +302,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. Continue the comparative review of the ten remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Continue the comparative review of the four remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 

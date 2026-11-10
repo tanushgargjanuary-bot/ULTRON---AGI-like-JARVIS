@@ -549,3 +549,12 @@ The next six changed shared paths reviewed were `core/undo.py`, `core/echo.py`, 
 ULTRON's undo registration reports success/failure to its caller. It also records echo-reference failures, retires Qt widgets before the provider-test process exits, validates smoke-harness arguments before loading target code, protects setup output encoding, and pins PyQt6 below a measured headless startup crash release. No upstream code was imported.
 
 The focused review now covers 52 of 62 changed shared paths. Ten remain. This was a source-delta review, not a full independent security audit. The test runner's platform and hardware limits remain explicit.
+
+
+### 2026-11-10 — six more MARK-LVI public-facing and dashboard comparisons
+
+The next six changed shared paths reviewed were `AGENTS.md`, `LICENSE`, `core/prompt.txt`, `dashboard/static/app.html`, `dashboard/static/login.html`, and `readme.md`.
+
+ULTRON retains its expanded agent-governance rules, its policy/consent/untrusted-content prompt, an authenticated dashboard session with AES-GCM client encryption, and a shorter README that states limitations. The `LICENSE` file is identical to upstream after normalization and continues to attribute FatihMakes under CC BY-NC 4.0. No upstream code or licence change was applied.
+
+The focused review now covers 58 of 62 changed shared paths. Four visual files remain: avatar code, avatar mesh, face model, and viseme. Dashboard review was a source comparison, not a penetration test. Licence review confirmed the text, but does not resolve rights for separate assets or binaries.
