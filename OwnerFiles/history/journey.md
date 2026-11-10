@@ -246,4 +246,3 @@ These are the instructions that shaped the build, in his words where possible:
   handle things like this itself."
 - "Only remember what I approve."
 - The assistant must not pretend. A push that did not happen is not a push.
-
