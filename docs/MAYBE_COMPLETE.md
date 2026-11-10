@@ -30,7 +30,7 @@ This checkpoint means the curated implementation has passed its current automate
 
 ## Verification evidence
 
-Post-promotion verification for the application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c` completed successfully. Linux and Windows suites passed in run `42699779342`; the Web type-check and production build passed in run `42699779160`; Reviewdog/Ruff completed successfully in run `42699779015`. The archive-only workflow completed successfully in run `42760721739`. The current `main` head `5f3beeefe7335e967029eaa5a2622ceb4160a8f1` is a documentation follow-up.
+Post-promotion verification for the application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c` completed successfully. Linux and Windows suites passed in run `42699779342`; the Web type-check and production build passed in run `42699779160`; Reviewdog/Ruff completed successfully in run `42699779015`. The archive-only workflow completed successfully in run `42760721739`. These results were recorded in follow-up documentation commits on `main`.
 
 | Check | Run | Result |
 |---|---:|---|
