@@ -136,6 +136,10 @@ jobs:
               { name: 'feature/web-mvp-auth', sha: 'a862f7650ddc36ac04d1178884d6802e2b3cb4c1' },
               { name: 'integration/best-of-all-2026-11-09', sha: '5118dede0ca4c29206a24a08ec9f9ae6699011f5' },
               { name: 'ultron/consolidation-2026-11', sha: 'e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a' },
+              // These two branches were merged through reviewed PRs on 2026-11-10.
+              // Preserve their exact pre-squash tips before the owner deletes the refs.
+              { name: 'docs/repository-doc-audit-2026-11-10', sha: '9074b986c9379ff2b2f320916616763a735df972' },
+              { name: 'ci/fast-branch-gate', sha: 'e0072889ca333f5b8193f7d85b4ef912bf4aa10d' },
               // The promoted candidate can receive later reviewed commits. Its current tip
               // is archived dynamically, after verifying that main contains that exact tip.
               { name: 'ultron/curated-promotion-2026-11', sha: candidateSha },
