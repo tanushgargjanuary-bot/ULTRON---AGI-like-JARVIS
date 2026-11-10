@@ -522,3 +522,12 @@ ULTRON keeps the shell-free app resolver, the explicit confirmed/unverified mess
 The focused review now covers 34 of the 62 changed shared paths. Twenty-eight remain. This was a focused diff and source-path review, not a full security audit. The broad test suites exist, but a dedicated test module for each of these six files was not found in the test tree.
 
 **GitHub About description.** The repository metadata still has a blank description. Proposed short text: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub tools expose metadata reads and file writes, but not repository-settings writes. The About field remains an owner action.
+
+
+### 2026-11-10 — six more MARK-LVI runtime and media comparisons
+
+The next six changed shared paths reviewed were `core/installer.py`, `actions/desktop.py`, `actions/proactive.py`, `actions/reminder.py`, `actions/screen_processor.py`, and `actions/youtube_video.py`.
+
+ULTRON includes the Windows `uiautomation` dependency used by its accessibility-tree driver; it applies explicit consent limits to proactive suggestions; and it uses lazy optional imports for PIL, requests, and YouTube transcript support. The reminder improvement is limited to clearer tool wording. No upstream code was imported.
+
+The focused review now covers 40 of 62 changed shared paths. Twenty-two remain. This was a focused diff comparison, not a full security audit. Hardware-specific behavior still requires the normal ULTRON verification on the target machine.

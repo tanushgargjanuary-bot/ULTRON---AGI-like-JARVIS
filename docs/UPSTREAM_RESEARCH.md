@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Thirty-four of the 62 changed shared files have now had focused diff comparisons; 28 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Forty of the 62 changed shared files have now had focused diff comparisons; 22 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -139,6 +139,21 @@ This pass checked six more changed shared files by exact upstream and ULTRON blo
 The six-file pass found no upstream-only implementation that should be copied directly. It brings the focused review total to **34 of 62** changed shared files. **Twenty-eight changed shared paths remain**. No source code was imported in this pass.
 
 The current test tree has broad provider, safety, tool-contract, and assistant suites, but it does not have a dedicated test module for each of these six files. Treat dedicated regression coverage for these exact file-level differences as unconfirmed, not as proven.
+
+### Additional focused review: six runtime and media files
+
+This pass compared six more changed shared paths by exact Git blobs and normalized lines. It is a focused source-delta review, not a full independent security audit.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `core/installer.py` | The Windows package list includes `uiautomation`, which ULTRON's `core/ui_windows.py` uses as its accessibility-tree driver. The upstream package list includes `pywinauto` but not this driver. | Keep the dependency required by ULTRON's actual Windows backend. |
+| `actions/desktop.py` | Coerces model-supplied action values safely and narrows the tool trigger description to wallpaper, desktop cleanup, and desktop inspection tasks. | Keep the safer parameter handling and explicit tool-selection description. |
+| `actions/proactive.py` | Adds explicit limits against unsolicited memory/cleanup reminders, restricts suggestions, and treats inferred preferences as unapproved hypotheses. | Keep the privacy and consent language. |
+| `actions/reminder.py` | Adds clearer trigger wording for reminder, alarm, and scheduled-task requests. The implementation is otherwise nearly identical in the normalized comparison. | Keep the clearer tool description; no runtime port required. |
+| `actions/screen_processor.py` | Replaces eager PIL import with an installed-package check and lazy submodule binding. | Keep the startup-cost reduction and lazy import design. |
+| `actions/youtube_video.py` | Removes unused `pyautogui` and `numpy` imports; checks optional packages without importing them and lazily loads `requests` and transcript support. | Keep the removal of unused imports and lazy optional dependencies. |
+
+No upstream-only runtime behavior from these six files was identified as a safe direct port. This pass brings the focused review total to **40 of 62** changed shared paths. **Twenty-two changed shared paths remain**. No source code was copied in this pass.
 
 ### Existing capability map
 
@@ -242,7 +257,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. Continue the comparative review of the 28 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Continue the comparative review of the 22 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 
