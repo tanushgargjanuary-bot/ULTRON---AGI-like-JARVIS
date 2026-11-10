@@ -6,7 +6,7 @@
 ## Current repository state
 
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
-**Latest `main` head checked:** `52a4f2b04b4d1453087c6ed30031bdd90cc889d4` (documentation follow-up).  
+**`main` head before this documentation follow-up:** `516b772db218ff2afc934ba943b9204a9abb2eb7` (workflow safety hardening).  
 **Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. PR #15 closed after its head became reachable from `main`. No merge commit was created.
 
 **Archive run:** [42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739) completed successfully.
@@ -59,10 +59,11 @@ Workflow: `.github/workflows/archive-reviewed-branches.yml`. A push to `main` ru
 6. The default mode is archive-only and deletes nothing.
 7. Before deletion, the owner must enable a GitHub tag ruleset targeting tag names matching `archive/**/*`. Set enforcement to **Active**. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** off so the workflow can create archive tags. Do not add bypass actors.
 8. Deletion requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`.
-9. The last phrase is an owner attestation. The workflow does not query or prove the ruleset exists.
-10. Branches used by open PRs are skipped. The workflow rechecks the PR list before deletion.
-11. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
-12. `main` is never in the deletion list.
+9. The last phrase is an additional owner confirmation, not proof of protection. Before it reads or changes refs in deletion mode, the workflow queries repository tag rulesets and fetches their full definitions.
+10. It requires an **Active** tag ruleset that includes `refs/tags/archive/**/*`, has no exclusions, blocks updates and deletions, does not block tag creation, and has no bypass actors. Otherwise it stops before deletion.
+11. Branches used by open PRs are skipped. The workflow rechecks the PR list before deletion.
+12. It rechecks the branch SHA and archive tag target immediately before deleting the branch.
+13. `main` is never in the deletion list.
 
 Git tags are not immutable by default. They can be moved or deleted until the owner protects `archive/**/*` with a ruleset. Do not enable branch deletion before that ruleset is active.
 
@@ -85,7 +86,7 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 4. Enter `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
 5. Inspect the summary. It must preserve `main`, retain all ten tags, and delete only eligible non-`main` refs.
 
-The repository currently has no tag ruleset. Do not run deletion until the owner creates and verifies the rule. Git tags are mutable until protected.
+The repository currently has no tag ruleset. The workflow now checks the live ruleset configuration itself and fails closed if the protection is absent or incomplete. Do not run deletion until the owner creates and verifies the rule. Git tags are mutable until protected.
 
 
 ## Restore a branch tip
