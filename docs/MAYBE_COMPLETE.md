@@ -5,9 +5,9 @@
 **Candidate branch:** `ultron/curated-promotion-2026-11`  
 **Promoted commit on `main`:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
 **Target:** `main`  
-**State:** Promoted to `main` by direct non-forced fast-forward. PR #15 is closed; GitHub reports it as merged because its head became reachable from `main`. No merge commit was created.
+**State:** Promotion and branch cleanup are complete. The curated code was fast-forwarded to `main` without a merge commit. Ten obsolete branches were later deleted after exact-SHA archive tags were protected. Only `main` remains.
 
-This checkpoint means the curated implementation has passed its current automated verification and is ready for the owner to review for promotion. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
+This document is a dated consolidation checkpoint and evidence record. Promotion and branch cleanup are finished. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free. Current repository state lives in `OwnerFiles/ULTIMATE_Context.md`.
 
 ## What is included
 
@@ -149,27 +149,18 @@ GitHub Actions tests the configured Linux and Windows suite. It cannot prove tha
 
 Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent is optional and is not installed or run by GitHub Actions in this repository. The documented local Ollama route requires a local model and a GitHub token. The manual review in this checkpoint is AI-assisted and risk-focused; it is not a substitute for an independent human review.
 
-## Branch cleanup
+## Branch cleanup — completed 2026-11-10
 
-The repository currently has **11 branch refs**: `main` plus ten historical source/staging refs. The archive workflow ran successfully and created **10 exact-SHA tags**:
+The ten historical branch tips were preserved by exact-SHA recovery tags. Tag protection was then configured and verified before deletion.
 
-[Archive workflow run 42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739).
+- Active ruleset: `26923169` (`ULTRON archive tag protection`).
+- Pattern: `refs/tags/archive/**/*`.
+- Rules: updates blocked, deletions blocked, tag creation allowed, no bypass actors.
+- Cleanup workflow: [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199), completed successfully.
+- Final live state: **one branch (`main`)**, **ten protected archive tags**, **zero open pull requests**.
+- All ten recovery commit SHAs were rechecked after branch deletion.
 
-All ten tags were read back from GitHub and matched their reviewed full commit SHAs. **No branch refs have been deleted.**
-
-The repository currently has **no tag rulesets**. Before deletion:
-- Create an Active tag ruleset for tag names matching `archive/**/*`.
-- Enable **Restrict updates** and **Restrict deletions**.
-- Leave **Restrict creations** off.
-- Add no bypass actors.
-
-Then manually run `.github/workflows/archive-reviewed-branches.yml` from `main` with:
-- `delete_branches=true`
-- `confirm_delete=DELETE ARCHIVED BRANCHES`
-- `confirm_archive_tags=ARCHIVE TAGS PROTECTED`
-
-The workflow skips branches used by open PRs, checks each branch SHA and tag target, and never deletes `main`. The final phrase is an owner attestation; the workflow does not query repository rulesets.
-
+The workflow's deletion mode checks the live ruleset before it reads or changes refs. It also checks the reviewed source SHAs, tag targets, and open PRs. It never deletes `main`. The ten branch names and full archived SHAs remain in `docs/BRANCH_ARCHIVE.md`.
 
 ## Promotion checklist
 
@@ -186,10 +177,10 @@ The workflow skips branches used by open PRs, checks each branch SHA and tag tar
 - [x] Fast-forward `main` with a non-forced expected-SHA update.
 - [x] PR #15 closed after its head became part of `main`; no merge commit was created.
 - [x] Archive-only workflow created and verified all ten exact-SHA tags.
-- [ ] Configure and verify the Active `archive/**/*` tag ruleset.
-- [ ] Manually dispatch deletion mode with both exact confirmation phrases.
-- [ ] Verify only `main` remains and all ten recovery tags remain.
+- [x] Configure and verify the Active `archive/**/*` tag ruleset.
+- [x] Dispatch guarded deletion mode with both exact confirmation phrases.
+- [x] Verify only `main` remains and all ten recovery tags remain.
 
 ## Meaning of this checkpoint
 
-When the checklist is complete, ULTRON is at a **curated, tested consolidation checkpoint**. That is a reasonable “maybe complete?” milestone for this release. It is not a claim that every planned capability, security boundary, update mechanism, web-agent integration, or autonomous behaviour is finished.
+The consolidation and branch-cleanup milestone is complete. This is not a product-completion claim. General live provider failover, the Python web worker, OS-level sandboxing, a complete updater, owner-machine hardware proof, and a full independent security review remain outside the verified scope.

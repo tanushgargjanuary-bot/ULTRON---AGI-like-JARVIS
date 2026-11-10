@@ -59,7 +59,9 @@ The focused command is offline. The full project verification may require platfo
 - `main` is the stable branch.
 - Use short-lived `feature/<topic>` and `fix/<topic>` branches. Do not keep one permanent branch per agent or model.
 - Open a pull request to `main`. CI runs on every pushed branch and every pull request.
-- After merge, archive reviewed branch tips through the manual workflow. Delete temporary branches only as a separate manual owner action. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
+- `main` is currently the only branch. Use short-lived `feature/<topic>` and `fix/<topic>` branches during active work. Do not keep permanent branches per agent or model.
+- Historical branch tips remain as protected exact-SHA archive tags. Do not delete or move these tags as routine cleanup. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
+- Every medium or large change must follow the [Agent maintenance system](docs/AGENT_MAINTENANCE.md), including documentation updates, handoff maintenance, safe cleanup, and structure checks.
 
 To reproduce the terminal demo GIF (requires the optional demo tools):
 
@@ -77,6 +79,8 @@ The demo script is deterministic and offline. It creates only a temporary synthe
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — runtime layers and request flow
 - [`docs/INDEX.md`](docs/INDEX.md) — documentation guide
+- [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) — complete handoff for a new chat or agent
+- [`docs/AGENT_MAINTENANCE.md`](docs/AGENT_MAINTENANCE.md) — mandatory documentation and repository hygiene workflow
 - [`docs/HEALTH_CENTER.md`](docs/HEALTH_CENTER.md) — notices and background repairs
 - [`docs/SELF-CHANGE.md`](docs/SELF-CHANGE.md) — guarded source changes
 - [`docs/UPDATE_ARCHITECTURE.md`](docs/UPDATE_ARCHITECTURE.md) — private development/public promotion and update design

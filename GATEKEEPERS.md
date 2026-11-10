@@ -1,5 +1,19 @@
 # GATEKEEPERS — what is actually between us and a working Ultron
 
+## Latest hosted verification snapshot — 2026-11-10
+
+The latest inspected Linux/Windows workflow is [run 42775101593](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593). Both test/proof-gate jobs completed successfully.
+
+| Hosted runner | PROVEN | PARTIAL | FAILED |
+|---|---:|---:|---:|
+| Linux | 24 | 13 | 0 |
+| Windows | 28 | 9 | 0 |
+
+The separate instrument scan is non-blocking: Linux reported 17 passed, 2 failed, 15 skipped; Windows reported 24 passed, 0 failed, 12 skipped. Linux display/PortAudio limitations and missing physical Windows audio devices explain some results. These checks do not prove the owner's devices or account. PARTIAL and SKIPPED are not passes.
+
+**Use this dated snapshot in preference to older counts in the historical detail below.** Re-check the latest Actions run before making a new current-state claim.
+
+
 Rewritten 2026-11-06, build 1.2.9, after you pushed back on the first version.
 Updated 2026-11-07, build 1.2.36: the two things this page used to call gates are
 closed. **There is CI now**, on `ubuntu-latest` and `windows-latest`, green on the last
