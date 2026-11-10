@@ -3,9 +3,9 @@
 **Checkpoint:** Curated consolidation candidate  
 **Promotion review:** [#15 — Curated ULTRON promotion candidate — fast-forward only](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
 **Candidate branch:** `ultron/curated-promotion-2026-11`  
-**Last fully CI-verified candidate SHA:** `1205550828025d7505389043818fe584a92be5cf`  
+**Promoted commit on `main`:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
 **Target:** `main`  
-**State:** Not promoted. PR #15 remains open. Do not use GitHub's merge button. Promotion must be a non-forced fast-forward update to the exact reviewed SHA.
+**State:** Promoted to `main` by direct non-forced fast-forward. PR #15 is closed; GitHub reports it as merged because its head became reachable from `main`. No merge commit was created.
 
 This checkpoint means the curated implementation has passed its current automated verification and is ready for the owner to review for promotion. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
@@ -30,7 +30,7 @@ This checkpoint means the curated implementation has passed its current automate
 
 ## Verification evidence
 
-All checks below belong to PR #15 head `1205550828025d7505389043818fe584a92be5cf`. The follow-up workflow patch changes only branch-cleanup automation; its CI must pass before promotion.
+Post-promotion checks for `main` are running on `bd4b43d16fdf27b495209678ed72b41f21408d7c`. Linux passed, Web CI passed, and the archive job passed. Windows was still in its suite step at the time of this update. The last full pre-promotion verification passed on the same application code tree; the promoted commit adds archive workflow and documentation changes.
 
 | Check | Run | Result |
 |---|---:|---|
@@ -84,9 +84,10 @@ This is a warning triage, not a full security audit. Do not bulk-suppress Ruff r
 
 ## Fast-forward status
 
-At this review, `main` is `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The candidate is **172 commits ahead and 0 behind** `main`. GitHub reports the candidate as fast-forwardable. PR #15 had no submitted reviews or review comments when checked.
+`main` is now `bd4b43d16fdf27b495209678ed72b41f21408d7c`. Before promotion, the candidate was 173 commits ahead and 0 behind. The update used `force=false` with expected old SHA `44ec6dbde86746a5a2ff1ff201ed646e54068cb9`. The promoted commit's parent is the existing candidate commit `1205550828025d7505389043818fe584a92be5cf`. No merge commit was created.
 
-Repeat this comparison immediately before promotion. Never force-update `main`.
+PR #15 is closed. GitHub marks it as merged because the exact PR head is now contained in `main`; the branch update itself was a direct fast-forward.
+
 
 ## Code-review status
 
@@ -150,23 +151,24 @@ Reviewdog + Ruff is deterministic static analysis, not semantic review. PR-Agent
 
 ## Branch cleanup
 
-The repository currently has **11 branches**: `main` plus ten other refs. No archive tags have been created yet and no branches have been deleted.
+The repository currently has **11 branch refs**: `main` plus ten historical source/staging refs. The archive workflow ran successfully and created **10 exact-SHA tags**:
 
-The workflow `.github/workflows/archive-reviewed-branches.yml`:
-- Runs manually from `main` only and requires `main` to contain the current candidate.
-- Reads `workflow_dispatch` values from the event payload.
-- Checks every reviewed branch against its exact SHA before creating any tags.
-- Creates and verifies ten exact-SHA archive tags.
-- Defaults to archive-only mode.
-- Requires `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED` before deletion.
-- Requires the owner to protect `archive/**/*` with a GitHub tag ruleset. The ruleset must block tag updates and deletion while allowing tag creation.
-- The workflow requires the owner's attestation. It does not query or verify that the ruleset exists.
-- Skips branches used by open PRs, rechecks each branch SHA and tag target, and never deletes `main`.
+[Archive workflow run 42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739).
 
-A Git tag is not immutable by default. Until the tag ruleset is active, a tag can be moved or deleted. Do not enable branch deletion before the owner confirms the ruleset.
+All ten tags were read back from GitHub and matched their reviewed full commit SHAs. **No branch refs have been deleted.**
 
-The candidate branch is used by PR #15. Close PR #15 without merging after the fast-forward promotion, run archive-only mode, inspect all ten tags, protect the tag namespace, and only then run deletion mode.
+The repository currently has **no tag rulesets**. Before deletion:
+- Create an Active tag ruleset for tag names matching `archive/**/*`.
+- Enable **Restrict updates** and **Restrict deletions**.
+- Leave **Restrict creations** off.
+- Add no bypass actors.
 
+Then manually run `.github/workflows/archive-reviewed-branches.yml` from `main` with:
+- `delete_branches=true`
+- `confirm_delete=DELETE ARCHIVED BRANCHES`
+- `confirm_archive_tags=ARCHIVE TAGS PROTECTED`
+
+The workflow skips branches used by open PRs, checks each branch SHA and tag target, and never deletes `main`. The final phrase is an owner attestation; the workflow does not query repository rulesets.
 
 
 ## Promotion checklist
@@ -180,11 +182,13 @@ The candidate branch is used by PR #15. Close PR #15 without merging after the f
 - [ ] Medium findings are fixed or explicitly deferred.
 - [ ] Vercel team access and preview deployment are configured, or explicitly deferred from this promotion.
 - [ ] The owner reviews PR #15 and approves the exact candidate SHA.
-- [ ] Re-check that the candidate is still ahead of `main` and 0 commits behind.
-- [ ] Fast-forward `main` to that SHA with a non-forced update and an expected-current-SHA check. Do not merge the PR.
-- [ ] Close PR #15 without merging.
-- [ ] Run archive-only mode from `main`; verify all ten exact-SHA tags.
-- [ ] Run the separate deletion mode with the exact confirmation phrase; verify that `main` remains and only eligible branches are removed.
+- [x] Re-check fast-forward ancestry before promotion.
+- [x] Fast-forward `main` with a non-forced expected-SHA update.
+- [x] PR #15 closed after its head became part of `main`; no merge commit was created.
+- [x] Archive-only workflow created and verified all ten exact-SHA tags.
+- [ ] Configure and verify the Active `archive/**/*` tag ruleset.
+- [ ] Manually dispatch deletion mode with both exact confirmation phrases.
+- [ ] Verify only `main` remains and all ten recovery tags remain.
 
 ## Meaning of this checkpoint
 

@@ -1,77 +1,82 @@
 # ULTRON — Next checkpoints
 
-**Current candidate:** `ultron/curated-promotion-2026-11`  
-**Last fully CI-verified candidate SHA:** `1205550828025d7505389043818fe584a92be5cf`  
-**Active review:** [PR #15](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/15)  
-**Rule:** One small checkpoint at a time. Update this file and `MAYBE_COMPLETE.md` when evidence or state changes.
+**Production branch:** `main`  
+**Promoted commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Promotion method:** Non-forced fast-forward using the prior `main` SHA as an expected-SHA lease. No merge commit was created. GitHub closed PR #15 as merged because its head became reachable from `main`.  
+**Archive run:** [42760721739 — Archive reviewed branch tips](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739)  
+**Current cleanup state:** Ten exact-SHA recovery tags created and verified; 11 branch refs remain; zero branches deleted.
 
-## Checkpoint 1 — Finish candidate verification
-
-**Goal:** Establish that this exact candidate is ready for the owner to review for fast-forward promotion.
-
-| Step | Task | Status |
-|---|---|---|
-| 1.1 | Confirm PR #15 head SHA matches the candidate SHA | Done — `1205550828025d7505389043818fe584a92be5cf` |
-| 1.2 | Confirm candidate is a fast-forward from main | Done — 172 ahead, 0 behind at last comparison |
-| 1.3 | Run Linux suite and proof gate | Passed — CI run `42699779342`; 24 PROVEN, 13 PARTIAL |
-| 1.4 | Run Windows suite and proof gate | Passed — CI run `42699779342`; 28 PROVEN, 9 PARTIAL |
-| 1.5 | Run ULTRON Web typecheck and production build | Passed — CI run `42699779160` |
-| 1.6 | Run Reviewdog / Ruff and inspect warnings | Passed and triaged — CI run `42699779015`; 101 advisory findings recorded in `MAYBE_COMPLETE.md` |
-| 1.7 | Inspect Linux and Windows proof-gate reports | Done — both reports inspected; PARTIAL claims remain documented |
-| 1.8 | Review PR #15 file inventory and remaining findings | No PR review submissions or review comments found; manual risk review is scoped, not a full line-by-line audit |
-| 1.9 | Update checkpoint documents with final evidence | Done; latest repeat run is `42699779342` |
-| 1.10 | Correct archive workflow dispatch-input parsing and require tag protection before deletion | Prepared in this update; needs fresh CI |
-
-**Exit condition:** Automated Linux, Windows, and web checks pass; both proof-gate reports are inspected; Reviewdog warnings are triaged; remaining review scope and hardware limits are explicit.
-
-**Do not:** update `main`, close PR #15, or delete branches during this checkpoint.
-
-## Checkpoint 2 — Prepare a Vercel preview
-
-**Goal:** Create a private test deployment. Do not promote production.
+## Checkpoint 1 — Promote the curated code
 
 | Step | Task | Status |
 |---|---|---|
-| 2.1 | Approve Vercel team access for the correct team | Waiting for owner approval |
-| 2.2 | Discover existing Vercel projects and avoid duplicate project creation | Blocked by team access |
-| 2.3 | Link the GitHub repository to a Vercel project with root directory `webapp` | Not started |
-| 2.4 | Create/configure Supabase project and Google OAuth provider | Not started; owner credentials/configuration required |
-| 2.5 | Set Supabase URL and publishable key in Vercel Preview and Development environments | Not started |
-| 2.6 | Create a Preview deployment from the reviewed web branch | Not started |
-| 2.7 | Test login, callback, protected route, and sign-out | Not started |
+| 1.1 | Verify candidate head and latest CI | Done — Linux passed; Web CI passed; Reviewdog passed; Windows post-promotion suite still running at time of update |
+| 1.2 | Confirm candidate fast-forward ancestry | Done — 173 ahead, 0 behind before promotion |
+| 1.3 | Fast-forward `main` with expected-SHA guard | Done — `main` is now `bd4b43d16fdf27b495209678ed72b41f21408d7c` |
+| 1.4 | Avoid native merge / merge commit | Done — direct ref update; promoted commit has its original candidate parent |
+| 1.5 | Close PR #15 after promotion | Done automatically when its head became part of `main` |
+| 1.6 | Archive reviewed branch tips | Done — run `42760721739` succeeded |
+| 1.7 | Verify the ten recovery tags | Done — every tag points to its reviewed full SHA |
+| 1.8 | Verify open pull requests | Done — zero open PRs |
 
-**Security boundary:** The first web slice is an auth shell. It does not run the Python agent or store prompts. Do not enable chat until the authenticated Python worker and per-user database policies are ready. Do not collect or sell raw user conversations or memories.
+## Checkpoint 2 — Protect tags and delete old branch refs
 
-**Exit condition:** Preview deployment reaches READY and the Google login flow passes. No production domain or production promotion is required for this checkpoint.
-
-## Checkpoint 3 — Promote and archive Git history
-
-**Goal:** Put the exact approved candidate on `main` without a merge commit, then clean the branch list without losing commit history.
+**Goal:** Leave only `main` as a branch, while retaining the ten old tips as protected recovery tags.
 
 | Step | Task | Status |
 |---|---|---|
-| 3.1 | Owner approves exact candidate SHA on PR #15 | Pending |
-| 3.2 | Recheck `main` SHA and fast-forward ancestry | Pending |
-| 3.3 | Update `main` to the candidate with a non-forced, expected-SHA update | Pending |
-| 3.4 | Close PR #15 without merging | Pending |
-| 3.5 | Run archive workflow in archive-only mode | Pending |
-| 3.6 | Verify all ten archive tags point to their exact reviewed commits | Pending |
-| 3.7 | Add a GitHub tag ruleset for `archive/**/*` that blocks updates and deletion | Pending — owner action |
-| 3.8 | Run deletion mode with both exact confirmation phrases | Pending |
-| 3.9 | Verify only `main` remains as a branch, with all historical tips recoverable from protected tags | Pending |
+| 2.1 | Create a GitHub tag ruleset for tag names matching `archive/**/*` | Pending — no ruleset exists yet |
+| 2.2 | Set enforcement to Active; enable Restrict updates and Restrict deletions; leave Restrict creations off; add no bypass actors | Pending — owner action |
+| 2.3 | Manually run the archive workflow from `main` with deletion enabled and both confirmation phrases | Pending |
+| 2.4 | Check the workflow summary for deleted and skipped branches | Pending |
+| 2.5 | Verify only `main` remains and all ten tags remain | Pending |
 
-**Deletion requires both exact confirmation phrases:**
-- `DELETE ARCHIVED BRANCHES`
-- `ARCHIVE TAGS PROTECTED`
+Required inputs:
+- `delete_branches=true`
+- `confirm_delete=DELETE ARCHIVED BRANCHES`
+- `confirm_archive_tags=ARCHIVE TAGS PROTECTED`
 
-The second phrase is an owner attestation. The workflow cannot inspect repository rulesets. Do not supply it until the tag ruleset is active.
+The last phrase is an owner attestation. The workflow does not query ruleset configuration. Do not enter it until the tag ruleset is active.
 
-**Safety rules:**
+### Create the tag ruleset
+
+1. Open repository **Settings → Rules → Rulesets**.
+2. Select **New tag ruleset**.
+3. Name it `ULTRON archive tag protection`.
+4. Add an inclusion pattern for tag names: `archive/**/*`.
+5. Set enforcement to **Active**.
+6. Enable **Restrict updates** and **Restrict deletions**.
+7. Leave **Restrict creations** disabled so the workflow can create future recovery tags.
+8. Add no bypass actors. Save the ruleset.
+
+### Run branch cleanup
+
+1. Open **Actions → Archive reviewed branch tips**.
+2. Select **Run workflow** from branch `main`.
+3. Set `delete_branches` to `true`.
+4. Enter `DELETE ARCHIVED BRANCHES`.
+5. Enter `ARCHIVE TAGS PROTECTED` only after confirming the ruleset is active.
+6. Run the workflow and inspect its summary.
+
+The workflow rechecks exact branch SHAs, archive tag targets, and open PRs. It never deletes `main`.
+
+## Checkpoint 3 — Vercel preview
+
+| Step | Task | Status |
+|---|---|---|
+| 3.1 | Approve Vercel team authorization | Pending — owner approval |
+| 3.2 | Discover existing projects and avoid duplicates | Blocked by team authorization |
+| 3.3 | Set root directory to `webapp` | Not started |
+| 3.4 | Configure Supabase and Google OAuth | Not started |
+| 3.5 | Set Supabase URL and publishable key in Preview/Development | Not started |
+| 3.6 | Deploy a Preview and test sign-in, callback, protected workspace, and sign-out | Not started |
+
+**Web security boundary:** The web client remains an authentication shell. It does not run the Python agent or store prompts. Keep chat disabled until a secure Python worker, per-user database policies, retention, export, and deletion controls exist.
+
+## Safety rules
+
 - Never delete `main`.
-- Never use GitHub's native merge button for PR #15.
 - Never force-push or force-update `main`.
-- A moved source branch must be re-reviewed; do not reset it to an earlier SHA.
-- The cleanup workflow skips branches used by open PRs.
-- Archive tags must exist and match exact commit SHAs before branch deletion.
-- A GitHub ruleset must block updates and deletion for `archive/**/*` before branch deletion is enabled.
-- The workflow requires the exact owner attestation `ARCHIVE TAGS PROTECTED`; it does not verify the ruleset through API.
+- Do not delete a branch with a changed SHA or active PR.
+- Protect archive tags before deleting branch refs.
+- Keep user conversations and memories private; do not sell raw user data.

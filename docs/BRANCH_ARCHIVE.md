@@ -5,9 +5,21 @@
 
 ## Current repository state
 
-The review found 11 branches: `main` plus 10 development or staging branches. The active release candidate is `ultron/curated-promotion-2026-11`. PR #15 uses that branch and must remain open for review until the owner fast-forwards `main` to the reviewed candidate and closes the PR without a native merge.
+**Current `main`:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. GitHub closed PR #15 as merged because its head became reachable from `main`. No merge commit was created; the promoted commit remains the existing candidate commit.
 
-PR #16 was closed without merging. Its final Git tree was confirmed byte-for-byte identical to the web-app tree copied into the curated candidate. Its branch remains available for recovery.
+**Archive run:** [42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739) completed successfully.
+
+- Branches: **11** (`main` plus ten reviewed source/staging branches).
+- Archive tags: **10**, each verified against its exact reviewed commit SHA.
+- Branches deleted: **0**.
+- Open pull requests: **0**.
+- Repository tag rulesets: **none** at the time of this check.
+
+PR #16 remains closed without merging. Its final web-app tree is included in the promoted candidate. Its source branch has an archive tag.
+
+The ten branch refs remain until the archive tag namespace is protected and the manual deletion workflow is run.
+
 
 ## Reviewed branch tips
 
@@ -50,15 +62,22 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 
 ## Safe operating sequence
 
-1. Finish PR #15 review.
-2. Fast-forward `main` to the exact approved candidate SHA. Do not use GitHub's merge button or create a merge commit.
-3. Close PR #15 without merging.
-4. Manually run the archive workflow on `main` with default `delete_branches=false`.
-5. Verify all ten archive tags.
-6. In repository Settings → Rules → Rulesets, choose **New tag ruleset**. Add an inclusion pattern for tag names: `archive/**/*`. Set enforcement to **Active**. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** off. Do not add bypass actors.
-7. Run deletion mode with both exact phrases: `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
-8. Verify the report. Any branch with an open PR, changed SHA, or tag mismatch is preserved.
+### Completed
 
+1. Fast-forward `main` to the exact reviewed candidate SHA. No native merge or merge commit.
+2. PR #15 closed automatically after its head became part of `main`.
+3. The push to `main` triggered archive-only mode.
+4. Workflow run `42760721739` created and verified all ten exact-SHA recovery tags.
+
+### Remaining
+
+1. In Settings → Rules → Rulesets, create an Active tag ruleset for `archive/**/*`.
+2. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** off. Add no bypass actors.
+3. In Actions → Archive reviewed branch tips, select `main` and run with `delete_branches=true`.
+4. Enter `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
+5. Inspect the summary. It must preserve `main`, retain all ten tags, and delete only eligible non-`main` refs.
+
+The repository currently has no tag ruleset. Do not run deletion until the owner creates and verifies the rule. Git tags are mutable until protected.
 
 
 ## Restore a branch tip
