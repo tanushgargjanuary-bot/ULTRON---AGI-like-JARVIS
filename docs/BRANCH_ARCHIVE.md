@@ -6,44 +6,38 @@
 ## Current repository state
 
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
-**`main` head before this documentation follow-up:** `516b772db218ff2afc934ba943b9204a9abb2eb7` (workflow safety hardening).  
+**Main head at the start of the documentation audit:** `a7be7daed4aa8457d138299a4e527ea131f9979e`.  
 **Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. PR #15 closed after its head became reachable from `main`. No merge commit was created.
 
-**Archive run:** [42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739) completed successfully.
+**Final archive cleanup:** [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
 
-### Live pre-deletion audit — 2026-11-10
+### Final cleanup verification — 2026-11-10
 
-- Branches: **11** (`main` plus ten reviewed source/staging branches).
-- Recovery tags: **10**.
-- Branch-to-tag SHA checks: **10/10 match**.
+- Branches: **1** — `main` only.
+- Historical recovery tags: **10**, all expected full commit SHAs verified.
+- Obsolete branch refs deleted: **10**.
 - Open pull requests: **0**.
 - Default branch: **main**.
-- Curated candidate ancestry: `main` is 8 commits ahead and 0 behind the candidate; the candidate tip is contained in `main`.
-- Branches deleted: **0**.
-- Repository tag rulesets: **1 Active archive-protection ruleset** (`26923169`).
+- Curated candidate ancestry: `main` contained the promoted candidate at `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
+- Archive ruleset: **Active**, ID `26923169`.
+- The ruleset targets `refs/tags/archive/**/*`, blocks updates and deletions, allows tag creation, and has no bypass actors.
 
-The ten exact matching tags preserve these branch tips: `ArenaAi`, `antigravity`, `arena/4c973188-ultron-agi-like-jarvis`, `chatgpt`, `code-quality-and-security-improvements-af08a`, `feature/web-companion-mvp`, `feature/web-mvp-auth`, `integration/best-of-all-2026-11-09`, `ultron/consolidation-2026-11`, and `ultron/curated-promotion-2026-11`.
-
-PR #16 remains closed without merging. Its final web-app tree is included in the promoted candidate. Its source branch tip remains recoverable from its exact-SHA tag.
-
-**Archive protection verified — 2026-11-10.** Ruleset `26923169` (`ULTRON archive tag protection`) is Active, targets tags matching `refs/tags/archive/**/*`, blocks updates and deletions, allows creation, and has no bypass actors. The cleanup workflow independently checks this live configuration before deleting any branch.
-
-
+The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
 ## Reviewed branch tips
 
 | Branch | Exact reviewed tip | Treatment |
 |---|---|---|
 | `main` | `44ec6dbde86746a5a2ff1ff201ed646e54068cb9` at audit time | Keep; never delete |
-| `ArenaAi` | `8f4803b8812e4cae1e79755381eda69f5b76ee81` | Archive, then eligible for deletion |
-| `antigravity` | `b8e9334484bb214fd1f18021eade35c62ba5329b` | Archive, then eligible for deletion |
-| `arena/4c973188-ultron-agi-like-jarvis` | `8b20ceff3421add70b65cc4eacca1dac1f3b5b36` | Archive, then eligible for deletion |
-| `chatgpt` | `c98ea0ff81a440ba4b2f56b1aef0f726384f521d` | Archive, then eligible for deletion |
-| `code-quality-and-security-improvements-af08a` | `bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420` | Archive, then eligible for deletion |
-| `feature/web-companion-mvp` | `309529147821728554896f84141333dd9fb512e8` | Older duplicate web scaffold; archive, then eligible for deletion |
-| `feature/web-mvp-auth` | `a862f7650ddc36ac04d1178884d6802e2b3cb4c1` | Web source; PR #16 closed without merge; archive, then eligible for deletion |
-| `integration/best-of-all-2026-11-09` | `5118dede0ca4c29206a24a08ec9f9ae6699011f5` | Ancestor of consolidation; archive, then eligible for deletion |
-| `ultron/consolidation-2026-11` | `e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a` | Superseded consolidation; archive, then eligible for deletion |
-| `ultron/curated-promotion-2026-11` | Current branch tip is captured by the workflow at run time | Keep until main contains it and PR #15 is closed; then eligible for deletion |
+| `ArenaAi` | `8f4803b8812e4cae1e79755381eda69f5b76ee81` | Deleted; exact tip retained by protected archive tag |
+| `antigravity` | `b8e9334484bb214fd1f18021eade35c62ba5329b` | Deleted; exact tip retained by protected archive tag |
+| `arena/4c973188-ultron-agi-like-jarvis` | `8b20ceff3421add70b65cc4eacca1dac1f3b5b36` | Deleted; exact tip retained by protected archive tag |
+| `chatgpt` | `c98ea0ff81a440ba4b2f56b1aef0f726384f521d` | Deleted; exact tip retained by protected archive tag |
+| `code-quality-and-security-improvements-af08a` | `bc65a2746d5a75232ff3ecb9a7ac6b57b87f8420` | Deleted; exact tip retained by protected archive tag |
+| `feature/web-companion-mvp` | `309529147821728554896f84141333dd9fb512e8` | Older duplicate web scaffold; deleted; exact tip retained by protected archive tag |
+| `feature/web-mvp-auth` | `a862f7650ddc36ac04d1178884d6802e2b3cb4c1` | Web source; PR #16 closed without merge; deleted; exact tip retained by protected archive tag |
+| `integration/best-of-all-2026-11-09` | `5118dede0ca4c29206a24a08ec9f9ae6699011f5` | Ancestor of consolidation; deleted; exact tip retained by protected archive tag |
+| `ultron/consolidation-2026-11` | `e058f26d4eff7f54ba896a3b8c307f5bc1e0aa7a` | Superseded consolidation; deleted; exact tip retained by protected archive tag |
+| `ultron/curated-promotion-2026-11` | `bd4b43d16fdf27b495209678ed72b41f21408d7c` | Deleted after promotion; exact tip retained by protected archive tag |
 
 These values were refreshed from GitHub immediately before the cleanup workflow was prepared. The workflow refuses to archive or delete a source branch if its current SHA differs from the reviewed SHA. The curated candidate is captured dynamically, but only after GitHub confirms that the exact current candidate SHA is already reachable from `main`.
 
@@ -73,20 +67,14 @@ GitHub's ref API does not provide an atomic compare-and-delete operation. The wo
 
 ### Completed
 
-1. Fast-forward `main` to the exact reviewed candidate SHA. No native merge or merge commit.
-2. PR #15 closed automatically after its head became part of `main`.
-3. The push to `main` triggered archive-only mode.
-4. Workflow run `42760721739` created and verified all ten exact-SHA recovery tags.
+1. Fast-forwarded `main` to the reviewed candidate without a merge commit.
+2. Created and verified ten exact-SHA recovery tags.
+3. Created Active archive ruleset `26923169`, with update/deletion restrictions, tag creation allowed, and no bypass actors.
+4. Dispatched the guarded deletion workflow from `main`. It checked the live ruleset and rechecked reviewed refs, tag targets, and open PRs.
+5. Workflow run [42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199) completed successfully.
+6. Re-read GitHub refs: only `main` remains; all ten recovery tags remain; zero open PRs.
 
-### Remaining
-
-1. Confirm the Active tag ruleset `26923169` remains in place.
-2. Run **Archive reviewed branch tips** from `main` with `delete_branches=true`.
-3. Enter `DELETE ARCHIVED BRANCHES` and `ARCHIVE TAGS PROTECTED`.
-4. Inspect the summary. It must preserve `main`, retain all ten tags, and delete only eligible non-`main` refs.
-
-The repository now has an Active tag ruleset (`26923169`) that protects `refs/tags/archive/**/*` against updates and deletions, allows creation, and has no bypass actors. The workflow checks the live ruleset configuration and fails closed if protection is absent or incomplete.
-
+**No branch cleanup steps remain.**
 
 ## Restore a branch tip
 

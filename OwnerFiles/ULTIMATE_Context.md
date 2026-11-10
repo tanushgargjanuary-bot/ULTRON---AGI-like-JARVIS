@@ -1,78 +1,193 @@
-# ULTRON — current handoff
+# ULTRON — canonical project handoff
 
-**Status:** The curated code is on `main`. Branch cleanup is pending tag protection and a separately confirmed workflow run.
+**Last full repository audit:** 2026-11-10  
+**Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`  
+**Visibility:** Public  
+**Stable branch:** `main` — the only remaining branch  
+**Code baseline checked:** `a7be7daed4aa8457d138299a4e527ea131f9979e`  
+**Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
-## Current repository state
+This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because consolidation and branch cleanup are complete.
 
-- Repository: `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
-- Stable branch: `main`
-- Follow-up documentation commits record the promotion, verification, and cleanup state on `main`.
-- Promoted application commit: `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
-- Curated candidate: `ultron/curated-promotion-2026-11`. Its exact tip is contained in `main`; `main` also contains the subsequent documentation-only audit and handoff updates.
-- PR #15 is closed. Its reviewed head is reachable from `main`; the promotion used a direct non-forced fast-forward, not a merge commit.
-- PR #16 is closed without merging. Its final web-app tree was copied into the curated candidate and promoted.
-- Open pull requests: zero at the latest check.
-- Linux and Windows verification passed in run `42699779342`.
-- Web type-check and production build passed in run `42699779160`.
-- Reviewdog/Ruff completed successfully in run `42699779015`.
-- Archive-only workflow run `42760721739` completed successfully. It created and verified ten exact-SHA recovery tags.
+## 1. Current status
 
-## Branch cleanup
+- The curated application is promoted to `main` by a direct, non-forced fast-forward. No merge commit was created.
+- PR #15 is closed after its exact reviewed head became reachable from `main`. PR #16 is closed without merging; its final web-app tree was included in the promoted candidate.
+- Ten obsolete development branches were deleted after exact-SHA archive tags were verified and protected.
+- The final branch cleanup is complete. GitHub reports **one branch (`main`)**, **ten protected archive tags**, and **zero open pull requests**.
+- Cleanup workflow: [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199), completed successfully.
+- Archive ruleset: **ID 26923169**, named `ULTRON archive tag protection`. It is Active, targets `refs/tags/archive/**/*`, blocks updates and deletions, allows creation, and has no bypass actors.
+- All ten expected full commit SHAs were verified in the archive tags. These tags preserve the historical branch tips; they are not active development branches.
+- `main` is the sole permanent integration branch. Use short-lived feature/fix branches for active work. Do not keep permanent per-agent branches.
 
-- Branch refs: 11 (`main` plus ten reviewed source/staging branches).
-- Recovery tags: 10; each was checked against its reviewed full commit SHA.
-- Branch refs deleted: zero.
-- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; Active tag ruleset `26923169` protects `refs/tags/archive/**/*` against updates and deletions, allows creation, and has no bypass actors. Workflow hardening commit `516b772db218ff2afc934ba943b9204a9abb2eb7` makes deletion mode query the live ruleset and verify its exact protection before it reads or changes refs.
+### Current cross-platform CI evidence
 
-**Archive protection is configured and verified:** repository tag ruleset `26923169` is Active for `refs/tags/archive/**/*`. It blocks updates and deletions, allows creation, and has no bypass actors.
+The latest inspected cross-platform verification for the pre-documentation code baseline is [run 42775101593](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593). Both Linux and Windows jobs completed successfully.
 
-Run Actions → **Archive reviewed branch tips** from `main` with:
+| Evidence | Linux | Windows |
+|---|---:|---:|
+| Proof-gate claims marked PROVEN | 24 | 28 |
+| Proof-gate claims marked PARTIAL | 13 | 9 |
+| Proof-gate claims marked FAILED | 0 | 0 |
+| Instrument scan | 17 passed, 2 failed, 15 skipped | 24 passed, 0 failed, 12 skipped |
 
-- `delete_branches=true`
-- `confirm_delete=DELETE ARCHIVED BRANCHES`
-- `confirm_archive_tags=ARCHIVE TAGS PROTECTED`
+The instrument scan is a non-blocking environment report. Linux screen/audio failures reflect hosted-runner display/PortAudio constraints. The Windows scan had no attached real audio devices. A green CI job does not prove the owner's microphone, camera, speaker, GPU, browser installation, or every desktop workflow. PARTIAL and SKIPPED are not passes.
 
-The final phrase is an additional owner confirmation, not proof of protection. The workflow independently requires an Active tag ruleset that includes `refs/tags/archive/**/*`, has no exclusions, blocks updates and deletions, allows tag creation, and has no bypass actors. It also checks the exact reviewed branch SHAs, recovery-tag targets, and open PRs. It preserves changed branches, skips branches used by open PRs, and never deletes `main`. Inspect the workflow summary before considering cleanup complete.
+Earlier promotion evidence remains recorded in `docs/MAYBE_COMPLETE.md`: Linux/Windows suite run 42699779342, ULTRON Web type-check/build run 42699779160, and Reviewdog/Ruff run 42699779015. Recheck live Actions before repeating claims about the current head.
 
-Do not delete branch refs before the archive tag ruleset is active. Do not force-update `main`.
+## 2. What ULTRON is
 
-## Read these first
+ULTRON is a voice-first, agentic desktop application built on the upstream MARK-LVI/JARVIS codebase. It adds a policy-controlled tool system, memory with owner approval, planning and decision logic, evidence checks, diagnostics, self-change proposals, local integrations, and a separate web shell.
 
-1. [Consolidation checkpoint](../docs/MAYBE_COMPLETE.md)
-2. [Branch archive and cleanup](../docs/BRANCH_ARCHIVE.md)
-3. [Branch review and promotion decisions](../docs/BRANCH_REVIEW.md)
-4. [Code review workflow](../docs/CODE_REVIEW.md)
-5. [Architecture](../ARCHITECTURE.md)
-6. [Recorded decisions](../DECISIONS.md)
-7. [Gatekeepers](../GATEKEEPERS.md)
+It is **not** a replacement kernel or a new operating system. It is an application/control layer over the host OS. It does not have unrestricted autonomy. The host OS permissions still define the outer security boundary.
 
-## Curated implementation
+### Product surfaces
 
-- Reviewed branch work was selected and adapted. No competing development branch was merged wholesale.
-- Provider imports are lazy on the default Gemini path.
-- Saved-session memory search is included.
-- Self-change proposals use hash checks and guarded atomic replacement. This is not an OS sandbox.
-- Windows NTFS alternate-data-stream path rejection is included.
-- MCP schemas and messages are bounded; unsupported schema features and tool-name collisions fail closed.
-- Local fallback requires explicit consent and uses loopback-only HTTP without redirects or proxies.
-- The dashboard is loopback-only by default. LAN exposure requires explicit permission and HTTPS.
-- The public web reader has URL, DNS, redirect, robots, content-type, and response-size checks.
-- ULTRON Web is an authentication shell. It does not run the Python agent, and its composer remains disabled.
+1. **Desktop assistant:** primary product, launched through `run.bat` or `run.ps1`; `main.py` runs the session and `ui.py` owns the Qt window.
+2. **Local dashboard:** separate local dashboard surface under `dashboard/`; network exposure is loopback-only by default. LAN exposure requires explicit owner configuration and HTTPS.
+3. **ULTRON Web:** separate Next.js application under `webapp/` with Supabase authentication scaffolding. It is currently an authentication/workspace shell. It does not execute the Python agent, persist chat messages, provide cross-device memory, or enable its composer.
+4. **Go sidecar:** optional watcher/supervisor component under `sidecar/`; Python fallback remains available. It is not a complete worker/supervisor architecture.
 
-## Known limits
+## 3. Main capability areas
 
-- General live multi-provider failover is not fully wired into the request path.
-- Self-change rehearsal runs with the current user's OS permissions. It is not a security sandbox.
-- MCP server processes run with the current user's permissions and inherit ULTRON's environment. They are not sandboxed.
-- The signed release verifier is not a complete publisher, downloader, A/B updater, or supervisor/worker update system.
-- CI cannot prove every hardware, driver, desktop, microphone, camera, browser, or provider path on the owner's machine.
-- Reviewdog/Ruff is static analysis, not a semantic security review. PR-Agent is optional and is not run automatically by GitHub Actions.
+These are capability areas in the repository, not blanket claims that every hardware- or provider-dependent path has been proven on the owner's machine.
 
-## Handoff rules
+- Voice session, provider selection, speech input/output, and reconnect handling.
+- Desktop/window control, accessibility-tree-first interaction, keyboard/mouse operations, and application launch.
+- Browser automation and bounded public-web search/reading.
+- Workspace-scoped file operations and file processing.
+- Action and plugin capability loading, tool catalog, capability descriptions, and usage telemetry.
+- Policy tiers, explicit confirmations, sensor consent, and evidence checks.
+- Planning, bounded tool workflows, task state, recovery proposals, and goal verification.
+- Approved memory, session recall, knowledge, learning curriculum, and skill packs.
+- Meta-cognition, lesson recall, decision scoring, algorithmic helpers, and reminder scheduling.
+- Health/crash reporting, process monitoring, self-change proposals, leaf reload staging, shipping, and update checks.
+- Native/public platform readers and bounded MCP integration.
+- Separate web UI authentication shell and local dashboard.
 
-- Treat `main` as the stable branch.
-- Use short-lived `feature/<topic>` and `fix/<topic>` branches for future work.
-- Open pull requests to `main`; do not keep permanent branches per agent or coding model.
-- Archive reviewed tips before deletion. Never delete `main`.
-- If a source branch moves from its reviewed SHA, re-review it. Do not reset it to an earlier SHA.
-- Do not claim a feature is complete unless tests and evidence support the claim.
+Detailed contracts live in `docs/CAPABILITIES.md`, `docs/SKILLS.md`, `docs/TRIGGERS.md`, `docs/MENTAL.md`, `docs/PHILOSOPHY.md`, `docs/HEALTH_CENTER.md`, `docs/SELF-CHANGE.md`, and `docs/ECOSYSTEM.md`. The generated module/test map is `docs/MAP.md`.
+
+## 4. Architecture and where work belongs
+
+The governing design is in `ARCHITECTURE.md`.
+
+| Layer | Location | Responsibility |
+|---|---|---|
+| Host | `main.py`, `ui.py`, `dashboard/` | session, UI, and user-facing surfaces |
+| Providers | `providers/` | model, speech, audio, and transport adapters |
+| Safety | `core/policy.py`, `core/custom_gate.py`, evidence components | action permission, confirmation, and proof |
+| Capability | `actions/`, `plugins/`, bridge helpers | bounded tools that perform one job |
+| Judgement | `custom_jarvis/` | plans, decisions, verification, memory workflows, and skills |
+| State | `memory/`, `config/`, state helpers | persisted user-approved settings and data |
+
+Other important areas:
+- `core/`: shared runtime, policy, memory consent, tool registry, UI bridges, networking, and platform support.
+- `curriculum/`: sourced syllabus data; course facts belong in data, not hard-coded prose.
+- `native/` and `sidecar/`: narrow native components and the optional Go watcher.
+- `scripts/`: bootstrap, migration, verification, proof gate, map generation, profiling, and maintenance tools.
+- `tests/`: unit, contract, security, integration, and platform-aware tests.
+- `packaging/`: packaging and release assets.
+- `docs/`: guides, indexes, generated maps, and technical decisions.
+- `OwnerFiles/`: public owner context and project history. Never put secrets or private personal data here.
+
+Do not move source directories for visual tidiness. Existing launchers, discovery rules, tests, package metadata, and the installer depend on established paths. Any structural move must include a complete reference search, compatibility decision, tests, and same-change documentation updates.
+
+## 5. Non-negotiable engineering and safety rules
+
+- **Evidence first:** a claim needs evidence. A claim without evidence must say so.
+- **Consent:** do not capture screen, camera, or microphone without relevant user consent, indicator, and stop path.
+- **Memory:** persist only what the owner approved. Do not infer and silently save user facts.
+- **Tool policy:** tools must pass the central policy/confirmation path. Never let the planner or a model-supplied value grant its own permissions.
+- **Workspace confinement:** file tools must remain inside the allowed workspace. Preserve backups and evidence where the design requires them.
+- **Threading:** Qt widgets are created/changed on the Qt main thread. Actions and plugins run on workers and use thread-safe `player` methods/signals.
+- **Provider boundary:** validate provider schemas and responses. Handle timeout, `None`, malformed output, quota, and network errors without inventing success.
+- **Secrets:** use `memory/config_manager.py` and OS credential mechanisms. Never print, commit, or place keys in docs or tests.
+- **Referee files:** `core/policy.py`, `core/confirm.py`, `core/self_change.py`, `scripts/proof_gate.py`, and secret-bearing config are protected by the project change rules. Do not weaken their controls or bypass rehearsal/confirmation.
+- **Self-change limitation:** rehearsal in a temporary copy runs with the current user's OS permissions. It is not a sandbox against hostile code.
+- **MCP limitation:** configured MCP child processes run with the current user's permissions and inherit the app environment. Use only trusted server commands.
+- **Updates:** signed verifier utilities do not constitute a complete unattended release/update pipeline. Keep unattended core-code updates disabled.
+- **No fake green:** CI success, a proof-gate PARTIAL, a skipped device test, and a live owner-machine result are different evidence levels.
+
+See `AGENTS.md`, `WORKING-PHILOSOPHY.md`, `DECISIONS.md`, and `GATEKEEPERS.md` for binding detail.
+
+## 6. Verification and engineering workflow
+
+Primary commands:
+
+```powershell
+python scripts/agent_workspace.py
+python scripts/verify.py
+python scripts/proof_gate.py
+python scripts/verify_all.py
+python scripts/map.py --write
+```
+
+- `agent_workspace.py` reports local commits, branch/base differences, paths, and uncommitted changes. It does not fetch, merge, edit, or test.
+- `verify.py` runs syntax checks, unit/regression tests, stress scenarios, mutation checks, and the module organization/map check.
+- `proof_gate.py` verifies capability claims and emits PROVEN/PARTIAL/FAILED/NOT PRESENT.
+- `verify_all.py` checks the current machine's real platform/hardware capabilities and reports non-applicable checks as SKIP.
+- `map.py --write` regenerates `docs/MAP.md` from Python source docstrings and tests. Do not hand-edit that generated file.
+
+GitHub Actions:
+- `.github/workflows/verify.yml`: Linux and Windows tests, proof gates, and non-blocking instrument reports.
+- `.github/workflows/webapp.yml`: webapp checks.
+- `.github/workflows/reviewdog.yml`: static Reviewdog/Ruff reporting.
+- `.github/workflows/archive-reviewed-branches.yml`: guarded exact-SHA archive workflow. Pushes to `main` run archive-only mode; manual deletion mode checks the live tag ruleset, reviewed refs, tags, and open PRs, and never deletes `main`.
+
+## 7. Repository hygiene
+
+- `main` is the only branch. Short-lived `feature/<topic>` and `fix/<topic>` branches are allowed during work.
+- Ten protected recovery tags remain under `archive/2026-11-10/`. They are history/recovery refs, not active branches.
+- Do not delete or rewrite recovery tags, `main`, project history, tests, or user-owned state as generic cleanup.
+- No workspace size/file-count budget is active. Keep caches, build outputs, temporary test files, and machine state out of Git because they are not auditable and may contain private data.
+- Do not remove tracked historical records such as `log.txt`, `HANDOFF.md`, or `verification-results.txt` merely because they are large. Check their role and references first.
+- Root pointer files `ALGORITHMS.md`, `CUSTOM_ULTRON.md`, and `PUBLISH.md` intentionally preserve old links and packaging contracts. Their full guides live under `docs/reference/`.
+- `docs/MAP.md` is generated. Regenerate only when source modules/tests change.
+- The repository's public landing page is `readme.md` (lowercase).
+
+## 8. Current limitations and unfinished work
+
+These limits matter. Do not advertise the product beyond them.
+
+1. **General provider failover:** routing primitives exist, but general live fallback/quota handling is not fully wired into the application request path.
+2. **ULTRON Web:** authentication/workspace shell only; no Python worker, chat persistence, cross-device memory, or enabled composer. Sign-in also depends on Supabase/Google OAuth configuration.
+3. **Deployment:** no confirmed Vercel project/preview deployment in this handoff. Team authorization is needed before discovery/configuration.
+4. **Self-change security:** temporary rehearsal is not OS-level isolation; hostile candidate code can use the current user's permissions.
+5. **MCP process security:** external MCP processes are not sandboxed and inherit the parent environment.
+6. **Release updates:** no complete signed publisher/downloader, production keyring, A/B updater, or supervisor/worker handoff.
+7. **Hardware proof:** CI cannot verify every actual owner device, microphone, speaker, camera, GPU, DPI, browser installation, or real provider/account workflow.
+8. **Independent review:** Reviewdog/Ruff are static checks. They are not a full semantic security audit or independent human review.
+9. **Code review depth:** previous promotion review was risk-focused, not a line-by-line independent review of every changed line.
+
+## 9. Project history and branch consolidation
+
+- The project started from `FatihMakes/Mark-LVI` and evolved through multiple feature, agent, and integration branches.
+- Branch adoption/rejection rationale is preserved in `docs/BRANCH_REVIEW.md`.
+- The curated candidate `ultron/curated-promotion-2026-11` was promoted as application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
+- Ten historical non-main tips were preserved as exact-SHA tags, then the ten obsolete branch refs were deleted in workflow run 42779866199.
+- Active archive ruleset is ID 26923169. Final branch state: one branch, ten archive tags, zero open PRs.
+- Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
+
+## 10. Agent operating instructions for a new chat
+
+1. Read this file, then `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `WORKING-PHILOSOPHY.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`.
+2. Inspect current main SHA, branch refs, worktree, PRs, and latest Actions results. Do not trust dates/counts copied from older handovers without rechecking.
+3. Run `python scripts/agent_workspace.py` and inspect all changed/uncommitted paths before editing.
+4. Follow the task-size and documentation-impact system. Medium/large work must update the canonical handoff and every affected guide before completion.
+5. Preserve owner decisions and existing work. Do not add scope because an older roadmap suggested it.
+6. Report exact commands, commits, CI run IDs, proof counts, failures, skipped checks, known limits, and what was not inspected.
+7. No secrets, tokens, local personal files, or private machine data belong in this public repository.
+
+## 11. Read-first navigation
+
+1. [Repository README](../readme.md)
+2. [Agent maintenance system](../docs/AGENT_MAINTENANCE.md)
+3. [Architecture](../ARCHITECTURE.md)
+4. [Owner decisions](../DECISIONS.md)
+5. [Proof status](../GATEKEEPERS.md)
+6. [Documentation index](../docs/INDEX.md)
+7. [Branch review and archive](../docs/BRANCH_REVIEW.md), [archive restore details](../docs/BRANCH_ARCHIVE.md)
+8. [Engineering journey](history/journey.md), [session record](history/session-log.md)
+
+A new chat must be able to delete its predecessor without losing project knowledge. This file and the linked repository records are the handoff.
