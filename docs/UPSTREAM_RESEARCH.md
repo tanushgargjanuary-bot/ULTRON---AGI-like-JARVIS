@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Eighteen of the 62 changed shared files have now had focused diff comparisons; 44 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Twenty-eight of the 62 changed shared files have now had focused diff comparisons; 34 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -103,6 +103,25 @@ A second pass checked six more large or security-relevant shared files. This sca
 | `actions/dev_agent.py` | Resolves the VS Code executable and invokes it with `shell=False`; the upstream version shown in the diff uses `shell=True`. | Keep the shell-free launch. Do not regress to shell interpolation. |
 
 The focused scan has now covered 18 shared files in total. It continues to support selective ULTRON-first integration. **No upstream code from these 18 files has been copied.** The next 44 shared paths still need review.
+
+### Additional focused review: ten provider, memory, speech, and desktop files
+
+This pass checked ten more shared files by exact source blobs. The comparison used normalized line endings. It remains a focused diff review, not a complete independent audit of each file.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `providers/schema.py` | Normalized text is identical to upstream. The blob SHA differs, but no content-line difference remains after line-ending normalization. | Already present. No change required. |
+| `providers/llm_openai.py` | Adds repair for repeated streamed tool names, validation for malformed config values, image-refusal classification, failure notes, and pooled connections. | Keep ULTRON's defensive provider path. Review proxy/environment behavior separately before changing transport settings. |
+| `memory/memory_manager.py` | Adds a read-modify-write lock, atomic storage, a separate bounded 50-entry change history, timestamp-aware sorting, and defensive handling of malformed nested values. | Keep ULTRON's concurrency and recovery behavior. |
+| `providers/registry.py` | Converts provider IDs to strings and replaces malformed provider config blocks with an empty object rather than failing during startup. | Keep the defensive input handling. |
+| `actions/computer_settings.py` | Converts model-supplied actions safely and declares parameters already read by the handler, including text, key, and press-enter. | Keep the schema/handler contract fix. |
+| `actions/file_processor.py` | Adds bounded undo snapshots, output fingerprints, conflict-safe undo registration, and rollback if the write path fails. | Keep the reversible output path. |
+| `providers/tts_piper.py` | Reuses the shared connection pool and records failures in voice-directory and prefetch paths. | Keep pooled transport and visible failure records. |
+| `providers/stt_whisper.py` | Reuses the connection pool and adds `ensure_ready()` so a local speech model can be checked before the caller relies on it. | Keep the readiness check and shared transport. |
+| `providers/tts_system.py` | Records failures in the prefetch path instead of silently swallowing the exception. | Keep failure visibility. |
+| `providers/tts_elevenlabs.py` | Uses the shared connection pool for synchronous and asynchronous requests. | Keep connection reuse. |
+
+The focused diff review now covers **28 of 62** changed shared paths. **34 changed shared paths remain**. No code from these ten upstream files was copied because the ULTRON versions already contain the relevant changes or have the same normalized content.
 
 ### Existing capability map
 
@@ -199,7 +218,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 
 | Priority | Work | Reason | Acceptance evidence |
 |---|---|---|---|
-| 1 | Compare the remaining 44 of 62 changed shared files against ULTRON | Eighteen high-risk/integration files have had focused diff scans; the rest of the source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
+| 1 | Compare the remaining 34 of 62 changed shared files against ULTRON | Twenty-eight high-risk/integration files have had focused diff scans; the remaining source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
 | 2 | Audit provider credential storage and consider OS credential-store support | Issue #117 raises a valid security concern; ULTRON still uses managed local config | Threat model, migration and rollback, no plaintext leak in logs/commits, platform tests |
 | 3 | Add reconnect/audio regression scenarios from issues #123/#134/#160/#162 | These are recurring upstream failure classes | Deterministic fake-device tests plus real owner-machine verification |
 | 4 | Design multi-agent role delegation as a separate ULTRON feature | PR #165 is conflicted/unverified; ULTRON has planning but not this full role-agent model | Role-specific tool allowlists, independent budgets, isolated context, audit trail, judge/evaluation tests |

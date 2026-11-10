@@ -179,13 +179,14 @@ The original project lineage and current upstream material are documented in [`d
 Key facts from the 2026-11-10 audit:
 
 - Eight public repositories were returned by the FatihMakes account search. The primary current source is [`FatihMakes/Mark-LVI`](https://github.com/FatihMakes/Mark-LVI), main commit `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`.
-- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed and need semantic comparison before any port.
+- The inspected MARK-LVI tree had 78 files. All 78 paths already existed in ULTRON. Sixteen shared files had identical blob SHAs; 62 shared files differed. Focused diff reviews have covered 28 files; 34 remain. No code from the reviewed shared files was copied because ULTRON already contained the relevant handling or the normalized text was identical.
 - ULTRON had 355 additional paths at the compared baseline. Its safety, planning, verification, and documentation layers must not be replaced by older upstream implementations.
 - The audit covered a sample of 100 issue results and 40 PR results. It also found many community forks, but it did not review every fork or every GitHub mention.
 - The current source licence is CC BY-NC 4.0. The checked-in `LICENSE` attributes the source to FatihMakes and prohibits commercial use. Preserve notices. Do not assume older snapshots or third-party assets have the same licence.
 - Gesture PRs #167/#168 are candidates only. Their PR file lists did not include regression tests; they need central policy/sensor consent and model-integrity work.
 - Multi-agent PR #165 was open/non-mergeable at audit and included a tracked `config/api_keys.json`. Do not import it wholesale.
 - MCP, tool routing, multi-step planning, audit, and tool-description triggers already exist in ULTRON. Do not build duplicates merely because an upstream proposal asks for them.
+- Upstream PR #169's morning-brief change was adopted independently: startup briefing now defaults off, saved boolean choices are preserved, and malformed values fail closed. Regression tests are in `tests/test_suite_assistant.py`.
 
 The strategy is selective reuse. Review the exact source SHA and licence, compare the code against ULTRON, port the smallest useful change, and test it. See the upstream research file for the repository list, PR/issue decisions, risks, and next priorities.
 

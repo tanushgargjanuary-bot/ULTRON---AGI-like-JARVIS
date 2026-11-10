@@ -521,3 +521,9 @@ ULTRON implements the behavior independently. `get_brief_enabled()` now returns 
 
 Added `BriefingOptInTests` to `tests/test_suite_assistant.py`: fresh config, an existing config without the key, explicit true, explicit false, malformed string, and toggle round-trip with another setting preserved. No upstream code was cherry-picked. The decision is recorded in `DECISIONS.md` and `docs/UPSTREAM_RESEARCH.md`.
 
+
+
+### Follow-up — ten more MARK-LVI files reviewed
+
+The focused source comparison now covers 28 of 62 changed shared files. This pass reviewed `providers/schema.py`, `providers/llm_openai.py`, `memory/memory_manager.py`, `providers/registry.py`, `actions/computer_settings.py`, `actions/file_processor.py`, `providers/tts_piper.py`, `providers/stt_whisper.py`, `providers/tts_system.py`, and `providers/tts_elevenlabs.py`. Findings include exact normalized parity for the provider schema, stronger provider input validation, atomic concurrent memory writes, bounded memory history, safer computer-settings arguments, conflict-safe file undo, connection pooling, model readiness checks, and visible TTS failures. No code from these ten files was copied. Thirty-four changed shared paths remain for review.
+
