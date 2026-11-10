@@ -66,7 +66,7 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Forty-six of the 62 changed shared files have now had focused diff comparisons; 16 changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Fifty-two of the 62 changed shared files have now had focused diff comparisons; ten changed shared paths remain for review. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
 
 ### Focused semantic review: 12 changed shared files
 
@@ -170,6 +170,21 @@ This pass checked six more changed shared files by exact blobs and normalized li
 
 No upstream-only runtime feature from these six files was identified for direct import. The focused review now covers **46 of 62** changed shared paths. **Sixteen changed shared paths remain**. No source code was copied in this pass.
 
+### Additional focused review: six safety, test, and install files
+
+This pass checked six more changed shared paths by exact source blobs and normalized lines. It is a focused comparison, not a full independent security audit.
+
+| File | ULTRON difference observed | Decision |
+|---|---|---|
+| `core/undo.py` | Changes `push_undo()` to return whether registration succeeded. This lets callers know whether a supposedly reversible operation has a rollback record. | Keep the success signal; callers must not claim an operation is reversible when its undo record was not registered. |
+| `core/echo.py` | Records errors from echo-reference output handling rather than silently swallowing them. | Keep failure telemetry. |
+| `providers/_tests.py` | Explicitly retires test widgets and the Qt application before process exit, and records cleanup faults. | Keep the deterministic Qt teardown path. The runner already isolates risky provider/UI checks from the main app. |
+| `core/_smoke_harness.py` | Validates command-line arguments and JSON structure before loading target code. It records harness errors and states that it must run as a subprocess, not as an imported module. | Keep the input validation and subprocess-only contract. |
+| `setup.py` | Reconfigures terminal output to UTF-8 with replacement handling where supported, so non-ASCII setup messages do not abort installs on restricted consoles. | Keep the non-fatal console setup. |
+| `requirements.txt` | Pins PyQt6 below 6.12 due to a measured Qt 6.12.0 audio-output construction crash in headless/no-audio environments, and adds the directly imported `jsonschema` dependency. | Keep the tested Qt ceiling and direct dependency declaration. |
+
+No upstream-only code from these six files was identified as a safe direct port. The focused review now covers **52 of 62** changed shared paths. **Ten changed shared paths remain**. No upstream source code was copied in this pass.
+
 ### Existing capability map
 
 The current upstream README describes features in these areas. These are upstream claims; ULTRON agents must check the implementation and its own tests before repeating a claim.
@@ -272,7 +287,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 | 5 | Decide whether gesture control is wanted | PRs #167/#168 have no regression tests and need stronger policy integration | Explicit camera consent/indicator, policy-gated input actions, emergency stop, verified model hash, Windows tests |
 | 6 | Evaluate Home Assistant/headless/multi-monitor work only when product scope requires it | Upstream issues identify demand, not owner approval | A bounded vertical slice with privacy and platform tests |
 
-Do not start all six tasks in parallel. Continue the comparative review of the 16 remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
+Do not start all six tasks in parallel. Continue the comparative review of the ten remaining changed shared files. Any new feature still needs explicit scope and the normal ULTRON approval rules.
 
 ## 9. Search limits and interpretation
 

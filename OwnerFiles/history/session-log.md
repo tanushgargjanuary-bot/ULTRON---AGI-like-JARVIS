@@ -540,3 +540,12 @@ The next six changed shared paths reviewed were `actions/flight_finder.py`, `act
 The normalized flight-finder and game-updater code is effectively the same. ULTRON keeps the first-alert correction in the system monitor, validates video-player arguments and records failures, declares the requested forecast day in the weather tool schema, and records keyboard-hook failures. No upstream source code was copied.
 
 The focused review now covers 46 of 62 changed shared paths. Sixteen remain. This was a focused diff comparison, not a full security audit.
+
+
+### 2026-11-10 — six more MARK-LVI safety, test, and install comparisons
+
+The next six changed shared paths reviewed were `core/undo.py`, `core/echo.py`, `providers/_tests.py`, `core/_smoke_harness.py`, `setup.py`, and `requirements.txt`.
+
+ULTRON's undo registration reports success/failure to its caller. It also records echo-reference failures, retires Qt widgets before the provider-test process exits, validates smoke-harness arguments before loading target code, protects setup output encoding, and pins PyQt6 below a measured headless startup crash release. No upstream code was imported.
+
+The focused review now covers 52 of 62 changed shared paths. Ten remain. This was a source-delta review, not a full independent security audit. The test runner's platform and hardware limits remain explicit.
