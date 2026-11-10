@@ -103,21 +103,26 @@ def resolve_python_files(root: Path, names: list[str]) -> list[Path]:
     return files
 
 
+def _source_label(root: Path, path: Path) -> str:
+    """Format a source path even when Windows uses a different path alias."""
+    try:
+        return path.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def syntax_errors(root: Path, files: list[Path]) -> list[str]:
     """Parse selected Python files without importing or executing them."""
     errors: list[str] = []
-    base = root.resolve()
     for path in files:
+        label = _source_label(root, path)
         try:
             source = path.read_text(encoding="utf-8-sig")
-            ast.parse(source, filename=str(path.relative_to(base)))
+            ast.parse(source, filename=label)
         except SyntaxError as error:
-            errors.append(
-                f"{path.relative_to(base)}:{error.lineno}:{error.offset}: "
-                f"{error.msg}"
-            )
+            errors.append(f"{label}:{error.lineno}:{error.offset}: {error.msg}")
         except (OSError, UnicodeError) as error:
-            errors.append(f"{path.relative_to(base)}: cannot read source: {error}")
+            errors.append(f"{label}: cannot read source: {error}")
     return errors
 
 

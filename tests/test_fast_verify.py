@@ -135,6 +135,16 @@ class SyntaxValidationTests(unittest.TestCase):
             self.assertIn("invalid.py:", errors[0])
             self.assertIn("encoding.py:", errors[1])
 
+    def test_reports_syntax_error_for_path_outside_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repo"
+            source = Path(temporary) / "outside.py"
+            root.mkdir()
+            source.write_text("def broken(:\n    pass\n", encoding="utf-8")
+            errors = fast_verify.syntax_errors(root, [source])
+            self.assertEqual(len(errors), 1)
+            self.assertTrue(errors[0].startswith("outside.py:"))
+
 
 class CommandExecutionTests(unittest.TestCase):
     def test_zero_exit_is_passed_without_a_shell(self):
