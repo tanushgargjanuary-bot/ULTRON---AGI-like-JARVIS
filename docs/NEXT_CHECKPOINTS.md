@@ -1,7 +1,8 @@
 # ULTRON — Next checkpoints
 
 **Production branch:** `main`  
-**Promoted commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Current `main` HEAD:** `5f3beeefe7335e967029eaa5a2622ceb4160a8f1` (documentation-only follow-up).  
 **Promotion method:** Non-forced fast-forward using the prior `main` SHA as an expected-SHA lease. No merge commit was created. GitHub closed PR #15 as merged because its head became reachable from `main`.  
 **Archive run:** [42760721739 — Archive reviewed branch tips](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739)  
 **Current cleanup state:** Ten exact-SHA recovery tags created and verified; 11 branch refs remain; zero branches deleted.
@@ -10,7 +11,7 @@
 
 | Step | Task | Status |
 |---|---|---|
-| 1.1 | Verify candidate head and latest CI | Done — Linux passed; Web CI passed; Reviewdog passed; Windows post-promotion suite still running at time of update |
+| 1.1 | Verify candidate head and latest CI | Done — Linux and Windows passed (run `42699779342`); Web CI passed (run `42699779160`); Reviewdog/Ruff passed (run `42699779015`) |
 | 1.2 | Confirm candidate fast-forward ancestry | Done — 173 ahead, 0 behind before promotion |
 | 1.3 | Fast-forward `main` with expected-SHA guard | Done — `main` is now `bd4b43d16fdf27b495209678ed72b41f21408d7c` |
 | 1.4 | Avoid native merge / merge commit | Done — direct ref update; promoted commit has its original candidate parent |
