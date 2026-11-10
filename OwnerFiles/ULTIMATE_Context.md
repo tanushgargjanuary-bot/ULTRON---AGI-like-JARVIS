@@ -22,11 +22,11 @@
 - Branch refs: 11 (`main` plus ten reviewed source/staging branches).
 - Recovery tags: 10; each was checked against its reviewed full commit SHA.
 - Branch refs deleted: zero.
-- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; the repository has zero tag rulesets. Deletion remains blocked until an Active `archive/**/*` ruleset protects tag updates and deletions. Workflow hardening commit `516b772db218ff2afc934ba943b9204a9abb2eb7` now makes deletion mode query the live ruleset and verify its exact protection before it reads or changes refs.
+- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; Active tag ruleset `26923169` protects `refs/tags/archive/**/*` against updates and deletions, allows creation, and has no bypass actors. Workflow hardening commit `516b772db218ff2afc934ba943b9204a9abb2eb7` makes deletion mode query the live ruleset and verify its exact protection before it reads or changes refs.
 
-**Required owner step:** In repository Settings → Rules → Rulesets, create an Active tag ruleset for tag names matching `archive/**/*`. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** disabled. Add no bypass actors.
+**Archive protection is configured and verified:** repository tag ruleset `26923169` is Active for `refs/tags/archive/**/*`. It blocks updates and deletions, allows creation, and has no bypass actors.
 
-After confirming that ruleset is active, run Actions → **Archive reviewed branch tips** from `main` with:
+Run Actions → **Archive reviewed branch tips** from `main` with:
 
 - `delete_branches=true`
 - `confirm_delete=DELETE ARCHIVED BRANCHES`
