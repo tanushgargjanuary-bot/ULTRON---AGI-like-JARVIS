@@ -96,10 +96,26 @@ jobs:
             }
 
             const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });
-            const candidateRef = await github.rest.git.getRef({
-              owner, repo, ref: 'heads/ultron/curated-promotion-2026-11',
-            });
-            const candidateSha = candidateRef.data.object.sha;
+            let candidateSha;
+            try {
+              const candidateRef = await github.rest.git.getRef({
+                owner, repo, ref: 'heads/ultron/curated-promotion-2026-11',
+              });
+              candidateSha = candidateRef.data.object.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              // Branch cleanup intentionally deletes the candidate branch. Once it is gone,
+              // use the protected exact-SHA archive tag so later push-triggered archive-only
+              // runs remain idempotent. Refuse any unexpected target.
+              const candidateArchiveRef = await github.rest.git.getRef({
+                owner, repo,
+                ref: 'tags/archive/2026-11-10/ultron-curated-promotion-2026-11-bd4b43d1',
+              });
+              candidateSha = candidateArchiveRef.data.object.sha;
+              if (candidateSha !== 'bd4b43d16fdf27b495209678ed72b41f21408d7c') {
+                throw new Error('Refusing cleanup: curated candidate recovery tag does not point to the reviewed promotion SHA.');
+              }
+            }
             const mainSha = mainRef.data.object.sha;
             const ancestry = await github.rest.repos.compareCommits({
               owner, repo, base: candidateSha, head: mainSha,

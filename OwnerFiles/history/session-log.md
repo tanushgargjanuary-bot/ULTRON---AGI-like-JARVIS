@@ -489,3 +489,8 @@ The portable `ULTIMATE_Context.zip` remains in the folder as a tracked deliverab
 **Decisions recorded.** `main` is the only permanent branch. Feature/fix branches are short-lived. The ten archive tags are protected historical recovery points. No workspace size/file-count ceiling is active; the owner withdrew the 100 MB / 5,000-file budget on 2026-11-07.
 
 **Still open.** Vercel team authorization and preview setup remain owner-gated. ULTRON Web remains an authentication/workspace shell, not a deployed Python agent. General provider failover, an OS-level rehearsal sandbox, fully sandboxed MCP processes, and a complete signed update pipeline remain unverified or incomplete. Do not treat this documentation milestone as product completion.
+
+
+### Follow-up — archive workflow remains valid after branch deletion
+
+The first documentation push after branch cleanup exposed a workflow assumption: push-triggered archive-only runs still tried to read the now-deleted curated candidate branch. GitHub returned 404 and the archive job failed before it could complete its no-deletion path. The workflow now falls back only to the protected candidate archive tag and verifies that it still points to the exact reviewed promotion SHA `bd4b43d16fdf27b495209678ed72b41f21408d7c`. Any other missing-ref error or unexpected tag target stops the run. This preserves the one-branch end state and keeps future `main` pushes idempotent.
