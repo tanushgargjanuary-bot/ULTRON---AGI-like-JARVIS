@@ -4,8 +4,11 @@
 **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`  
 **Visibility:** Public  
 **Stable branch:** `main` — the only remaining branch  
-**Main SHA at upstream-source audit:** `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`  
+**Main SHA at upstream-source comparison baseline:** `76484ebc4cbf4b5d4a23889ed72b41f21408d7c`  
 **Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Main SHA at last verified documentation baseline:** `8154ad553f94190c0f84dc7cbf8ec0dc2e4c3abf`  
+**Latest cross-platform CI:** [run 42799637908](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637908) — Linux and Windows passed.  
+**Latest archive-only workflow:** [run 42799637975](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637975) — passed.  
 **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
 This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because consolidation and branch cleanup are complete.
@@ -23,7 +26,7 @@ This file is the durable handoff. A new chat or agent must be able to continue f
 
 ### Current cross-platform CI evidence
 
-The latest inspected cross-platform verification is [run 42786030989](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030989), on main SHA `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`. Both Linux and Windows jobs completed successfully. The archive-only workflow also passed in [run 42786030636](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42786030636).
+The latest successful cross-platform verification recorded at this handoff baseline is [run 42799637908](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637908), on main SHA `8154ad553f94190c0f84dc7cbf8ec0dc2e4c3abf`. Both Linux and Windows jobs completed successfully. The archive-only workflow for the same SHA passed in [run 42799637975](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42799637975).
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
@@ -34,7 +37,7 @@ The latest inspected cross-platform verification is [run 42786030989](https://gi
 
 The instrument scan is a non-blocking environment report. Linux screen/audio failures reflect hosted-runner display/PortAudio constraints. The Windows scan had no attached real audio devices. A green CI job does not prove the owner's microphone, camera, speaker, GPU, browser installation, or every desktop workflow. PARTIAL and SKIPPED are not passes.
 
-Earlier promotion evidence remains recorded in `docs/MAYBE_COMPLETE.md`: Linux/Windows suite run 42699779342, ULTRON Web type-check/build run 42699779160, and Reviewdog/Ruff run 42699779015. Recheck live Actions before repeating claims about the current head.
+Historical promotion evidence remains in `docs/MAYBE_COMPLETE.md`: Linux/Windows suite run 42699779342, ULTRON Web type-check/build run 42699779160, and Reviewdog/Ruff run 42699779015. These are earlier milestone checks, not the latest verification.
 
 ## 2. What ULTRON is
 
