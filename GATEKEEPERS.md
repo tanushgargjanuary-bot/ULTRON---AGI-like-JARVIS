@@ -2,17 +2,16 @@
 
 ## Latest hosted verification snapshot — 2026-11-10
 
-The latest inspected Linux/Windows workflow is [run 42775101593](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42775101593). Both test/proof-gate jobs completed successfully.
+The latest inspected Linux/Windows verification is [run 42803012589](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42803012589), on main SHA `116b0317fdd5eec654ff009ee65281fff27e34ec`. Both hosted jobs completed successfully.
 
 | Hosted runner | PROVEN | PARTIAL | FAILED |
 |---|---:|---:|---:|
 | Linux | 24 | 13 | 0 |
 | Windows | 28 | 9 | 0 |
 
-The separate instrument scan is non-blocking: Linux reported 17 passed, 2 failed, 15 skipped; Windows reported 24 passed, 0 failed, 12 skipped. Linux display/PortAudio limitations and missing physical Windows audio devices explain some results. These checks do not prove the owner's devices or account. PARTIAL and SKIPPED are not passes.
+The Linux non-blocking instrument report returned 17 passed, 2 failed, and 15 skipped. Its display and audio limits reflect the hosted runner, not a test-suite failure. The Windows native-check step returned 99 passed and 0 failed. The Windows proof gate still reports 9 PARTIAL claims. Missing owner devices, optional packages, and live account/provider checks remain unproven.
 
-**Use this dated snapshot in preference to older counts in the historical detail below.** Re-check the latest Actions run before making a new current-state claim.
-
+**The hosted jobs are green; that does not mean every capability is proven.** PARTIAL and SKIPPED are not passes. The owner's microphone, speaker, camera, GPU, display scaling, browser installation, and real provider/account workflow still need checks on the target machine. Read the current run before repeating these counts after another push.
 
 Rewritten 2026-11-06, build 1.2.9, after you pushed back on the first version.
 Updated 2026-11-07, build 1.2.36: the two things this page used to call gates are

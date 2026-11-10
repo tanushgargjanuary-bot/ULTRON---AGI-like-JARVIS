@@ -42,7 +42,7 @@ Some abilities are optional. If a dependency or integration is unavailable, Ultr
 - Background repair work stages and tests a candidate. It never applies code or supplies the owner's confirmations.
 - **Rehearsal is not a security sandbox.** Candidate code runs with the current user's OS permissions, even in a temporary copy. Only rehearse trusted code; do not treat this as isolation from hostile code.
 - The signed release verifier is not yet wired into a complete publisher/downloader and safe core-update handoff. Do not enable unattended core-code updates.
-- The private owner-development repository has not been created or configured. The current public repository remains the curated/professional upstream.
+- Private owner-development and canary publishing are not configured. This public repository remains the curated/professional upstream.
 - **License:** Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). Attribution: FatihMakes / 0101e5. Commercial use is not permitted; see [`LICENSE`](LICENSE).
 
 ## Development
@@ -56,10 +56,8 @@ The focused command is offline. The full project verification may require platfo
 
 ### Branch workflow
 
-- `main` is the stable branch.
-- Use short-lived `feature/<topic>` and `fix/<topic>` branches. Do not keep one permanent branch per agent or model.
+- `main` is the only permanent branch. Use short-lived `feature/<topic>` and `fix/<topic>` branches during active work. Do not keep permanent branches per agent or model.
 - Open a pull request to `main`. CI runs on every pushed branch and every pull request.
-- `main` is currently the only branch. Use short-lived `feature/<topic>` and `fix/<topic>` branches during active work. Do not keep permanent branches per agent or model.
 - Historical branch tips remain as protected exact-SHA archive tags. Do not delete or move these tags as routine cleanup. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
 - Every medium or large change must follow the [Agent maintenance system](docs/AGENT_MAINTENANCE.md), including documentation updates, handoff maintenance, safe cleanup, and structure checks.
 
