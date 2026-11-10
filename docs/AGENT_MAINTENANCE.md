@@ -33,6 +33,7 @@ A user may explicitly request a documentation-only task. It still needs this cla
 5. Inspect relevant source, callers, tests, and existing documentation before changing behavior.
 6. Write a short plan: requested outcome, affected components/docs, safety constraints, tests, and acceptance evidence.
 7. Preserve unrelated work. Do not stage, reset, overwrite, or delete another agent's work.
+8. Run `python scripts/fast_verify.py` for immediate local feedback. The branch-push fast gate and the main/PR full gate are defined in `docs/TEST_AUTOMATION.md`.
 
 ## 3. Documentation impact review
 

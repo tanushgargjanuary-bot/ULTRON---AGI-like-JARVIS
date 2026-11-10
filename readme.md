@@ -54,10 +54,13 @@ python scripts/verify.py
 
 The focused command is offline. The full project verification may require platform or optional packages; run it in the intended installation environment before promoting a change.
 
-### Branch workflow
+### Branch workflow and automatic tests
 
-- `main` is the only permanent branch. Use short-lived `feature/<topic>` and `fix/<topic>` branches during active work. Do not keep permanent branches per agent or model.
-- Open a pull request to `main`. CI runs on every pushed branch and every pull request.
+- `main` is the only permanent integration branch. Main-only work is the default for small, low-risk, non-parallel changes when the owner authorizes it.
+- Use a short-lived `feature/<topic>` or `fix/<topic>` branch only when isolation, parallel work, or rollback risk gives a clear benefit. Do not keep permanent branches per agent or model.
+- Every branch push runs the fast offline test gate. Pull requests to `main` and pushes to `main` also run the full Linux/Windows regression gate.
+- Run `python scripts/fast_verify.py` for quick local checks and `python scripts/verify.py` for the full suite.
+- See [Test automation](docs/TEST_AUTOMATION.md) and [Code review](docs/CODE_REVIEW.md).
 - Historical branch tips remain as protected exact-SHA archive tags. Do not delete or move these tags as routine cleanup. See [Branch archive and cleanup](docs/BRANCH_ARCHIVE.md).
 - Every medium or large change must follow the [Agent maintenance system](docs/AGENT_MAINTENANCE.md), including documentation updates, handoff maintenance, safe cleanup, and structure checks.
 

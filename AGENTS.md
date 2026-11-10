@@ -18,14 +18,22 @@ on this project at once. One page per project, a fixed section order, dates and 
 update instead of appending, one checkbox per task, and say what you did not check. A page
 another agent cannot read in ten seconds is a page that gets redone.
 
-**Three GitHub rules, no more.** Every task is an issue, and you assign it to claim it.
-Every change is a pull request, and the PR is the gate. Every PR carries evidence: the run
-ID, the numbers, and what you did not check. Issues, pull requests, actions. Ten rules
-nobody reads is the same as none.
+**Git and branch policy.** `main` is the only permanent integration branch and the
+single source of truth. Main-only work is the default for small, low-risk, non-parallel
+changes when the owner authorizes it. Use a short-lived branch only when parallel work,
+isolation, or rollback risk gives a clear benefit. Keep each branch narrow, target
+`main`, and remove it after successful integration. Never keep permanent branches per
+agent or model. Do not create an issue or PR only to add process to a tiny change.
 
-**Claim work before you start it.** An unassigned task is unclaimed. Assign the GitHub issue
-to yourself, or comment `claim: <branch> <what> <files>` on **issue #7**. Two agents on one
-branch is the same defect as two agents editing one file, and it is silent until the merge.
+**Claim overlapping work.** When multiple agents or contributors may touch the same area,
+reserve a clear scope in an existing issue or PR before editing. State the branch and
+files. A solo change does not need a compulsory claim on issue #7. Never let two agents
+edit the same working branch at the same time without explicit coordination.
+
+**CI policy.** Every branch push runs the fast offline gate in
+`.github/workflows/fast-checks.yml`. Pull requests to `main` and pushes to `main`
+also run the full Linux/Windows verification workflow. See
+[`docs/TEST_AUTOMATION.md`](docs/TEST_AUTOMATION.md). A fast pass is not a full pass.
 
 **Before planning a task, read [`docs/AGENT_WORKSPACE.md`](docs/AGENT_WORKSPACE.md) and run `python scripts/agent_workspace.py`.** Review its commit/path and uncommitted-work report, then inspect the relevant full diffs and files. The script does not fetch or merge. Use `--ack` only after you have actually reviewed the report. Preserve unrelated work from other agents.
 
