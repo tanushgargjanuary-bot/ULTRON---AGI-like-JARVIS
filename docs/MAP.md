@@ -207,7 +207,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 918 | **no docstring** | test_bugfix_pass, test_curriculum, test_edge_cases, test_hud_fixes, test_local_fallback, test_mark_integration, test_philosophy, test_shipping, test_suite_assistant, test_triggers |
 | `memory_manager.py` | 602 | **no docstring** | test_edge_cases, test_memory_changes, test_proof_gate, test_session_memory_search, test_suite_assistant, test_suite_safety |
 
-## `scripts/` — 33 modules, 9,566 lines
+## `scripts/` — 33 modules, 9,587 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -224,7 +224,7 @@ edit the module docstring instead and run it again.
 | `deep_scan.py` | 512 | Read the whole tree and report what a reviewer would complain about. | test_suite_assistant |
 | `evolve.py` | 249 | scripts/evolve.py — the missing engine for core/selfimprove.py. | test_evolve_script |
 | `fake_provider.py` | 280 | A local stand-in for any OpenAI-compatible model server. | test_live_transport |
-| `fast_verify.py` | 262 | Fast, offline verification for every branch update. | test_fast_verify |
+| `fast_verify.py` | 283 | Fast, offline verification for every branch update. | test_fast_verify |
 | `github_awesome_miner.py` | 418 | scripts/github_awesome_miner.py — Miner and curation engine for @GithubAwesome videos. | — |
 | `inventory_data.py` | 213 | scripts/inventory_data.py — what data does this install actually hold? | test_suite_algorithms |
 | `local_model.py` | 288 | Pick a local model, fetch it, and prove it answers — without guessing. | test_local_model |
