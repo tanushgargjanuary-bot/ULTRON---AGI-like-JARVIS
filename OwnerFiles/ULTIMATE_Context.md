@@ -22,7 +22,7 @@
 - Branch refs: 11 (`main` plus ten reviewed source/staging branches).
 - Recovery tags: 10; each was checked against its reviewed full commit SHA.
 - Branch refs deleted: zero.
-- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; the repository has zero tag rulesets. Deletion is blocked until an Active `archive/**/*` ruleset protects tag updates and deletions.
+- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; the repository has zero tag rulesets. Deletion remains blocked until an Active `archive/**/*` ruleset protects tag updates and deletions. Workflow hardening commit `516b772db218ff2afc934ba943b9204a9abb2eb7` now makes deletion mode query the live ruleset and verify its exact protection before it reads or changes refs.
 
 **Required owner step:** In repository Settings → Rules → Rulesets, create an Active tag ruleset for tag names matching `archive/**/*`. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** disabled. Add no bypass actors.
 
@@ -32,7 +32,7 @@ After confirming that ruleset is active, run Actions → **Archive reviewed bran
 - `confirm_delete=DELETE ARCHIVED BRANCHES`
 - `confirm_archive_tags=ARCHIVE TAGS PROTECTED`
 
-The final phrase is an owner attestation. The workflow checks the exact reviewed branch SHAs, recovery-tag targets, and open PRs. It preserves changed branches, skips branches used by open PRs, and never deletes `main`. Inspect the workflow summary before considering cleanup complete.
+The final phrase is an additional owner confirmation, not proof of protection. The workflow independently requires an Active tag ruleset that includes `refs/tags/archive/**/*`, has no exclusions, blocks updates and deletions, allows tag creation, and has no bypass actors. It also checks the exact reviewed branch SHAs, recovery-tag targets, and open PRs. It preserves changed branches, skips branches used by open PRs, and never deletes `main`. Inspect the workflow summary before considering cleanup complete.
 
 Do not delete branch refs before the archive tag ruleset is active. Do not force-update `main`.
 
