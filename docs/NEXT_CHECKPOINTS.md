@@ -1,11 +1,11 @@
 # ULTRON — live checkpoint status and next actions
 
-**Snapshot date:** 2026-11-10  
-**Current main SHA:** `b80919314f391e15ddd86e2860c2e4d66057b15b`  
-**Default/permanent integration branch:** `main`  
-**Live refs:** three — `main` plus two merged temporary refs  
-**Archive tags:** 12 protected exact-SHA tags  
-**Open pull requests:** 0  
+**Snapshot date:** 2026-11-10
+**Current main SHA:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
+**Default/permanent integration branch:** `main`
+**Live refs:** three — `main` plus two merged temporary refs
+**Archive tags:** 12 protected exact-SHA tags
+**Open pull requests:** 0
 **PR status:** #17 and #18 merged; #19 closed without merge.
 
 This file is the live action list, not permission to add product scope. The canonical handoff is `OwnerFiles/ULTIMATE_Context.md`. Follow `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_MAINTENANCE.md` before any medium or large task.
