@@ -22,7 +22,7 @@
 - Branch refs: 11 (`main` plus ten reviewed source/staging branches).
 - Recovery tags: 10; each was checked against its reviewed full commit SHA.
 - Branch refs deleted: zero.
-- The latest recorded ruleset check found no repository tag ruleset. Verify the current setting before deletion.
+- Live pre-deletion audit (2026-11-10): all 10 non-`main` branch tips match their exact-SHA recovery tags; zero open PRs; candidate is contained in `main`; the repository has zero tag rulesets. Deletion is blocked until an Active `archive/**/*` ruleset protects tag updates and deletions.
 
 **Required owner step:** In repository Settings → Rules → Rulesets, create an Active tag ruleset for tag names matching `archive/**/*`. Enable **Restrict updates** and **Restrict deletions**. Leave **Restrict creations** disabled. Add no bypass actors.
 
