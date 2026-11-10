@@ -5,6 +5,10 @@ change it makes to this project, and so should any other agent or contributor.
 Each rule below exists because breaking it produced code that looked right,
 passed a syntax check and did nothing when used.
 
+**Start from the durable handoff:** read [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) for current product scope, repository state, evidence, known limits, and next actions. The previous chat is not the source of truth.
+
+**Mandatory documentation and repository maintenance:** before medium or large work, read [`docs/AGENT_MAINTENANCE.md`](docs/AGENT_MAINTENANCE.md). Classify the task, review every relevant documentation surface, update the current handoff, and perform the safe cleanup/structure review before declaring the task complete. This is a required part of the work, not an optional final suggestion.
+
 **Read [`WORKING-PHILOSOPHY.md`](WORKING-PHILOSOPHY.md) first.** It holds the one rule
 this project runs on, how work is done, what is never allowed, and the checklist before a
 push. This file is the rule book for the code; that page is the thinking underneath it.
@@ -160,13 +164,12 @@ a small built-in fallback — instead of crashing.
 
 ## Read these first, in this order
 
-1. `OwnerFiles/README.md` — why the repository exists and what it is for.
-2. `ARCHITECTURE.md` — the six layers, where a change belongs, and every
-   invariant with the test that enforces it.
-3. `DECISIONS.md` — what the owner decided. If a change contradicts an entry,
-   the entry wins until the owner says otherwise.
-4. `GATEKEEPERS.md` — which claims already have proof, and which need his machine.
-5. `docs/MAP.md` — every module, its purpose and its test. Generated; do not edit.
+1. `OwnerFiles/ULTIMATE_Context.md` — canonical current handoff, product scope, verified state, limits, and next actions.
+2. `docs/AGENT_MAINTENANCE.md` — mandatory documentation, handoff, cleanup, and structure-maintenance procedure.
+3. `WORKING-PHILOSOPHY.md` and `AGENTS.md` — evidence-first work and non-negotiable code/runtime rules.
+4. `ARCHITECTURE.md` and `DECISIONS.md` — system boundaries and owner decisions.
+5. `GATEKEEPERS.md` — current proof status and hardware-dependent gaps.
+6. `docs/INDEX.md` and `docs/MAP.md` — documentation navigation and the generated module/test map.
 
 ## The one question to ask of any change
 

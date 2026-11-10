@@ -17,6 +17,7 @@ A recommendation is not authorization. Do not treat this playbook, a branch, a m
 
 ## Required start: understand before editing
 
+0. Read `OwnerFiles/ULTIMATE_Context.md` for current project state and `docs/AGENT_MAINTENANCE.md` for the mandatory documentation and repository-hygiene system. Classify the task before editing.
 1. Read `WORKING-PHILOSOPHY.md`, `AGENTS.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`.
 2. Read `OwnerFiles/ULTIMATE_Context.md` for current state and known traps.
 3. Read `docs/BRANCH_REVIEW.md` for the branch-review findings, then re-measure them with
@@ -69,5 +70,7 @@ For computer-use or multi-step actions, preview consequential changes, execute t
 The branch review recorded in `docs/BRANCH_REVIEW.md` is a point-in-time assessment, not a standing merge instruction. At that review `chatgpt` and `antigravity` overlapped on local-model work, and `opencode` matched `main`. Re-check current commits before relying on that finding: `python scripts/branch_report.py` prints every branch, its tip and whether two names are the same commit. The proposed local-model feature must not be merged as written: revisit owner consent and model-size/cloud-first decisions, separate observational status from settings changes in policy, keep `running_only` strict, constrain and validate detector I/O, and use deterministic machine-independent tests.
 
 ## Definition of done
+
+A medium or large task is not done until the documentation impact review, canonical handoff update, safe repository-cleanup review, and structure check in `docs/AGENT_MAINTENANCE.md` are complete. New documentation must be indexed. Generated documentation must be regenerated from its source. State when an important documentation surface was reviewed and correctly left unchanged.
 
 A change is done only when the requested behavior is implemented, safety invariants remain intact, relevant tests and gates have been run and accurately reported, generated/docs records are truthful, and remaining limitations are explicit. **“No known bug” is not “bug-free.”** Never promise zero crashes or perfect behavior.
