@@ -66,7 +66,28 @@ The 16 identical shared files at the time of comparison were:
 - `plugins/__init__.py` and `plugins/_template.py`
 - `providers/__init__.py`, `providers/audio.py`, and `providers/base.py`
 
-The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+The 62 changed shared paths include `main.py`, `ui.py`, `core/`, `actions/`, `providers/`, `memory/`, `dashboard/`, `requirements.txt`, `.gitignore`, and documentation/prompt files. A different SHA does not mean ULTRON is better or worse. It means the content must be reviewed. Twelve high-risk shared files have now had a focused semantic comparison; 50 changed shared paths remain. Do not overwrite the ULTRON copy with upstream code simply because it is newer.
+
+### Focused semantic review: 12 changed shared files
+
+A first focused review covered 12 high-risk shared files. It was a targeted comparison of changed lines and responsibilities, not a full independent security review of all 62 files.
+
+| File | Difference found in ULTRON | Decision |
+|---|---|---|
+| `core/audio_devices.py` | Adds failure telemetry around device probing and endpoint resolution. The main device-selection pattern is already shared. | Keep ULTRON's failure reporting. No upstream port identified. |
+| `core/gemini.py` | Records live-turn failures and selects the critic provider through ULTRON's purpose-based routing layer. | Keep ULTRON routing and telemetry. Do not replace them with a direct sidecar selector. |
+| `core/wake_word.py` | Records failures from feed, drain, and stop paths. | Keep the extra diagnostics. |
+| `memory/config_manager.py` | Uses shared read/modify/write helpers, config-shape validation, and safer write/error handling. The code is larger because it handles failure cases. | Keep ULTRON's managed settings path. **This is not OS credential-manager support**; the credential-store request remains open. |
+| `actions/web_search.py` | Records backend failures and gives the model a more specific distinction between search and the policy-aware `web_read` path. | Keep the narrower trigger and failure records. |
+| `.gitignore` | Keeps comments on separate lines, ignores temporary/broken config copies, and excludes more local runtime state. | Keep ULTRON's rules. Upstream's inline comments can make secret patterns fail to match. |
+| `core/tts.py` | Imports `sounddevice` only when playback is requested, records failures, and falls back to the system voice when primary speech fails. | Keep the lazy-import and fallback behavior. |
+| `dashboard/server.py` | Defaults to loopback, requires explicit owner permission and HTTPS for LAN command access, and fixes firewall-status and undefined-port defects. | Keep ULTRON's stricter network boundary. Do not copy upstream firewall-opening behavior. |
+| `actions/computer_control.py` | Escapes model-supplied window titles before PowerShell use, records failures, and declares the missing drag coordinates in the schema. | Keep the input escaping and corrected tool contract. |
+| `actions/file_controller.py` | Adds a sensitive-directory and sensitive-file deny-list on top of root confinement. It covers credential stores and browser profiles, not just paths outside the workspace. | Keep the stronger data-protection boundary. |
+| `core/plugin_loader.py` | Integrates candidate-generation loading, explicit registry inspection, and failure tracking for safe action/plugin refresh. | Keep the ULTRON leaf-generation model. |
+| `providers/engine_pipeline.py` | Adds a bounded partial-tool-result grace period and turn-detection/voice-style handling, while recording failures. | Keep the existing pipeline and its regression tests. |
+
+No upstream-only behavior from these 12 focused comparisons was identified as a safe direct copy. The useful result was validation of ULTRON-specific improvements and several concrete tests or threat cases. The next audit still has **50 of the 62 changed shared paths** to inspect. Start with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py`.
 
 ### Existing capability map
 
@@ -162,7 +183,7 @@ Before using any new FatihMakes/MARK/JARVIS resource:
 
 | Priority | Work | Reason | Acceptance evidence |
 |---|---|---|---|
-| 1 | Compare the 62 changed shared upstream files against ULTRON, starting with secrets/config, provider lifecycle, audio, reconnect, browser, and UI control | This is the remaining direct source-code delta | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
+| 1 | Compare the remaining 50 of 62 changed shared files against ULTRON, starting with `main.py`, `ui.py`, `core/appidentity.py`, `core/action_loader.py`, `actions/browser_control.py`, and `actions/dev_agent.py` | Twelve high-risk files have had a first focused review; the rest of the source delta is not yet audited | Per-file adopt/hold/reject notes, focused tests for any adopted fix |
 | 2 | Audit provider credential storage and consider OS credential-store support | Issue #117 raises a valid security concern; ULTRON still uses managed local config | Threat model, migration and rollback, no plaintext leak in logs/commits, platform tests |
 | 3 | Add reconnect/audio regression scenarios from issues #123/#134/#160/#162 | These are recurring upstream failure classes | Deterministic fake-device tests plus real owner-machine verification |
 | 4 | Design multi-agent role delegation as a separate ULTRON feature | PR #165 is conflicted/unverified; ULTRON has planning but not this full role-agent model | Role-specific tool allowlists, independent budgets, isolated context, audit trail, judge/evaluation tests |
