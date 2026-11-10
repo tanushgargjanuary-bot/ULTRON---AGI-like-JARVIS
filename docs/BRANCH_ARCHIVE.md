@@ -5,20 +5,28 @@
 
 ## Current repository state
 
-**Current `main`:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
-**Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. GitHub closed PR #15 as merged because its head became reachable from `main`. No merge commit was created; the promoted commit remains the existing candidate commit.
+**Promoted application commit:** `bd4b43d16fdf27b495209678ed72b41f21408d7c`  
+**Latest `main` head checked:** `52a4f2b04b4d1453087c6ed30031bdd90cc889d4` (documentation follow-up).  
+**Promotion:** The curated candidate was pushed to `main` with a non-forced fast-forward update and an expected old-SHA lease. PR #15 closed after its head became reachable from `main`. No merge commit was created.
 
 **Archive run:** [42760721739](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42760721739) completed successfully.
 
+### Live pre-deletion audit — 2026-11-10
+
 - Branches: **11** (`main` plus ten reviewed source/staging branches).
-- Archive tags: **10**, each verified against its exact reviewed commit SHA.
-- Branches deleted: **0**.
+- Recovery tags: **10**.
+- Branch-to-tag SHA checks: **10/10 match**.
 - Open pull requests: **0**.
-- Repository tag rulesets: **none** at the time of this check.
+- Default branch: **main**.
+- Curated candidate ancestry: `main` is 8 commits ahead and 0 behind the candidate; the candidate tip is contained in `main`.
+- Branches deleted: **0**.
+- Repository tag rulesets: **0**.
 
-PR #16 remains closed without merging. Its final web-app tree is included in the promoted candidate. Its source branch has an archive tag.
+The ten exact matching tags preserve these branch tips: `ArenaAi`, `antigravity`, `arena/4c973188-ultron-agi-like-jarvis`, `chatgpt`, `code-quality-and-security-improvements-af08a`, `feature/web-companion-mvp`, `feature/web-mvp-auth`, `integration/best-of-all-2026-11-09`, `ultron/consolidation-2026-11`, and `ultron/curated-promotion-2026-11`.
 
-The ten branch refs remain until the archive tag namespace is protected and the manual deletion workflow is run.
+PR #16 remains closed without merging. Its final web-app tree is included in the promoted candidate. Its source branch tip remains recoverable from its exact-SHA tag.
+
+**Deletion is not approved by this audit.** The archive tags are not protected because no tag ruleset exists. Do not delete branch refs until an Active ruleset protects `archive/**/*` against updates and deletions. The manual workflow's confirmation phrase is an owner attestation; the workflow itself does not verify that the ruleset exists.
 
 
 ## Reviewed branch tips
