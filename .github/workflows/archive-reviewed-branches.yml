@@ -57,6 +57,44 @@ jobs:
               throw new Error('Deletion refused: first protect the archive/**/* tag-name pattern against updates and deletion with a GitHub ruleset, then attest with the exact phrase.');
             }
 
+            // Never trust a typed attestation by itself. Verify the live repository ruleset
+            // before any archive or deletion operation. This endpoint is readable on public repos.
+            if (deleteBranches) {
+              const summaries = await github.paginate(
+                'GET /repos/{owner}/{repo}/rulesets',
+                { owner, repo, per_page: 100, includes_parents: false, targets: 'tag' },
+              );
+              const ruleSets = [];
+              for (const summary of summaries) {
+                const response = await github.request(
+                  'GET /repos/{owner}/{repo}/rulesets/{ruleset_id}',
+                  { owner, repo, ruleset_id: summary.id },
+                );
+                ruleSets.push(response.data);
+              }
+
+              const protectsArchiveTags = ruleSets.some((ruleSet) => {
+                const includes = ruleSet.conditions?.ref_name?.include || [];
+                const excludes = ruleSet.conditions?.ref_name?.exclude || [];
+                const ruleTypes = new Set((ruleSet.rules || []).map((rule) => rule.type));
+                const bypassActors = ruleSet.bypass_actors || [];
+                return ruleSet.target === 'tag' &&
+                  ruleSet.enforcement === 'active' &&
+                  includes.includes('refs/tags/archive/**/*') &&
+                  excludes.length === 0 &&
+                  ruleTypes.has('update') &&
+                  ruleTypes.has('deletion') &&
+                  !ruleTypes.has('creation') &&
+                  bypassActors.length === 0;
+              });
+
+              if (!protectsArchiveTags) {
+                throw new Error(
+                  'Deletion refused: no Active tag ruleset was found that protects refs/tags/archive/**/* against updates and deletions, allows tag creation, and has no bypass actors.',
+                );
+              }
+            }
+
             const mainRef = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });
             const candidateRef = await github.rest.git.getRef({
               owner, repo, ref: 'heads/ultron/curated-promotion-2026-11',
