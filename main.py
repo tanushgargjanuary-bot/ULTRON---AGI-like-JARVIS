@@ -2769,11 +2769,13 @@ class JarvisLive:
             # outlive the failure it described.
             self._pipeline_error = ""
             from memory.config_manager import (
-                get_pipeline, get_provider_config, get_providers, save_pipeline,
-                save_provider_config,
+                get_pipeline, get_provider_config, get_providers, load_api_keys,
+                save_pipeline, save_provider_config,
             )
             from providers import registry
-            from core.routing import Provider, Purpose, RoutingTable
+            from core.routing import (
+                Fallback, Provider, Purpose, Route, RoutingTable,
+            )
             from core.routing_runtime import (
                 RoutedLLM, configured_slot_id, provider_for_id,
             )
@@ -2828,6 +2830,25 @@ class JarvisLive:
                 route_clients[provider.key] = client
                 route_ids[provider.key] = pid
 
+            # Failover consent comes from the same file that already holds
+            # local_fallback_consent. Without it the ladder may fall back only
+            # to free and local routes: a hosted provider that runs out never
+            # switches silently to one that costs money or shares data.
+            try:
+                consents = load_api_keys() or {}
+            except Exception:
+                consents = {}
+            route_table.allow_paid_fallback = \
+                consents.get("paid_fallback_consent") is True
+            route_table.allow_data_sharing_fallback = \
+                consents.get("data_fallback_consent") is True
+            allowed = " + ".join(
+                name for name, on in (
+                    ("paid", route_table.allow_paid_fallback),
+                    ("data-sharing", route_table.allow_data_sharing_fallback),
+                ) if on) or "free and local"
+            self.ui.write_log(f"SYS: Failover ladder allows {allowed} routes.")
+
             # The selected engine provider is always present after the validation
             # above. It is the conversation default; the other purpose defaults
             # use the configured coding and sidecar providers when available.
@@ -2862,6 +2883,20 @@ class JarvisLive:
                         purpose, provider.name,
                         str(getattr(route_clients[provider.key], "model", "") or ""),
                     )
+
+            # Every other configured LLM becomes a fallback rung — local ones
+            # first, then the hosted ones in configuration order. Listing a
+            # rung is not permission to use it: the consent flags above and
+            # the quota ledger decide that at request time, in RoutedLLM.chat.
+            primary_key = active_label.lower()
+            rungs = [p for p in sorted(route_table.providers.values(),
+                                       key=lambda p: not p.local)
+                     if p.key != primary_key]
+            route_table.fallbacks = [
+                Fallback(Route(p.name,
+                               str(getattr(route_clients[p.key], "model", "") or "")))
+                for p in rungs
+            ]
 
             def persist_conversation_provider(pid: str) -> None:
                 if local is not None:
