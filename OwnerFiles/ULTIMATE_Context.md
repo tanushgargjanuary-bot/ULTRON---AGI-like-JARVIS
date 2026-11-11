@@ -1,38 +1,36 @@
 # ULTRON — canonical project handoff
 
-**Last full repository audit:** 2026-11-11
+**Last full repository audit:** 2026-11-12
 
 - **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - **Visibility:** Public
 - **Permanent integration branch:** `main`
-- **Current `main` HEAD:** `e1237d2e82ad7b981362f009baf568f7873415ea` (read from GitHub on 2026-11-11).
+- **Current `main` HEAD:** `2b31d7723baf85fbfd439aab00df44306575b0cb` (read from GitHub on 2026-11-12).
 - **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b` (runtime/test baseline; later commits are documentation-only).
-- **Latest full Linux/Windows run:** [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213) — both jobs succeeded on current `main`.
-- **Latest fast branch gate:** [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264) — 5/5 groups passed on current `main`.
-- **Latest archive run:** [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) — success; 12 exact-SHA recovery tags re-verified; no branches deleted.
-- **Live branches:** three refs — `main` plus two merged temporary refs pending guarded deletion.
-- **Open pull requests:** zero.
+- **Latest full Linux/Windows run:** [43012781547](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/43012781547) — both jobs succeeded on current `main`.
+- **Latest fast branch gate:** the per-branch runs on [PR #20](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/20). The last fully verified fast gate on `main` itself is [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264) (5/5 groups).
+- **Live branches:** `main` plus one temporary feature ref, `feat/provider-failover-wiring` (open as PR #20).
+- **Open pull requests:** one — PR #20, provider failover wiring plus the tool-path shadowing fix.
 - **Archive ruleset:** Active ID `26923169`; protects `refs/tags/archive/**/*` from updates and deletion.
-- **GitHub About description:** blank (`null` in repository metadata); owner/admin action remains.
+- **GitHub About description:** set on 2026-11-12 to "A voice-first desktop AI agent with computer control, web research, memory, and safety gates." Read back verified.
 - **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
 
-This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because the test gates and main integration are complete. Two merged temporary branch refs remain and need the guarded manual deletion workflow.
+This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because the test gates and main integration are complete.
 
 ## 1. Current status
 
-This snapshot was read from GitHub on 2026-11-11. The current source of truth is `main` at `e1237d2e82ad7b981362f009baf568f7873415ea`. The last fully verified application/test baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`; the three commits after it are documentation-only. The full and fast workflows passed on current HEAD.
+This snapshot was read from GitHub on 2026-11-12. The current source of truth is `main` at `2b31d7723baf85fbfd439aab00df44306575b0cb`. The last fully verified application/test baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`; the commits after it are documentation-only. The full workflow passed on current HEAD.
 
 - PR #15 was promoted to `main`; PR #16 was closed without merging, but its final web-app tree was included in the promoted candidate.
 - Documentation PR #17 and fast-test PR #18 are merged. PR #18 was squash-merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
 - PR #19, `chore: trigger CodeRabbit review`, is **closed without merging** (`merged=false`). Do not treat it as a durable CodeRabbit integration or assume an AI review check is required.
 - The original ten obsolete development branches were archived and deleted in [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199).
-- Three branch refs remain: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`. The two temporary refs are merged, have protected exact-SHA recovery tags, and have no open PR. Their branch refs have not been deleted.
-- There are 12 protected recovery tags. Archive workflow [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) completed successfully on current main and re-verified the tag set in archive-only mode; branch refs were preserved.
+- The last two merged temporary refs (`docs/repository-doc-audit-2026-11-10`, `ci/fast-branch-gate`) were deleted by the guarded `Archive reviewed branch tips` workflow on 2026-11-12, [run 43080080807](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/43080080807). It PASSED, deleted exactly those two refs, and kept all 12 archive tags. Branch list now: `main` plus `feat/provider-failover-wiring` (open as PR #20).
+- There are 12 protected recovery tags. They were re-verified by the guarded cleanup run above.
 - Archive ruleset **ID 26923169** is Active. It protects `refs/tags/archive/**/*` against updates and deletion, allows tag creation, and has no bypass actors.
-- To finish branch cleanup, manually dispatch `Archive reviewed branch tips` from `main` with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow rechecks the ruleset, exact refs, tag targets, and open PRs. It never deletes `main`.
-- Required-check merge blocking is **not verified**. The branch-protection API returned HTTP 403 when this audit tried to read `main` protection. The workflows run, but this audit cannot claim failed checks block merges.
-- The GitHub repository About description is blank. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub tools can read metadata but do not expose a repository-settings write action.
+- Required-check merge blocking is **verified** (2026-11-12): `main` protection was written and read back through the GitHub API with the three required checks `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about`; `enforce_admins` is false. See `docs/TEST_AUTOMATION.md`.
+- The GitHub repository About description was set on 2026-11-12 to "A voice-first desktop AI agent with computer control, web research, memory, and safety gates." and read back verified from the repository metadata.
 - The separate private owner-development repository exists but is empty. It has no commits or files and is not an active canary channel. The public repository remains the active source of truth.
 
 ### Latest full application/test verification
@@ -167,7 +165,7 @@ GitHub Actions:
 
 ## 7. Repository hygiene
 
-- `main` is the only permanent integration branch. Two merged short-lived refs remain pending guarded deletion: `docs/repository-doc-audit-2026-11-10` and `ci/fast-branch-gate`.
+- `main` is the only permanent integration branch. Merged short-lived refs are deleted by the guarded archive workflow once their recovery tags exist; the last two went on 2026-11-12 (run 43080080807). The open feature branch `feat/provider-failover-wiring` is temporary work for PR #20.
 - Twelve protected recovery tags remain under `archive/2026-11-10/`. They are history/recovery refs, not active branches.
 - Do not delete or rewrite recovery tags, `main`, project history, tests, or user-owned state as generic cleanup.
 - No workspace size/file-count budget is active. Keep caches, build outputs, temporary test files, and machine state out of Git because they are not auditable and may contain private data.
@@ -180,7 +178,7 @@ GitHub Actions:
 
 These limits matter. Do not advertise the product beyond them.
 
-1. **General provider failover:** routing primitives exist, but general live fallback/quota handling is not fully wired into the application request path.
+1. **Provider failover (conversation path):** wired on 2026-11-12, pending merge. `RoutedLLM.chat` now walks the routing table's candidates: a rung that fails before it answers is rested (quota 5 min, gone-for-today, unavailable 30 min — the one-shot ladder's rests) and the next allowed rung answers; a rung that fails after words were spoken raises instead of switching. `main.py` registers every other configured LLM as a fallback rung (local first) and reads `paid_fallback_consent` / `data_fallback_consent` from `config/api_keys.json` — a paid or data-sharing rung never answers without them. Offline tests prove the logic; a live outage across real providers is still unproven (owner-machine evidence). PR #20.
 2. **ULTRON Web:** authentication/workspace shell only; no Python worker, chat persistence, cross-device memory, or enabled composer. Sign-in also depends on Supabase/Google OAuth configuration.
 3. **Deployment:** no confirmed Vercel project/preview deployment in this handoff. Team authorization is needed before discovery/configuration.
 4. **Self-change security:** temporary rehearsal is not OS-level isolation; hostile candidate code can use the current user's permissions.
@@ -190,7 +188,7 @@ These limits matter. Do not advertise the product beyond them.
 8. **Independent review:** Reviewdog/Ruff are static checks. They are not a full semantic security audit or independent human review.
 9. **Code review depth:** previous promotion review was risk-focused, not a line-by-line independent review of every changed line.
 10. **Private owner-development repository:** it exists but is empty (no commits or files). No private development or canary workflow is active. The public repository remains the active source of truth.
-11. **Merge enforcement:** Automatic workflows run, but required status-check enforcement for `main` is not verified. The branch-protection API returned HTTP 403. Require `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` in GitHub branch protection. See `docs/TEST_AUTOMATION.md`.
+11. **Merge enforcement:** verified on 2026-11-12. `main` protection was configured and read back through the GitHub API: `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` are required status checks; `enforce_admins` is false. See `docs/TEST_AUTOMATION.md`.
 
 ## 9. Project history and branch consolidation
 
@@ -198,10 +196,10 @@ These limits matter. Do not advertise the product beyond them.
 - Branch adoption/rejection rationale is preserved in `docs/BRANCH_REVIEW.md`.
 - The curated candidate `ultron/curated-promotion-2026-11` was promoted as application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
 - The original ten historical non-main tips were preserved as exact-SHA tags, then their refs were deleted in workflow run 42779866199. Two later merged PR branch tips were added to the archive list and verified in run 42830329517.
-- Active archive ruleset is ID 26923169. Current branch state: `main` plus two archived temporary refs, 12 archive tags, zero open PRs. Manual guarded deletion remains. The latest full, fast, and archive workflows passed on `e1237d2e82ad7b981362f009baf568f7873415ea`: full [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213), fast [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264), and archive [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242).
+- The two merged temporary branch refs were deleted by the guarded archive workflow on 2026-11-12, [run 43080080807](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/43080080807) (PASSED; 12 recovery tags preserved). Branch list now: `main` plus the open PR #20 feature ref. Manual guarded deletion remains the only sanctioned way to remove a branch ref.
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
-The GitHub About description was blank at the latest metadata check. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub interface can read metadata but does not expose the repository-settings write needed to change this field; owner action remains required.
+The GitHub About description was set on 2026-11-12 to "A voice-first desktop AI agent with computer control, web research, memory, and safety gates." and read back verified from the repository metadata.
 - The separate private owner-development repository exists but is empty. It has no commits or files and is not an active canary channel. The public repository remains the active source of truth until the private workflow is deliberately configured and verified.
 
 ## 10. Upstream MARK/JARVIS resources
@@ -233,7 +231,7 @@ The strategy is selective reuse. Review the exact source SHA and licence, compar
 5. Preserve owner decisions and existing work. Do not add scope because an older roadmap suggested it.
 6. Report exact commands, commits, CI run IDs, proof counts, failures, skipped checks, known limits, and what was not inspected.
 7. No secrets, tokens, local personal files, or private machine data belong in this public repository.
-8. Before product work, complete the two visible repository-maintenance actions in this handoff: delete the two already-archived merged branch refs through the guarded archive workflow, and configure/read back the three required `main` status checks. Do not claim either action is complete until GitHub confirms it.
+8. The two repository-maintenance actions this handoff used to list — deleting the two archived merged branch refs and configuring/reading back the three required `main` status checks — are both complete and GitHub-verified (2026-11-12, runs and read-backs recorded in sections 1 and 9). Re-check the live refs before acting on any older snapshot.
 
 ## 12. Read-first navigation
 
