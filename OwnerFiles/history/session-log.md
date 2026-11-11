@@ -765,3 +765,21 @@ remove the branch ref through the guarded archive workflow. A live outage
 across real providers is still unproven (owner-machine `verify_all.py`).
 Version numbering stays 1.2.38; bumps accompany owner build commits on
 `main`.
+
+**Consent gaps closed (2026-11-12, later the same day).** Sentinel's review of
+PR #20 HEAD `b31ce5a` returned BLOCK with two medium findings; both were
+verified in the code and fixed on the same branch. (1) Automatic failover onto
+this machine skipped `local_fallback_consent`: `RoutingTable.candidates()`
+gated only paid and data-sharing rungs, so a hosted outage could silently move
+the conversation to an unapproved local model. `candidates()` now also
+requires `allow_local_fallback`, wired from `local_fallback_consent` in
+`main.py`; a locally chosen primary is unaffected. (2) `shares_data` was read
+from the catalog but no catalog row set it, so the data-sharing gate never
+fired; every cloud row in `providers/llm_openai.py` now carries
+`shares_data: True` until the service's training policy is verified
+(fail-closed; a verified service may set False in its own row). (3) Provider
+failure text reached the log unscrubbed; `core/routing_runtime.py` now masks
+URLs and credential-like runs (`_scrub`). Known limitation recorded: one
+paid/data consent flag covers all hosted accounts (no per-provider consent).
+Evidence: routing tests 52 passed; `scripts/fast_verify.py` PASS 5/5; Ruff
+(E4,E7,E9,F) clean on all changed files; `docs/MAP.md` regenerated.

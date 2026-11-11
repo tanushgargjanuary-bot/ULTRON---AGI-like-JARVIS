@@ -106,9 +106,9 @@ Other targeted fixes include stale self-change proposal protection, the planner 
 
 ### Provider routing
 
-The routing library supports route selection, quota groups, and privacy/cost restrictions. The live application wires primary conversation/evolution/critic routes and explicit conversation switching. It does **not** yet configure a general live fallback ladder or quota-limit handling in the application request path.
+The routing library supports route selection, quota groups, and privacy/cost restrictions. The live application wires primary conversation/evolution/critic routes and explicit conversation switching, and — since PR #20, pending merge — a general fallback ladder in the request path with quota rests and consent gates.
 
-Do not advertise automatic multi-provider failover as complete. Do not add paid or data-sharing fallback without a separate user-controlled setting and tests. The local fallback is a separate, explicit-consent path.
+Do not advertise automatic multi-provider failover as complete until PR #20 is merged and a live outage has been exercised. Paid, data-sharing, and on-this-machine rungs answer nothing without their `config/api_keys.json` consent flags, and every cloud catalog row carries `shares_data: True` until its service's data policy is verified. The dedicated local fallback stays a separate, explicit-consent path.
 
 ### ULTRON Web
 
