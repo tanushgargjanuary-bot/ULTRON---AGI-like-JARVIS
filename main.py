@@ -1691,14 +1691,19 @@ class JarvisLive:
             # uses, and nothing is stored until CONFIRM is pressed. The policy
             # table has said GUARDED all along; this is the call site that never
             # asked it.
-            outcome = request_memory_write(category, key, value, update_memory)
-            if outcome.get("result") == "ok":
+            #
+            # Named `write_outcome`, not `outcome`: one local assignment to
+            # `outcome` would make the module import a local for the whole
+            # method, and the web_search mirror's `outcome.unwrap(r)` below
+            # would raise UnboundLocalError on every successful search.
+            write_outcome = request_memory_write(category, key, value, update_memory)
+            if write_outcome.get("result") == "ok":
                 print(f"[Memory] 💾 save_memory (approved): {category}/{key} = {value}")
             else:
                 print(f"[Memory] ⏸ save_memory awaiting confirmation: {category}/{key}")
             if not self.ui.muted:
                 self.ui.set_state("LISTENING")
-            return types.FunctionResponse(id=fc.id, name=name, response=outcome)
+            return types.FunctionResponse(id=fc.id, name=name, response=write_outcome)
 
         loop   = asyncio.get_event_loop()
         result = "Done."
@@ -1716,7 +1721,12 @@ class JarvisLive:
                 # matches reality instead of a list written by hand. The usage line
                 # is the part that is not a claim: it says which of them have ever
                 # been reached for, so a tool nobody calls can be found and fixed.
-                from core import tool_catalog, tool_usage
+                # The module import at the top of this file already binds
+                # `tool_usage`, and it must stay the only binding: importing
+                # it here too would make the name local for the whole method,
+                # and `tool_usage.note(name)` above would raise
+                # UnboundLocalError on every approved tool call.
+                from core import tool_catalog
                 wanted = str(args.get("tool") or "").strip()
                 if wanted:
                     result = tool_catalog.describe(wanted)

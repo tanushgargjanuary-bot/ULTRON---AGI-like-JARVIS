@@ -549,6 +549,45 @@ class ReconnectWiringTests(unittest.TestCase):
         self.assertGreaterEqual(self.src.count("self._conn_streak = 0"), 2)
 
 
+class ToolPathScopeTests(unittest.TestCase):
+    """The tool path needs `tool_usage` and `outcome` from the module top.
+
+    Both names were assigned again inside `_execute_tool_approved` — a
+    redundant local import in the tools_status branch, and the save_memory
+    result variable. One local assignment makes a name local for the whole
+    function, so `tool_usage.note(name)` raised UnboundLocalError on every
+    approved tool call, and the web_search mirror's `outcome.unwrap(r)`
+    raised on every successful search. These read the source, because a real
+    run needs sounddevice and a live session.
+    """
+
+    def setUp(self):
+        self.tree = ast.parse((ROOT / "main.py").read_text(encoding="utf-8"))
+
+    def tool_method_locals(self) -> set[str]:
+        methods = [node for node in ast.walk(self.tree)
+                   if isinstance(node, ast.AsyncFunctionDef)
+                   and node.name == "_execute_tool_approved"]
+        self.assertTrue(methods, "_execute_tool_approved is gone from main.py")
+        assigned: set[str] = set()
+        for sub in ast.walk(methods[0]):
+            if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Store):
+                assigned.add(sub.id)
+            elif isinstance(sub, ast.Import):
+                assigned.update((a.asname or a.name).partition(".")[0]
+                                for a in sub.names)
+            elif isinstance(sub, ast.ImportFrom):
+                assigned.update((a.asname or a.name).partition(".")[0]
+                                for a in sub.names)
+        return assigned
+
+    def test_the_call_counter_is_not_shadowed_by_a_later_local_import(self):
+        self.assertNotIn("tool_usage", self.tool_method_locals())
+
+    def test_the_memory_write_result_is_not_named_after_the_outcome_module(self):
+        self.assertNotIn("outcome", self.tool_method_locals())
+
+
 class SecretBackupIgnoreTests(unittest.TestCase):
     """The new backup files contain the same secrets as the files they protect."""
 

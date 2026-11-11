@@ -1,0 +1,13 @@
+# Static checks for the fast branch gate (.github/workflows/fast-checks.yml
+# runs `ruff check --select E4,E7,E9,F` on every changed Python file).
+#
+# main.py is the launcher, not a library. Its imports deliberately sit after
+# the stdout reconfiguration and the launch guard: the guard must refuse a
+# doomed startup before more imports can fail it, and the crash recorder is
+# installed between the import blocks so the next import cannot crash it
+# without leaving a file (see the comments in main.py). Moving those imports
+# would change startup behaviour, so this file is exempt from E402 instead of
+# pretending the imports can move to the top.
+
+[lint.per-file-ignores]
+"main.py" = ["E402"]
