@@ -45,7 +45,7 @@ edit the module docstring instead and run it again.
 | `local_ocr.py` | 59 | Optional local-only OCR. This module never opens a network connection. | test_local_ocr |
 | `memory_consent.py` | 96 | core/memory_consent.py — remembering is a decision the user makes, not a side effect. | test_suite_safety |
 | `numerics.py` | 154 | core/numerics.py — the small amount of numerical mathematics this project needs. | test_suite_algorithms |
-| `outcome.py` | 274 | core/outcome.py — what a tool tells the model when it is done. | test_action_audit, test_autonomy_upgrades, test_metacog, test_metacog_service |
+| `outcome.py` | 274 | core/outcome.py — what a tool tells the model when it is done. | test_action_audit, test_autonomy_upgrades, test_bugfix_pass, test_metacog, test_metacog_service |
 | `paths.py` | 26 | core/paths.py — where Ultron keeps its own state, decided in one place. | test_bugfix_pass, test_crash, test_edge_cases, test_file_processor_safety |
 | `personas.py` | 92 | Assistant personas: behavior and face animation, independent of appearance. | test_personas |
 | `philosophy.py` | 399 | core/philosophy.py — the minds Ultron thinks with. | test_philosophy |
@@ -66,7 +66,7 @@ edit the module docstring instead and run it again.
 | `themes.py` | 51 | Named visual presets for the Ultron HUD; UI code owns applying the palette. | test_themes |
 | `tool_catalog.py` | 255 | core/tool_catalog.py — Ultron's knowledge of its own hands. | test_capability_guide, test_health_center, test_suite_safety |
 | `tool_prompt.py` | 120 | How a tool is described to the model — and what makes it ever get called. | test_triggers |
-| `tool_usage.py` | 108 | Which tools are actually called — the other half of a trigger. | test_triggers |
+| `tool_usage.py` | 108 | Which tools are actually called — the other half of a trigger. | test_bugfix_pass, test_triggers |
 | `trie.py` | 137 | core/trie.py — a prefix tree for "what could they be about to say?". | test_suite_algorithms |
 | `tts.py` | 473 | Text-to-Speech engines for MARK XL. | test_local_fallback, test_tts_fallback |
 | `ui_action.py` | 413 | core/ui_action.py — acting on a ref, and knowing when not to. | test_ui_action, test_ui_ladder |
@@ -175,7 +175,7 @@ edit the module docstring instead and run it again.
 | `video_player.py` | 334 | Play a video where the avatar normally is. | test_video_player |
 | `weather_report.py` | 82 | **no docstring** | test_policy, test_tool_contract |
 | `web_read.py` | 306 | Read an openly accessible web page without bypassing site restrictions. | test_capability_guide, test_readme, test_web_read |
-| `web_search.py` | 441 | **no docstring** | test_action_audit, test_mental, test_policy, test_triggers |
+| `web_search.py` | 441 | **no docstring** | test_action_audit, test_bugfix_pass, test_mental, test_policy, test_triggers |
 | `youtube_video.py` | 471 | **no docstring** | — |
 
 ## `providers/` — 11 modules, 5,054 lines
@@ -245,7 +245,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 85 modules, 22,732 lines
+## `tests/` — 85 modules, 22,771 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -258,7 +258,7 @@ edit the module docstring instead and run it again.
 | `test_bandit_weighted.py` | 111 | Regression tests for fractional bandit evidence and decayed strategy replay. | — |
 | `test_bootstrap.py` | 260 | tests/test_bootstrap.py — the double-click path. | test_bootstrap, test_suite_safety |
 | `test_branch_report.py` | 53 | Tests for the branch report: parsing, grouping, and the shallow-clone note. | — |
-| `test_bugfix_pass.py` | 657 | tests/test_bugfix_pass.py — defects found by reading the code, not by looking. | test_bugfix_pass |
+| `test_bugfix_pass.py` | 696 | tests/test_bugfix_pass.py — defects found by reading the code, not by looking. | test_bugfix_pass |
 | `test_capability_guide.py` | 97 | Routing checks for the capability guide. | — |
 | `test_collect_install.py` | 206 | Offline tests for scripts/collect_install.py. | — |
 | `test_computer_capability.py` | 22 | Computer-control failures are recorded without running real desktop actions. | — |
