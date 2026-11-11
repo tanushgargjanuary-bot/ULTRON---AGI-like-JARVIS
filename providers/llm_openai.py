@@ -110,6 +110,10 @@ _LOCAL_BUDGET = {"max_tools": "14", "max_tool_chars": "12000"}
 _LOCAL = {"model": "", **_LOCAL_BUDGET}
 _CLOUD = {"model": "", "max_tools": "", "max_tool_chars": ""}
 
+# Every cloud row carries `shares_data: True` until someone verifies that the
+# service does not train on what it receives. True is the fail-closed default:
+# the rung then needs data_fallback_consent instead of nothing. A service you
+# have verified may set `shares_data: False` in its own row below.
 CATALOG = (
     {"id": "ollama",     "label": "Ollama",
      "note": "on this computer · free", "local": True,
@@ -127,35 +131,37 @@ CATALOG = (
      "note": "on this computer · free", "local": True,
      "values": {"base_url": PRESETS["Jan"], **_LOCAL}},
     {"id": "minimax",    "label": "MiniMax",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["MiniMax"], **_CLOUD,
                 "model": "MiniMax-M3.1-Flash"}},
     {"id": "groq",       "label": "Groq",
      "note": "cloud · very fast · free tier", "local": False,
+     "shares_data": True,
      "values": {"base_url": PRESETS["Groq"], **_CLOUD}},
     {"id": "openai",     "label": "OpenAI",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["OpenAI"], **_CLOUD}},
     {"id": "deepseek",   "label": "DeepSeek",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["DeepSeek"], **_CLOUD}},
     {"id": "mistral",    "label": "Mistral",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["Mistral"], **_CLOUD}},
     {"id": "xai",        "label": "xAI (Grok)",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["xAI"], **_CLOUD}},
     {"id": "openrouter", "label": "OpenRouter",
      "note": "cloud · many models behind one key", "local": False,
+     "shares_data": True,
      "values": {"base_url": PRESETS["OpenRouter"], **_CLOUD}},
     {"id": "together",   "label": "Together",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["Together"], **_CLOUD}},
     {"id": "cerebras",   "label": "Cerebras",
-     "note": "cloud · needs a key", "local": False,
+     "note": "cloud · needs a key", "local": False, "shares_data": True,
      "values": {"base_url": PRESETS["Cerebras"], **_CLOUD}},
     {"id": "custom",     "label": "Something else",
-     "note": "type the address yourself", "local": None,
+     "note": "type the address yourself", "local": None, "shares_data": True,
      "values": {}},
 )
 

@@ -279,6 +279,26 @@ class VisionProbeTests(unittest.TestCase):
         self.assertFalse(mod._refused_the_image(ConnectionRefusedError()))
 
 
+class CatalogConsentTests(unittest.TestCase):
+    """A cloud provider row must not opt itself out of the data-consent gate.
+
+    `shares_data` defaults to False in core/routing.py, which is right for a
+    local server — it cannot train on anything it never sends. A cloud row
+    that simply forgets the key would then become a fallback that shares
+    data without permission, so the row itself must carry the fail-closed
+    default.
+    """
+
+    def test_every_cloud_catalog_row_carries_shares_data(self):
+        from providers.llm_openai import CATALOG
+
+        for row in CATALOG:
+            if row.get("local") is True:
+                self.assertNotIn("shares_data", row, row["id"])
+                continue
+            self.assertIs(row.get("shares_data"), True, row["id"])
+
+
 class AppResolutionTests(unittest.TestCase):
     """An error message is not an app.
 

@@ -70,7 +70,8 @@ class RoutingRuntimeTests(unittest.TestCase):
         table.set_route(Purpose.CRITIC, "Google AI Studio", "gemma")
         # Fallback rungs, wired the way main.py does it: local first, then
         # hosted, in configuration order. Listing is not permission — the
-        # table's consent flags and quota ledger decide that.
+        # table's consent flags (paid, data-sharing, local) and the quota
+        # ledger decide that.
         table.fallbacks = [Fallback(Route("Ollama", "qwen-coder")),
                            Fallback(Route("Google AI Studio", "gemma"))]
         logs, persisted = [], []
@@ -153,6 +154,7 @@ class RoutingRuntimeTests(unittest.TestCase):
 
     def test_chat_falls_through_when_the_primary_is_out_of_quota(self):
         runtime, logs, _ = self.build()
+        runtime.table.allow_local_fallback = True  # the local rung is permitted here
         failing = _QuotaLLM("llama-70b")
         runtime._clients["groq"] = failing
 
@@ -189,7 +191,9 @@ class RoutingRuntimeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             asyncio.run(_collect(runtime))
 
-        # Both free rungs were tried; the hosted one was never asked.
+        # No rung was tried: the local one needs local consent, and the hosted
+        # one needs paid consent. The quota log still names the failure.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
         self.assertEqual(google.tries, 0)
         self.assertTrue(any("out of quota" in line for line in logs))
 
@@ -204,6 +208,54 @@ class RoutingRuntimeTests(unittest.TestCase):
         self.assertEqual(events, [{"text": "from gemma"}])
         self.assertEqual(
             runtime.table.ledger.snapshot()["google"]["used_requests"], 1)
+
+    def test_local_fallback_stays_unused_without_consent(self):
+        runtime, logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        # The local rung was listed but never asked: failover onto this
+        # machine needs local_fallback_consent, like paid and data-sharing
+        # failover do.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
+        self.assertTrue(any("out of quota" in line for line in logs))
+
+    def test_local_fallback_answers_when_consent_is_given(self):
+        runtime, _logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+        runtime.table.allow_local_fallback = True
+
+        events = asyncio.run(_collect(runtime))
+
+        self.assertEqual(events, [{"text": "from qwen-coder"}])
+        self.assertEqual(
+            runtime.table.ledger.snapshot()["ollama"]["used_requests"], 1)
+
+    def test_failure_text_reaches_the_log_scrubbed(self):
+        runtime, logs, _ = self.build()
+
+        class _Leaky(FakeLLM):
+            async def chat(self, messages, tools=None, **kwargs):
+                self.tries += 1
+                raise RuntimeError(
+                    "connect to https://api.secret.example/v1 failed "
+                    "(api_key=sk-abcdef123456)")
+                yield  # pragma: no cover — turns this into an async generator
+
+        runtime._clients["groq"] = _Leaky("llama-70b")
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        joined = "\n".join(logs)
+        self.assertNotIn("https://", joined)
+        self.assertNotIn("sk-abcdef123456", joined)
+        self.assertIn("<url>", joined)
+        self.assertIn("<redacted>", joined)
+        # No consent, so no other rung was asked either.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
 
     def test_chat_says_why_nothing_answered(self):
         runtime, _logs, _ = self.build()

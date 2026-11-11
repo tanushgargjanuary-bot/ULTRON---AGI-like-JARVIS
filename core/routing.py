@@ -51,7 +51,7 @@ class Provider:
     quota_group: str = ""
     local: bool = False
     paid: bool = False
-    shares_data: bool = False        # free tier whose content trains the provider
+    shares_data: bool = False        # may train on the content — cloud rows carry True until verified
 
     def __post_init__(self) -> None:
         if not self.quota_group:
@@ -178,6 +178,7 @@ class RoutingTable:
     ledger: QuotaLedger = field(default_factory=QuotaLedger)
     allow_paid_fallback: bool = False
     allow_data_sharing_fallback: bool = False
+    allow_local_fallback: bool = False
 
     # ── configuration ───────────────────────────────────────────────────────
     def add_provider(self, provider: Provider) -> Provider:
@@ -218,11 +219,14 @@ class RoutingTable:
                 continue
             own_route = primary is not None and route == primary
             if not own_route:
-                # A fallback may not silently cost money or change who sees the
-                # data. Skipping it is the whole point; the caller can say so.
+                # A fallback may not silently cost money, change who sees the
+                # data, or move the conversation onto this machine. Skipping
+                # it is the whole point; the caller can say so.
                 if provider.paid and not self.allow_paid_fallback:
                     continue
                 if provider.shares_data and not self.allow_data_sharing_fallback:
+                    continue
+                if provider.local and not self.allow_local_fallback:
                     continue
             allowed.append(route)
         return allowed
@@ -232,8 +236,8 @@ class RoutingTable:
         if not options:
             raise Refusal(
                 "no provider is available for this request — every route is "
-                "exhausted, or the only fallbacks left would cost money or share "
-                "the data without permission"
+                "exhausted, or the only fallbacks left would cost money, share "
+                "the data, or run on this machine without permission"
             )
         return options[0]
 

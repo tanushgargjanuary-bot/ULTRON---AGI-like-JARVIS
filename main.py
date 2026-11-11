@@ -2841,9 +2841,10 @@ class JarvisLive:
                 route_ids[provider.key] = pid
 
             # Failover consent comes from the same file that already holds
-            # local_fallback_consent. Without it the ladder may fall back only
-            # to free and local routes: a hosted provider that runs out never
-            # switches silently to one that costs money or shares data.
+            # local_fallback_consent. Without these flags the ladder does not
+            # switch at all: a provider that runs out never moves the
+            # conversation silently to one that costs money, shares data, or
+            # runs on this machine uninvited.
             try:
                 consents = load_api_keys() or {}
             except Exception:
@@ -2852,11 +2853,18 @@ class JarvisLive:
                 consents.get("paid_fallback_consent") is True
             route_table.allow_data_sharing_fallback = \
                 consents.get("data_fallback_consent") is True
+            # The same consent that allows the dedicated local-fallback path
+            # allows an automatic failover rung on this machine. Without it a
+            # hosted outage must not move the conversation to an unapproved
+            # local model, even though listing it as a rung is harmless.
+            route_table.allow_local_fallback = \
+                consents.get("local_fallback_consent") is True
             allowed = " + ".join(
                 name for name, on in (
                     ("paid", route_table.allow_paid_fallback),
                     ("data-sharing", route_table.allow_data_sharing_fallback),
-                ) if on) or "free and local"
+                    ("local", route_table.allow_local_fallback),
+                ) if on) or "no fallback routes"
             self.ui.write_log(f"SYS: Failover ladder allows {allowed} routes.")
 
             # The selected engine provider is always present after the validation

@@ -9,6 +9,7 @@ never switch once words were spoken.
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -22,6 +23,20 @@ from core.routing import (
 _QUOTA_REST_S = 300.0          # 429 — out of quota for minutes, not seconds
 _GONE_REST_S = 6 * 3600.0      # 404/403 — not coming back today
 _UNAVAILABLE_REST_S = 1800.0   # 503/504/timeout — usually passes
+
+# Provider error text is third-party content, and it reaches the app's log.
+# Mask what must never end up there: request URLs and anything shaped like a
+# credential. Keys normally stay in headers, so this is a backstop, not the
+# main defence.
+_URL_TEXT = re.compile(r"https?://\S+")
+_KEY_TEXT = re.compile(
+    r"(?i)(bearer\s+\S+|api[_-]?key\s*[=:]\s*\S+|sk-[A-Za-z0-9_-]{8,})"
+)
+
+
+def _scrub(text: str) -> str:
+    """Return provider error text with URLs and credential-like runs masked."""
+    return _KEY_TEXT.sub("<redacted>", _URL_TEXT.sub("<url>", text))
 
 
 def _fail_kind(message: str) -> str:
@@ -187,7 +202,7 @@ class RoutedLLM:
                        f"{_UNAVAILABLE_REST_S / 60:.0f} minutes")
         else:
             self._note(f"{route.describe()} failed ({type(error).__name__}: "
-                       f"{str(error)[:140]})")
+                       f"{_scrub(str(error))[:140]})")
 
     def handle_switch(self, text: str) -> str | None:
         """Apply a locally parsed conversation-route command, or return None.
