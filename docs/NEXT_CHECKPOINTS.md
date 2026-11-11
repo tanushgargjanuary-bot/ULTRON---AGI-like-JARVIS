@@ -1,6 +1,7 @@
 # ULTRON — live checkpoint status and next actions
 
-**Snapshot date:** 2026-11-10
+**Snapshot date:** 2026-11-11
+**Current main HEAD:** `e1237d2e82ad7b981362f009baf568f7873415ea`
 **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
 **Default/permanent integration branch:** `main`
 **Live refs:** three — `main` plus two merged temporary refs
@@ -8,15 +9,15 @@
 **Open pull requests:** 0
 **PR status:** #17 and #18 merged; #19 closed without merge.
 
-This file is the live action list, not permission to add product scope. The canonical handoff is `OwnerFiles/ULTIMATE_Context.md`. Follow `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_MAINTENANCE.md` before any medium or large task. The current `main` HEAD is not copied into this snapshot; read it from GitHub or run `git fetch origin main` followed by `git rev-parse origin/main` before editing.
+This file is the live action list, not permission to add product scope. The canonical handoff is `OwnerFiles/ULTIMATE_Context.md`. Follow `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_MAINTENANCE.md` before any medium or large task. The HEAD above was read from GitHub on 2026-11-11. Refresh it before every later task.
 
 ## 1. Latest full application/test verification
 
 | Lane | Run | Result |
 |---|---|---|
-| Fast branch gate | [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649) | 5/5 groups passed in 12.68 seconds |
-| Full Linux/Windows gate | [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003) | Both passed; 2,073 tests per platform |
-| Archive workflow | [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) | Passed; 12 exact-SHA archive tags verified |
+| Fast branch gate | [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264) | Passed 5/5 groups on current main |
+| Full Linux/Windows gate | [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213) | Both jobs succeeded on current main |
+| Archive workflow | [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) | Passed; 12 exact-SHA tags re-verified; archive-only mode |
 
 Fast gate: 309 Python files parsed; 19 runner edge tests, 30 policy/confirmation tests, 8 README tests, and 1,000 seeded stress scenarios passed. Ruff, Git diff checks, and generated-map validation passed.
 
@@ -123,4 +124,4 @@ Do not deploy, create a project, or add secrets without owner authorization.
 - The initial ten historical branch refs were archived, protected, and deleted in [42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199).
 - PR #17 (handoff documentation) and PR #18 (automatic branch test gate) were merged.
 - Twelve archive tags are verified by the current archive workflow.
-- The automatic fast and full verification lanes are running successfully on current main SHA `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- The fast and full verification lanes passed on current main SHA `e1237d2e82ad7b981362f009baf568f7873415ea` in runs 42876494264 and 42876494213. The application/test code is unchanged from baseline `b80919314f391e15ddd86e2860c2e4d66057b15b`.

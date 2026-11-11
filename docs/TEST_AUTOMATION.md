@@ -6,14 +6,14 @@ Every branch update needs quick feedback. A complete ULTRON verification run is 
 
 The repository now uses two lanes. The fast lane runs on every branch push. The full lane runs on pushes to **main** and pull requests that target **main**.
 
-Latest verified baseline: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+Latest verified main commit: `e1237d2e82ad7b981362f009baf568f7873415ea` (2026-11-10; documentation-only commits after the application/test baseline).
 
-- Fast gate: [run 42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649), 5/5 groups in 12.68 seconds.
-- Full Linux/Windows gate: [run 42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003), both jobs passed; 2,073 tests per platform, 1,000 seeded stress scenarios and 15 targeted mutations per platform.
-- Archive workflow: [run 42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028), passed; 12 exact-SHA tags verified.
+- Fast gate: [run 42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264), success; 5/5 groups. It parsed 309 Python files, passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 seeded stress scenarios. Ruff, diff checks, and generated-map validation passed.
+- Full Linux/Windows gate: [run 42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213), both jobs succeeded on `e1237d2e82ad7b981362f009baf568f7873415ea`. The application/test baseline `b80919314f391e15ddd86e2860c2e4d66057b15b` recorded 2,073 tests per platform, 1,000 seeded stress scenarios, and 15 targeted mutations per platform; the current workflow re-ran the same verification scripts successfully.
+- Archive workflow: [run 42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242), success; 12 exact-SHA recovery tags re-verified in archive-only mode. Branch refs were preserved.
 
 
-These workflows produce automatic status checks. They do **not** guarantee that GitHub blocks a merge when a check fails. On 2026-11-10, the connected GitHub integration returned HTTP 403 when reading `main` branch protection. Required-check enforcement is therefore **not verified** by this audit.
+These workflows produce automatic status checks. They do **not** guarantee that GitHub blocks a merge when a check fails. On 2026-11-11, the connected GitHub integration returned HTTP 403 when reading `main` branch protection. Required-check enforcement is therefore **not verified** by this audit.
 
 ## Lane 1 — fast branch gate
 
@@ -97,7 +97,7 @@ To make the test system a hard merge gate, configure branch protection for `main
 - `linux — suite and instruments`
 - `windows — the machine the claims are about`
 
-The fast gate also runs on every branch push. The full checks run on pull requests to `main` and pushes to `main`. Verify the required-check list in GitHub after changing repository settings. This session could not inspect or change branch protection because the API returned HTTP 403. Do not claim that failed checks block merges until the settings have been read back and verified.
+The fast gate also runs on every branch push. The full checks run on pull requests to `main` and pushes to `main`. Verify the required-check list in GitHub after changing repository settings. The 2026-11-11 audit could not inspect or change branch protection because the API returned HTTP 403. Do not claim that failed checks block merges until the settings have been read back and verified.
 
 ## Failure handling
 

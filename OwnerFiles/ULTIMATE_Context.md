@@ -1,14 +1,15 @@
 # ULTRON — canonical project handoff
 
-**Last full repository audit:** 2026-11-10
+**Last full repository audit:** 2026-11-11
 
 - **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - **Visibility:** Public
 - **Permanent integration branch:** `main`
-- **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
-- **Latest full Linux/Windows run:** [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003) — both platforms passed.
-- **Latest fast branch gate:** [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649) — 5/5 groups passed in 12.68 seconds.
-- **Latest archive run:** [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) — passed; 12 exact-SHA archive tags verified.
+- **Current `main` HEAD:** `e1237d2e82ad7b981362f009baf568f7873415ea` (read from GitHub on 2026-11-11).
+- **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b` (runtime/test baseline; later commits are documentation-only).
+- **Latest full Linux/Windows run:** [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213) — both jobs succeeded on current `main`.
+- **Latest fast branch gate:** [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264) — 5/5 groups passed on current `main`.
+- **Latest archive run:** [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) — success; 12 exact-SHA recovery tags re-verified; no branches deleted.
 - **Live branches:** three refs — `main` plus two merged temporary refs pending guarded deletion.
 - **Open pull requests:** zero.
 - **Archive ruleset:** Active ID `26923169`; protects `refs/tags/archive/**/*` from updates and deletion.
@@ -16,18 +17,18 @@
 - **License:** CC BY-NC 4.0. Attribution to FatihMakes / 0101e5 is required. Commercial use is not permitted; see `LICENSE`.
 
 
-This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because the test gates and main integration are complete. Two merged temporary branch refs still need the guarded deletion workflow.
+This file is the durable handoff. A new chat or agent must be able to continue from the repository without access to earlier conversations. Read this page first, then follow the linked source-of-truth documents. Do not infer that every planned capability is complete because the test gates and main integration are complete. Two merged temporary branch refs remain and need the guarded manual deletion workflow.
 
 ## 1. Current status
 
-This snapshot was read from GitHub on 2026-11-10. `main` is the current source of truth. The last fully verified application/test baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`. The current `main` HEAD may be newer because later commits only updated documentation. Re-read `git fetch origin main` and `git rev-parse origin/main` before acting.
+This snapshot was read from GitHub on 2026-11-11. The current source of truth is `main` at `e1237d2e82ad7b981362f009baf568f7873415ea`. The last fully verified application/test baseline is `b80919314f391e15ddd86e2860c2e4d66057b15b`; the three commits after it are documentation-only. The full and fast workflows passed on current HEAD.
 
 - PR #15 was promoted to `main`; PR #16 was closed without merging, but its final web-app tree was included in the promoted candidate.
 - Documentation PR #17 and fast-test PR #18 are merged. PR #18 was squash-merged as `eeacaf2ae2224edd91074a3853ae0ecff47c41a7`.
 - PR #19, `chore: trigger CodeRabbit review`, is **closed without merging** (`merged=false`). Do not treat it as a durable CodeRabbit integration or assume an AI review check is required.
 - The original ten obsolete development branches were archived and deleted in [run 42779866199](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42779866199).
 - Three branch refs remain: `main`, `docs/repository-doc-audit-2026-11-10`, and `ci/fast-branch-gate`. The two temporary refs are merged, have protected exact-SHA recovery tags, and have no open PR. Their branch refs have not been deleted.
-- There are 12 protected recovery tags. Archive workflow [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) completed successfully on the current main SHA and verified the tag set.
+- There are 12 protected recovery tags. Archive workflow [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) completed successfully on current main and re-verified the tag set in archive-only mode; branch refs were preserved.
 - Archive ruleset **ID 26923169** is Active. It protects `refs/tags/archive/**/*` against updates and deletion, allows tag creation, and has no bypass actors.
 - To finish branch cleanup, manually dispatch `Archive reviewed branch tips` from `main` with `delete_branches=true`, `confirm_delete=DELETE ARCHIVED BRANCHES`, and `confirm_archive_tags=ARCHIVE TAGS PROTECTED`. The workflow rechecks the ruleset, exact refs, tag targets, and open PRs. It never deletes `main`.
 - Required-check merge blocking is **not verified**. The branch-protection API returned HTTP 403 when this audit tried to read `main` protection. The workflows run, but this audit cannot claim failed checks block merges.
@@ -36,7 +37,7 @@ This snapshot was read from GitHub on 2026-11-10. `main` is the current source o
 
 ### Latest full application/test verification
 
-Full Linux/Windows run: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003). Both jobs completed successfully on the application/test baseline `b80919314f391e15ddd86e2860c2e4d66057b15b`. Later commits in this handoff cycle were documentation-only.
+Full Linux/Windows run: [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213). Both jobs completed successfully on current `main` SHA `e1237d2e82ad7b981362f009baf568f7873415ea`. The three commits after application/test baseline `b80919314f391e15ddd86e2860c2e4d66057b15b` were documentation-only. The baseline measured 2,073 tests per platform, 1,000 stress scenarios, and 15 targeted mutations per platform; the current full workflow reran the same verification scripts successfully.
 
 | Evidence | Linux | Windows |
 |---|---:|---:|
@@ -50,9 +51,9 @@ Full Linux/Windows run: [42855681003](https://github.com/tanushgargjanuary-bot/U
 
 Linux also reports 17 instrument checks passed, 2 failed, and 15 skipped. The two non-blocking failures are screen capture without a display server and audio initialization without PulseAudio. These are hosted-runner limits. They do not prove the owner's actual display or audio setup.
 
-Fast branch gate: [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649). It parsed 309 Python files and passed 19 fast-runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 deterministic stress scenarios. Changed-file Ruff, Git diff checks, and generated `docs/MAP.md` validation passed. All five fast-gate groups passed in 12.68 seconds. The stress suite made no live model or provider request.
+Fast branch gate: [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264). It parsed 309 Python files and passed 19 fast-runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 deterministic stress scenarios. Changed-file Ruff, Git diff checks, and generated `docs/MAP.md` validation passed. All five fast-gate groups passed. The stress suite made no live model or provider request.
 
-The archive workflow [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028) passed and verified all 12 exact-SHA archive tags.
+The archive workflow [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242) passed and verified all 12 exact-SHA archive tags. It ran archive-only mode and preserved all branch refs.
 
 **Evidence limits:** PARTIAL and SKIPPED are not passes. Hosted CI cannot prove the owner's microphone, speaker, camera, GPU, display scaling, browser installation, provider credentials, or interactive workflows. Run `python scripts/verify_all.py` on the target Windows machine when authorized.
 
@@ -197,7 +198,7 @@ These limits matter. Do not advertise the product beyond them.
 - Branch adoption/rejection rationale is preserved in `docs/BRANCH_REVIEW.md`.
 - The curated candidate `ultron/curated-promotion-2026-11` was promoted as application commit `bd4b43d16fdf27b495209678ed72b41f21408d7c`.
 - The original ten historical non-main tips were preserved as exact-SHA tags, then their refs were deleted in workflow run 42779866199. Two later merged PR branch tips were added to the archive list and verified in run 42830329517.
-- Active archive ruleset is ID 26923169. Current branch state: `main` plus two archived temporary refs, 12 archive tags, zero open PRs. Manual guarded deletion remains. The latest full, fast, and archive workflows passed on `b80919314f391e15ddd86e2860c2e4d66057b15b`: full [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003), fast [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649), and archive [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028).
+- Active archive ruleset is ID 26923169. Current branch state: `main` plus two archived temporary refs, 12 archive tags, zero open PRs. Manual guarded deletion remains. The latest full, fast, and archive workflows passed on `e1237d2e82ad7b981362f009baf568f7873415ea`: full [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213), fast [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264), and archive [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242).
 - Full SHA evidence and restore instructions are in `docs/BRANCH_ARCHIVE.md`. The adoption/rejection audit is in `docs/BRANCH_REVIEW.md`.
 
 The GitHub About description was blank at the latest metadata check. Proposed short description: “A voice-first desktop AI agent with computer control, web research, memory, and safety gates.” The connected GitHub interface can read metadata but does not expose the repository-settings write needed to change this field; owner action remains required.

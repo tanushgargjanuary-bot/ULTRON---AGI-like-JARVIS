@@ -698,3 +698,21 @@ Fast gate [42854158231](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-li
 5. Treat Vercel preview as owner-authorized work only. Do not create projects or add secrets without approval.
 
 **Scope.** Documentation and handoff only. No application runtime source or test code changed. `docs/MAP.md` was not regenerated because no Python module/test relationship changed. No branch refs or archive tags were deleted. No external AI review integration was enabled.
+
+
+## 2026-11-11 — ULTRON repository coherence and live-state audit
+
+**Request.** Audit whether the repository's code and documentation agree. Correct stale handoff and navigation details without inventing completion or removing history.
+
+**Live state checked.** Current `main`: `e1237d2e82ad7b981362f009baf568f7873415ea`. Branch refs: `main`, `docs/repository-doc-audit-2026-11-10` (`9074b986c9379ff2b2f320916616763a735df972`), and `ci/fast-branch-gate` (`e0072889ca333f5b8193f7d85b4ef912bf4aa10d`). There are 12 exact-SHA archive tags and zero open PRs. All three workflow runs succeeded on current main: full Linux/Windows [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213), fast gate [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264), archive-only [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242).
+
+**Findings corrected.**
+- Current handoff, next-checkpoint, test automation, and branch archive guides cited an older main/test run and did not separate the live HEAD from the application/test baseline.
+- The successful archive workflow was archive-only. The two temporary branch refs still exist; they were not deleted.
+- `docs/INDEX.md` used `docs/CAPABILITY_AWARENESS.md` from inside `docs/`, which pointed to a non-existent `docs/docs/` path.
+
+**Changes.** Updated current commit and workflow references in `OwnerFiles/ULTIMATE_Context.md`, `docs/NEXT_CHECKPOINTS.md`, `docs/TEST_AUTOMATION.md`, and `docs/BRANCH_ARCHIVE.md`. Clarified that the application/test baseline remains `b80919314f391e15ddd86e2860c2e4d66057b15b`, while the current documentation-only HEAD is `e1237d2e82ad7b981362f009baf568f7873415ea`. Fixed the capability-guide link in `docs/INDEX.md`.
+
+**Evidence and limits.** The fast gate passed 5/5 groups: 309 Python files parsed, 19 runner edge tests, 30 policy/confirmation tests, 8 README tests, 1,000 seeded stress scenarios, Ruff, whitespace checks, and generated-map validation. Current full Linux and Windows jobs both passed. The baseline ran 2,073 tests per platform, 1,000 stress scenarios, and 15 targeted mutations per platform; the current full workflow reran the same verification scripts after documentation-only commits. Proof counts: Linux 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. Hosted Linux instruments: 17 passed / 2 failed / 15 skipped (display server and PulseAudio unavailable).
+
+**Still open.** Two temporary branch refs are archived and merged, but remain present. Delete them only through the documented manual workflow after its explicit confirmations and ruleset checks. Branch-protection read returned HTTP 403, so merge-blocking enforcement is unverified. GitHub About description remains blank. Owner-machine hardware/provider checks were not run. No application source or tests changed; `docs/MAP.md` was not regenerated. Historical records remain untouched.

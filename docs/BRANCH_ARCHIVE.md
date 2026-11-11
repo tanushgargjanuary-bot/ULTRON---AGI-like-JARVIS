@@ -1,6 +1,6 @@
 # Branch archive and cleanup
 
-**Review date:** 2026-11-10  
+**Review date:** 2026-11-11  
 **Target end state:** `main` is the only permanent branch. Historical tips remain recoverable through exact-SHA archive tags protected by a GitHub ruleset.
 
 ## Current repository state
@@ -23,15 +23,16 @@
 - The ruleset targets `refs/tags/archive/**/*`, blocks updates and deletions, allows tag creation, and has no bypass actors.
 
 The live post-cleanup audit confirmed that every reviewed historical commit remains reachable through its protected archive tag.
-### Current follow-up state — 2026-11-10
+### Current follow-up state — 2026-11-11
 
-- Last fully verified application/test baseline: `b80919314f391e15ddd86e2860c2e4d66057b`. Re-read the live `main` HEAD before any cleanup.
-- Latest full verification: [42855681003](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681003), Linux and Windows passed 2,073 tests each.
-- Latest fast gate: [42855680649](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855680649), 5/5 groups in 12.68 seconds.
-- Latest archive run: [42855681028](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42855681028), success; 12 protected tags verified.
+- Current `main` HEAD: `e1237d2e82ad7b981362f009baf568f7873415ea` (2026-11-11).
+- Last fully verified application/test baseline: `b80919314f391e15ddd86e2860c2e4d66057b15b`; later commits are documentation-only.
+- Latest full verification: [42876494213](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494213), both Linux and Windows jobs passed on current `main`.
+- Latest fast gate: [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264), success; 5/5 groups on current `main`.
+- Latest archive run: [42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242), success; all 12 exact-SHA tags re-verified in archive-only mode.
 - PR #17 and PR #18 are merged. PR #19 is closed without merge.
 - Current refs: **three branches** (`main` and two merged temporary refs); **zero open PRs**.
-- Current main ref: `b80919314f391e15ddd86e2860c2e4d66057b15b`.
+- Current main ref: `e1237d2e82ad7b981362f009baf568f7873415ea`.
 - The two remaining refs are `docs/repository-doc-audit-2026-11-10` at `9074b986c9379ff2b2f320916616763a735df972` and `ci/fast-branch-gate` at `e0072889ca333f5b8193f7d85b4ef912bf4aa10d`.
 - Their recovery tags are `archive/2026-11-10/docs-repository-doc-audit-2026-11-10-9074b986` and `archive/2026-11-10/ci-fast-branch-gate-e0072889`. The archive workflow verified both exact targets.
 - Active archive ruleset `26923169` protects `refs/tags/archive/**/*` from updates and deletion, permits creation, and has no bypass actors.
@@ -43,7 +44,7 @@ The live post-cleanup audit confirmed that every reviewed historical commit rema
 
 | Branch | Exact reviewed tip | Treatment |
 |---|---|---|
-| `main` | `b80919314f391e15ddd86e2860c2e4d66057b15b` at latest verified check | Keep; never delete |
+| `main` | `e1237d2e82ad7b981362f009baf568f7873415ea` at the 2026-11-11 live audit | Keep; never delete |
 | `docs/repository-doc-audit-2026-11-10` | `9074b986c9379ff2b2f320916616763a735df972` | PR #17 merged; exact tip archived; branch ref pending guarded deletion |
 | `ci/fast-branch-gate` | `e0072889ca333f5b8193f7d85b4ef912bf4aa10d` | PR #18 merged; exact tip archived; branch ref pending guarded deletion |
 | `ArenaAi` | `8f4803b8812e4cae1e79755381eda69f5b76ee81` | Deleted; exact tip retained by protected archive tag |
