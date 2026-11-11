@@ -783,3 +783,11 @@ URLs and credential-like runs (`_scrub`). Known limitation recorded: one
 paid/data consent flag covers all hosted accounts (no per-provider consent).
 Evidence: routing tests 52 passed; `scripts/fast_verify.py` PASS 5/5; Ruff
 (E4,E7,E9,F) clean on all changed files; `docs/MAP.md` regenerated.
+
+The branch's first full verify run (43084080659) failed on both OS jobs for
+one reason only: `RealPolicyTests.test_main_py_routes_save_memory_through_the_gate`
+grepped a fixed 1,200-character window of `main.py`, and the tool-path
+rename's comments pushed `request_memory_write` past the window. The test now
+reads the whole `save_memory` branch up to the next dispatch entry, so the
+assertion is about the call site, not about comment length. Both OS jobs
+failed only on this test (failures=1; 2,080 tests each).
