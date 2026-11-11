@@ -790,4 +790,7 @@ grepped a fixed 1,200-character window of `main.py`, and the tool-path
 rename's comments pushed `request_memory_write` past the window. The test now
 reads the whole `save_memory` branch up to the next dispatch entry, so the
 assertion is about the call site, not about comment length. Both OS jobs
-failed only on this test (failures=1; 2,080 tests each).
+failed only on this test (failures=1; 2,080 tests each). The gate also flagged
+31 pre-existing duplicate-import findings in `tests/test_suite_safety.py`
+(each merged section re-imported its stdlib/core names); those lines are now
+removed, ruff is clean on the file, and the 69 tests still pass.

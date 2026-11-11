@@ -3248,3 +3248,4 @@ Consent gaps closed (2026-11-12): Sentinel's PR #20 review found automatic local
 Evidence: pytest tests/test_routing_runtime.py tests/test_routing.py -q = 52 passed; scripts/fast_verify.py = PASS 5/5 (0 live provider requests); Ruff E4,E7,E9,F = clean on all changed files; docs/MAP.md regenerated.
 Next: unchanged - merge PR #20 only when the three required checks are green.
 CI run 43084080659 failed on both OS jobs for one test only: the save_memory call-site test grepped a fixed 1,200-char window that the rename's comments had grown past. The test now reads the whole branch up to the next dispatch entry (tests/test_suite_safety.py). Local evidence: pytest tests/test_suite_safety.py -q = 69 passed, 6 subtests passed.
+The same gate run also flagged 31 pre-existing duplicate-import findings in tests/test_suite_safety.py (each merged section re-imported its stdlib/core names; ruff E4,E7,E9,F on that file is now clean, 69 tests still pass).
