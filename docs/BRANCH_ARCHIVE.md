@@ -1,6 +1,6 @@
 # Branch archive and cleanup
 
-**Review date:** 2026-11-11  
+**Review date:** 2026-11-11
 **Target end state:** `main` is the only permanent branch. Historical tips remain recoverable through exact-SHA archive tags protected by a GitHub ruleset.
 
 ## Current repository state
