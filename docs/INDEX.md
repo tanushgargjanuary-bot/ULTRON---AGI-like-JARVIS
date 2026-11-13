@@ -29,7 +29,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | Guide | Subject |
 |---|---|
 | [`CAPABILITIES.md`](CAPABILITIES.md) | Candidate capabilities that are designed but not necessarily built |
-| [`SKILLS.md`](SKILLS.md) | Skill families, bounded learning, and extension limits |
+| [`SKILLS.md`](SKILLS.md) | Skill recipes, the written `skills/*/SKILL.md` layer, bounded learning, and extension limits |
 | [`TOOL_SUGGESTIONS.md`](TOOL_SUGGESTIONS.md) | Tools considered, accepted, or refused, with reasons |
 | [`CURRICULUM.md`](CURRICULUM.md) | Subjects, syllabus sources, units, and reading paths |
 | [`MENTAL.md`](MENTAL.md) | Curriculum topics implemented as algorithms and their code locations |

@@ -22,8 +22,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from actions import skill_guide
-from core import skill_docs
+from actions import skill_guide  # noqa: E402
+from core import skill_docs  # noqa: E402
 
 
 def write(path: Path, text: str) -> None:

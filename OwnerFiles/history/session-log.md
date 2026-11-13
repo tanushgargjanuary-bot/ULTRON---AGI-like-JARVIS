@@ -794,3 +794,39 @@ failed only on this test (failures=1; 2,080 tests each). The gate also flagged
 31 pre-existing duplicate-import findings in `tests/test_suite_safety.py`
 (each merged section re-imported its stdlib/core names); those lines are now
 removed, ruff is clean on the file, and the 69 tests still pass.
+
+---
+
+## 2026-11-14 - PR #20 merged; computer-use and written skills
+
+**Asked for.** Finish PR #20, then implement a curated Claude Code skill set
+with the computer-use additions and refinements, so the assistant is always
+aware of background processes.
+
+**Done for #20.** The fast gate was failing on a stale `docs/MAP.md`; it was
+regenerated. Windows failed only `memory_approval`: comments had pushed the
+guarded call past the proof gate's 1,200-character window, so the explanation
+moved above the `save_memory` branch and the gate reads the call again
+(`4ccc561`). Fast gate PASS 5/5, `memory_approval` PROVEN, 21 gate tests OK.
+The three required checks passed and the PR was squash-merged as `252a299`.
+
+**Built on `feat/computer-use-skills` (`cc94ecd`).**
+`core/situation.py` reads what is open - front app, known apps, versions - and
+never window titles or command lines outside the Minecraft case. Minecraft's
+version comes from the game's `--version` argument or the launcher's last-used
+profile. `actions/situation_report.py` answers out loud; `background_status`
+does the same inside the skill engine; `main.py` puts one compact line into the
+session prompt. `core/skill_docs.py` finally loads `skills/<name>/SKILL.md`,
+which nothing read before, and `skill_guide` lists or reads a document on
+demand. Six documents added (computer use, background awareness, development
+method, coding guardrails, security review, documents) and three read-only
+recipes (background_awareness, computer_preflight, desktop_evidence).
+
+**Evidence.** Fast gate PASS 5/5, 315 files. Proof gate 26 PROVEN, 0 FAILED,
+11 PARTIAL. New tests 37. Contract, audit, packs and process-watch tests 76.
+`docs/MAP.md` regenerated. A false label found by running it for real -
+`opencode.exe` matched the "code" pattern and was reported as VS Code - is now
+covered by a test, and the table matches whole process names only.
+
+**Left.** A live Minecraft session to confirm the game path end to end. The
+PARTIAL proof rows are unchanged and are not caused by this work.

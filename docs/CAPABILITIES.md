@@ -35,6 +35,7 @@ deterministic replacement for sending a screenshot to a model.
 | Capability | What it is | What it buys | Cost | Risk |
 |---|---|---|---|---|
 | **WMI / CIM** | `Win32_*` classes, `MSAcpi_ThermalZoneTemperature`, battery, disk, GPU | Real answers about the machine, not guesses: why it is slow, what is spinning the fan, what is on the network | Slow calls (100 ms+), must be off the UI thread | Low |
+| **Process and app inventory** | The process table plus each program's own version metadata | "Minecraft 1.21.4 is open" instead of "a Java process", and a second copy is never started by accident. **Built** (`core/situation.py`, `actions/situation_report.py`, `background_status`) | One process pass at session start; versions cached by file time | Reads process names. Never window titles, documents or command lines |
 | **ETW / `Get-Counter`** | Performance counters, per-process CPU/IO | "What is using my disk right now" answered precisely | Parsing counter names is fiddly | Low |
 | **Power and session events** | Lock, unlock, sleep, resume, display off | Ultron stops talking when the screen locks, resumes the digest on unlock, knows why a task failed at 03:00 | Event subscription in `main.py` | Low, and it is privacy-positive |
 | **FileSystemWatcher** | Change notifications for a folder | "Tell me when a file lands in Downloads" without polling | Handle lifetime; must not watch the whole drive | Low |

@@ -24,8 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from actions import situation_report as report_action
-from core import situation
+from actions import situation_report as report_action  # noqa: E402
+from core import situation  # noqa: E402
 
 
 class NameTests(unittest.TestCase):
