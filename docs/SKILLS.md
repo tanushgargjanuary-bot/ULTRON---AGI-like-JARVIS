@@ -6,10 +6,19 @@ and **meta-cognition**.
 
 ## What a skill is here
 
-A skill in this project is a **deterministic recipe**: a named list of tool calls
-with fixed arguments. It is not generated code, it is not a prompt, and it cannot
-do anything a tool cannot already do. `plugins/custom_jarvis.py` exposes them as
-`list_skills`, `run_skill` and `preview_skill`.
+A skill in this project is one of two things, and the difference is deliberate:
+
+- a **deterministic recipe**: a named list of tool calls with fixed arguments.
+  It is not generated code, it is not a prompt, and it cannot do anything a tool
+  cannot already do. `plugins/custom_jarvis.py` exposes them as `list_skills`,
+  `run_skill` and `preview_skill`.
+- a **written skill**: a Markdown document at `skills/<name>/SKILL.md` that says
+  when a procedure applies and how to do it well. It grants nothing. It is read
+  on demand by `core/skill_docs.py` through the `skill_guide` tool.
+
+A recipe without a document is a plan with no judgement. A document without a
+recipe is advice with no hands. Both live here, and neither can widen a
+permission.
 
 Three rules follow, and they are why skills are safe to add quickly:
 
@@ -175,3 +184,51 @@ Then three things, or it does not count:
 3. **The honesty check**: if a step needs `.git`, Windows, or a package, declare it
    (`required_markers`, `platform_required`) so `list_skills` reports it as not
    applicable instead of failing at step two of five.
+
+## The written layer (2026-11-14)
+
+Before this date `skills/<name>/SKILL.md` was decoration: ten files in the tree
+and no reader. `core/skill_docs.py` now loads them, and `skill_guide` lists and
+reads them during a session. The rules that keep that safe:
+
+| Rule | Why |
+|---|---|
+| Only `skills/<simple-name>/SKILL.md`, no `..`, no drive letter | A name is not a path |
+| Reads stop at 12,000 characters, files at 64 KB | A skill is context, and context is the budget |
+| A document is text, never code | Nothing here imports or executes it |
+| A broken document is skipped, not raised | A bad file must not take the session down |
+
+### Installed documents
+
+| Document | Applies to |
+|---|---|
+| `computer-use` | Tree before pixels, act once, verify every time, stop on private screens |
+| `background-awareness` | Know what is open without being told, and never touch it |
+| `dev-methodology` | Plan, test, build small, review, report |
+| `coding-guardrails` | No wrong assumptions, no overcomplication, no unrequested edits |
+| `security-review` | Secrets, boundary input, authority, dependencies |
+| `documents` | Real `.docx`, `.xlsx`, `.pptx`, `.pdf` files with the installed libraries |
+
+### Recipes added with them
+
+| Skill | Steps |
+|---|---|
+| `background_awareness` | `background_status` - front app, running apps, versions |
+| `computer_preflight` | `get_active_window`, `inspect_accessibility`, `vision_capability_status` |
+| `desktop_evidence` | `get_active_window`, `take_screenshot`, `vision_capability_status` |
+
+All three read. None clicks, focuses or closes anything, because a recipe that
+acts cannot be undone by the model that ran it.
+
+### The awareness read
+
+`core/situation.py` answers "what is open right now". It names the app in front
+and the other known programs, with a version where the program records one.
+Minecraft is the case that motivated it: the version comes from the running
+game's `--version` argument or the launcher's last-used profile, so the answer is
+"Minecraft 1.21.4" rather than "a Java process".
+
+It never collects window titles, documents or command lines outside that one
+Java case. `background_status` exposes the same read inside the skill engine, and
+`main.py` puts one compact line into the session prompt, so the assistant starts
+each session knowing what is open instead of asking.

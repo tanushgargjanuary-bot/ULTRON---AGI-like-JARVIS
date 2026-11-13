@@ -1527,8 +1527,32 @@ class JarvisLive:
             ),
         })
 
+        # What is on the machine right now, so the owner does not have to say it.
+        #
+        # One read at session start, not a watcher: a background loop that
+        # re-reads the process table would spend the owner's battery to tell it
+        # something the model can ask for again in one call. The line is facts
+        # only - app names and versions, never window titles - and it says it
+        # may be stale, because a prompt is a photograph of the machine, not a
+        # live feed.
+        situation_ctx = ""
+        try:
+            from core import situation as _situation
+            _open_now = _situation.brief_line()
+            if _open_now:
+                situation_ctx = (
+                    f"[WHAT IS OPEN NOW]\n{_open_now}\n"
+                    "Read when this session started. If the answer must be "
+                    "current - is it still running, which version now - call "
+                    "situation_report instead of repeating this line.\n\n"
+                )
+        except Exception as _situation_error:
+            print(f"[JARVIS] situation read skipped: {_situation_error}")
+
         persona_ctx = personas_mod.persona_prompt(_persona.id)
         parts = [time_ctx, identity_ctx, persona_ctx]
+        if situation_ctx:
+            parts.append(situation_ctx)
         if self._context_carryover:
             parts.append(self._context_carryover)
         if mem_str:

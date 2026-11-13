@@ -1180,6 +1180,53 @@ def get_active_window() -> ToolResult:
 # 4. CLAUDE COMPUTER USE VISION & GUI AUTOMATION
 # ==============================================================================
 
+@registry.register(
+    name="background_status",
+    category="desktop",
+    description=(
+        "What is already running, read-only: the app in front, the other known "
+        "apps that are open, and their versions where the program records one "
+        "(Minecraft, browsers, editors). It never starts, stops or focuses "
+        "anything. Use it before opening an app that may already be open, and "
+        "when the owner asks what is running."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "app": {
+                "type": "string",
+                "description": "Optional name to check, such as 'Minecraft'.",
+            },
+            "detail": {
+                "type": "string",
+                "enum": ["short", "full"],
+                "description": "short returns one sentence; full adds the list.",
+            },
+        },
+    },
+)
+def background_status(app: str = "", detail: str = "short") -> ToolResult:
+    """Read what is open on this machine. Observation only - no control."""
+    from core import situation
+
+    current = situation.snapshot()
+    wanted = (app or "").strip()
+    if wanted:
+        matches = situation.running_apps(only=wanted)
+        text = (
+            f"{wanted} is running: " + ", ".join(a.describe() for a in matches)
+            if matches else f"{wanted} is not running."
+        )
+    elif (detail or "").strip().lower() == "full":
+        rows = [f"front: {current.foreground.describe()}" if current.foreground else "front: none"]
+        rows += [f"- {a.describe()} ({a.kind})" for a in current.apps]
+        if current.note:
+            rows.append(f"note: {current.note}")
+        text = "\n".join(rows)
+    else:
+        text = situation.describe(current)
+    return ToolResult(success=True, output=text, data=current.as_dict())
+
 
 @registry.register(
     name="take_screenshot",
