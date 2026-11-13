@@ -232,10 +232,10 @@ What it already does:
   that is how providers apply limits. Nothing multiplies an allowance by the number of keys, and key
   rotation to escape a limit is not implemented.
 - **`Retry-After` blocks the whole group**, not the one key that hit the 429.
-- **A fallback ladder** that will not take a **paid** or **data-sharing** fallback unless that was
-  explicitly allowed; choosing a paid provider as your *primary* is fine, being switched to one silently
-  is not.
-- **Local tail** — the ladder ends at your local model, and a capability downgrade is visible.
+- **A fallback ladder** that will not take a **paid**, **data-sharing** or **on-this-machine** fallback unless
+  that was explicitly allowed; choosing a paid provider as your *primary* is fine, being switched to one
+  silently is not. Cloud provider rows count as data-sharing until their training policy is verified.
+- **Local tail** — with consent, the ladder ends at your local model, and a capability downgrade is visible.
 - **Voice/typed switching parser** — "use Groq", "switch the critic to Groq",
   "use Groq with qwen3.8-27b", "go local for now". Only providers you configured are recognised, so an
   unconfigured name is a question for the model, not a silent switch. Parsed locally: it costs no request

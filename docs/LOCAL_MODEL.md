@@ -21,6 +21,12 @@ public model endpoint.
 
 To disable the feature, remove the key or set it to `false`.
 
+The same consent also allows automatic failover to another local provider you
+configured (Ollama, LM Studio, llama.cpp, vLLM, Jan) when a hosted provider
+fails. Without the flag, the failover ladder never moves the conversation onto
+this machine by itself. Choosing a local model yourself is not a fallback and
+does not need the flag.
+
 Ultron already talks to a model on this machine. `core/llm_client.py` reads three keys from
 `config/api_keys.json` and defaults to Ollama:
 

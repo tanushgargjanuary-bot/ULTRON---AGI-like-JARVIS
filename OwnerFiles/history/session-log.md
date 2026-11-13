@@ -716,3 +716,81 @@ Fast gate [42854158231](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-li
 **Evidence and limits.** The fast gate passed 5/5 groups: 309 Python files parsed, 19 runner edge tests, 30 policy/confirmation tests, 8 README tests, 1,000 seeded stress scenarios, Ruff, whitespace checks, and generated-map validation. Current full Linux and Windows jobs both passed. The baseline ran 2,073 tests per platform, 1,000 stress scenarios, and 15 targeted mutations per platform; the current full workflow reran the same verification scripts after documentation-only commits. Proof counts: Linux 24 PROVEN / 13 PARTIAL / 0 FAILED; Windows 28 PROVEN / 9 PARTIAL / 0 FAILED. Hosted Linux instruments: 17 passed / 2 failed / 15 skipped (display server and PulseAudio unavailable).
 
 **Still open.** Two temporary branch refs are archived and merged, but remain present. Delete them only through the documented manual workflow after its explicit confirmations and ruleset checks. Branch-protection read returned HTTP 403, so merge-blocking enforcement is unverified. GitHub About description remains blank. Owner-machine hardware/provider checks were not run. No application source or tests changed; `docs/MAP.md` was not regenerated. Historical records remain untouched.
+
+---
+
+## 2026-11-12 — provider failover wired into the conversation path
+
+**Asked for.** A fresh plan after the upstream changes, then wire general
+provider failover into the live conversation request path (the handoff's
+standing general-failover limitation), with real applied results and minimal
+words. Forge's monthly quota was exhausted, so the work was done directly.
+
+**Live state checked (2026-11-12).** `main` at
+`2b31d7723baf85fbfd439aab00df44306575b0cb`. The last two merged temporary
+branch refs were deleted by the guarded archive workflow
+([run 43080080807](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/43080080807))
+with all 12 recovery tags kept. The three required `main` status checks were
+configured and read back as enforced. The GitHub About description was set and
+read back. All recorded in the handoff.
+
+**Built.** Branch `feat/provider-failover-wiring`, open as PR #20 against
+`main`, two commits. `548ea66`: `core/routing_runtime.py` — `RoutedLLM.chat`
+walks `RoutingTable.candidates()`; a rung that fails before it answers is
+rested (quota 5 min, gone-for-today, unavailable 30 min — the one-shot
+ladder's rests, reusing its classifiers) and the next allowed rung answers; a
+rung that fails after words were spoken raises instead of switching; usage is
+recorded only when a route actually answers. `main.py` registers every other
+configured LLM as a fallback rung (local first) and reads
+`paid_fallback_consent` / `data_fallback_consent` from `config/api_keys.json`
+into the table's consent flags; paid and data-sharing rungs stay silent
+without them. Five new tests in `tests/test_routing_runtime.py`;
+`docs/MAP.md` regenerated. `38c87d8`: fixed a live bug found while passing the
+gate — a local shadow in `_execute_tool_approved` made `tool_usage.note(name)`
+raise `UnboundLocalError` on every approved tool call since 2026-11-06 (proven
+by an AST scope check), and `outcome.unwrap` failed on `web_search` mirror
+results; shadow renamed, `ruff.toml` scopes E402 for `main.py` (46 pre-existing
+false findings), and `ToolPathScopeTests` pin the tool path.
+
+**Evidence.** Local on the branch:
+`pytest tests/test_routing_runtime.py tests/test_routing.py -q` — 48 passed;
+`scripts/fast_verify.py` — PASS 5/5 (309 Python files, 1,000 stress scenarios,
+0 live provider requests); full offline suite — 104 passed / 2 skipped; Ruff —
+0 findings (was 48 on `main.py`). The PR runs the fast gate plus the full
+Linux/Windows verification; merge is blocked until the three required checks
+are green, by the now-verified branch protection.
+
+**Still open.** Merge PR #20 only when all three required checks pass, then
+remove the branch ref through the guarded archive workflow. A live outage
+across real providers is still unproven (owner-machine `verify_all.py`).
+Version numbering stays 1.2.38; bumps accompany owner build commits on
+`main`.
+
+**Consent gaps closed (2026-11-12, later the same day).** Sentinel's review of
+PR #20 HEAD `b31ce5a` returned BLOCK with two medium findings; both were
+verified in the code and fixed on the same branch. (1) Automatic failover onto
+this machine skipped `local_fallback_consent`: `RoutingTable.candidates()`
+gated only paid and data-sharing rungs, so a hosted outage could silently move
+the conversation to an unapproved local model. `candidates()` now also
+requires `allow_local_fallback`, wired from `local_fallback_consent` in
+`main.py`; a locally chosen primary is unaffected. (2) `shares_data` was read
+from the catalog but no catalog row set it, so the data-sharing gate never
+fired; every cloud row in `providers/llm_openai.py` now carries
+`shares_data: True` until the service's training policy is verified
+(fail-closed; a verified service may set False in its own row). (3) Provider
+failure text reached the log unscrubbed; `core/routing_runtime.py` now masks
+URLs and credential-like runs (`_scrub`). Known limitation recorded: one
+paid/data consent flag covers all hosted accounts (no per-provider consent).
+Evidence: routing tests 52 passed; `scripts/fast_verify.py` PASS 5/5; Ruff
+(E4,E7,E9,F) clean on all changed files; `docs/MAP.md` regenerated.
+
+The branch's first full verify run (43084080659) failed on both OS jobs for
+one reason only: `RealPolicyTests.test_main_py_routes_save_memory_through_the_gate`
+grepped a fixed 1,200-character window of `main.py`, and the tool-path
+rename's comments pushed `request_memory_write` past the window. The test now
+reads the whole `save_memory` branch up to the next dispatch entry, so the
+assertion is about the call site, not about comment length. Both OS jobs
+failed only on this test (failures=1; 2,080 tests each). The gate also flagged
+31 pre-existing duplicate-import findings in `tests/test_suite_safety.py`
+(each merged section re-imported its stdlib/core names); those lines are now
+removed, ruff is clean on the file, and the 69 tests still pass.

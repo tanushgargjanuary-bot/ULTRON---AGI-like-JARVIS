@@ -2,8 +2,9 @@
 
 Everything here is pure logic: no socket is opened, no key is read, no provider
 name is baked in. The rules under test are the agreed ones — quota is tracked per
-QUOTA GROUP (not per key), a fallback may not silently cost money or share data,
-and a switch only works against providers the user actually configured.
+QUOTA GROUP (not per key), a fallback may not silently cost money, share data, or
+move onto this machine, and a switch only works against providers the user
+actually configured.
 """
 
 import unittest
@@ -145,13 +146,24 @@ class RoutingTableTests(unittest.TestCase):
         value.set_route(Purpose.CONVERSATION, "SomePaid", "m")
         self.assertEqual(value.choose(Purpose.CONVERSATION).provider, "SomePaid")
 
-    def test_the_ladder_ends_on_the_local_model(self):
+    def test_the_ladder_ends_on_the_permitted_local_model(self):
+        # Automatic local failover needs the same consent as every other kind.
         value = self.build()
+        value.allow_local_fallback = True
         value.set_route(Purpose.CONVERSATION, "Groq", "m")
         value.fallbacks = [Fallback(Route("Ollama"))]
         value.ledger.configure("groq", requests_per_day=1)
         value.record_use(Route("Groq", "m"))
         self.assertEqual(value.choose(Purpose.CONVERSATION).provider, "Ollama")
+
+    def test_a_local_fallback_is_not_taken_silently(self):
+        value = self.build()
+        value.set_route(Purpose.CONVERSATION, "Groq", "m")
+        value.fallbacks = [Fallback(Route("Ollama"))]
+        value.ledger.configure("groq", requests_per_day=1)
+        value.record_use(Route("Groq", "m"))
+        with self.assertRaises(Refusal):
+            value.choose(Purpose.CONVERSATION)
 
     def test_no_route_at_all_is_refused_with_a_reason(self):
         with self.assertRaises(Refusal) as caught:

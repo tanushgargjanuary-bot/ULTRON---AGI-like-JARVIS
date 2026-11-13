@@ -34,15 +34,8 @@ from core.memory_consent import EMPTY_ANSWER, PENDING_MARKER, request_write
 # ══════════════════════════════════════════════════════════════════════════
 # from test_file_safety.py
 # ══════════════════════════════════════════════════════════════════════════
-import sys
-import tempfile
-import unittest
-from pathlib import Path
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-
-from actions import file_controller as fc          # noqa: E402
 
 
 class CredentialStoreTests(unittest.TestCase):
@@ -135,11 +128,6 @@ class RealOperationsTests(unittest.TestCase):
 # ══════════════════════════════════════════════════════════════════════════
 # from test_policy_new_tools.py
 # ══════════════════════════════════════════════════════════════════════════
-import unittest
-from pathlib import Path
-
-from core import policy
-from core.plugin_loader import discover_plugins
 
 PLUGINS = Path(__file__).resolve().parent.parent / "plugins"
 
@@ -219,10 +207,6 @@ class Wired(unittest.TestCase):
 # ══════════════════════════════════════════════════════════════════════════
 # from test_tool_catalog.py
 # ══════════════════════════════════════════════════════════════════════════
-import unittest
-from pathlib import Path
-
-from core import tool_catalog
 
 
 class Build(unittest.TestCase):
@@ -306,10 +290,6 @@ class Robust(unittest.TestCase):
 # ══════════════════════════════════════════════════════════════════════════
 # from test_tools_overlay.py
 # ══════════════════════════════════════════════════════════════════════════
-import os
-import sys
-import unittest
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -408,9 +388,6 @@ class Wiring(unittest.TestCase):
 # ══════════════════════════════════════════════════════════════════════════
 # from test_publishing.py
 # ══════════════════════════════════════════════════════════════════════════
-import re
-import unittest
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -502,10 +479,6 @@ class Licence(unittest.TestCase):
 # ══════════════════════════════════════════════════════════════════════════
 # from test_memory_consent.py
 # ══════════════════════════════════════════════════════════════════════════
-import unittest
-
-from core import memory_consent
-from core.memory_consent import EMPTY_ANSWER, PENDING_MARKER, request_write
 
 
 class _Verdict:
@@ -650,7 +623,12 @@ class RealPolicyTests(unittest.TestCase):
         source = (memory_consent.__file__ and
                   __import__("pathlib").Path("main.py").read_text(encoding="utf-8",
                                                                   errors="replace"))
-        block = source.split('if name == "save_memory":', 1)[1][:1200]
+        after = source.split('if name == "save_memory":', 1)[1]
+        # The whole branch, not a fixed char count: comments above the call are
+        # allowed to grow without moving the assertion's goalposts. The next
+        # dispatch entry at the same indent ends the branch.
+        siblings = re.findall(r"\n        (?:el)?if name == ", after)
+        block = after[:siblings[0]] if siblings else after[:6000]
         self.assertIn("request_memory_write", block)
         self.assertNotIn("update_memory({category: {key:", block,
                          "the direct write must not come back")

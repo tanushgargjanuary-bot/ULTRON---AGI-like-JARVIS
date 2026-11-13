@@ -1672,6 +1672,15 @@ class JarvisLive:
         self.ui.set_state("THINKING")
 
 
+        # Memory is permanent, so it is a decision the user makes: the write
+        # parks behind the same on-screen confirmation the shutdown path uses,
+        # and nothing is stored until CONFIRM is pressed. The policy table has
+        # said GUARDED all along; this is the call site that never asked it.
+        #
+        # Named `write_outcome`, not `outcome`: one local assignment to
+        # `outcome` would make the module import a local for the whole method,
+        # and the web_search mirror's `outcome.unwrap(r)` below would raise
+        # UnboundLocalError on every successful search.
         if name == "save_memory":
             category = str(args.get("category") or "notes")
             key      = str(args.get("key") or "")
@@ -1686,19 +1695,14 @@ class JarvisLive:
                     id=fc.id, name=name,
                     response={"result": "Nothing was saved: I need both a key "
                                         "and a value."})
-            # Memory is permanent, so it is a decision the user makes: the write
-            # parks behind the same on-screen confirmation the shutdown path
-            # uses, and nothing is stored until CONFIRM is pressed. The policy
-            # table has said GUARDED all along; this is the call site that never
-            # asked it.
-            outcome = request_memory_write(category, key, value, update_memory)
-            if outcome.get("result") == "ok":
+            write_outcome = request_memory_write(category, key, value, update_memory)
+            if write_outcome.get("result") == "ok":
                 print(f"[Memory] 💾 save_memory (approved): {category}/{key} = {value}")
             else:
                 print(f"[Memory] ⏸ save_memory awaiting confirmation: {category}/{key}")
             if not self.ui.muted:
                 self.ui.set_state("LISTENING")
-            return types.FunctionResponse(id=fc.id, name=name, response=outcome)
+            return types.FunctionResponse(id=fc.id, name=name, response=write_outcome)
 
         loop   = asyncio.get_event_loop()
         result = "Done."
@@ -1716,7 +1720,12 @@ class JarvisLive:
                 # matches reality instead of a list written by hand. The usage line
                 # is the part that is not a claim: it says which of them have ever
                 # been reached for, so a tool nobody calls can be found and fixed.
-                from core import tool_catalog, tool_usage
+                # The module import at the top of this file already binds
+                # `tool_usage`, and it must stay the only binding: importing
+                # it here too would make the name local for the whole method,
+                # and `tool_usage.note(name)` above would raise
+                # UnboundLocalError on every approved tool call.
+                from core import tool_catalog
                 wanted = str(args.get("tool") or "").strip()
                 if wanted:
                     result = tool_catalog.describe(wanted)
@@ -2769,11 +2778,13 @@ class JarvisLive:
             # outlive the failure it described.
             self._pipeline_error = ""
             from memory.config_manager import (
-                get_pipeline, get_provider_config, get_providers, save_pipeline,
-                save_provider_config,
+                get_pipeline, get_provider_config, get_providers, load_api_keys,
+                save_pipeline, save_provider_config,
             )
             from providers import registry
-            from core.routing import Provider, Purpose, RoutingTable
+            from core.routing import (
+                Fallback, Provider, Purpose, Route, RoutingTable,
+            )
             from core.routing_runtime import (
                 RoutedLLM, configured_slot_id, provider_for_id,
             )
@@ -2828,6 +2839,33 @@ class JarvisLive:
                 route_clients[provider.key] = client
                 route_ids[provider.key] = pid
 
+            # Failover consent comes from the same file that already holds
+            # local_fallback_consent. Without these flags the ladder does not
+            # switch at all: a provider that runs out never moves the
+            # conversation silently to one that costs money, shares data, or
+            # runs on this machine uninvited.
+            try:
+                consents = load_api_keys() or {}
+            except Exception:
+                consents = {}
+            route_table.allow_paid_fallback = \
+                consents.get("paid_fallback_consent") is True
+            route_table.allow_data_sharing_fallback = \
+                consents.get("data_fallback_consent") is True
+            # The same consent that allows the dedicated local-fallback path
+            # allows an automatic failover rung on this machine. Without it a
+            # hosted outage must not move the conversation to an unapproved
+            # local model, even though listing it as a rung is harmless.
+            route_table.allow_local_fallback = \
+                consents.get("local_fallback_consent") is True
+            allowed = " + ".join(
+                name for name, on in (
+                    ("paid", route_table.allow_paid_fallback),
+                    ("data-sharing", route_table.allow_data_sharing_fallback),
+                    ("local", route_table.allow_local_fallback),
+                ) if on) or "no fallback routes"
+            self.ui.write_log(f"SYS: Failover ladder allows {allowed} routes.")
+
             # The selected engine provider is always present after the validation
             # above. It is the conversation default; the other purpose defaults
             # use the configured coding and sidecar providers when available.
@@ -2862,6 +2900,20 @@ class JarvisLive:
                         purpose, provider.name,
                         str(getattr(route_clients[provider.key], "model", "") or ""),
                     )
+
+            # Every other configured LLM becomes a fallback rung — local ones
+            # first, then the hosted ones in configuration order. Listing a
+            # rung is not permission to use it: the consent flags above and
+            # the quota ledger decide that at request time, in RoutedLLM.chat.
+            primary_key = active_label.lower()
+            rungs = [p for p in sorted(route_table.providers.values(),
+                                       key=lambda p: not p.local)
+                     if p.key != primary_key]
+            route_table.fallbacks = [
+                Fallback(Route(p.name,
+                               str(getattr(route_clients[p.key], "model", "") or "")))
+                for p in rungs
+            ]
 
             def persist_conversation_provider(pid: str) -> None:
                 if local is not None:

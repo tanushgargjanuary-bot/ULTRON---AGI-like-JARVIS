@@ -3,20 +3,45 @@
 import asyncio
 import unittest
 
-from core.routing import Provider, Purpose, Route, RoutingTable
+from core.routing import Fallback, Provider, Purpose, Refusal, Route, RoutingTable
 from core.routing_runtime import RoutedLLM, configured_slot_id
 from providers.engine_pipeline import PipelineEngine
+
+
+async def _collect(runtime):
+    """Consume one full chat stream, or raise like the caller would."""
+    return [event async for event in runtime.chat([{"role": "user", "content": "hi"}])]
 
 
 class FakeLLM:
     def __init__(self, model, *, tools=True, vision=False, max_tools=12):
         self.model = model
+        self.tries = 0
         self.base = "https://example.invalid/v1"
         self.caps = {"tools": tools, "tool_format": "openai", "vision": vision,
                      "max_tools": max_tools, "max_tool_chars": 8000}
 
     async def chat(self, messages, tools=None, **kwargs):
+        self.tries += 1
         yield {"text": f"from {self.model}"}
+
+
+class _QuotaLLM(FakeLLM):
+    """Fails before it produces anything — the 429 case."""
+
+    async def chat(self, messages, tools=None, **kwargs):
+        self.tries += 1
+        raise RuntimeError("429 RESOURCE_EXHAUSTED for this account")
+        yield  # pragma: no cover — turns this into an async generator
+
+
+class _MidStreamLLM(FakeLLM):
+    """Produces one event, then dies — the mid-answer case."""
+
+    async def chat(self, messages, tools=None, **kwargs):
+        self.tries += 1
+        yield {"text": "first words"}
+        raise RuntimeError("504 deadline exceeded")
 
 
 class _FakeSTT:
@@ -43,6 +68,12 @@ class RoutingRuntimeTests(unittest.TestCase):
         table.set_route(Purpose.CONVERSATION, "Groq", "llama-70b")
         table.set_route(Purpose.EVOLUTION, "Ollama", "qwen-coder")
         table.set_route(Purpose.CRITIC, "Google AI Studio", "gemma")
+        # Fallback rungs, wired the way main.py does it: local first, then
+        # hosted, in configuration order. Listing is not permission — the
+        # table's consent flags (paid, data-sharing, local) and the quota
+        # ledger decide that.
+        table.fallbacks = [Fallback(Route("Ollama", "qwen-coder")),
+                           Fallback(Route("Google AI Studio", "gemma"))]
         logs, persisted = [], []
         runtime = RoutedLLM(
             table,
@@ -120,6 +151,119 @@ class RoutingRuntimeTests(unittest.TestCase):
         runtime, _logs, _ = self.build()
         self.assertEqual(runtime.caps["max_tools"], 12)
         self.assertFalse(runtime.caps["vision"])
+
+    def test_chat_falls_through_when_the_primary_is_out_of_quota(self):
+        runtime, logs, _ = self.build()
+        runtime.table.allow_local_fallback = True  # the local rung is permitted here
+        failing = _QuotaLLM("llama-70b")
+        runtime._clients["groq"] = failing
+
+        events = asyncio.run(_collect(runtime))
+
+        # The local rung answered, and the failed rung cost one round trip.
+        self.assertEqual(events, [{"text": "from qwen-coder"}])
+        self.assertEqual(failing.tries, 1)
+        snapshot = runtime.table.ledger.snapshot()
+        self.assertGreater(snapshot["groq"]["blocked_for"], 0.0)
+        self.assertEqual(snapshot["groq"]["used_requests"], 0)
+        self.assertEqual(snapshot["ollama"]["used_requests"], 1)
+        self.assertTrue(any("Groq" in line and "quota" in line for line in logs))
+
+    def test_chat_does_not_switch_after_words_were_produced(self):
+        runtime, logs, _ = self.build()
+        runtime._clients["groq"] = _MidStreamLLM("llama-70b")
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        self.assertTrue(any("mid-answer" in line for line in logs))
+        snapshot = runtime.table.ledger.snapshot()
+        self.assertEqual(snapshot["groq"]["used_requests"], 1)
+        # No fallback was asked: the turn is already part-spoken.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
+
+    def test_paid_fallback_stays_unused_without_consent(self):
+        runtime, logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+        runtime._clients["ollama"] = _QuotaLLM("qwen-coder")
+        google = runtime._clients["google ai studio"]
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        # No rung was tried: the local one needs local consent, and the hosted
+        # one needs paid consent. The quota log still names the failure.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
+        self.assertEqual(google.tries, 0)
+        self.assertTrue(any("out of quota" in line for line in logs))
+
+    def test_paid_fallback_answers_when_consent_is_given(self):
+        runtime, logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+        runtime._clients["ollama"] = _QuotaLLM("qwen-coder")
+        runtime.table.allow_paid_fallback = True
+
+        events = asyncio.run(_collect(runtime))
+
+        self.assertEqual(events, [{"text": "from gemma"}])
+        self.assertEqual(
+            runtime.table.ledger.snapshot()["google"]["used_requests"], 1)
+
+    def test_local_fallback_stays_unused_without_consent(self):
+        runtime, logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        # The local rung was listed but never asked: failover onto this
+        # machine needs local_fallback_consent, like paid and data-sharing
+        # failover do.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
+        self.assertTrue(any("out of quota" in line for line in logs))
+
+    def test_local_fallback_answers_when_consent_is_given(self):
+        runtime, _logs, _ = self.build()
+        runtime._clients["groq"] = _QuotaLLM("llama-70b")
+        runtime.table.allow_local_fallback = True
+
+        events = asyncio.run(_collect(runtime))
+
+        self.assertEqual(events, [{"text": "from qwen-coder"}])
+        self.assertEqual(
+            runtime.table.ledger.snapshot()["ollama"]["used_requests"], 1)
+
+    def test_failure_text_reaches_the_log_scrubbed(self):
+        runtime, logs, _ = self.build()
+
+        class _Leaky(FakeLLM):
+            async def chat(self, messages, tools=None, **kwargs):
+                self.tries += 1
+                raise RuntimeError(
+                    "connect to https://api.secret.example/v1 failed "
+                    "(api_key=sk-abcdef123456)")
+                yield  # pragma: no cover — turns this into an async generator
+
+        runtime._clients["groq"] = _Leaky("llama-70b")
+
+        with self.assertRaises(RuntimeError):
+            asyncio.run(_collect(runtime))
+
+        joined = "\n".join(logs)
+        self.assertNotIn("https://", joined)
+        self.assertNotIn("sk-abcdef123456", joined)
+        self.assertIn("<url>", joined)
+        self.assertIn("<redacted>", joined)
+        # No consent, so no other rung was asked either.
+        self.assertEqual(runtime._clients["ollama"].tries, 0)
+
+    def test_chat_says_why_nothing_answered(self):
+        runtime, _logs, _ = self.build()
+        for group in ("groq", "ollama", "google"):
+            runtime.table.ledger.block_for(group, 60.0)
+
+        with self.assertRaises(Refusal):
+            asyncio.run(_collect(runtime))
 
 
 if __name__ == "__main__":

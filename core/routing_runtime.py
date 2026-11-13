@@ -1,13 +1,55 @@
-"""Runtime adapter from the pure routing table to configured LLM clients."""
+"""Runtime adapter from the pure routing table to configured LLM clients.
+
+`RoutedLLM.chat` is the conversation's request path. It walks the table's
+candidate routes and fails over the way the one-shot ladder in `core/gemini.py`
+does: rest what failed before it answered, skip what is out of quota, and
+never switch once words were spoken.
+"""
 
 from __future__ import annotations
 
+import asyncio
+import re
 from collections.abc import Callable
 from typing import Any
 
 from core.routing import (
     Provider, Purpose, Refusal, Route, RoutingTable, apply_switch, parse_switch,
 )
+
+# How long a failed route's whole quota group rests, by failure kind. These are
+# the same rests core/gemini.py measured for the one-shot ladder — same kinds
+# of failure, same accounts, so one policy covers both request paths.
+_QUOTA_REST_S = 300.0          # 429 — out of quota for minutes, not seconds
+_GONE_REST_S = 6 * 3600.0      # 404/403 — not coming back today
+_UNAVAILABLE_REST_S = 1800.0   # 503/504/timeout — usually passes
+
+# Provider error text is third-party content, and it reaches the app's log.
+# Mask what must never end up there: request URLs and anything shaped like a
+# credential. Keys normally stay in headers, so this is a backstop, not the
+# main defence.
+_URL_TEXT = re.compile(r"https?://\S+")
+_KEY_TEXT = re.compile(
+    r"(?i)(bearer\s+\S+|api[_-]?key\s*[=:]\s*\S+|sk-[A-Za-z0-9_-]{8,})"
+)
+
+
+def _scrub(text: str) -> str:
+    """Return provider error text with URLs and credential-like runs masked."""
+    return _KEY_TEXT.sub("<redacted>", _URL_TEXT.sub("<url>", text))
+
+
+def _fail_kind(message: str) -> str:
+    """Classify a client failure, reusing the one-shot ladder's classifiers."""
+    from core.gemini import is_gone_error, is_quota_error, is_unavailable_error
+
+    if is_quota_error(message):
+        return "quota"
+    if is_gone_error(message):
+        return "gone"
+    if is_unavailable_error(message):
+        return "unavailable"
+    return ""
 
 
 class RoutedLLM:
@@ -73,10 +115,94 @@ class RoutedLLM:
 
     async def chat(self, messages: list[dict], tools: list[dict] | None = None,
                    **kwargs):
-        route, client = self.select(Purpose.CONVERSATION)
-        self.table.record_use(route)
-        async for event in client.chat(messages, tools, **kwargs):
-            yield event
+        """Stream the conversation, walking the route ladder until one answers.
+
+        The route order is the routing table's own: the conversation route
+        first, then the fallbacks the quota and consent rules allow right now.
+        A route that fails BEFORE it produced anything is rested and passed
+        over, so an outage or an empty quota costs one round trip, not the
+        feature. A route that fails AFTER it produced something is raised, not
+        retried — the words already spoken would be spoken twice, or
+        contradicted by a different model, and a failed turn is smaller than
+        either.
+        """
+        purpose = Purpose.CONVERSATION
+        candidates = self.table.candidates(purpose)
+        if not candidates:
+            # Raises Refusal with the routing table's own explanation, so the
+            # caller reads one reason for why nothing is available.
+            self.table.choose(purpose)
+
+        last_error: Exception | None = None
+        for route in candidates:
+            client = self._clients.get(route.provider.lower())
+            if client is None:
+                self._note(f"{route.provider} is configured but has no active "
+                           "client — skipped")
+                continue
+            produced = 0
+            try:
+                async for event in client.chat(messages, tools, **kwargs):
+                    if produced == 0:
+                        self.table.record_use(route)
+                        self._announce(route)
+                    produced += 1
+                    yield event
+            except asyncio.CancelledError:
+                raise
+            except Exception as error:                     # noqa: BLE001
+                if produced:
+                    self._note(f"{route.provider} dropped mid-answer — not "
+                               "switching, or the reply would repeat or "
+                               "contradict itself")
+                    raise
+                last_error = error
+                self._rest(route, error)
+                continue
+            if produced == 0:
+                # A clean stream that answered nothing still spent a request,
+                # and the ROUTE line still belongs in the log.
+                self.table.record_use(route)
+                self._announce(route)
+            return
+
+        if last_error is not None:
+            raise last_error
+        raise Refusal("no configured provider has an active client — "
+                      "check ENGINE & PROVIDERS")
+
+    def _announce(self, route: Route) -> None:
+        message = f"ROUTE: purpose=conversation model={route.describe()}"
+        self._log(message)
+        print(f"[Routing] {message}")
+
+    def _note(self, message: str) -> None:
+        self._log(f"ROUTE: {message}")
+        print(f"[Routing] {message}")
+
+    def _rest(self, route: Route, error: Exception) -> None:
+        """Rest a route that failed before it produced anything.
+
+        The whole quota group rests, not just this route: limits are per
+        account, so a second route on the same account would only buy another
+        429. The rests are the one-shot ladder's, for the same reasons.
+        """
+        kind = _fail_kind(str(error))
+        if kind == "quota":
+            self.table.record_limit(route, _QUOTA_REST_S)
+            self._note(f"{route.describe()} is out of quota — resting it for "
+                       f"{_QUOTA_REST_S / 60:.0f} minutes")
+        elif kind == "gone":
+            self.table.record_limit(route, _GONE_REST_S)
+            self._note(f"{route.describe()} is unavailable to this setup — "
+                       "resting it for the session")
+        elif kind == "unavailable":
+            self.table.record_limit(route, _UNAVAILABLE_REST_S)
+            self._note(f"{route.describe()} is not answering — resting it for "
+                       f"{_UNAVAILABLE_REST_S / 60:.0f} minutes")
+        else:
+            self._note(f"{route.describe()} failed ({type(error).__name__}: "
+                       f"{_scrub(str(error))[:140]})")
 
     def handle_switch(self, text: str) -> str | None:
         """Apply a locally parsed conversation-route command, or return None.
