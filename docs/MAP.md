@@ -245,7 +245,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 85 modules, 22,855 lines
+## `tests/` — 85 modules, 22,833 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -320,7 +320,7 @@ edit the module docstring instead and run it again.
 | `test_suite_algorithms.py` | 1,061 | test_suite_algorithms.py — one suite file for 8 areas. | test_suite_algorithms |
 | `test_suite_assistant.py` | 1,378 | test_suite_assistant.py — one suite file for 8 areas. | test_suite_assistant, test_triggers |
 | `test_suite_providers.py` | 986 | test_suite_providers.py — one suite file for 5 areas. | test_suite_providers |
-| `test_suite_safety.py` | 660 | test_suite_safety.py — one suite file for 6 areas. | test_suite_safety |
+| `test_suite_safety.py` | 638 | test_suite_safety.py — one suite file for 6 areas. | test_suite_safety |
 | `test_themes.py` | 25 | Named HUD theme presets remain deterministic and separate from custom colours. | — |
 | `test_tool_contract.py` | 333 | tests/test_tool_contract.py — what the model is told against what the code does. | test_tool_contract |
 | `test_triggers.py` | 277 | Every tool has a condition, the model reads it, and calls are counted. | test_triggers |

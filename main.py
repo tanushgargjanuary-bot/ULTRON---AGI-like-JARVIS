@@ -1672,6 +1672,15 @@ class JarvisLive:
         self.ui.set_state("THINKING")
 
 
+        # Memory is permanent, so it is a decision the user makes: the write
+        # parks behind the same on-screen confirmation the shutdown path uses,
+        # and nothing is stored until CONFIRM is pressed. The policy table has
+        # said GUARDED all along; this is the call site that never asked it.
+        #
+        # Named `write_outcome`, not `outcome`: one local assignment to
+        # `outcome` would make the module import a local for the whole method,
+        # and the web_search mirror's `outcome.unwrap(r)` below would raise
+        # UnboundLocalError on every successful search.
         if name == "save_memory":
             category = str(args.get("category") or "notes")
             key      = str(args.get("key") or "")
@@ -1686,16 +1695,6 @@ class JarvisLive:
                     id=fc.id, name=name,
                     response={"result": "Nothing was saved: I need both a key "
                                         "and a value."})
-            # Memory is permanent, so it is a decision the user makes: the write
-            # parks behind the same on-screen confirmation the shutdown path
-            # uses, and nothing is stored until CONFIRM is pressed. The policy
-            # table has said GUARDED all along; this is the call site that never
-            # asked it.
-            #
-            # Named `write_outcome`, not `outcome`: one local assignment to
-            # `outcome` would make the module import a local for the whole
-            # method, and the web_search mirror's `outcome.unwrap(r)` below
-            # would raise UnboundLocalError on every successful search.
             write_outcome = request_memory_write(category, key, value, update_memory)
             if write_outcome.get("result") == "ok":
                 print(f"[Memory] 💾 save_memory (approved): {category}/{key} = {value}")
