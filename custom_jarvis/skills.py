@@ -243,6 +243,41 @@ SKILLS = [
         "Report vision capability without uploading anything.",
         (call("vision_capability_status"),),
     ),
+
+    # -- computer use and background awareness --------------------------------
+    # The owner asked for two things that sound different and are the same
+    # question: know what is already open, and act on a screen without
+    # guessing. Both are answered by reading before touching anything, which is
+    # exactly what a recipe made of read-only calls can do.
+    Skill(
+        "background_awareness",
+        "What is already running",
+        "Front app plus the other known programs and their versions, before "
+        "starting anything or claiming nothing is open.",
+        (call("background_status", detail="full"),),
+    ),
+    Skill(
+        "computer_preflight",
+        "Look before acting on a screen",
+        "Foreground app, its accessible controls and vision readiness, so an "
+        "action is aimed at a named control instead of a guessed coordinate.",
+        (
+            call("get_active_window"),
+            call("inspect_accessibility"),
+            call("vision_capability_status"),
+        ),
+    ),
+    Skill(
+        "desktop_evidence",
+        "Prove what the screen shows",
+        "Foreground app, a real capture and whether vision can read it, so a "
+        "claim about the screen rests on pixels rather than on memory.",
+        (
+            call("get_active_window"),
+            call("take_screenshot"),
+            call("vision_capability_status"),
+        ),
+    ),
     Skill(
         "test_context",
         "Build test-planning evidence",

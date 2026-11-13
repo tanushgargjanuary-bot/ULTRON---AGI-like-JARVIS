@@ -34,6 +34,9 @@ INSPECTION_TOOLS = frozenset(
         "preview_file_change",
         "inspect_accessibility",
         "vision_capability_status",
+        # What is open now: app names and versions, never window titles. Read
+        # only, so a pack may use it and a pack can never change a program.
+        "background_status",
         # The two workspace readers added with the meta-cognitive skills.
         # They read file contents, so they are read-only; they take a path,
         # so they belong in the confinement table below.
