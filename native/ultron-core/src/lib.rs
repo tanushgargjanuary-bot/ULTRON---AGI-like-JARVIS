@@ -5,3 +5,5 @@ pub mod watchdog;
 pub mod git;
 pub mod state;
 pub mod orchestrator;
+pub mod integrity;
+pub mod vision;
