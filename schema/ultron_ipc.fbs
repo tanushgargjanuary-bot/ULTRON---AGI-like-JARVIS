@@ -1,0 +1,84 @@
+namespace ultron.ipc;
+
+enum ChannelId : uint8 {
+  AudioChunk    = 1,
+  AudioPlayback = 2,
+  AgentCommand  = 3,
+  AgentEvent    = 4,
+  HUDState      = 5,
+  Heartbeat     = 6,
+  Shutdown      = 255
+}
+
+enum HUDMode : uint8 {
+  Idle = 0,
+  Listening = 1,
+  Thinking = 2,
+  Speaking = 3,
+  AwaitingConfirmation = 4
+}
+
+enum CommandType : uint8 {
+  FocusWindow = 1,
+  TypeText = 2,
+  MouseClick = 3,
+  Screenshot = 4,
+  RunProcess = 5,
+  SetVolume = 6
+}
+
+enum EventType : uint8 {
+  WakeWord = 1,
+  VADStart = 2,
+  VADEnd = 3,
+  OCRResult = 4,
+  ScreenChange = 5,
+  SystemAlert = 6
+}
+
+table AudioChunk {
+  sequence_id:    uint64;
+  sample_rate:    uint32 = 16000;
+  channels:       uint8 = 1;
+  format:         uint8 = 0;       // 0=f32le, 1=s16le
+  vad_confidence: float32;
+  samples:        [uint8];
+}
+
+table AudioPlayback {
+  sample_rate:    uint32 = 24000;
+  channels:       uint8 = 1;
+  pcm_data:       [uint8];
+}
+
+table AgentEvent {
+  event_type:     EventType;
+  wake_word_id:   string;
+  confidence:     float32;
+  ocr_text:       string;
+  timestamp_us:   uint64;
+}
+
+table AgentCommand {
+  command_type:   CommandType;
+  window_title:   string;
+  keystrokes:     string;
+  mouse_x:        int32;
+  mouse_y:        int32;
+  payload_json:   string;
+}
+
+table HUDState {
+  mode:           HUDMode;
+  waveform:       [float32];       // 64 normalized samples
+  status_text:    string;
+  thinking_tokens:uint32;
+  accent_color:   uint32;          // 0xRRGGBBAA
+}
+
+table Heartbeat {
+  timestamp_ms:   uint64;
+  seq:            uint32;
+}
+
+root_type AgentEvent;
