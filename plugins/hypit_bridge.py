@@ -34,6 +34,7 @@ PLUGIN = {
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     bridge = bridges.get("hypit")
     if bridge is None:
         return "Hypit is not wired in this build."

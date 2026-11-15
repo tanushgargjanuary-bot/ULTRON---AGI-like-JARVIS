@@ -103,6 +103,7 @@ def _headers(url):
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     action = str(parameters.get("action") or "dns").strip().lower()
     try:
         if action == "dns":

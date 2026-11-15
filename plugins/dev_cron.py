@@ -109,6 +109,7 @@ def _next_runs(parts, count):
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     try:
         parts = _parse(parameters.get("expression"))
     except (ValueError, TypeError) as exc:

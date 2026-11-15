@@ -36,6 +36,7 @@ PLUGIN = {
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     bridge = bridges.get("voicestudio")
     if bridge is None:
         return "VoiceStudio is not wired in this build."

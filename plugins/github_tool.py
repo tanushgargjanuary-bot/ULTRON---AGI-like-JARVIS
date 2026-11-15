@@ -203,6 +203,7 @@ def _trending(client, parameters) -> str:
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     action = str(parameters.get("action") or "status").strip().lower()
     if action not in _ACTIONS:
         return ("I can do " + ", ".join(_ACTIONS) + " on GitHub. Not '" + action + "'.")

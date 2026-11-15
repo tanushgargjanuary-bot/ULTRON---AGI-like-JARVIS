@@ -44,6 +44,7 @@ PLUGIN = {
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     try:
         raw = parameters.get("payload_json", "{}")
         if not isinstance(raw, str) or len(raw.encode("utf-8")) > 65536:

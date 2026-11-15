@@ -36,6 +36,7 @@ PLUGIN = {
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     bridge = bridges.get("hindsight")
     if bridge is None:
         return "Hindsight is not wired in this build."

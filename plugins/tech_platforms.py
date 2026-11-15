@@ -52,6 +52,7 @@ def _cache():
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     source = str(parameters.get("source") or "").strip().lower()
     query = str(parameters.get("query") or "").strip()
     limit = parameters.get("limit") or 6

@@ -494,6 +494,9 @@ class Client:
         finally:
             for stream in (process.stdin, process.stdout, process.stderr):
                 self._close_stream_bounded(stream)
+            with self._lock:
+                for slot in self._pending.values():
+                    slot["event"].set()
 
     def __enter__(self) -> "Client":
         """Start the server and release it if context entry fails."""
@@ -542,6 +545,9 @@ class Client:
                 slot["reply"] = message
                 slot["event"].set()
         self._dead = self._dead or "the server stopped"
+        with self._lock:
+            for slot in self._pending.values():
+                slot["event"].set()
 
     def _read_stderr(self) -> None:
         """Keep only a bounded diagnostic tail from the server stderr pipe."""

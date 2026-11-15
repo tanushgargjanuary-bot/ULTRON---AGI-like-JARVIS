@@ -36,6 +36,7 @@ _ALGORITHMS = {"md5": hashlib.md5, "sha1": hashlib.sha1,
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     action = str(parameters.get("action") or "digest").strip().lower()
     text = str(parameters.get("text") or "")
     algorithm = str(parameters.get("algorithm") or "sha256").strip().lower()

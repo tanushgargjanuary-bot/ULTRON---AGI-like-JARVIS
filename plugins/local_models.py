@@ -56,6 +56,7 @@ def _render(models: list[LocalModelInfo]) -> str:
 
 def run(parameters: dict, player=None, session_memory=None) -> str:
     """Return model inventory only; configuration and activation are not supported."""
+    parameters = parameters or {}
     action = str((parameters or {}).get("action") or "status").strip().lower()
     if action != "status":
         return "This plugin supports read-only status only. It cannot configure or activate models."

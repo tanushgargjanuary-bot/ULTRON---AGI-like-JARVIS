@@ -63,10 +63,10 @@
         <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
         <div class="sub">Remote access</div>
         <h2 id="login-title">Welcome back.</h2>
-        <p class="hint">Press <strong>Remote Control</strong> in the ULTRON desktop app to get a QR code or six-character session key.</p>
+        <p class="hint">Press <strong>Remote Control</strong> in the ULTRON desktop app to get a QR code or eight-character session key.</p>
       </div>
       <p id="reconnecting">Reconnecting to your paired device…</p>
-      <div class="key-wrap"><input class="key-input" id="key" type="text" maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Six-character session key" placeholder="· · · · · ·"></div>
+      <div class="key-wrap"><input class="key-input" id="key" type="text" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Eight-character session key" placeholder="· · · · · · · ·"></div>
       <div class="err" id="err" role="alert" aria-live="polite"></div>
       <button class="btn" onclick="doLogin()" type="button"><span>Connect</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <p class="voice-note">🎤 <strong>Voice commands:</strong> microphone access on some mobile browsers requires HTTPS or a secure local origin. If your browser needs its special local-origin setting, follow its documented steps for your trusted JARVIS URL.</p>
@@ -102,13 +102,13 @@
 
     inp.addEventListener('input', () => {
       inp.value = inp.value.toUpperCase().replace(/[^A-Z2-9]/g, '');
-      if (inp.value.length === 6) doLogin();
+      if (inp.value.length === 8) doLogin();
     });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
     async function doLogin() {
       const key = inp.value.trim();
-      if (key.length < 6) { shake(); return; }
+      if (key.length < 8) { shake(); return; }
       let data;
       try {
         const r = await fetch('/login', {

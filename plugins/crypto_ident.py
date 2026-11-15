@@ -56,6 +56,7 @@ def _jwt(text):
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     text = str(parameters.get("text") or "").strip()
     if not text:
         return "There is nothing to identify."

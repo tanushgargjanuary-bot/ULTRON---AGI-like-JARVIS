@@ -94,6 +94,7 @@ def _match_child(pattern, text, flags, limit):
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     pattern = str(parameters.get("pattern") or "")
     text = str(parameters.get("text") or "")[:MAX_TEXT]
     limit = max(1, min(int(parameters.get("count") or 20), MAX_MATCHES))

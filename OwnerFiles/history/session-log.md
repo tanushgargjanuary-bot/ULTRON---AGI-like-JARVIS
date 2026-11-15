@@ -794,3 +794,21 @@ failed only on this test (failures=1; 2,080 tests each). The gate also flagged
 31 pre-existing duplicate-import findings in `tests/test_suite_safety.py`
 (each merged section re-imported its stdlib/core names); those lines are now
 removed, ruff is clean on the file, and the 69 tests still pass.
+
+---
+
+## 2026-11-15 — Swarm Bug Hunting, Core & System Hardening, README 100x
+
+**Asked for.** Run a comprehensive multi-agent swarm to audit the codebase for bugs, verify and eliminate false positives, patch confirmed defects directly on `main`, update documentation, and upgrade `README.md` into a high-impact, visual showcase suitable for professional presentation.
+
+**Built & Fixed.**
+1. **Critical Dashboard 8-char Key Pairing (BUG-CRIT-01):** Fixed `dashboard/static/login.html` where input hardcoded `maxlength="6"` and auto-submitted 6 chars against `server.py`'s 8-character pairing secrets, eliminating the 100% 401 pairing lockout.
+2. **Critical MCP Subprocess EOF Unhandled Hang (BUG-CRIT-02):** Fixed `custom_jarvis/mcp_client.py` where reader thread exited on subprocess termination/EOF without setting pending request events, eliminating the 120-second thread freeze.
+3. **Provider Failover Timeout & Network Errors (BUG-HIGH-01):** Expanded `is_unavailable_error` in `core/gemini.py` to match timeouts, connect errors, 500, and 502 Bad Gateway responses, ensuring failing upstream routes rest appropriately rather than stalling loops.
+4. **Next.js App Router Middleware Invariant (BUG-HIGH-03):** Renamed `webapp/proxy.ts` to `webapp/middleware.ts` with standard `middleware()` export, enabling Supabase silent session token refreshes.
+5. **Config Manager Atomic Isolation (BUG-HIGH-05):** Refactored 9 public setters in `memory/config_manager.py` that open-coded `write_text` with empty dict fallback to use `_load_for_write()` and `_write_config()`, eliminating risk of catastrophic API key wipeouts.
+6. **Action Mutex Bypass (BUG-HIGH-08):** Fixed `actions/screen_processor.py` to route camera index changes through `config_manager` rather than writing `config/api_keys.json` directly.
+7. **Plugin Error Safety (BUG-HIGH-07):** Added `parameters = parameters or {}` defensive guard across 15 plugins to adhere strictly to the invariant that `run()` must never raise.
+8. **UI Shutdown Thread Crash:** Protected `MainWindow` wake state emitter against `RuntimeError` on C++ object deletion during application termination (`ui.py`).
+9. **README Overhaul:** Transformed `README.md` with visual architecture flowcharts, badges, feature matrices, quick starts, and verified contract assertions (all passing `tests/test_readme.py`).
+10. **Swarm Bug Dossier:** Consolidated all findings into durable artifact `ULTRON_BUG_DOSSIER.md`. Verified with `scripts/fast_verify.py` passing 5/5 groups (309 Python files, 1,000 stress scenarios).

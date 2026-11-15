@@ -50,6 +50,7 @@ def _walk(value, path):
 
 
 def run(parameters, player=None, session_memory=None):
+    parameters = parameters or {}
     action = str(parameters.get("action") or "validate").strip().lower()
     text = str(parameters.get("text") or "")
     if len(text) > MAX_INPUT:

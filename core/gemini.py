@@ -273,8 +273,10 @@ def is_unavailable_error(err: str) -> bool:
     like an exhausted one — for less long, since it is usually passing.
     """
     low = err.lower()
-    return ("503" in err or "504" in err
-            or "unavailable" in low or "deadline_exceeded" in low)
+    return ("503" in err or "504" in err or "502" in err or "500" in err
+            or "unavailable" in low or "deadline_exceeded" in low
+            or "timeout" in low or "timed out" in low
+            or "connecterror" in low or "connection refused" in low)
 
 
 def is_gone_error(err: str) -> bool:
