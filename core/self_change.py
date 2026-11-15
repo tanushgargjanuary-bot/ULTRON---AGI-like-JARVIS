@@ -335,6 +335,16 @@ def propose(path: str, reason: str, new_text: str | None = None,
                              f"{MAX_PATCH}. Split it into smaller changes.")
         if new == old:
             raise ValueError("That change would leave the file exactly as it is.")
+
+        # Mandatory AST Guardian validation on Python targets
+        if canonical_path.endswith(".py"):
+            from core.ast_guardian import ASTGuardian
+            report = ASTGuardian().audit_source(new, canonical_path)
+            # Allow SYNTAX_ERROR to proceed to Rehearsal stage where rehearsal specifically tests compilation failure
+            security_blockers = [v for v in report.violations if v.severity == "BLOCK" and v.rule != "SYNTAX_ERROR"]
+            if security_blockers:
+                violations_str = "; ".join(f"{v.rule} at L{v.line}: {v.detail}" for v in security_blockers)
+                raise ValueError(f"Proposal blocked by AST Guardian security rules: {violations_str}")
         proposal = {
             "id": "c" + uuid.uuid4().hex[:12],
             "path": canonical_path,

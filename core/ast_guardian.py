@@ -47,6 +47,8 @@ FORBIDDEN_IMPORT_MODULES: Set[str] = frozenset(
     {
         "subprocess",
         "ctypes",
+        "_ctypes",
+        "cffi",
         "mmap",
         "socket",
         "ssl",
@@ -54,6 +56,7 @@ FORBIDDEN_IMPORT_MODULES: Set[str] = frozenset(
         "pickle",
         "dis",
         "gc",
+        "importlib",
     }
 )
 
@@ -157,7 +160,17 @@ class ASTGuardian:
                     )
 
     def _check_dunders(self, tree: ast.AST, report: ASTAuditReport) -> None:
-        dangerous = {"__class__", "__bases__", "__mro__", "__globals__", "__builtins__"}
+        dangerous = {
+            "__class__",
+            "__bases__",
+            "__mro__",
+            "__globals__",
+            "__builtins__",
+            "__code__",
+            "co_code",
+            "__func__",
+            "__closure__",
+        }
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and node.attr in dangerous:
                 report.violations.append(
