@@ -84,7 +84,18 @@ class RoutedLLM:
 
     @property
     def caps(self) -> dict:
-        return dict(self._caps)
+        base = dict(self._caps)
+        # Use active conversation route's vision capability if available
+        try:
+            route = self.table.choose(Purpose.CONVERSATION)
+            active_client = self._clients.get(route.provider.lower())
+            if active_client is not None:
+                client_caps = getattr(active_client, "caps", {}) or {}
+                if "vision" in client_caps:
+                    base["vision"] = bool(client_caps["vision"])
+        except Exception:
+            pass
+        return base
 
     def select(self, purpose: Purpose | str = Purpose.CONVERSATION):
         route = self.table.choose(purpose)
@@ -160,10 +171,13 @@ class RoutedLLM:
                 self._rest(route, error)
                 continue
             if produced == 0:
-                # A clean stream that answered nothing still spent a request,
-                # and the ROUTE line still belongs in the log.
-                self.table.record_use(route)
-                self._announce(route)
+                # An empty answer from the provider is treated as a failed turn
+                # so the ladder advances to the next candidate route instead of
+                # dropping the conversation in silence.
+                self._note(f"{route.provider} returned an empty answer — falling back")
+                last_error = RuntimeError(f"{route.provider} returned an empty answer")
+                self._rest(route, last_error)
+                continue
             return
 
         if last_error is not None:

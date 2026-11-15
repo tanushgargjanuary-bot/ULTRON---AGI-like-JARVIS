@@ -822,38 +822,54 @@ def _validated_checkpoint(checkpoint_payload, engine):
 
 
 def _restore_completed_step(row, engine):
-    """Recreate a completed artifact step only when its current bytes are verified."""
+    """Recreate a completed step, verifying artifact integrity when files were touched."""
     from custom_jarvis.evidence import file_digest
 
-    args = engine.prepare_args(row["tool_name"], row.get("tool_args", {}))
+    tool_name = row.get("tool_name", "")
+    args = engine.prepare_args(tool_name, row.get("tool_args", {}))
     path = args.get("path")
-    if not isinstance(path, str):
-        raise ValueError(
-            "Completed non-artifact action cannot be independently verified; manual review required"
-        )
     expected = row.get("artifact_sha256")
-    if row.get("backup_id"):
+    backup_id = row.get("backup_id")
+
+    if backup_id:
+        if not isinstance(path, str):
+            raise ValueError("Completed mutated action lacks a target path")
         import json
 
-        folder = engine.backups._folder(row["backup_id"])
+        folder = engine.backups._folder(backup_id)
         manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
         if Path(manifest["path"]).resolve() != Path(path).resolve():
             raise ValueError("Checkpoint backup target mismatch")
         expected = manifest.get("after_sha256")
-    if not expected or file_digest(Path(path)) != expected:
-        raise ValueError("Completed artifact changed or lacks a verified fingerprint")
+
+    if path and isinstance(path, str):
+        target_path = Path(path)
+        if expected:
+            if not target_path.is_file() or file_digest(target_path) != expected:
+                raise ValueError("Completed artifact changed or lacks a verified fingerprint")
+        elif backup_id:
+            raise ValueError("Completed artifact changed or lacks a verified fingerprint")
+    elif backup_id or expected:
+        raise ValueError(
+            "Completed non-artifact action cannot be independently verified; manual review required"
+        )
+
+    verification = row.get("verification")
+    if not verification:
+        verification = "verified" if (expected and path) else "inspection_accepted"
+
     return PlanStep(
         row["step_id"],
         row.get("description", "Restored step"),
-        row["tool_name"],
+        tool_name,
         row.get("tool_args", {}),
         status=StepStatus.COMPLETED,
         output=row.get("output"),
         data=row.get("data"),
         artifact_sha256=expected,
-        backup_id=row.get("backup_id"),
+        backup_id=backup_id,
         resolved_args=args,
-        verification=row.get("verification", "executed_unverified"),
+        verification=verification,
         approval_recorded=bool(row.get("approval_recorded", False)),
     )
 

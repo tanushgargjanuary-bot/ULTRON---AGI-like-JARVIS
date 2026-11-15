@@ -282,6 +282,13 @@ class Updating(Base):
         self.assertEqual(result["stage"], "dirty")
         self.assertIn("uncommitted", result["note"])
 
+    def test_untracked_files_do_not_block_update(self):
+        self.advance_origin("notes.md", "a new note\n")
+        (self.work / "untracked_scratch.txt").write_text("temp data\n")
+        result = Updater(self.work, token="t").apply()
+        self.assertTrue(result["ok"], result)
+        self.assertTrue((self.work / "untracked_scratch.txt").exists())
+
 
 class Tools(Base):
     def setUp(self):

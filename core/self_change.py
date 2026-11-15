@@ -68,7 +68,7 @@ PROTECTED = (
 )
 
 # Folders that are copied into a rehearsal or must never be written through here.
-SKIP_DIRS = {".git", "__pycache__", ".venv", ".venv.old", "node_modules",
+SKIP_DIRS = {".git", ".github", "__pycache__", ".venv", ".venv.old", "node_modules",
              "build", "dist", ".pytest_cache", ".ruff_cache", ".mypy_cache",
              ".hypothesis", ".arena", ".npm", "uploads"}
 
@@ -201,15 +201,17 @@ def _ledger_file() -> Path:
 
 
 def _load_proposals() -> dict:
-    try:
-        data = json.loads(_read_regular_text(_proposals_file()))
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
+    with _change_lock:
+        try:
+            data = json.loads(_read_regular_text(_proposals_file()))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
 
 
 def _save_proposals(data: dict) -> None:
-    _atomic_write_text(_proposals_file(), json.dumps(data, indent=1))
+    with _change_lock:
+        _atomic_write_text(_proposals_file(), json.dumps(data, indent=1))
 
 
 def _note(entry: dict) -> None:
@@ -311,48 +313,49 @@ def _apply_edit(old: str, find: str | None, replace: str | None,
 def propose(path: str, reason: str, new_text: str | None = None,
             find: str | None = None, replace: str | None = None) -> dict:
     """Stage a change to one of its own files. Nothing in the project is written."""
-    reason = str(reason or "").strip()
-    if not reason:
-        raise ValueError("A change to my own body needs a reason recorded beside it.")
-    relative = str(path or "").strip()
-    if is_protected(relative):
-        raise ValueError(f"I will not change {relative}. It decides what is allowed, "
-                         f"or it records what happened. That is the referee, and a "
-                         f"system that can rewrite its own referee has none.")
-    target = _inside(relative)
-    if target is None:
-        raise ValueError(f"'{relative}' is outside the files I may change.")
-    # Store the resolved project-relative target. Re-resolving the model-supplied
-    # symlink name later could otherwise redirect an approved proposal to another file.
-    canonical_path = target.relative_to(root().resolve()).as_posix()
-    old = _read_regular_text(target)
-    new = _apply_edit(old, find, replace, new_text)
-    if len(new) > MAX_PATCH:
-        raise ValueError(f"That change is {len(new)} characters; the limit is "
-                         f"{MAX_PATCH}. Split it into smaller changes.")
-    if new == old:
-        raise ValueError("That change would leave the file exactly as it is.")
-    proposal = {
-        "id": "c" + uuid.uuid4().hex[:12],
-        "path": canonical_path,
-        "reason": reason,
-        "at": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "stage": "proposed",
-        "before": len(old),
-        "after": len(new),
-        "old_sha256": _content_digest(old),
-        "confirmations": [],
-        "rehearsal": None,
-        # The crashes known when this was proposed. Kept in the ledger so that months
-        # later the question "why was this changed" has an answer that is evidence
-        # rather than a recollection.
-        "evidence": evidence(limit=2)["crashes"],
-    }
-    data = _load_proposals()
-    data[proposal["id"]] = dict(proposal, old=old, new=new)
-    _save_proposals(data)
-    _note(dict(proposal, event="proposed"))
-    return proposal
+    with _change_lock:
+        reason = str(reason or "").strip()
+        if not reason:
+            raise ValueError("A change to my own body needs a reason recorded beside it.")
+        relative = str(path or "").strip()
+        if is_protected(relative):
+            raise ValueError(f"I will not change {relative}. It decides what is allowed, "
+                             f"or it records what happened. That is the referee, and a "
+                             f"system that can rewrite its own referee has none.")
+        target = _inside(relative)
+        if target is None:
+            raise ValueError(f"'{relative}' is outside the files I may change.")
+        # Store the resolved project-relative target. Re-resolving the model-supplied
+        # symlink name later could otherwise redirect an approved proposal to another file.
+        canonical_path = target.relative_to(root().resolve()).as_posix()
+        old = _read_regular_text(target)
+        new = _apply_edit(old, find, replace, new_text)
+        if len(new) > MAX_PATCH:
+            raise ValueError(f"That change is {len(new)} characters; the limit is "
+                             f"{MAX_PATCH}. Split it into smaller changes.")
+        if new == old:
+            raise ValueError("That change would leave the file exactly as it is.")
+        proposal = {
+            "id": "c" + uuid.uuid4().hex[:12],
+            "path": canonical_path,
+            "reason": reason,
+            "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "stage": "proposed",
+            "before": len(old),
+            "after": len(new),
+            "old_sha256": _content_digest(old),
+            "confirmations": [],
+            "rehearsal": None,
+            # The crashes known when this was proposed. Kept in the ledger so that months
+            # later the question "why was this changed" has an answer that is evidence
+            # rather than a recollection.
+            "evidence": evidence(limit=2)["crashes"],
+        }
+        data = _load_proposals()
+        data[proposal["id"]] = dict(proposal, old=old, new=new)
+        _save_proposals(data)
+        _note(dict(proposal, event="proposed"))
+        return proposal
 
 
 def _copy_tree(destination: Path) -> None:
@@ -366,142 +369,146 @@ def _copy_tree(destination: Path) -> None:
 def rehearse(proposal_id: str, full: bool = False,
              command: list[str] | None = None, timeout: float = 300.0) -> dict:
     """Apply the change in a copy and run the check there. The body is untouched."""
-    data = _load_proposals()
-    proposal = data.get(proposal_id)
-    if proposal is None:
-        raise ValueError(f"I have no change called '{proposal_id}'.")
-    folder = Path(tempfile.mkdtemp(prefix="ultron-rehearsal-"))
-    try:
-        _copy_tree(folder)
-        target = folder / proposal["path"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(proposal["new"], encoding="utf-8")
-        if command is None:
-            command = ([sys.executable, "scripts/verify.py"] if full
-                       else [sys.executable, "-m", "compileall", "-q", proposal["path"]])
-        result = subprocess.run(command, cwd=folder, capture_output=True, text=True,
-                                timeout=timeout, check=False)
-        ok = result.returncode == 0
-        tail = ((result.stdout or "") + (result.stderr or "")).strip().splitlines()[-12:]
-        outcome = {"ok": ok, "command": " ".join(command), "code": result.returncode,
-                   "tail": "\n".join(tail), "full": bool(full),
-                   "at": time.strftime("%Y-%m-%d %H:%M:%S")}
-    except subprocess.TimeoutExpired:
-        outcome = {"ok": False, "command": " ".join(command or []), "code": None,
-                   "tail": "the rehearsal did not finish in time", "full": bool(full),
-                   "at": time.strftime("%Y-%m-%d %H:%M:%S")}
-    finally:
-        shutil.rmtree(folder, ignore_errors=True)
-    proposal["rehearsal"] = outcome
-    proposal["stage"] = "rehearsed" if outcome["ok"] else "proposed"
-    data[proposal_id] = proposal
-    _save_proposals(data)
-    _note({"id": proposal_id, "event": "rehearsed", "ok": outcome["ok"],
-           "path": proposal["path"], "at": outcome["at"], "full": bool(full)})
-    return outcome
+    with _change_lock:
+        data = _load_proposals()
+        proposal = data.get(proposal_id)
+        if proposal is None:
+            raise ValueError(f"I have no change called '{proposal_id}'.")
+        folder = Path(tempfile.mkdtemp(prefix="ultron-rehearsal-"))
+        try:
+            _copy_tree(folder)
+            target = folder / proposal["path"]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(proposal["new"], encoding="utf-8")
+            if command is None:
+                command = ([sys.executable, "scripts/verify.py"] if full
+                           else [sys.executable, "-m", "compileall", "-q", proposal["path"]])
+            result = subprocess.run(command, cwd=folder, capture_output=True, text=True,
+                                    timeout=timeout, check=False)
+            ok = result.returncode == 0
+            tail = ((result.stdout or "") + (result.stderr or "")).strip().splitlines()[-12:]
+            outcome = {"ok": ok, "command": " ".join(command), "code": result.returncode,
+                       "tail": "\n".join(tail), "full": bool(full),
+                       "at": time.strftime("%Y-%m-%d %H:%M:%S")}
+        except subprocess.TimeoutExpired:
+            outcome = {"ok": False, "command": " ".join(command or []), "code": None,
+                       "tail": "the rehearsal did not finish in time", "full": bool(full),
+                       "at": time.strftime("%Y-%m-%d %H:%M:%S")}
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+        proposal["rehearsal"] = outcome
+        proposal["stage"] = "rehearsed" if outcome["ok"] else "proposed"
+        data[proposal_id] = proposal
+        _save_proposals(data)
+        _note({"id": proposal_id, "event": "rehearsed", "ok": outcome["ok"],
+               "path": proposal["path"], "at": outcome["at"], "full": bool(full)})
+        return outcome
 
 
 def confirm(proposal_id: str, channel: str) -> str:
     """One confirmation, from one place. Two are needed, from two places."""
-    data = _load_proposals()
-    proposal = data.get(proposal_id)
-    if proposal is None:
-        return f"I have no change called '{proposal_id}'."
-    place = str(channel or "").strip().lower()
-    if place not in CHANNELS:
-        return (f"A confirmation comes from {', '.join(CHANNELS)} — '{place}' is not "
-                f"one of them.")
-    if place in proposal["confirmations"]:
-        return (f"The {place} confirmation is already recorded. The second one has to "
-                f"come from somewhere else: {', '.join(c for c in CHANNELS if c != place)}.")
-    proposal["confirmations"] = proposal["confirmations"] + [place]
-    data[proposal_id] = proposal
-    _save_proposals(data)
-    left = CONFIRMATIONS - len(proposal["confirmations"])
-    if left > 0:
-        return (f"One confirmation recorded ({place}). {left} more, from a different "
-                f"place, and then it applies.")
-    return f"Confirmed twice ({', '.join(proposal['confirmations'])}). Ready to apply."
+    with _change_lock:
+        data = _load_proposals()
+        proposal = data.get(proposal_id)
+        if proposal is None:
+            return f"I have no change called '{proposal_id}'."
+        place = str(channel or "").strip().lower()
+        if place not in CHANNELS:
+            return (f"A confirmation comes from {', '.join(CHANNELS)} — '{place}' is not "
+                    f"one of them.")
+        if place in proposal["confirmations"]:
+            return (f"The {place} confirmation is already recorded. The second one has to "
+                    f"come from somewhere else: {', '.join(c for c in CHANNELS if c != place)}.")
+        proposal["confirmations"] = proposal["confirmations"] + [place]
+        data[proposal_id] = proposal
+        _save_proposals(data)
+        left = CONFIRMATIONS - len(proposal["confirmations"])
+        if left > 0:
+            return (f"One confirmation recorded ({place}). {left} more, from a different "
+                    f"place, and then it applies.")
+        return f"Confirmed twice ({', '.join(proposal['confirmations'])}). Ready to apply."
 
 
 def apply(proposal_id: str) -> dict:
     """Write the change, keep what it replaced, and record that it happened."""
-    data = _load_proposals()
-    proposal = data.get(proposal_id)
-    if proposal is None:
-        raise ValueError(f"I have no change called '{proposal_id}'.")
-    if len(proposal["confirmations"]) < CONFIRMATIONS:
-        raise ValueError(f"That change has {len(proposal['confirmations'])} of "
-                         f"{CONFIRMATIONS} confirmations.")
-    if not (proposal.get("rehearsal") or {}).get("ok"):
-        raise ValueError("That change has not passed a rehearsal, so I will not write "
-                         "it. Rehearse it first: a rehearsal costs a copy, not a body.")
-    target = _inside(proposal["path"])
-    if target is None:
-        raise ValueError(f"'{proposal['path']}' is no longer a file I may change.")
-    current = _read_regular_text(target)
-    expected_old = proposal.get("old_sha256") or _content_digest(proposal.get("old", ""))
-    if _content_digest(current) != expected_old:
-        raise ValueError(
-            f"{proposal['path']} changed after this proposal was created. "
-            "Nothing was overwritten. Create and rehearse a new proposal."
+    with _change_lock:
+        data = _load_proposals()
+        proposal = data.get(proposal_id)
+        if proposal is None:
+            raise ValueError(f"I have no change called '{proposal_id}'.")
+        if len(proposal["confirmations"]) < CONFIRMATIONS:
+            raise ValueError(f"That change has {len(proposal['confirmations'])} of "
+                             f"{CONFIRMATIONS} confirmations.")
+        if not (proposal.get("rehearsal") or {}).get("ok"):
+            raise ValueError("That change has not passed a rehearsal, so I will not write "
+                             "it. Rehearse it first: a rehearsal costs a copy, not a body.")
+        target = _inside(proposal["path"])
+        if target is None:
+            raise ValueError(f"'{proposal['path']}' is no longer a file I may change.")
+        current = _read_regular_text(target)
+        expected_old = proposal.get("old_sha256") or _content_digest(proposal.get("old", ""))
+        if _content_digest(current) != expected_old:
+            raise ValueError(
+                f"{proposal['path']} changed after this proposal was created. "
+                "Nothing was overwritten. Create and rehearse a new proposal."
+            )
+        backup = store() / "backups"
+        backup.mkdir(parents=True, exist_ok=True)
+        _atomic_write_text(backup / f"{proposal_id}.bak", proposal["old"])
+        _atomic_write_text(
+            target, proposal["new"], default_mode=0o644, expected_sha256=expected_old
         )
-    backup = store() / "backups"
-    backup.mkdir(parents=True, exist_ok=True)
-    _atomic_write_text(backup / f"{proposal_id}.bak", proposal["old"])
-    _atomic_write_text(
-        target, proposal["new"], default_mode=0o644, expected_sha256=expected_old
-    )
-    proposal["applied_sha256"] = _content_digest(proposal["new"])
-    proposal["stage"] = "applied"
-    proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    data[proposal_id] = proposal
-    _save_proposals(data)
-    restart = _write_marker(proposal)
-    _note({"id": proposal_id, "event": "applied", "path": proposal["path"],
-           "at": proposal["applied_at"], "reason": proposal["reason"],
-           "restart_required": restart})
-    return {"ok": True, "path": proposal["path"], "restart_required": restart,
-            "note": ("Applied. This file is code, so it needs a restart before it "
-                     "runs; the session survives the restart because its state is in "
-                     "files."
-                     if restart else "Applied. Data only: no restart is needed.")}
+        proposal["applied_sha256"] = _content_digest(proposal["new"])
+        proposal["stage"] = "applied"
+        proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        data[proposal_id] = proposal
+        _save_proposals(data)
+        restart = _write_marker(proposal)
+        _note({"id": proposal_id, "event": "applied", "path": proposal["path"],
+               "at": proposal["applied_at"], "reason": proposal["reason"],
+               "restart_required": restart})
+        return {"ok": True, "path": proposal["path"], "restart_required": restart,
+                "note": ("Applied. This file is code, so it needs a restart before it "
+                         "runs; the session survives the restart because its state is in "
+                         "files."
+                         if restart else "Applied. Data only: no restart is needed.")}
 
 
 def revert(proposal_id: str) -> str:
     """Put back the bytes this change replaced."""
-    data = _load_proposals()
-    proposal = data.get(proposal_id)
-    if proposal is None:
-        return f"I have no change called '{proposal_id}'."
-    if proposal["stage"] != "applied":
-        return f"'{proposal_id}' was never applied, so there is nothing to put back."
-    kept = store() / "backups" / f"{proposal_id}.bak"
-    if not kept.exists():
-        return f"The copy of what {proposal_id} replaced is gone; I will not guess."
-    target = _inside(proposal["path"])
-    if target is None:
-        return f"'{proposal['path']}' is no longer a file I may write."
-    current = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
-    expected_applied = proposal.get("applied_sha256") or _content_digest(proposal.get("new", ""))
-    if _content_digest(current) != expected_applied:
-        return (
-            f"Cannot revert {proposal['path']}: it changed after {proposal_id} was applied. "
-            "The current file was left untouched."
+    with _change_lock:
+        data = _load_proposals()
+        proposal = data.get(proposal_id)
+        if proposal is None:
+            return f"I have no change called '{proposal_id}'."
+        if proposal["stage"] != "applied":
+            return f"'{proposal_id}' was never applied, so there is nothing to put back."
+        kept = store() / "backups" / f"{proposal_id}.bak"
+        if not kept.exists():
+            return f"The copy of what {proposal_id} replaced is gone; I will not guess."
+        target = _inside(proposal["path"])
+        if target is None:
+            return f"'{proposal['path']}' is no longer a file I may write."
+        current = target.read_text(encoding="utf-8", errors="replace") if target.exists() else ""
+        expected_applied = proposal.get("applied_sha256") or _content_digest(proposal.get("new", ""))
+        if _content_digest(current) != expected_applied:
+            return (
+                f"Cannot revert {proposal['path']}: it changed after {proposal_id} was applied. "
+                "The current file was left untouched."
+            )
+        _atomic_write_text(
+            target, _read_regular_text(kept), default_mode=0o644,
+            expected_sha256=expected_applied,
         )
-    _atomic_write_text(
-        target, _read_regular_text(kept), default_mode=0o644,
-        expected_sha256=expected_applied,
-    )
-    proposal["stage"] = "reverted"
-    proposal["reverted_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    data[proposal_id] = proposal
-    _save_proposals(data)
-    restart = _write_marker(proposal)
-    _note({"id": proposal_id, "event": "reverted", "path": proposal["path"],
-           "at": proposal["reverted_at"]})
-    return (f"Put back: {proposal['path']} is exactly what it was before "
-            f"{proposal_id}." + (" A restart applies it." if restart else ""))
+        proposal["stage"] = "reverted"
+        proposal["reverted_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        data[proposal_id] = proposal
+        _save_proposals(data)
+        restart = _write_marker(proposal)
+        _note({"id": proposal_id, "event": "reverted", "path": proposal["path"],
+               "at": proposal["reverted_at"]})
+        return (f"Put back: {proposal['path']} is exactly what it was before "
+                f"{proposal_id}." + (" A restart applies it." if restart else ""))
 
 
 def _write_marker(proposal: dict) -> bool:

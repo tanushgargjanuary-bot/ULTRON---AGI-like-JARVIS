@@ -128,7 +128,11 @@ class PluginRegistry:
         if not get_plugin_enabled(name):
             return f"The '{name}' plugin is currently disabled."
         try:
-            return _call_run(rec.run, parameters, player, session_memory) or "Done."
+            from core.action_loader import _clean_parameters, _coerce_parameters
+            cleaned = _clean_parameters(parameters)
+            schema = rec.declaration.get("parameters") if isinstance(rec.declaration, dict) else None
+            safe_params = _coerce_parameters(cleaned, schema)
+            return _call_run(rec.run, safe_params, player, session_memory) or "Done."
         except Exception as e:
             failures.note(f"plugin.{name}", e)
             self._logger(f"Plugin '{name}' crashed during run(): {e}")

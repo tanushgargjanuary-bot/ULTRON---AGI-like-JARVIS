@@ -97,7 +97,11 @@ def run(parameters, player=None, session_memory=None):
     parameters = parameters or {}
     pattern = str(parameters.get("pattern") or "")
     text = str(parameters.get("text") or "")[:MAX_TEXT]
-    limit = max(1, min(int(parameters.get("count") or 20), MAX_MATCHES))
+    try:
+        raw_count = int(float(parameters.get("count") or 20))
+    except (TypeError, ValueError):
+        raw_count = 20
+    limit = max(1, min(raw_count, MAX_MATCHES))
     flags = str(parameters.get("flags") or "")
     if not pattern:
         return "I need a pattern to test."

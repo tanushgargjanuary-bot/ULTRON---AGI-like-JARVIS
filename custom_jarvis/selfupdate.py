@@ -152,7 +152,7 @@ class Updater:
     # ------------------------------------------------------------------ apply
     def apply(self, verify: Callable[[], dict] | None = None) -> dict:
         """Pull, verify, reload what is safe, and ask for a restart only if needed."""
-        dirty = self.git("status", "--porcelain")[1]
+        dirty = self.git("status", "--porcelain", "-uno")[1]
         if dirty:
             return {"ok": False, "stage": "dirty", "note":
                     "The working tree has uncommitted changes, so I will not pull over "

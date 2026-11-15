@@ -157,7 +157,10 @@ def ui_control(parameters=None, response=None, player=None, session_memory=None)
     value = str(params.get("value") or "")
     role = str(params.get("role") or "").strip()
     skeleton = bool(params.get("skeleton"))
-    max_lines = int(params.get("max_lines") or 120)
+    try:
+        max_lines = int(float(params.get("max_lines") or 120))
+    except (TypeError, ValueError):
+        max_lines = 120
 
     if action in ("ocr", "read_text", "read_screen_text"):
         return _read_screen_text()

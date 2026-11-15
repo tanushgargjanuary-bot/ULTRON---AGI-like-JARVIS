@@ -152,6 +152,10 @@ class TheReferee(WithAFakeProject):
         with self.assertRaises(ValueError):
             self_change.propose(".git/config", "no", new_text="x\n")
 
+    def test_the_github_folder_is_refused(self):
+        with self.assertRaises(ValueError):
+            self_change.propose(".github/workflows/verify.yml", "no", new_text="x\n")
+
 
     def test_a_symlink_alias_to_a_protected_file_is_refused(self):
         protected = self.project / "core" / "policy.py"

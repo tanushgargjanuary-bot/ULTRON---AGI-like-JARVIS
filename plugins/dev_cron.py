@@ -116,7 +116,11 @@ def run(parameters, player=None, session_memory=None):
         return f"That cron expression is not valid: {exc}"
 
     words = ", ".join(_field_words(value, index) for index, value in enumerate(parts))
-    count = max(1, min(int(parameters.get("count") or 5), 20))
+    try:
+        raw_count = int(float(parameters.get("count") or 5))
+    except (TypeError, ValueError):
+        raw_count = 5
+    count = max(1, min(raw_count, 20))
     runs = _next_runs(parts, count)
     if not runs:
         return f"It means {words}, but I could not find a run in the next year."

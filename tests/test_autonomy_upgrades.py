@@ -540,6 +540,32 @@ class AutonomyUpgradeTests(unittest.TestCase):
         self.assertEqual(calls.call_count, 1)
         self.assertEqual((self.root / "new.txt").read_text(), "approved text")
 
+    def test_checkpoint_resume_supports_non_artifact_completed_step(self):
+        completed = PlanStep(
+            1,
+            "list directory",
+            "list_dir",
+            {"path": "."},
+            status=StepStatus.COMPLETED,
+            output="note.txt",
+        )
+        pending = PlanStep(
+            2, "write", "write_file", {"path": "resumed_list.txt", "content": "resumed content"}
+        )
+        planner = AutonomousPlanner(
+            brain=MagicMock(), tool_registry=self.control, verbose=False
+        )
+        checkpoint = {
+            "goal": "write resumed_list.txt",
+            "workspace": str(self.root.resolve()),
+            "steps": [completed.to_dict(), pending.to_dict()],
+        }
+        with patch.object(self.raw, "execute", wraps=self.raw.execute) as calls:
+            result = planner.resume_from_checkpoint(checkpoint)
+        self.assertTrue(result.success)
+        self.assertEqual(calls.call_count, 1)
+        self.assertEqual((self.root / "resumed_list.txt").read_text(), "resumed content")
+
     def test_disk_checkpoint_restarts_at_step_three_after_step_two(self):
         """Persist after step two, reload in a fresh planner, and run only step three."""
         folder = self.base / "plan-state-restart"
