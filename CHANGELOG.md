@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Windows Job Object supervisor for worker lifecycle isolation and crash recovery.
 - **Python Hybrid IPC Layer**: `core/ipc_client.py` and `core/audio_ring.py` for sub-millisecond bidirectional communication with the native daemon.
 - **Enterprise Documentation Hierarchy**: Restructured legacy context stores into standard `docs/specifications/`, `docs/engineering/`, `docs/audits/`, and `docs/MAINTAINERS.md`.
+- **Autonomous Self-Evolution Specification (`docs/specifications/AUTONOMOUS_EVOLUTION_SPEC.md`)**: Complete architectural specification for Blue/Green worker hot-swapping, out-of-process Rust watchdog with automated Git rollback, canary sandbox under Windows Job Objects, AST Guardian, and hardware-sealed referee integrity.
 
 ### Changed
 - **Dynamic Vision Resolution (`core/routing_runtime.py`)**: Vision capability now reflects active conversation route dynamically instead of requiring all configured fallback routes to support vision.

@@ -54,6 +54,8 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`HEALTH_CENTER.md`](HEALTH_CENTER.md) | Persistent detected-issue notices, ignore/dismiss controls, and background repair proposals |
 | [`SELF-CHANGE.md`](SELF-CHANGE.md) | Guarded source-change process and protected referee files |
 | [`UPDATE_ARCHITECTURE.md`](UPDATE_ARCHITECTURE.md) | Owner-canary releases, signed updates, and no-shutdown worker handoff design |
+| [`specifications/AUTONOMOUS_EVOLUTION_SPEC.md`](specifications/AUTONOMOUS_EVOLUTION_SPEC.md) | Autonomous self-evolution, blue/green hot swapping, canary sandbox, and referee integrity architecture |
+| [`HYBRID_RUST_PYTHON_SPEC.md`](HYBRID_RUST_PYTHON_SPEC.md) | Phase 1 hybrid Rust daemon, Named Pipe IPC, and shared memory ring specification |
 | [`INSTALL.md`](INSTALL.md) | Installation, setup, and troubleshooting |
 | [`SIDECAR.md`](SIDECAR.md) | Go watcher responsibilities, build, and fallback behavior |
 | [`SPACE.md`](SPACE.md) | Why there is no size budget; keep generated output and machine state out of Git |
