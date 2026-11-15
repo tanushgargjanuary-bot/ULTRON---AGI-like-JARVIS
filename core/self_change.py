@@ -576,7 +576,7 @@ def describe(proposal_id: str) -> str:
              f"  size: {item['before']} -> {item['after']} characters",
              f"  confirmations: {', '.join(item['confirmations']) or 'none'} of "
              f"{CONFIRMATIONS}",
-             f"  rehearsal: " + ("passed — " + rehearsal.get("command", "")
+             "  rehearsal: " + ("passed — " + rehearsal.get("command", "")
                                  if rehearsal.get("ok") else
                                  "not passed yet" if rehearsal else "not run")]
     return "\n".join(lines)
