@@ -98,3 +98,6 @@ sidecar/bin/
 # changelog. It is the owner's history, not the repository's: a fresh clone starts
 # with the shipped prompt and an empty history, which is the truth about it.
 config/prompt_versions/
+
+native/ultron-core/target/
+
