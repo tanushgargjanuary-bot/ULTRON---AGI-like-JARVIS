@@ -19,6 +19,20 @@ class FileControllerPathSafetyTests(unittest.TestCase):
             with patch.object(file_controller, "_SAFE_ROOTS", [Path.home()]):
                 self.assertTrue(file_controller._is_safe_path(target))
 
+    def test_windows_drive_resolution_and_critical_protection(self):
+        with patch.object(file_controller, "_OS", "Windows"):
+            resolved_d = file_controller._resolve_path("d:")
+            self.assertEqual(resolved_d, Path("D:/"))
+
+            sub_d = file_controller._resolve_path("d:projects/app.py")
+            self.assertEqual(sub_d, Path("D:/projects/app.py"))
+
+            # Critical OS system directory protection
+            sys32 = Path("C:/Windows/System32/cmd.exe")
+            self.assertTrue(file_controller._is_sensitive(sys32))
+            self.assertFalse(file_controller._is_safe_path(sys32))
+            self.assertIn("critical operating system", file_controller._denial_message(sys32))
+
 
 if __name__ == "__main__":
     unittest.main()

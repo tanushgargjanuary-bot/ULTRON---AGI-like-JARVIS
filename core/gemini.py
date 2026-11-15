@@ -634,13 +634,53 @@ def _to_openai_messages(contents, config) -> tuple[list[dict], Optional[float]]:
     return messages, temperature
 
 
+def _detect_local_fallback() -> str | None:
+    """Detect an active local model server (Ollama, LM Studio, etc.) on loopback.
+
+    Returns an identifier like 'auto_local@qwen2.5-coder:7b@http://127.0.0.1:11434/v1',
+    or None if no local server is active.
+    """
+    try:
+        from core.local_detector import scan_running_servers
+        running = scan_running_servers()
+        if running:
+            best = running[0]
+            for m in running:
+                if m.has_code or m.tier in ("smart", "heavy"):
+                    best = m
+                    break
+            return f"auto_local@{best.name}@{best.base_url}"
+    except Exception as exc:
+        failures.note("gemini._detect_local_fallback", exc)
+    return None
+
+
 def _provider_call(model: str, contents, config, timeout_ms: int):
     """One generation through a configured provider. Raises like every other
     rung, so the loop's error classification applies to it unchanged."""
+    pid = model[len(PROVIDER_PREFIX):]
+    if pid.startswith("auto_local@"):
+        parts = pid.split("@", 2)
+        model_name = parts[1] if len(parts) > 1 else ""
+        base_url = parts[2] if len(parts) > 2 else "http://127.0.0.1:11434/v1"
+        from providers.llm_openai import OpenAICompatLLM
+        llm = OpenAICompatLLM({
+            "base_url": base_url,
+            "model": model_name,
+            "timeout": max(MIN_TIMEOUT_MS, int(timeout_ms)) / 1000.0,
+        })
+        messages, temperature = _to_openai_messages(contents, config)
+        text_out, _calls = llm.complete(
+            messages, tools=None,
+            timeout=max(MIN_TIMEOUT_MS, int(timeout_ms)) / 1000.0,
+            temperature=temperature)
+        if not (text_out or "").strip():
+            raise RuntimeError("the local provider returned an empty answer")
+        return _Reply(text_out)
+
     from memory.config_manager import get_provider_config
     from providers import registry
 
-    pid = model[len(PROVIDER_PREFIX):]
     cfg = get_provider_config(pid)
     missing = registry.missing_fields(pid, cfg)
     if missing:
@@ -748,6 +788,19 @@ def call(contents, tier: str = FAST, config=None,
                       f"{_UNAVAILABLE_SECONDS // 60} minutes")
             else:
                 print(f"[Gemini] {model}: {type(e).__name__}: {msg[:140]}")
+
+    # When all configured rungs have failed (e.g. quota exhausted / 429), attempt
+    # automatic failover to any active local LLM before giving up.
+    if tier != SEARCH and not _carries_recording(contents):
+        local_target = _detect_local_fallback()
+        if local_target and not any(m.startswith(PROVIDER_PREFIX) for m in tried):
+            try:
+                print(f"[Gemini] all cloud rungs exhausted — failing over to local LLM ({local_target})")
+                return _provider_call(PROVIDER_PREFIX + local_target, contents, config, timeout_ms)
+            except Exception as exc:
+                failures.note("gemini.local_fallback", exc)
+                print(f"[Gemini] local fallback failed: {exc}")
+
     return None
 
 

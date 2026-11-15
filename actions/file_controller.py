@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import platform
 from pathlib import Path
@@ -120,6 +121,10 @@ _SENSITIVE_FILE_NAMES = {
     "secrets.json", "secret.json",
 }
 _SENSITIVE_SUFFIXES = (".pem", ".key", ".pfx", ".p12", ".kdbx", ".keystore", ".jks")
+_CRITICAL_SYSTEM_DIR_PARTS = (
+    "windows/system32", "windows/syswow64", "windows/winsxs",
+    "$recycle.bin", "system volume information",
+)
 
 
 def _as_posix_lower(target: Path) -> str:
@@ -131,8 +136,10 @@ def _as_posix_lower(target: Path) -> str:
 
 
 def _is_sensitive(target: Path) -> bool:
-    """True for credential stores and anything else nobody means by "a file"."""
+    """True for credential stores, system critical folders, and anything nobody means by 'a file'."""
     text = _as_posix_lower(target)
+    if any(part in text for part in _CRITICAL_SYSTEM_DIR_PARTS):
+        return True
     if any(part in text for part in _SENSITIVE_DIR_PARTS):
         return True
     name = target.name.lower()
@@ -150,14 +157,42 @@ def _denial_message(target: Path) -> str:
     permissions problem, and sends people looking for one. A credential store is
     a different answer and deserves saying.
     """
+    text = _as_posix_lower(target)
+    if any(part in text for part in _CRITICAL_SYSTEM_DIR_PARTS):
+        return (f"I will not touch {target.name} — it is a critical operating system directory.")
     if _is_sensitive(target):
         return (f"I will not touch {target.name} — it holds credentials. "
                 f"Open it yourself if you need what is in it.")
     return f"Access denied: {target}"
 
 
+def _get_laptop_roots() -> list[Path]:
+    """Retrieve allowed roots including configured roots and user partitions."""
+    roots = list(_SAFE_ROOTS)
+    try:
+        from memory.config_manager import load_api_keys
+        cfg = load_api_keys()
+        for custom_path in cfg.get("allowed_roots", []):
+            try:
+                p = Path(custom_path).resolve()
+                if p.exists() and p not in roots:
+                    roots.append(p)
+            except Exception:
+                pass
+        # Enable multi-drive laptop access by default on Windows or when configured
+        if cfg.get("laptop_wide_access", True):
+            if _OS == "Windows":
+                for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
+                    drive = Path(f"{letter}:/")
+                    if drive.exists() and drive not in roots:
+                        roots.append(drive)
+    except Exception:
+        pass
+    return roots
+
+
 def _is_safe_path(target: Path) -> bool:
-    """Is the given path inside _SAFE_ROOTS and not a credential store?
+    """Is the given path inside _SAFE_ROOTS (or laptop roots) and not a credential/system store?
 
     Known user folders (Downloads, Documents, ...) count as safe roots too.
     OneDrive and others redirect them outside the home folder (for example
@@ -174,7 +209,7 @@ def _is_safe_path(target: Path) -> bool:
         resolved = target.resolve()
         if _is_sensitive(resolved):
             return False
-        roots = list(_SAFE_ROOTS)
+        roots = _get_laptop_roots()
         # `_get_*` are defined below; resolve them lazily so this check
         # stays cheap and keeps working if a folder is redirected.
         for helper in (_get_desktop, _get_downloads, _get_documents,
@@ -245,7 +280,23 @@ def _resolve_path(raw: str) -> Path:
         "videos":    _get_videos(),
         "home":      Path.home(),
     }
-    raw   = raw.strip().strip('"').strip("'")
+    if _OS == "Windows":
+        for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
+            drive = Path(f"{letter}:/")
+            if drive.exists():
+                shortcuts[f"{letter.lower()}:"] = drive
+                shortcuts[f"drive_{letter.lower()}"] = drive
+                shortcuts[f"{letter.lower()}_drive"] = drive
+
+    raw = raw.strip().strip('"').strip("'")
+    if _OS == "Windows":
+        # "d:" or "D:" -> Path("D:/")
+        if re.match(r"^[A-Za-z]:[\\/]?$", raw):
+            return Path(f"{raw[0].upper()}:/")
+        # "d:notes" -> Path("D:/notes")
+        if re.match(r"^[A-Za-z]:[^\\/]", raw):
+            return Path(f"{raw[0].upper()}:/{raw[2:]}")
+
     lower = raw.lower()
     if lower in shortcuts:
         return shortcuts[lower]
