@@ -1,7 +1,7 @@
 """Shared memory circular audio ring buffer reader for ULTRON."""
 
 import ctypes
-from typing import List, Optional
+from typing import List
 import numpy as np
 
 RING_NAME = "Local\\UltronAudioRing"
