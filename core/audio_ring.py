@@ -1,3 +1,5 @@
+"""Shared memory circular audio ring buffer reader for ULTRON."""
+
 import ctypes
 from typing import List, Optional
 import numpy as np

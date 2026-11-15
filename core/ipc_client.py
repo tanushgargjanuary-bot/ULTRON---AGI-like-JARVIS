@@ -1,3 +1,5 @@
+"""Named pipe IPC client for communicating with ultron-core supervisor."""
+
 import asyncio
 import struct
 from typing import Callable, Dict, List, Optional
