@@ -35,3 +35,14 @@
 *.zip  binary
 *.so   binary
 *.dll  binary
+
+# ── GitHub Linguist Configuration ────────────────────────────────────────────
+# Exclude test suites, stress suites, and datasets from language byte metrics
+# so production runtime code (Rust / Python hybrid) accurately reflects in stats.
+tests/**        linguist-vendored=true
+scripts/**      linguist-vendored=true
+curriculum/**   linguist-data=true
+docs/**         linguist-documentation=true
+sidecar/**      linguist-vendored=true
+webapp/**       linguist-vendored=true
+

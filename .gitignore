@@ -42,7 +42,7 @@ setup-log.txt
 # Used while run.bat looks for an interpreter.
 .ultron-python.tmp
 # The plan that was running at exit. It is this machine's work, not the project's.
-state/
+/state/
 
 # ── Python build noise ────────────────────────────────────────────────────────
 __pycache__/
