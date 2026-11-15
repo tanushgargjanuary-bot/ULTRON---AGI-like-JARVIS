@@ -21,7 +21,7 @@ class TestDynamicEvolution(unittest.TestCase):
     def test_autonomous_winner_selection(self):
         manager = DynamicEvolutionManager()
         manager.formulate_rubrics("General optimization", "core backend")
-        
+
         candidates = [
             ArchitectureCandidate(
                 name="Actor Model",
