@@ -1,8 +1,8 @@
 # ULTRON — live checkpoint status and next actions
 
-**Snapshot date:** 2026-11-11
-**Current main HEAD:** `e1237d2e82ad7b981362f009baf568f7873415ea`
-**Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b`
+**Snapshot date:** 2026-11-15
+**Current main HEAD:** `c57d0e4`
+**Last fully verified application/test baseline:** `c57d0e4`
 **Default/permanent integration branch:** `main`
 **Live refs:** three — `main` plus two merged temporary refs
 **Archive tags:** 12 protected exact-SHA tags

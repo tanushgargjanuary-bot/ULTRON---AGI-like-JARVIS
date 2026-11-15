@@ -5,8 +5,8 @@
 - **Repository:** `tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS`
 - **Visibility:** Public
 - **Permanent integration branch:** `main`
-- **Current `main` HEAD:** `2b31d7723baf85fbfd439aab00df44306575b0cb` (read from GitHub on 2026-11-12).
-- **Last fully verified application/test baseline:** `b80919314f391e15ddd86e2860c2e4d66057b15b` (runtime/test baseline; later commits are documentation-only).
+- **Current `main` HEAD:** `c57d0e4` (updated 2026-11-15: Phase 1 hybrid Rust-Python architecture, critical bug fixes, memory synchronization, and self-change locking).
+- **Last fully verified application/test baseline:** `c57d0e4` (passes fast gate 5/5, 1,000 stress scenarios, provider schema checks, and hybrid IPC suite).
 - **Latest full Linux/Windows run:** [43012781547](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/43012781547) — both jobs succeeded on current `main`.
 - **Latest fast branch gate:** the per-branch runs on [PR #20](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/pull/20). The last fully verified fast gate on `main` itself is [42876494264](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494264) (5/5 groups).
 - **Live branches:** `main` plus one temporary feature ref, `feat/provider-failover-wiring` (open as PR #20).
