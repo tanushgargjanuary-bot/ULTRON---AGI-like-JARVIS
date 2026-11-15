@@ -66,8 +66,8 @@ The order is not negotiable, because each step has caught something the others m
 4. **Write the test first or with it.** A change with no test is a claim with no evidence.
    Never weaken an assertion to make a build pass.
 5. **Run the three instruments** (section 5). Red is a real defect, not noise.
-6. **Update the record**: `log.txt` (what changed and why), `HANDOFF.md` (the phase),
-   `docs/`, `AGENTS.md` if a rule appears, `OwnerFiles/` if the owner's intent moved.
+6. **Update the record**: `log.txt` (what changed and why), `CHANGELOG.md` (the release),
+   `docs/`, `AGENTS.md` if a rule appears, `docs/MAINTAINERS.md` if maintainer intent moved.
 7. **One commit per isolated improvement.** A commit that mixes unrelated changes
    cannot be reviewed or reverted safely.
 8. **Use the correct CI lane.** Every branch push gets the fast offline gate. A pull
@@ -78,7 +78,7 @@ The order is not negotiable, because each step has caught something the others m
 
 ## 4. What is never allowed
 
-Each of these has been broken once, and the cost is in `OwnerFiles/history/journey.md`.
+Each of these has been broken once, and the cost is in `docs/engineering/HISTORICAL_JOURNEY.md`.
 
 | Never | Because |
 |---|---|
@@ -201,9 +201,9 @@ Three habits keep that shape:
 
 | Read | For |
 |---|---|
-| `OwnerFiles/README.md` | why the folder exists, and the one sentence that defines it |
-| `OwnerFiles/ULTIMATE_Context.md` | what stands today, what is open, where the traps are |
-| `OwnerFiles/history/journey.md` | the build history, defects included |
+| `docs/specifications/SYSTEM_OVERVIEW.md` | what stands today, what is open, where the traps are |
+| `docs/engineering/HISTORICAL_JOURNEY.md` | the build history, defects included |
+| `docs/MAINTAINERS.md` | maintainer preferences, guidelines, and context |
 | `AGENTS.md` | the hard rules: threading, plugins, hooks, provider schemas |
 | `DECISIONS.md` | what the owner decided, and where each decision is enforced |
 | `GATEKEEPERS.md` | which claims have proof, which need his machine, and why |

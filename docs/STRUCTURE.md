@@ -25,7 +25,7 @@ This guide explains where code and project records belong. The current package l
 ├── .github/                       CI workflows and issue templates
 ├── docs/                          Guides, maps, and technical records
 │   └── reference/                 Long-form algorithms, user, and publishing guides
-├── OwnerFiles/                    Owner-authored project context and history
+├── docs/specifications/           System overview and architecture specifications
 └── run.bat, run.ps1, setup.py, requirements*.txt
                                   Install and launch contracts
 ```
@@ -42,7 +42,7 @@ This guide explains where code and project records belong. The current package l
 | Course facts and syllabus material | `curriculum/` | Store sourced facts as data; do not bury syllabus content in Python. |
 | Verification or development tooling | `scripts/` | A verifier should report what it cannot check; do not weaken a gate to make it green. |
 | A behavior guarantee | `tests/` | Add the closest regression/contract test and preserve existing assertions. |
-| A guide or operating record | `docs/`, `HANDOFF.md`, or `OwnerFiles/` | `docs/INDEX.md` is the documentation entry point; `docs/MAP.md` is generated. |
+| A guide or operating record | `docs/` or `CHANGELOG.md` | `docs/INDEX.md` is the documentation entry point; `docs/MAP.md` is generated. |
 
 ## Root files that intentionally stay at the root
 

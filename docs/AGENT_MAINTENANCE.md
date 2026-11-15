@@ -26,7 +26,7 @@ A user may explicitly request a documentation-only task. It still needs this cla
 
 ## 2. Mandatory start-of-task procedure
 
-1. Read `OwnerFiles/ULTIMATE_Context.md`. It is the current cross-chat handoff.
+1. Read `docs/specifications/SYSTEM_OVERVIEW.md`. It is the current cross-chat handoff.
 2. Read root `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_PLAYBOOK.md`.
 3. Read `docs/AGENT_WORKSPACE.md` and run `python scripts/agent_workspace.py`. Review commit, path, base-difference, and uncommitted-work reports. This tool is read-only. It does not fetch, merge, test, or edit.
 4. Check `git status --short`, current branch, recent commits, remote refs, open PRs, and latest relevant CI. Do not assume an earlier chat's state is current.
@@ -42,7 +42,7 @@ After implementation, review every surface below. Update only the surfaces affec
 | Surface | Update when |
 |---|---|
 | `readme.md` | Product scope, setup, user-visible behavior, requirements, license statement, or public claims change |
-| `OwnerFiles/ULTIMATE_Context.md` | Any medium/large task, milestone, branch/PR/release state change, new limitation, or next-action change |
+| `docs/specifications/SYSTEM_OVERVIEW.md` | Any medium/large task, milestone, branch/PR/release state change, new limitation, or next-action change |
 | `ARCHITECTURE.md` | Responsibilities, data flow, trust boundary, threading, runtime lifecycle, or extension point changes |
 | `DECISIONS.md` | The owner makes a new durable decision or changes an existing one |
 | `GATEKEEPERS.md` | Proof claims, verdicts, test mechanisms, or known machine-dependent gaps change |
@@ -50,14 +50,14 @@ After implementation, review every surface below. Update only the surfaces affec
 | Topic guide in `docs/` | A documented behavior, operation, security constraint, API, or implementation detail changes |
 | `docs/INDEX.md` | A new, renamed, or retired guide changes navigation |
 | `docs/MAP.md` | A Python module is added, removed, renamed, or its docstring/test relationship changes. Regenerate with `python scripts/map.py --write`. |
-| `OwnerFiles/history/journey.md` | A major milestone or important turn in the project history occurs |
-| `OwnerFiles/history/session-log.md` | A meaningful work session finishes. Record the request, changes, evidence, and unresolved work. |
+| `docs/engineering/HISTORICAL_JOURNEY.md` | A major milestone or important turn in the project history occurs |
+| `docs/engineering/SESSION_LOG.md` | A meaningful work session finishes. Record the request, changes, evidence, and unresolved work. |
 | `log.txt` and `HANDOFF.md` | The established build/phase record requires a new entry. Preserve their historical role. Do not create competing status files. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | Keep documentation, tests, and repository hygiene visible during future reviews |
 
 ### Required current-handoff format
 
-For medium/large work, update `OwnerFiles/ULTIMATE_Context.md` with relevant facts:
+For medium/large work, update `docs/specifications/SYSTEM_OVERVIEW.md` with relevant facts:
 
 1. Last audit date and repository/main state.
 2. Product scope and system boundaries.
@@ -126,7 +126,7 @@ Keep the current responsibility-based layout. Put work where it belongs:
 - `curriculum/`: sourced curriculum data.
 - `native/`, `sidecar/`: narrow native integrations and optional watcher.
 - `scripts/`, `tests/`: tools and evidence.
-- `docs/`, `OwnerFiles/`: technical guides, current handoff, and historical records.
+- `docs/`: technical guides, current handoff, and historical records.
 
 Follow `docs/STRUCTURE.md` for current paths and stable root contracts. Do not restructure to match a fashionable template when it adds import shims, launch changes, or risk without a measured benefit.
 

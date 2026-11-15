@@ -41,4 +41,4 @@ green, the run number goes next to it.
 - **One hub page per project**, with the handover as its child page.
 - The hub holds the state and the index. The child page holds the detail.
 - Nothing private. No keys, no tokens, no personal data about other people. The same rule
-  as `OwnerFiles/README.md`, for the same reason: this page may be shared.
+  as `docs/MAINTAINERS.md`, for the same reason: this page may be shared.

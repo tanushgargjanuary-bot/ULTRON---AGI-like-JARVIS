@@ -7,7 +7,7 @@
 **Target:** `main`  
 **Historical state:** This checkpoint records the original promotion and cleanup of ten obsolete branches. Two later temporary branches were created for PRs #17 and #18. Both PRs are now merged; their exact tips are archived, but their branch refs remain pending guarded deletion. The current repository has three branch refs, 12 protected archive tags, and zero open PRs. Latest `main` is `077793d7fd846f871f269362759d97c198ec61c5`.
 
-This document is a dated consolidation checkpoint and evidence record. It is not the live source of truth. The initial promotion and ten-branch cleanup are historical milestones. Current CI, branch refs, archive tags, blockers, and next actions live in `OwnerFiles/ULTIMATE_Context.md` and `docs/NEXT_CHECKPOINTS.md`. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
+This document is a dated consolidation checkpoint and evidence record. It is not the live source of truth. The initial promotion and ten-branch cleanup are historical milestones. Current CI, branch refs, archive tags, blockers, and next actions live in `docs/specifications/SYSTEM_OVERVIEW.md` and `docs/NEXT_CHECKPOINTS.md`. It does **not** mean every planned ULTRON capability is complete, every hardware path has been tested, or the product is defect-free.
 
 ## What is included
 

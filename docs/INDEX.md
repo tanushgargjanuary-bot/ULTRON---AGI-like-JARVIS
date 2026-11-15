@@ -8,7 +8,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 |---|---|---|
 | [`../readme.md`](../readme.md) | Everyone | What Ultron does, setup, privacy, and supported capabilities |
 | [`STRUCTURE.md`](STRUCTURE.md) | Contributors | Repository map, package responsibilities, and paths that must stay stable |
-| [`../OwnerFiles/ULTIMATE_Context.md`](../OwnerFiles/ULTIMATE_Context.md) | New agents | Canonical current handoff: product scope, repository state, evidence, known limits, and next actions |
+| [`specifications/SYSTEM_OVERVIEW.md`](specifications/SYSTEM_OVERVIEW.md) | New agents | Canonical current handoff: product scope, repository state, evidence, known limits, and next actions |
 | [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | Contributors | Evidence-first work, debugging, and contribution process |
 | [`../AGENTS.md`](../AGENTS.md) | Coding agents | Hard coding, threading, plugin, and safety rules |
 | [`AGENT_WORKSPACE.md`](AGENT_WORKSPACE.md) | Agents resuming work | How to inspect commits, branch differences, and local edits |
@@ -82,11 +82,11 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 
 | File | Purpose |
 |---|---|
-| [`../HANDOFF.md`](../HANDOFF.md) | Historical phase notes; current state is in `OwnerFiles/ULTIMATE_Context.md` |
+| [`../HANDOFF.md`](../HANDOFF.md) | Historical phase notes; current state is in `specifications/SYSTEM_OVERVIEW.md` |
 | [`../log.txt`](../log.txt) | Append-only build and investigation log |
-| [`../OwnerFiles/history/journey.md`](../OwnerFiles/history/journey.md) | Owner-facing project journey, including defects and corrections |
-| [`../OwnerFiles/history/session-log.md`](../OwnerFiles/history/session-log.md) | Dated task and handoff notes |
-| [`../OwnerFiles/owner/owner-notes.md`](../OwnerFiles/owner/owner-notes.md) | Owner's recorded preferences and unresolved prompts |
+| [`engineering/HISTORICAL_JOURNEY.md`](engineering/HISTORICAL_JOURNEY.md) | Owner-facing project journey, including defects and corrections |
+| [`engineering/SESSION_LOG.md`](engineering/SESSION_LOG.md) | Dated task and handoff notes |
+| [`MAINTAINERS.md`](MAINTAINERS.md) | Owner's recorded preferences and unresolved prompts |
 | [`../verification-results.txt`](../verification-results.txt) | Output from the last recorded full verification; rerun before relying on it |
 
 ## Scripts and the evidence they produce
@@ -104,7 +104,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 
 ## Repository layout
 
-The package-level map and its path-stability rules live in [`STRUCTURE.md`](STRUCTURE.md). In brief: `actions/` and `plugins/` hold capabilities; `core/` holds shared runtime and safety; `providers/` and `custom_jarvis/` hold integrations and planning; `memory/` and `config/` hold managed state; `scripts/` and `tests/` hold verification; and `dashboard/`, `curriculum/`, `native/`, `sidecar/`, and `packaging/` hold focused assets. `OwnerFiles/` contains owner context. Do not move private state or keys into source control.
+The package-level map and its path-stability rules live in [`STRUCTURE.md`](STRUCTURE.md). In brief: `actions/` and `plugins/` hold capabilities; `core/` holds shared runtime and safety; `providers/` and `custom_jarvis/` hold integrations and planning; `memory/` and `config/` hold managed state; `scripts/` and `tests/` hold verification; and `dashboard/`, `curriculum/`, `native/`, `sidecar/`, and `packaging/` hold focused assets. `docs/specifications/` and `docs/engineering/` contain system context and history. Do not move private state or keys into source control.
 
 ## Organization rule
 

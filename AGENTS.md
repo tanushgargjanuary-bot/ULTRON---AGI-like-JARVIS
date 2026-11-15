@@ -5,7 +5,7 @@ change it makes to this project, and so should any other agent or contributor.
 Each rule below exists because breaking it produced code that looked right,
 passed a syntax check and did nothing when used.
 
-**Start from the durable handoff:** read [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) for current product scope, repository state, evidence, known limits, and next actions. The previous chat is not the source of truth.
+**Start from the durable handoff:** read [`docs/specifications/SYSTEM_OVERVIEW.md`](docs/specifications/SYSTEM_OVERVIEW.md) for current product scope, repository state, evidence, known limits, and next actions. The previous chat is not the source of truth.
 
 **Check the live next-action list:** read [`docs/NEXT_CHECKPOINTS.md`](docs/NEXT_CHECKPOINTS.md), then recheck the live refs, PRs, branch protection, and Actions before taking any listed action. The checkpoint is a snapshot, not permission to add product scope.
 
@@ -174,7 +174,7 @@ a small built-in fallback — instead of crashing.
 
 ## Read these first, in this order
 
-1. `OwnerFiles/ULTIMATE_Context.md` — canonical current handoff, product scope, verified state, limits, and next actions.
+1. `docs/specifications/SYSTEM_OVERVIEW.md` — canonical current handoff, product scope, verified state, limits, and next actions.
 2. `docs/AGENT_MAINTENANCE.md` — mandatory documentation, handoff, cleanup, and structure-maintenance procedure.
 3. `WORKING-PHILOSOPHY.md` and `AGENTS.md` — evidence-first work and non-negotiable code/runtime rules.
 4. `ARCHITECTURE.md` and `DECISIONS.md` — system boundaries and owner decisions.

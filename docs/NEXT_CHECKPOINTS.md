@@ -9,7 +9,7 @@
 **Open pull requests:** 0
 **PR status:** #17 and #18 merged; #19 closed without merge.
 
-This file is the live action list, not permission to add product scope. The canonical handoff is `OwnerFiles/ULTIMATE_Context.md`. Follow `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_MAINTENANCE.md` before any medium or large task. The HEAD above was read from GitHub on 2026-11-11. Refresh it before every later task.
+This file is the live action list, not permission to add product scope. The canonical handoff is `docs/specifications/SYSTEM_OVERVIEW.md`. Follow `AGENTS.md`, `WORKING-PHILOSOPHY.md`, and `docs/AGENT_MAINTENANCE.md` before any medium or large task. The HEAD above was read from GitHub on 2026-11-11. Refresh it before every later task.
 
 ## 1. Latest full application/test verification
 
@@ -111,7 +111,7 @@ Do not deploy, create a project, or add secrets without owner authorization.
 ## 5. Rules for the next agent
 
 1. Re-read the live main SHA, branch refs, tags, PRs, repository metadata, and Actions before acting. This file is a dated snapshot.
-2. Read `OwnerFiles/ULTIMATE_Context.md`, `AGENTS.md`, `WORKING-PHILOSOPHY.md`, `docs/AGENT_MAINTENANCE.md`, and `docs/AGENT_PLAYBOOK.md`.
+2. Read `docs/specifications/SYSTEM_OVERVIEW.md`, `AGENTS.md`, `WORKING-PHILOSOPHY.md`, `docs/AGENT_MAINTENANCE.md`, and `docs/AGENT_PLAYBOOK.md`.
 3. Run `python scripts/agent_workspace.py` and inspect all changed and uncommitted paths. Preserve other agents' work.
 4. Main-only is the default for small, low-risk, non-parallel work when authorized. Use a short-lived branch only when isolation, parallel work, or rollback risk gives a clear benefit. Never keep permanent per-agent branches.
 5. Do not treat old roadmap items as authorization. No new product scope is implied by this checkpoint.

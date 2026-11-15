@@ -51,9 +51,9 @@ GitHub has not accepted account passwords for pushes since 2021.
 | `memory/long_term.json` | what the assistant learned about the owner. Personal by definition. |
 | `restart-required.json`, `ship_pending.json`, ship logs | machine state. They live beside the state folder, and `.gitignore` names them twice. |
 
-`log.txt`, `verification-results.txt` and the whole of `OwnerFiles/` **are**
+`log.txt`, `verification-results.txt` and the whole of `docs/` **are**
 published on purpose: the owner wants the record of how this was built to be
-readable by anyone, including another AI. `OwnerFiles/owner/owner-notes.md` is his own
+readable by anyone, including another AI. `docs/MAINTAINERS.md` is his own
 file and holds nothing private.
 
 ## The licence line, which is the only legal boundary here

@@ -17,9 +17,9 @@ A recommendation is not authorization. Do not treat this playbook, a branch, a m
 
 ## Required start: understand before editing
 
-0. Read `OwnerFiles/ULTIMATE_Context.md` for current project state and `docs/AGENT_MAINTENANCE.md` for the mandatory documentation and repository-hygiene system. Classify the task before editing.
+0. Read `docs/specifications/SYSTEM_OVERVIEW.md` for current project state and `docs/AGENT_MAINTENANCE.md` for the mandatory documentation and repository-hygiene system. Classify the task before editing.
 1. Read `WORKING-PHILOSOPHY.md`, `AGENTS.md`, `DECISIONS.md`, `ARCHITECTURE.md`, and `GATEKEEPERS.md`.
-2. Read `OwnerFiles/ULTIMATE_Context.md` for current state and known traps.
+2. Read `docs/specifications/SYSTEM_OVERVIEW.md` for current state and known traps.
 3. Read `docs/BRANCH_REVIEW.md` for the branch-review findings, then re-measure them with
    `python scripts/branch_report.py`.
 4. Inspect the target module, its callers, its tests, and generated documentation in `docs/MAP.md`.

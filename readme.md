@@ -159,7 +159,7 @@ python scripts/verify.py
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — Runtime layers and request flow
 - [`docs/INDEX.md`](docs/INDEX.md) — Comprehensive documentation guide
 - [`docs/NEXT_CHECKPOINTS.md`](docs/NEXT_CHECKPOINTS.md) — Current verified repository status and ordered next actions
-- [`OwnerFiles/ULTIMATE_Context.md`](OwnerFiles/ULTIMATE_Context.md) — Complete handoff for a new chat or agent
+- [`docs/specifications/SYSTEM_OVERVIEW.md`](docs/specifications/SYSTEM_OVERVIEW.md) — Complete engineering handoff and system state specification
 - [`docs/AGENT_MAINTENANCE.md`](docs/AGENT_MAINTENANCE.md) — Mandatory documentation and repository hygiene workflow
 - [`docs/AGENT_PLAYBOOK.md`](docs/AGENT_PLAYBOOK.md) — Step-by-step task, implementation, test, and review workflow
 - [`docs/TEST_AUTOMATION.md`](docs/TEST_AUTOMATION.md) — Fast branch-push tests, full Linux/Windows gates, and merge-check limits

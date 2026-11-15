@@ -128,12 +128,12 @@ new visual language need to be asked for, not assumed.
 
 - **`main` is the sole permanent branch after consolidation.** Use short-lived `feature/<topic>` and `fix/<topic>` branches for active work. Do not keep permanent branches per agent or model.
 - **Historical branch tips remain protected recovery tags.** The ten 2026-11-10 archive tags are protected by Active ruleset `26923169`; do not move or delete them during routine cleanup.
-- **A chat is not a project record.** `OwnerFiles/ULTIMATE_Context.md` is the canonical current handoff. A new agent starts there and checks live Git/PR/CI state before relying on dated facts.
+- **A chat is not a project record.** `docs/specifications/SYSTEM_OVERVIEW.md` is the canonical current handoff. A new agent starts there and checks live Git/PR/CI state before relying on dated facts.
 - **Medium and large work must update the durable record.** Agents classify task size, review the documentation impact map, update the affected guides and canonical handoff, review repository hygiene, and record evidence. `docs/AGENT_MAINTENANCE.md` is mandatory and is referenced from `AGENTS.md`, the agent playbook, and the pull-request template.
 - **Repository cleanup must be evidence-led.** Do not delete a file because it is large or looks old. Check imports, dynamic discovery, tests, workflows, packaging, docs, and user commands. Preserve logs, backups, history, and owner data.
 - **No workspace size or file-count ceiling is active.** The owner withdrew the 100 MB / 5,000-file budget on 2026-11-07. Keep build output, caches, and machine state out of Git without restoring an arbitrary limit.
 
-Enforced/documented by: `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`, `OwnerFiles/ULTIMATE_Context.md`, and `.github/PULL_REQUEST_TEMPLATE.md`.
+Enforced/documented by: `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PLAYBOOK.md`, `docs/specifications/SYSTEM_OVERVIEW.md`, and `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## 8. Upstream MARK/JARVIS resource intake
 
@@ -216,7 +216,7 @@ Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, and the s
 | **Every tool says when to call it, and every call is counted** | A tool with no condition is a tool that is never chosen, and a feature that is never chosen looks exactly like a feature that is never needed. The condition comes first in the line the model reads, because the cap can only cost a description. | `core/tool_prompt.py`, `core/tool_usage.py`, gate claim `triggers` |
 | **A yes or no question gets Yes or No first** | A direct answer buried in paragraphs is not an answer to a person who asked a direct question. | how the assistant reports to the owner, recorded in `WORKING-PHILOSOPHY.md` |
 | **Plain words before any table** | He flagged excessive technicality three times. Simplified Technical English, one instruction per sentence, the least technical term that is still accurate. | every reply, `WORKING-PHILOSOPHY.md` section 2 |
-| **The working philosophy is a file, not a habit** | A handover to another agent cannot rely on a conversation that no longer exists. The one rule, the process, the red lines, the failure patterns and the checklist live in one page any agent can read in ten minutes. | `WORKING-PHILOSOPHY.md`, `OwnerFiles/ULTIMATE_Context.md` |
+| **The working philosophy is a file, not a habit** | A handover to another agent cannot rely on a conversation that no longer exists. The one rule, the process, the red lines, the failure patterns and the checklist live in one page any agent can read in ten minutes. | `WORKING-PHILOSOPHY.md`, `docs/specifications/SYSTEM_OVERVIEW.md` |
 
 | **A push is allowed only in one direction** | The ship pushes `main` to `origin` and nothing else: no force, no tag, no other branch, no rewrite of history. A remote that has moved is a refusal sentence, because the alternative is destroying work that someone else published. | `custom_jarvis/ship.py:push`, gate claim `shipping` |
 | **A secret is caught before the commit exists** | The scan runs first, so a leak is never in a local commit that someone might push later out of habit. The trade is a slower ship and the risk of a false alarm, which is why the scanner knows the placeholder shapes this repository's own tests use. | `custom_jarvis/ship.py:scan`, `find_secret` |

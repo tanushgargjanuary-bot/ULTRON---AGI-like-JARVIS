@@ -114,7 +114,7 @@ Other important areas:
 - `tests/`: unit, contract, security, integration, and platform-aware tests.
 - `packaging/`: packaging and release assets.
 - `docs/`: guides, indexes, generated maps, and technical decisions.
-- `OwnerFiles/`: public owner context and project history. Never put secrets or private personal data here.
+- `docs/specifications/` & `docs/engineering/`: technical system overview and historical records.
 
 Do not move source directories for visual tidiness. Existing launchers, discovery rules, tests, package metadata, and the installer depend on established paths. Any structural move must include a complete reference search, compatibility decision, tests, and same-change documentation updates.
 
