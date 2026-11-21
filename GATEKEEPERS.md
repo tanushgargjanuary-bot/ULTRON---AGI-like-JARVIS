@@ -13,7 +13,7 @@ Both platforms passed 1,000 deterministic stress scenarios and 15 targeted seede
 
 The fast gate parsed 309 Python files, passed 19 runner edge tests, 30 policy/confirmation tests, 8 README contract tests, and 1,000 seeded stress scenarios. Changed-file Ruff, Git diff checks, and generated module-map validation passed. All five fast-gate groups passed in 12.68 seconds.
 
-**Merge enforcement is not verified.** The GitHub API returned HTTP 403 when reading `main` branch protection. The workflows run automatically, but this audit cannot claim that they block merges. Configure `fast offline gate`, `linux — suite and instruments`, and `windows — the machine the claims are about` as required checks in GitHub, then verify the settings. See `docs/TEST_AUTOMATION.md`.
+**Merge enforcement (read 2026-11-20).** `GET /repos/<owner>/<repo>/branches/main`, read on 2026-11-20, reports `main` as protected with the three required status checks `fast offline gate`, `linux — suite and instruments` and `windows — the machine the claims are about`, at `enforcement_level: non_admins`. That blocks a failing pull request for everyone except administrators; administrators can push straight to `main`, and the `verify` workflow has failed or been cancelled on every push to `main` since 2026-11-15 (14 failed, 8 cancelled). The 2026-11-10 snapshot above predates that, and its "both hosted jobs passed" was true of that run only. See `docs/TEST_AUTOMATION.md`.
 
 **The hosted jobs are green; that does not mean every capability is proven.** PARTIAL and SKIPPED are not passes. The owner's microphone, speaker, camera, GPU, display scaling, browser installation, and real provider/account workflow still need checks on the target machine. Read the current run before repeating these counts after another push.
 
@@ -78,12 +78,15 @@ python scripts\proof_gate.py --live           # with your real key / local model
 python scripts\proof_gate.py --json proof.json
 ```
 
-Thirty-five **claims**, each a chain rather than a checklist, because a microphone that
+The **claims** are each a chain rather than a checklist, because a microphone that
 records and a model that answers have not, together, heard and answered anything
-until the sentence has come out of the speaker. The last count on Linux, with no display
-and no hardware attached: **21 PROVEN, 14 PARTIAL, 0 FAILED** — and 22 / 13 on the CI
-machine, which installs `libGL.so.1`. One claim moves between those two numbers because
-Qt cannot import without it, and the gate says so instead of guessing. Four verdicts:
+until the sentence has come out of the speaker. The number of claims changes whenever one
+is added, so this page does not repeat it: run the gate. On 2026-11-20, in a Linux sandbox with
+the Python packages `verify.yml` installs, it printed **24 PROVEN, 13 PARTIAL, 0 FAILED** over 37
+claims; the last hosted Linux run in the table at the top reads the same. (The "35 claims,
+21 PROVEN, 14 PARTIAL" that stood here are out of date, and a machine without `libGL.so.1`
+can still read differently, because Qt cannot import without it and the gate says so instead
+of guessing.) Four verdicts:
 
 | verdict | means | what to do |
 | --- | --- | --- |

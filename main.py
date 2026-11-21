@@ -693,7 +693,8 @@ class JarvisLive:
         """Initialize the live assistant, UI hooks, clients, and session state."""
         self._platform_notes_shown = False
         self.ui             = ui
-        self._asst_name     = "JARVI    S"   # updated each session from config
+        self._asst_name     = identity.NAME   # updated each session from config
+        self._background_tasks    = set()   # strong references; see _hold
         self.session              = None
         self.audio_in_queue       = None
         self.out_queue            = None
@@ -1828,6 +1829,10 @@ class JarvisLive:
                         )
                     except Exception as error:
                         print(f"[MCP] shutdown cleanup failed: {error}")
+                    # A spoken shutdown is a normal end, and os._exit skips the exit handlers and the
+                    # end of main(): without this, a change Ultron made to its own code would be put
+                    # back at the next launch if the owner shut down within the first minute.
+                    _boot_guard("mark_healthy")
                     import os as _os
                     _os._exit(0)
                 asyncio.create_task(_do_shutdown())
@@ -3073,6 +3078,11 @@ class JarvisLive:
             self._engine = None
             await engine.close()
 
+    def _hold(self, task, name: str):
+        """Keep a task that lives as long as the process; see core/background_tasks.py."""
+        from core.background_tasks import hold
+        return hold(self._background_tasks, task, name)
+
     async def run(self):
         """Run the reconnecting assistant session and recover from supported failures."""
         self._loop = asyncio.get_event_loop()
@@ -3107,15 +3117,21 @@ class JarvisLive:
             from dashboard.server import DashboardServer
             self._dashboard = DashboardServer()
             self._dashboard.set_connect_callback(self._on_phone_connected)
-            asyncio.create_task(self._dashboard.serve())
+            self._hold(asyncio.create_task(self._dashboard.serve()), "dashboard-serve")
             # Runs for the whole lifetime, not just inside an active session
-            asyncio.create_task(self._process_dashboard_commands())
-            # The daily digest: a log line at the configured hour, nothing more.
-            asyncio.create_task(self._digest_loop())
-            asyncio.create_task(self._process_watch_loop())
+            self._hold(asyncio.create_task(self._process_dashboard_commands()),
+                       "dashboard-commands")
         except Exception as e:
             print(f"[Dashboard] Disabled: {e}")
             self._dashboard = None
+
+        # Neither of these has anything to do with the dashboard. They were started inside
+        # the `try` above, so a machine where the dashboard could not start (one missing
+        # package is enough) never got its daily digest or the watcher that says a
+        # background program has finished, and nothing said so but "[Dashboard] Disabled".
+        # The daily digest: a log line at the configured hour, nothing more.
+        self._hold(asyncio.create_task(self._digest_loop()), "digest")
+        self._hold(asyncio.create_task(self._process_watch_loop()), "process-watch")
 
         while True:
             try:
@@ -3507,19 +3523,38 @@ class JarvisLive:
             print(f"[JARVIS] Reconnecting in {delay}s...")
             await asyncio.sleep(delay)
 
+def _boot_guard(step: str) -> None:
+    """Tell `core/boot_guard.py` how this start is going. A safety net is never why the app fails to open."""
+    try:
+        from core import boot_guard
+        getattr(boot_guard, step)()
+    except Exception as error:                      # noqa: BLE001 - see the docstring
+        from core import failures
+        failures.note("main.boot_guard", error)
+
+
 def main():
     ui = JarvisUI("face.png")
+    # A change Ultron made to its own code is trusted once this start has lasted, or ended normally.
+    _boot_guard("arm")
 
     def runner():
-        ui.wait_for_api_key()
-        jarvis = JarvisLive(ui)
         try:
-            asyncio.run(jarvis.run())
-        except KeyboardInterrupt:
-            print("\n🔴 Shutting down...")
+            ui.wait_for_api_key()
+            jarvis = JarvisLive(ui)
+            try:
+                asyncio.run(jarvis.run())
+            except KeyboardInterrupt:
+                print("\n🔴 Shutting down...")
+        except BaseException:
+            # The window would stay open over an assistant that is not running. A change Ultron made
+            # to its own code is not trusted by a start that went like this (core/boot_guard.py).
+            _boot_guard("fail")
+            raise
 
     threading.Thread(target=runner, daemon=True).start()
     ui.root.mainloop()
+    _boot_guard("mark_healthy")             # the window was closed: that was a normal end
 
 if __name__ == "__main__":
     main()

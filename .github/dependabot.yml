@@ -1,0 +1,24 @@
+# Keeps three things that are pinned from going stale: the GitHub Actions (every one is
+# pinned to a commit, so nothing else will move them), the Python requirements, and the web
+# app's packages (package-lock.json). A pin that nothing updates is how a fixed vulnerability
+# stays in the build. One pull request per ecosystem at a time, once a month; delete this
+# file to turn it off.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: "npm"
+    directory: "/webapp"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3

@@ -48,7 +48,7 @@ Do not use force-push or an unguarded ref-delete operation.
 
 **Status: NOT VERIFIED — OWNER/ADMIN ACTION**
 
-The automatic workflows run. The connected GitHub API returned HTTP 403 when this audit tried to read branch protection. This repository must not claim that failed checks block merges until an admin has configured and read back the required checks.
+The automatic workflows run, and `main` lists them as required checks (read 2026-11-20 through `GET /branches/main`, `enforcement_level: non_admins`; see `docs/TEST_AUTOMATION.md`). Administrators are not bound, so a failing `main` is possible: `verify` failed on every push to it from 2026-11-15.
 
 Require these exact check names in GitHub branch protection:
 
@@ -106,7 +106,7 @@ Do not deploy, create a project, or add secrets without owner authorization.
 - PR #19 (`chore: trigger CodeRabbit review`) is closed without merge. It does not establish that CodeRabbit is configured or that AI review is required.
 - Reviewdog/Ruff is static analysis. It is advisory and is not a semantic AI review.
 - PR-Agent is documented as an optional local workflow. Do not send repository code to an external model endpoint without checking the owner's authorization and data-handling requirements.
-- Branch-protection enforcement remains unverified until the required checks are configured and read back.
+- Required checks are configured and were read back on 2026-11-12 and 2026-11-20. Administrators can still bypass them (`enforce_admins` false); whether to close that is the owner's decision.
 
 ## 5. Rules for the next agent
 

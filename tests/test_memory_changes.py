@@ -93,7 +93,18 @@ class WhatChanged(_Store):
     def test_a_failed_atomic_history_replace_keeps_the_old_file_and_fact(self):
         mm.CHANGES_PATH.write_text('[{"path":"old"}]', encoding="utf-8")
         old_history = mm.CHANGES_PATH.read_bytes()
-        with mock.patch.object(mm.os, "replace", side_effect=OSError("disk full")):
+        # The failure belongs to the HISTORY file only. This used to patch os.replace for
+        # everything, which was the same thing while the store itself was written with
+        # write_text; the store is now replaced atomically too, so the injection names its
+        # target. The assertions below are unchanged.
+        real_replace = mm.os.replace
+
+        def fail_for_history(source, destination, *args, **kwargs):
+            if Path(destination) == Path(mm.CHANGES_PATH):
+                raise OSError("disk full")
+            return real_replace(source, destination, *args, **kwargs)
+
+        with mock.patch.object(mm.os, "replace", side_effect=fail_for_history):
             self.write({"preferences": {"answer_length": "short"}})
         stored = json.loads(mm.MEMORY_PATH.read_text(encoding="utf-8"))
         self.assertEqual(stored["preferences"]["answer_length"]["value"], "short")

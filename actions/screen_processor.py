@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import importlib
 import io
-import json
 import sys
 from pathlib import Path
 
@@ -72,9 +71,9 @@ def _load_config() -> dict:
 def _save_config_key(key: str, value) -> None:
     try:
         from memory import config_manager
-        data = config_manager._load_for_write()
-        data[key] = value
-        config_manager._write_config(data)
+        # The public setter holds the settings lock from read to write; the
+        # private pair it replaces did not, so this save could erase another's.
+        config_manager.patch_settings(**{key: value})
     except Exception as e:
         print(f"[Vision] ⚠️  Could not save config key '{key}': {e}")
 

@@ -32,7 +32,22 @@ config/whatsapp_web/
 memory/long_term.json
 # Its timestamped backups too: same contents, different name.
 memory/long_term.json.bak-*
+# Everything memory_manager writes beside it, for the same reason as config/api_keys.json.* above:
+# the copy it sets aside when the store will not parse (long_term.json.broken-<epoch>) and the
+# temporary file of a write that was cut short (.long_term.json.<random>.tmp) are each a COPY OF THE
+# WHOLE MEMORY. A name missing here is a way to publish it: the app's own `ship` runs `git add -A`,
+# and the repository is public.
+memory/long_term.json.*
+memory/.long_term.json.*
+# Any file an atomic writer set aside as damaged or left half-written, wherever it lives.
+*.broken-*
+.*.tmp
 memory/*.db
+# What the app keeps about this machine's own programs and folders: which background programs
+# finished, the evolution runs, and what the model worked out about the user's projects.
+memory/watch-events.jsonl
+memory/evolution-log.json
+config/project_briefs/
 
 # ── Machine state, regenerated on every run ───────────────────────────────────
 # Which files collect-data has already hashed.
@@ -98,6 +113,13 @@ sidecar/bin/
 # changelog. It is the owner's history, not the repository's: a fresh clone starts
 # with the shipped prompt and an empty history, which is the truth about it.
 config/prompt_versions/
+
+# ── What Ultron changed in its own code, and what it replaced ─────────────────
+# `core/self_change.py` keeps every proposal (the whole old and new text of the file), the ledger, a
+# copy of each file it replaced, and the watch file `core/boot_guard.py` reads at the next start. Like
+# the prompt history it is the owner's, and `ship` runs `git add -A`: none of this was ignored, so the
+# first self-change followed by a ship would have published all of it.
+config/self_change/
 
 native/ultron-core/target/
 

@@ -36,6 +36,8 @@ from importlib.util import find_spec
 from typing import Any, Callable, Optional
 from urllib.parse import urlsplit
 
+from core import crash, failures
+
 DEFAULT_URL = "http://127.0.0.1:11434"
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 OPENAI_ENDPOINT = "/v1/chat/completions"
@@ -157,16 +159,23 @@ def start_server(url: str = DEFAULT_URL) -> bool:
     program = shutil.which("ollama")
     if not program:
         return False
+    # The server's own output goes to logs/child-ollama.log rather than nowhere, and a
+    # start that fails is noted: "no local model" with no reason is not a diagnosis.
+    output = crash.child_log("ollama")
     try:
         subprocess.Popen(          # no shell: one program, no arguments from a model
             [program, "serve"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=output if output is not None else subprocess.DEVNULL,
+            stderr=subprocess.STDOUT if output is not None else subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
         )
-    except OSError:
+    except OSError as error:
+        failures.note("local_fallback.start_server", error, detail=program)
         return False
+    finally:
+        if output is not None:
+            output.close()
     deadline = time.time() + START_WAIT
     while time.time() < deadline:
         if running(url):

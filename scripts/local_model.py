@@ -19,9 +19,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -162,24 +164,70 @@ def config_lines(url: str, model: str) -> dict:
     return {"llm_provider": "ollama", "llm_url": url, "llm_model": model}
 
 
+def _private_copy(source: Path, target: Path) -> None:
+    """Copy `source` to `target`, readable by its owner only, from the first byte on.
+
+    `shutil.copy2` gives the copy the ORIGINAL's permissions, so a key file that was readable by
+    other users (the one this script used to leave behind) produced a backup of the same keys that
+    was readable by them too. And over a backup an earlier run had left, it kept THAT file's mode
+    while the new text went in. Here the old backup is removed first and the new one is created
+    exclusively with mode 0600, so the keys are never in a file anyone else can open. The
+    modification time of the original is kept, as `copy2` kept it. A copy that fails part way is
+    removed rather than left half written. On Windows the mode argument has no effect (access
+    there is by ACL), as it has none in the rest of this file.
+    """
+    target.unlink(missing_ok=True)
+    descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as out, open(source, "rb") as original:
+            shutil.copyfileobj(original, out)
+        status = source.stat()
+        os.utime(target, ns=(status.st_atime_ns, status.st_mtime_ns))
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+
+
 def write_config(path: Path, url: str, model: str) -> Path:
     """Write the three keys, keep a backup, and return where the backup went.
 
     An existing file is merged, not replaced: a key the owner pasted for a cloud provider must
-    survive a switch to a local model.
+    survive a switch to a local model. So a file that exists but cannot be read as a JSON object
+    is NOT treated as empty (it used to be, which replaced every key with these three): this
+    raises ValueError and writes nothing. The new text goes to a temporary file that is moved
+    over the config, so an interruption cannot leave half a file either.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     backup = path.with_suffix(path.suffix + ".bak")
+    current: dict = {}
     if path.exists():
-        shutil.copy2(path, backup)
         try:
-            current = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            current = {}
-    else:
-        current = {}
+            parsed = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError) as error:
+            raise ValueError(f"{path} exists but could not be read as JSON ({error}); nothing "
+                             "was written. Fix or move it, then run this again.") from error
+        if not isinstance(parsed, dict):
+            raise ValueError(f"{path} is JSON but not an object ({type(parsed).__name__}); "
+                             "nothing was written.")
+        current = parsed
+        _private_copy(path, backup)
     current.update(config_lines(url, model))
-    path.write_text(json.dumps(current, indent=2) + "\n", encoding="utf-8")
+    # Owner-only, and a name of its own: this file holds API keys. It used to be a fixed
+    # `api_keys.json.tmp` written with the default mode, and the rename then left the key file
+    # readable by every other user of a Linux or macOS machine (measured: 0600 became 0644, where
+    # `memory/config_manager.py` takes care to write the same file 0600). `mkstemp` creates it 0600.
+    descriptor, temporary_name = tempfile.mkstemp(dir=str(path.parent), prefix=f"{path.name}.",
+                                                  suffix=".tmp")
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(current, indent=2) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except OSError:
+        temporary.unlink(missing_ok=True)
+        raise
     return backup
 
 
@@ -251,7 +299,11 @@ def _do_write(url: str, model: str, config: str, confirmed: bool) -> int:
         if input("continue? [y/N] ").strip().lower() not in ("y", "yes"):
             print("nothing written")
             return 1
-    backup = write_config(target, url, model)
+    try:
+        backup = write_config(target, url, model)
+    except (OSError, ValueError) as error:
+        print(f"\nnothing was written: {error}")
+        return 1
     print(f"\nwrote {target}")
     if backup.exists():
         print(f"backup: {backup}")

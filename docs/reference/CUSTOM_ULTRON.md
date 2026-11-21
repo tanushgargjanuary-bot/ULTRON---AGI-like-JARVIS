@@ -102,7 +102,7 @@ Two more, found by scanning the launch path rather than by guessing at it:
   (23 ms) moved to first use, keeping their `_REQUESTS_OK` / `_PIL` flags answered by `find_spec`,
   which locates a package without executing it.
 
-The rule that keeps it that way is enforced, not remembered: `tests/test_lazyimport.py` walks the
+The rule that keeps it that way is enforced, not remembered: `tests/test_suite_providers.py` (the lazy-import section) walks the
 AST of every file in `actions/` and `plugins/` and fails if a heavy library is imported at module
 scope. Timing tests measure the machine they run on; "this file does not import pyautogui at launch"
 is true everywhere.

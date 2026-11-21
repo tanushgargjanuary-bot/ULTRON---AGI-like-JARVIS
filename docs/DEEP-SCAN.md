@@ -68,4 +68,4 @@ This is the one finding worth a ratchet, because a discarded exception is how a 
 | `service.py:365` | 253 | |
 | `dev_agent.py:1268` | 239 | |
 
-See `verification/deep-scan.json` for every finding with its line number. The tests in `tests/test_deep_scan.py` hold the counts as a ceiling, so this report cannot get worse without a red build.
+See `verification/deep-scan.json` for every finding with its line number. The tests in `tests/test_suite_assistant.py:TheCeilings` hold the counts as a ceiling, so this report cannot get worse without a red build.

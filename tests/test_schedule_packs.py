@@ -156,6 +156,22 @@ class Packs(unittest.TestCase):
         self.assertNotIn("pack_todo_report", SKILL_BY_ID)
         self.assertFalse((self.directory / "skills" / "pack_todo_report.json").exists())
 
+    def test_remove_cannot_be_pointed_outside_the_skills_folder(self):
+        # The id becomes a file name and the model chooses it.
+        outside = self.directory / "notes.json"
+        outside.write_text("{}", encoding="utf-8")
+        deeper = self.directory.parent / f"{self.directory.name}-sibling.json"
+        deeper.write_text("{}", encoding="utf-8")
+        self.addCleanup(deeper.unlink, missing_ok=True)
+        for attempt in ("../notes", "../../notes", "..\\notes", "../" + deeper.stem,
+                        "../../" + deeper.stem, "sub/notes", "/notes", "Pack_Todo", "x",
+                        "a" * 41, ""):
+            result = skillpacks.remove(attempt, self.directory)
+            self.assertFalse(result["ok"], attempt)
+            self.assertIn("no pack called", result["note"])
+        self.assertTrue(outside.exists())
+        self.assertTrue(deeper.exists())
+
     def test_a_built_in_cannot_be_removed_as_a_pack(self):
         result = skillpacks.remove("secret_scan", self.directory)
         self.assertFalse(result["ok"])

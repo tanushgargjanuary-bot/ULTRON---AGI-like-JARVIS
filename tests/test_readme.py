@@ -110,5 +110,43 @@ class NoInventedScreenRecordings(unittest.TestCase):
                          "added, say so on the page and delete this test")
 
 
+class Badges(unittest.TestCase):
+    """A badge is a claim. It must be true, or read its truth from somewhere that is."""
+
+    def setUp(self):
+        self.text = readme_text()
+
+    def test_the_python_range_is_the_one_the_launcher_accepts(self):
+        # The badge said 3.10+ while main.py uses BaseExceptionGroup (3.11) and the
+        # launcher refuses everything but 3.11 to 3.13.
+        import re
+        from urllib.parse import unquote
+        from core import launch_guard
+        badge = re.search(r"img\.shields\.io/badge/Python-([^)\s]+?)-blue", self.text)
+        self.assertIsNotNone(badge, "the page has no Python badge")
+        shown = unquote(badge.group(1))
+        low, high = launch_guard.SUPPORTED[0], launch_guard.SUPPORTED[-1]
+        self.assertIn(f"{low[0]}.{low[1]}", shown)
+        self.assertIn(f"{high[0]}.{high[1]}", shown)
+        self.assertNotIn("+", shown, "an open-ended range promises versions nobody tested")
+
+    def test_no_static_badge_says_a_check_is_passing(self):
+        # "Fast Gate Passing" was a fixed image: it stayed green while the full
+        # verification on main failed 22 pushes in a row.
+        import re
+        static = re.findall(r"img\.shields\.io/badge/[^)\s]*", self.text)
+        for url in static:
+            with self.subTest(url=url):
+                self.assertNotRegex(url.lower(), r"pass|green|success|verified")
+
+    def test_the_status_badges_read_the_real_workflows(self):
+        import re
+        workflows = re.findall(r"actions/workflows/([\w.-]+)/badge\.svg", self.text)
+        self.assertTrue(workflows, "the page has no live workflow badge")
+        for name in workflows:
+            with self.subTest(workflow=name):
+                self.assertTrue((ROOT / ".github" / "workflows" / name).is_file())
+
+
 if __name__ == "__main__":
     unittest.main()

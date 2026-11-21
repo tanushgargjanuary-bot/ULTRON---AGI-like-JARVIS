@@ -7,9 +7,10 @@
 <br/>
 
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
-[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](docs/INSTALL.md)
+[![Python: 3.11 to 3.13](https://img.shields.io/badge/Python-3.11%20to%203.13-blue.svg)](docs/INSTALL.md)
 [![Platform: Windows Native](https://img.shields.io/badge/Platform-Windows%20Native-0078D6.svg)](docs/INSTALL.md)
-[![Tests: Fast & Proof Gates](https://img.shields.io/badge/Verification-Fast%20Gate%20Passing-success.svg)](docs/TEST_AUTOMATION.md)
+[![Fast checks](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/workflows/fast-checks.yml/badge.svg?branch=main)](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/workflows/fast-checks.yml)
+[![Full verification](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/workflows/verify.yml)
 [![Architecture: Self--Healing & Memory](https://img.shields.io/badge/Architecture-Self--Healing%20%26%20Memory-blueviolet.svg)](ARCHITECTURE.md)
 
 <p align="center">

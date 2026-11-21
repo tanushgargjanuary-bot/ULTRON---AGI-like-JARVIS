@@ -132,11 +132,13 @@ a small built-in fallback — instead of crashing.
   `memory/config_manager.py`; never write that file directly.
 - Keep to the libraries already in `requirements.txt`.
 - **A change to its own source goes through `core/self_change.py`, in five stages, or
-  it does not go.** Propose, rehearse in a copy, two confirmations from two channels,
-  apply, revert. Never write `core/policy.py`, `core/confirm.py`, `core/self_change.py`,
-  `scripts/proof_gate.py` or the settings file — those are the referee. Never add a
-  shortcut around a rehearsal, and never say a `.py` change is running before the
-  process has restarted.
+  it does not go.** Propose, rehearse in a copy, two confirmations from two places (the
+  owner's yes, and the owner's press of the CONFIRM button; a `channel` the model names
+  counts for nothing), apply, revert. Never write `core/policy.py`, `core/confirm.py`,
+  `core/self_change.py`, `core/boot_guard.py`, `scripts/proof_gate.py`,
+  `scripts/bootstrap.py`, `run.bat`, `run.ps1` or the settings file — those are the
+  referee and the net under it. Never add a shortcut around a rehearsal, and never say a
+  `.py` change is running before the process has restarted.
 - **Syllabus topics live in `curriculum/*.json`, not in Python.** A university fact
   belongs in a file the owner can read and correct. Every subject says where its
   syllabus came from, and a reading link is written down only after it has been

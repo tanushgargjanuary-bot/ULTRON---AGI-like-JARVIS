@@ -3,6 +3,16 @@
 This file records third-party components that ULTRON includes or derives from.
 It does not replace the licence for the ULTRON project itself.
 
+## CryptoJS (vendored, not loaded)
+
+**ULTRON file:** `dashboard/static/crypto-js.min.js`
+
+**What it is:** a minified build of [CryptoJS](https://github.com/brix/crypto-js). The file does not record which version; it is byte-identical to the copy in the upstream MARK-LVI project (`docs/UPSTREAM_RESEARCH.md` lists it among the shared files with an identical blob).
+
+**Licence:** MIT, copyright 2009-2013 Jeff Mott and 2013-2016 Evan Vosberg, as published in the `crypto-js` package on npm. [`CRYPTOJS-LICENSE.txt`](CRYPTOJS-LICENSE.txt) is that licence text. MIT requires the notice to travel with copies of the software, and this file is a copy.
+
+**Is it used?** No. Neither `dashboard/static/app.html` nor `dashboard/static/login.html` loads it: the dashboard now encrypts with the browser's Web Crypto (AES-GCM) and says so in `app.html`. `tests/test_source_hygiene.py` fails if a page starts loading it without this entry being revisited. It is kept, rather than deleted, because it is one of the files the project tracks as identical to upstream; removing it is the owner's decision.
+
 ## MediaPipe canonical face geometry
 
 **ULTRON file:** `core/face_model.obj`

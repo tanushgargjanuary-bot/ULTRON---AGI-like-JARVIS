@@ -8,8 +8,9 @@ import tempfile
 import platform
 from pathlib import Path
 from datetime import datetime
+from urllib.parse import urlsplit
 
-from core import outcome
+from core import applescript, failures, outcome
 
 # pyautogui is gone from this file along with the generated-code sandbox that
 # was the only thing using it — see the note below. Nothing here drives the
@@ -105,6 +106,18 @@ def _unknown(said: str) -> str:
     )
 
 
+def _new_temp_file(suffix: str) -> Path:
+    """An empty temporary file that this call created, so no one else can have.
+
+    `tempfile.mktemp` only invents a name — between that and the first write another
+    process can create the same name (or a link with it), and the write then goes
+    wherever that file points. `mkstemp` creates the file, exclusively, and hands it back.
+    """
+    descriptor, name = tempfile.mkstemp(suffix=suffix)
+    os.close(descriptor)
+    return Path(name)
+
+
 def _apply_wallpaper(image_path: str) -> str:
     path = Path(image_path).expanduser().resolve()
     if not path.exists():
@@ -118,7 +131,7 @@ def _apply_wallpaper(image_path: str) -> str:
             if path.suffix.lower() in {".webp", ".png"}:
                 try:
                     from PIL import Image
-                    bmp_path = Path(tempfile.mktemp(suffix=".bmp"))
+                    bmp_path = _new_temp_file(".bmp")
                     Image.open(path).convert("RGB").save(bmp_path, "BMP")
                     path = bmp_path
                 except ImportError:
@@ -129,7 +142,7 @@ def _apply_wallpaper(image_path: str) -> str:
         elif _OS == "Darwin":
             script = (
                 f'tell application "System Events" to tell every desktop to '
-                f'set picture to POSIX file "{path}"'
+                f'set picture to POSIX file {applescript.literal(path)}'
             )
             subprocess.run(["osascript", "-e", script], capture_output=True)
             return f"Wallpaper set: {path.name}"
@@ -235,21 +248,64 @@ def set_wallpaper(image_path: str) -> str:
     )
 
 
+MAX_WALLPAPER_BYTES = 25_000_000      # a 4K photograph is a few MB; this is not a place to store a film
+
+_IMAGE_SUFFIX = {"image/jpeg": ".jpg", "image/jpg": ".jpg", "image/png": ".png",
+                 "image/bmp": ".bmp", "image/gif": ".gif", "image/webp": ".webp",
+                 "image/tiff": ".tif"}
+_IMAGE_SUFFIXES = frozenset(_IMAGE_SUFFIX.values()) | {".jpeg", ".tiff"}
+
+
+def _image_suffix(content_type: str, final_url: str) -> str | None:
+    """The file suffix to save under, or None when what came back is not an image.
+
+    The server's `Content-Type` decides. A server that says only `application/octet-stream`
+    (some download hosts do) is believed if the address itself ends in an image suffix.
+    """
+    kind = content_type.split(";", 1)[0].strip().lower()
+    if kind in _IMAGE_SUFFIX:
+        return _IMAGE_SUFFIX[kind]
+    ending = Path(urlsplit(final_url).path).suffix.lower()
+    if kind in ("", "application/octet-stream", "binary/octet-stream") and ending in _IMAGE_SUFFIXES:
+        return ending
+    if kind.startswith("image/") and ending in _IMAGE_SUFFIXES:
+        return ending                       # an image type this table has not heard of, named as one
+    return None
+
+
 def set_wallpaper_from_url(url: str) -> str:
+    """Download one picture from a PUBLIC web address and make it the wallpaper.
+
+    It used to hand the address to `urllib.request.urlretrieve`, which opens whatever it is
+    given: a `file:///` path (a copy of any file the owner can read), `ftp:`, `localhost`, a
+    printer or router on the home network, a cloud metadata address. The model chooses the
+    address, and the model reads web pages and files that anyone can write. Now the download goes
+    through `actions/web_read.fetch_public_bytes`: http and https only, no credentials, standard
+    ports, public addresses only (checked again at every redirect), at most
+    `MAX_WALLPAPER_BYTES`, and it has to be an image. The temporary file is removed on every path,
+    including the failed ones the old code left behind.
+    """
+    tmp = None
     try:
-        import urllib.request
-        suffix = Path(url.split("?")[0]).suffix or ".jpg"
-        tmp    = Path(tempfile.mktemp(suffix=suffix))
-        urllib.request.urlretrieve(url, str(tmp))
-        result = set_wallpaper(str(tmp))
-        try:
-            tmp.unlink()
-        except Exception:
-            pass
-        return result
+        from actions import web_read
+        final, headers, body = web_read.fetch_public_bytes(
+            str(url or "").strip(), MAX_WALLPAPER_BYTES, accept="image/*")
+        suffix = _image_suffix(headers.get("content-type", ""), final)
+        if suffix is None:
+            kind = headers.get("content-type", "").split(";", 1)[0].strip() or "an unknown type"
+            raise ValueError(f"that address gave {kind}, which is not a picture format a wallpaper can use")
+        tmp = _new_temp_file(suffix)
+        tmp.write_bytes(body)
+        return set_wallpaper(str(tmp))
     except Exception as e:
         return outcome.failed("set_wallpaper",
                               f"the image could not be downloaded: {e}", url=url)
+    finally:
+        if tmp is not None:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError as error:           # Windows can hold a just-used wallpaper file for a moment
+                failures.note("desktop.wallpaper_temp", error)
 
 
 def get_current_wallpaper() -> str:
@@ -429,7 +485,6 @@ def desktop_control(
     """
     params = parameters or {}
     action = str(params.get("action") or "").lower().strip()
-    task   = params.get("task", "").strip()
 
     if player:
         print(f"[Desktop] {action}")             # terminal, not the HUD
@@ -512,7 +567,7 @@ TOOL = {
             },
             "url": {
                 "type": "STRING",
-                "description": "Image URL, for action='wallpaper_url'"
+                "description": "Public http(s) address of a picture (never a local file), for action='wallpaper_url'"
             },
             "mode": {
                 "type": "STRING",

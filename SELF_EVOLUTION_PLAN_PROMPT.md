@@ -90,7 +90,7 @@ Please provide a comprehensive, production-grade architectural specification tha
 
 ### 3. Out-of-Process Watchdog & Boot Recovery Protocol
 - Implementation specification for the Rust daemon (`ultron-core`):
-  - Crash detection and heartbeat pings (`\pipe\ultron-ipc`).
+  - Crash detection and heartbeat pings (`\\.\pipe\ultron-core`).
   - **Dead Man's Switch / Boot Loop Guard**: If a newly applied self-change causes the Python worker to crash within 30 seconds of booting 3 consecutive times, the Rust supervisor automatically triggers `git reset --hard` to the last verified release tag and restarts the worker.
 
 ### 4. Sandboxed Code Generation & Safety Invariants

@@ -238,29 +238,44 @@ def _process_image(path: Path, action: str, params: dict, speak=None) -> str:
 
     return _process_image(path, "describe", {"instruction": f"{action}: {params}"})
 
+def _extract_pdf_text(path: Path, max_chars: int = 50000) -> str:
+    """The first `max_chars` characters of a PDF's text, from whichever reader is installed.
+
+    Only that many are ever used, so reading stops once there are that many: a 4,000-page PDF
+    was parsed whole and then cut to 50,000 characters, which is minutes of work and the whole
+    document in memory. pdfplumber first; then pypdf, the maintained successor of PyPDF2 (no
+    PyPDF2 release since 2022); then PyPDF2 if that is what is installed; "" if none is.
+    """
+    text = ""
+    try:
+        import pdfplumber
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                text += (page.extract_text() or "") + "\n"
+                if len(text) >= max_chars:
+                    break
+    except ImportError:
+        try:
+            from pypdf import PdfReader
+        except ImportError:
+            try:
+                from PyPDF2 import PdfReader
+            except ImportError:
+                return ""
+        with open(path, "rb") as f:
+            reader = PdfReader(f)
+            for page in reader.pages:
+                text += (page.extract_text() or "") + "\n"
+                if len(text) >= max_chars:
+                    break
+    return text[:max_chars]
+
+
 def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
     action = action or "summarize"
 
-    def _extract_pdf_text(max_chars=50000) -> str:
-        text = ""
-        try:
-            import pdfplumber
-            with pdfplumber.open(path) as pdf:
-                for page in pdf.pages:
-                    text += (page.extract_text() or "") + "\n"
-        except ImportError:
-            try:
-                import PyPDF2
-                with open(path, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
-                    for page in reader.pages:
-                        text += page.extract_text() + "\n"
-            except ImportError:
-                return ""
-        return text[:max_chars]
-
     if action in ("summarize", "extract_text", "translate_hint", "analyze", "reformat"):
-        text = _extract_pdf_text()
+        text = _extract_pdf_text(path)
         if not text.strip():
             return "Could not extract text from PDF (may be scanned/image-based)."
 
@@ -297,7 +312,7 @@ def _process_pdf(path: Path, action: str, params: dict, speak=None) -> str:
             return f"PDF size: {_file_size_str(path)}"
 
     if action == "to_word":
-        text = _extract_pdf_text()
+        text = _extract_pdf_text(path)
         if not text:
             return "Could not extract text to convert."
         try:
@@ -745,7 +760,10 @@ def _process_video(path: Path, action: str, params: dict, speak=None) -> str:
     if action == "transcribe":
         if not _ffmpeg_available():
             return "ffmpeg not found. Needed for video transcription."
-        tmp_audio = Path(tempfile.mktemp(suffix=".mp3"))
+        # mkstemp creates the file; mktemp only picked a name another process could take.
+        _descriptor, _name = tempfile.mkstemp(suffix=".mp3")
+        os.close(_descriptor)
+        tmp_audio = Path(_name)
         try:
             subprocess.run(
                 ["ffmpeg", "-i", str(path), "-q:a", "0", "-map", "a",

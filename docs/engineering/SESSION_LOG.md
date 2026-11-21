@@ -812,3 +812,201 @@ removed, ruff is clean on the file, and the 69 tests still pass.
 8. **UI Shutdown Thread Crash:** Protected `MainWindow` wake state emitter against `RuntimeError` on C++ object deletion during application termination (`ui.py`).
 9. **README Overhaul:** Transformed `README.md` with visual architecture flowcharts, badges, feature matrices, quick starts, and verified contract assertions (all passing `tests/test_readme.py`).
 10. **Swarm Bug Dossier:** Consolidated all findings into durable artifact `ULTRON_BUG_DOSSIER.md`. Verified with `scripts/fast_verify.py` passing 5/5 groups (309 Python files, 1,000 stress scenarios).
+
+---
+
+## 2026-11-20 — a review pass: two red gates, the safety gaps, and what the code really runs
+
+**Asked for.** A review of the repository (bugs, risky code, missing tests, documentation gaps,
+developer-experience faults, highest value first); then "fix all this and do an even deeper search
+for more problems and feature malfunctions". Nothing was to be committed, pushed or merged. The
+work is in the working tree of branch `arena/850afbc9-ultron-agi-like-jarvis`, cut from `main` at
+`cf02c0e`.
+
+**Method.** Read first, then ran. The suite and `scripts/verify.py` were run in clean copies of the
+tree, with the full package set and with the lean set `verify.yml` installs (the lean run caught a
+test of mine that needed FastAPI, which that job does not install). Every new test was also run
+against the code it replaces and fails there. Besides the suite: a probe that calls every dashboard
+route with malformed bodies, one that sends every bundled plugin junk arguments (it found nothing in
+the plugins; the dispatcher raises on non-object arguments, which `main.py` never sends), the repository's debt scanner against its ceilings, and the real ruff on every touched file.
+
+**Built & fixed** (detail and file names: `CHANGELOG.md`, "Review pass, 2026-11-20"):
+1. **The gates.** The plugin dispatcher fault (every plugin call raised) and the provider self-test that
+   `verify` has failed since `60ee7a3`; a dispatch smoke group in the fast gate; live workflow badges
+   in the README; a lint step that fails a change for the findings it adds (`scripts/lint_ratchet.py`),
+   Actions pinned to commits, Ruff pinned to `requirements-dev.txt`, upper bounds on every requirement,
+   `webapp/package-lock.json` with `npm ci`, `.github/dependabot.yml`.
+2. **Safety.** The system prompt can no longer be changed by the model alone (the second confirmation
+   is the owner's click on a banner); `self_modify` asks on every call; the AST guardian's bypasses;
+   `file_controller`'s credential deny-list and overwrite-on-copy/move; local-model failover needs
+   `local_fallback_consent`; the dashboard (every JSON route, both sockets, downloads, `/auto-login`,
+   the TLS key); AppleScript quoting; skill-pack ids; `tempfile.mktemp`.
+3. **Data.** Settings and memory writes are atomic and never made from a failed read; `remember`,
+   `forget` and the approved memory write say so when they did not save; the persona and identity paths
+   in `ui.py` and `scripts/local_model.py` no longer write the settings file themselves.
+4. **Honesty of claims.** The Rust core's status (a section in the evolution spec, a test that fails when
+   `main.rs` and the sentence disagree), the sealer marked experimental, the pipe name, test files named
+   in `DECISIONS.md` and `ARCHITECTURE.md` that do not exist, `GATEKEEPERS.md`' stale claim count, the
+   merge-enforcement text (read from GitHub: required checks exist and bind everyone but administrators).
+5. **Smaller:** the IPC frame cap, the loops started inside the dashboard's `try`, a file handle in
+   `measure_code`, child output logged instead of discarded for the two programs the app depends on,
+   `scripts/map.py`'s closing line, dead code in `scripts/verify.py`, a CryptoJS licence notice.
+
+**Evidence.** Linux, Python 3.11.2: full suite 2,442 tests, 0 failed, 9 skipped; `scripts/verify.py`
+with the CI package set exits 0 (suite 2,442 / 48 skipped, provider and UI self-tests 99 of 99, 1,000
+stress scenarios, 15 of 15 mutations detected, no new module-map gap, migration checks passed); proof gate
+24 PROVEN, 13 PARTIAL, 0 FAILED over 37 claims (the same as the last hosted Linux run); fast gate 6 of 6
+groups over 345 Python files; lint ratchet against `cf02c0e`: 141 findings in the 68 touched files, 151 at
+the base. Before: cf02c0e ran 2,101 tests and 32 failed in both environments (29 from the plugin dispatcher fault, 3 from the repository's own debt-ceiling tests). Debt measures are all within their ceilings (swallowed 152 of 157,
+print-in-library 252 of 254, complex 107 of 108, no-timeout 43 of 45, no-module-docstring 16 of 18).
+
+**Not checked.** Windows, macOS, GitHub Actions (workflow edits parse and have not run), the Rust and Go
+code (no toolchain; the one Rust edit is uncompiled), Python 3.12 and 3.13, real keys, audio and display.
+Found by reading and not reproduced: the Job Object limits in `native/ultron-core/src/process/supervisor.rs`
+(a second `SetInformationJobObject` call can replace the first call's limits; the code was left unchanged
+at this point and is changed in the follow-up entry below, still uncompiled) and the Windows
+drive-relative download name.
+
+**Left for the owner** (`DECISIONS.md`, "Open questions"; `docs/specifications/SYSTEM_OVERVIEW.md`):
+whether administrators may bypass the required checks (`enforce_admins` is false; only the owner can
+change it); whether to keep the lint ratchet; `laptop_wide_access` defaulting to on; a real panel button
+for `self_modify`'s second confirmation (a referee file); what to do with the archive workflow that runs
+on every push to `main`; whether to lower the debt ceilings to the new measures; the unused vendored
+`crypto-js.min.js`; and the two referee-file edits above, which should be read before anything else.
+
+## 2026-11-21 — follow-up: twelve findings from a second review of the review pass
+
+**Asked for.** "Use this repo to code review" (github.com/alibaba/open-code-review) on the working tree, then
+"Dont ask before making a fix". Same constraints as the entry above: nothing committed, pushed or merged; the
+work is in the working tree of `arena/850afbc9-ultron-agi-like-jarvis`.
+
+**Method.** The tool (npm package 1.14.0, installed with `--ignore-scripts`; its release binary's checksum matched the
+npm copy) was run in *delegation* mode: it lists the changed files, prepares each file's diff and prints its
+rules; it has no model of its own in that mode, so the reading and every finding were done by the agent that wrote
+the first pass: a second look with a checklist, not an outside reviewer. It set 55 of
+the 103 changed paths aside (31 tests, a lockfile, 23 documents); those were not reviewed. The other 48 were all
+read. The tool's update check was switched off and it ran with a scratch home folder. Its own claims
+(benchmarks, telemetry) were not checked. The report was written to a scratch folder outside the repository,
+which a sandbox reset has since removed; the twelve findings are recorded here and in `CHANGELOG.md` instead.
+
+**The twelve, highest first, and what was done** (detail: `CHANGELOG.md`, "Follow-up to the review pass"):
+1. HIGH — the prompt-change banner dropped lines starting `++`/`--`, cut at 900 characters, drew the model's
+   reason as HTML, and the window clipped every banner silently. Fixed (`core/display_text.py`, `ui.py`,
+   `actions/prompt_editor.py`); a change over 4,000 characters of difference is refused, not shown in part.
+2. HIGH — `.gitignore` missed the memory store's set-aside and temporary files, and `ship` runs `git add -A`. Fixed.
+3. MEDIUM — `scripts/local_model.py` left the key file (and its backup) readable by other users. Fixed.
+4. MEDIUM — the Linux proof-gate step could not fail the job (`| tee`). Fixed, simulated, not run on GitHub.
+5. MEDIUM — the AST guardian's header said it "can only over-report". Rewritten, the code made to match, each
+   remaining limit named and pinned by a test. **Referee file.**
+6. LOW — `core/tool_usage.py` wrote settings on the event loop. A writer thread now, `main.py` untouched.
+7. LOW — `wallpaper_url` followed `file://` and local addresses. Now the page reader's checks.
+8. LOW — the Job Object supervisor (Rust). Rewritten by reading; uncompiled, unrun, and nothing calls it.
+9. LOW — `verify.yml` had no `permissions:` and cancelled runs on `main`. Fixed.
+10. LOW — the dashboard login throttle never forgot an address. Bounded.
+11. LOW — dead stores in `_select_persona_theme`. Removed; the switch has a test now.
+12. LOW — the lint ratchet's description promised more than it checks. Weakened to what is true, with a test.
+
+**Method for the fixes.** Every new test was also run against the code it replaces and fails there; where a test
+could not fail on the old code because the old code's behaviour was identical (the dead stores, who the throttle
+blocks) it is a structural or an equivalence test, and says so. The guardian's tests were run against the original
+file as well: 9 of the 27 tests fail (119 sub-cases). The refusal count was measured before and after each guardian change.
+Failures found on the way: the repository's debt ceilings caught six new "no-timeout" findings (49 against a ceiling
+of 45: three `put` calls on a queue, which the scanner reads as an HTTP verb, and three `mock.patch("...")` calls,
+which it reads as HTTP PATCH) and two over-deep functions in the guardian (28 against 26); the lint ratchet caught a
+new unused local and an import after code. All of them were fixed in the code, not by raising a ceiling.
+
+**Evidence** (Linux, Python 3.11.2, a clean two-commit copy: the base tree, then the working tree):
+- package set `verify.yml` installs: `scripts/verify.py` exits 0; 2,631 tests, 0 failed, 39 skipped; provider and UI
+  self-tests 108 of 108; 1,000 stress scenarios; 15 of 15 seeded mutations detected; no new module-map gap (22 inherited);
+- full package set: `scripts/verify.py` exits 0; 2,631 tests, 0 failed, 10 skipped;
+- proof gate 24 PROVEN, 13 PARTIAL, 0 FAILED (37), unchanged; `self_modify`, `triggers` and `procwatch` PROVEN, so
+  the gate's checks of `tool_usage.note(name)` in `main.py` and of the counter still pass;
+- fast gate 6 of 6, 354 Python files parsed;
+- lint ratchet against `cf02c0e`: 141 findings in 78 touched Python files, 151 at the base: nothing got worse;
+- debt ceilings: all within; at the ceiling: `long-function` 97, `typed-exception-discarded` 82, `hardcoded-address` 37,
+  `deep-nesting` 26, `address-in-constant` 19, `duplicate-body` 11, `dangerous-call` 1, `high` 0.
+- the guardian refuses 116 of 354 Python files now and 115 under the original; the one newly refused is
+  `custom_jarvis/addon_runtime.py` (`marshal`, `__code__`).
+
+**Not checked.** Windows, macOS, GitHub Actions (the `verify.yml` change parses as YAML and was simulated under
+`bash -eo pipefail`; it has not run), the Rust (`supervisor.rs`, and `ipc/server.rs` from the entry above; no
+toolchain), the banner on a real screen (offscreen only), Python 3.12 and 3.13, real keys, audio.
+
+**Found, not changed at the time (a referee file; done in the next entry).** `core/self_change.py` `diff()`: a line
+added a second time elsewhere is not shown; a line removed from one place that still stands in another is reported as
+"only the order of lines changes"; past 40 lines (20 when proposing) the rest is cut with no marker. Probed in a
+scratch copy. The `self_modify` banner shows the call's arguments, not the change. Untouched then because the file is
+a referee file.
+
+**Left for the owner at the end of this entry** (all but the first and the last were done in the next entry): read
+the referee edits (`core/policy.py` and `core/ast_guardian.py` twice); the `diff()` problem and whether
+`core/self_change.py`'s rehearsal copy (it skips `.git` and `.github`, so a full rehearsal fails) may be edited; a real
+second-confirmation button for `self_modify`; the earlier open questions; and whether to commit and open a pull
+request.
+
+## 2026-11-21 — follow-up: what was left (the self-change pipeline, a referee file)
+
+**Asked for.** "Do everything that's left, and give me a small CEO note." The owner had been left five questions at
+the end of the entry above; four of them were work (the referee file `core/self_change.py` and a real second
+confirmation for `self_modify`, a guard that puts back a self-change that stops the program from starting, an
+optional check in `custom_jarvis/ship.py`), plus commit and pull request. The fifth, which "100%" he means, is a
+question and stays open. I read "everything that's left" as the go-ahead to edit `core/self_change.py`. It is a
+referee file: every edit to it is flagged here, in `CHANGELOG.md` and in `DECISIONS.md`.
+
+**What was done** (detail: `CHANGELOG.md`, "Follow-up: what was left"):
+1. `core/self_change.py`: `diff()` is a real diff (written once, in `core/display_text.py`, and shared with the
+   system-prompt banner), says how many rows it did not show; the rehearsal copy keeps `.github` and gets a one-commit
+   repository of its own (a full rehearsal of this repository used to fail 9 tests and error on 6); a file's line
+   endings survive a change and a put-back (`revert` said "exactly what it was" over a different file for Windows
+   line ends); a file that is not valid UTF-8 is refused; four more files are off limits (`core/boot_guard.py`,
+   `scripts/bootstrap.py`, `run.bat`, `run.ps1`).
+2. `actions/self_change.py`: the second confirmation is a button press on a banner that lists every changed line. The
+   tool takes no `channel` and ignores one. On HEAD the sequence propose, rehearse, confirm voice, confirm panel, apply
+   printed `Applied: app.py` with no person involved beyond the per-call banners; it is refused now.
+3. New `core/boot_guard.py`, run first by `scripts/bootstrap.py`, armed and cleared by `main.py`: a code change is
+   recorded before it is written, marked started on the next launch, put back at the launch after if it never proved
+   itself (45 seconds up, or a normal end, and not if the assistant's thread died).
+4. `custom_jarvis/ship.py` `guards()`, `.gitignore`: `config/self_change/` was not ignored while `ship` runs
+   `git add -A`; it is now, and `guards()` refuses a ship while git would add any non-source file in `memory/` or
+   `config/`.
+5. **Found while building the button, and fixed:** the model's own click and key-press tool (`computer_control`, a
+   routine tool, no banner) could answer any confirmation banner with `press tab` then `press space`. The banner
+   defaults to CANCEL, which stops Enter, not that. `core/custom_gate.py` now refuses every call that is not
+   read-only while a confirmation is waiting. Two gaps are left and named (open question 5 in `DECISIONS.md`): a call in
+   the same message as the one that raises the banner, and anything that does not come through the dispatcher.
+   `docs/PROMPT.md` and `DECISIONS.md` said the model "cannot press" the button; they say what is true now.
+
+**Method.** Every new group of tests was run against HEAD's version of the file it covers and fails there (CHANGELOG
+has the counts). Four of my own mistakes were caught by the checks, not by reading: the debt scanner counted two
+duplicated function bodies (`_diff_rows` copied into `core/self_change.py`, and a button helper copied into the test)
+and then the `.put(...)` calls of a test helper as HTTP calls without a timeout; the lint ratchet counted two
+more imports after code; and a rehearsal copy test showed I had read the original file after opening it for writing, which
+emptied it. A first version of the rehearsal repository (`git init` only) made `ship.guards()` fail in the copy,
+because nothing was tracked; the copy gets one commit. Probed, not guessed: the line-ending fault (a Windows file
+came back with Unix line ends), the missing ignore rule (`git check-ignore` on the real names), and the two-call
+button press (the dispatcher test refuses `press tab` and `press space` while a banner waits).
+
+**Evidence** (Linux, Python 3.11.2, a clean two-commit copy: the base tree, then the working tree; the first run of
+this chain failed one test, which was a document naming a runtime file; fixed and re-run):
+- package set `verify.yml` installs: `scripts/verify.py` exits 0; 2,751 tests, 0 failed, 39 skipped; provider and UI
+  self-tests 108 of 108; 1,000 stress scenarios; 15 of 15 seeded mutations detected; no new module-map gap (22 inherited);
+- full package set: `scripts/verify.py` exits 0; 2,751 tests, 0 failed, 10 skipped; self-tests 108 of 108;
+- proof gate 24 PROVEN, 13 PARTIAL, 0 FAILED (37), unchanged; `self_modify` PROVEN (the gate checks the counting rule
+  in `core/self_change.py` directly, not the button; the button is tested in `tests/test_self_change.py`);
+- fast gate 6 of 6, 357 Python files parsed;
+- lint ratchet against `cf02c0e`: 146 findings in 88 touched Python files, 156 at the base: nothing got worse;
+- debt ceilings: all within; at the ceiling: `long-function` 97, `typed-exception-discarded` 82, `hardcoded-address` 37,
+  `deep-nesting` 26, `address-in-constant` 19, `duplicate-body` 11, `dangerous-call` 1, `high` 0; `no-timeout` 43 of 45;
+- the guardian refuses 117 of 357 Python files now and 116 under the original; the one newly refused is still
+  `custom_jarvis/addon_runtime.py`;
+- a full rehearsal of this tree (`core.self_change.rehearse(full=True)`, run in a copy of it): exit 0 in 112 seconds.
+  On the same repository before the copy fix: 9 failures and 6 errors, 74 seconds;
+- the count of tests: 2,101 at `cf02c0e` (32 failing), 2,442 after the first pass, 2,631 after the second, 2,751 now.
+
+**Not checked.** Windows, macOS, GitHub Actions (this branch's pull request will trigger them), the Rust and the Go,
+the banner and the dispatcher check with the real window, `run.bat` and `run.ps1` with the boot guard (only the
+launcher's Python step and real child processes were run), Python 3.12 and 3.13, real keys, audio.
+
+**Left for the owner** (`docs/specifications/SYSTEM_OVERVIEW.md`): read the referee edits (`core/self_change.py` this
+time, with the new four off-limits files; `core/policy.py`; `core/ast_guardian.py`); whether to close the two gaps in
+the dispatcher check; which "100%" he means; and the earlier open questions.

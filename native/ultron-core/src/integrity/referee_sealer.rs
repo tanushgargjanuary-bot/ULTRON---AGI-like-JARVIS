@@ -3,6 +3,16 @@ use std::fs;
 use std::path::Path;
 use tracing::info;
 
+/// EXPERIMENTAL. Not a security control, and `main.rs` does not use it.
+///
+/// `compute_tag` is a home-made mixing function: it is not HMAC, BLAKE3 or any published
+/// MAC, and nothing about it has been analysed. `from_device_context` is not bound to the
+/// machine either: it returns a fixed key made of one constant string. Anyone who can edit
+/// a referee file can recompute its tag with this same public function and key, so the tag
+/// proves nothing against that person. Before this seals anything for real, replace
+/// `compute_tag` with HMAC-SHA256 (or keyed BLAKE3) and keep the key out of the source
+/// (DPAPI, or a file only the owner can read). `docs/specifications/AUTONOMOUS_EVOLUTION_SPEC.md`
+/// says the same under "Status of this document".
 pub struct RefereeSealer {
     secret_key: [u8; 32],
 }
@@ -12,9 +22,10 @@ impl RefereeSealer {
         Self { secret_key }
     }
 
-    /// Derives a consistent hardware-bound seed from machine information
+    /// NOT hardware-bound, despite the name: the key is the first 32 bytes of a constant
+    /// string, identical on every machine. See the note on `RefereeSealer`.
     pub fn from_device_context() -> Self {
-        // Fallback deterministic entropy based on machine context
+        // A fixed key, not entropy from the machine.
         let mut key = [0u8; 32];
         let salt = b"ULTRON-REFEREE-DPAPI-BLAKE3-SEED-2026";
         for (i, b) in salt.iter().enumerate().take(32) {
@@ -23,7 +34,8 @@ impl RefereeSealer {
         Self { secret_key: key }
     }
 
-    /// Computes a 256-bit HMAC tag using a 2-pass iterative sponge
+    /// A 256-bit tag from a home-made two-pass mix. Despite what this used to say, it is
+    /// not an HMAC and not a sponge construction; see the note on `RefereeSealer`.
     pub fn compute_tag(&self, data: &[u8]) -> [u8; 32] {
         let mut tag = self.secret_key;
         for chunk in data.chunks(32) {

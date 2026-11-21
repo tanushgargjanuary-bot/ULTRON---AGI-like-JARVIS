@@ -39,6 +39,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from core import crash, failures
 from core.process_watch import Completion
 
 __all__ = [
@@ -158,7 +159,9 @@ def try_start(patterns: list[str] | tuple[str, ...], events_path: Path,
     """Start the compiled supervisor if it exists. Never raise for its absence.
 
     A missing compiler must not be a missing capability, so every failure here is
-    a quiet None and `main.py` falls back to the Python watcher.
+    a None and `main.py` falls back to the Python watcher. "Quiet" no longer means
+    unrecorded: a failure to start is noted in `core.failures`, and the supervisor's own
+    output is in `logs/child-watchd.log`.
     """
     binary = binary_path()
     if binary is None or not patterns:
@@ -174,6 +177,7 @@ def try_start(patterns: list[str] | tuple[str, ...], events_path: Path,
         except OSError:
             pass
 
+    output = crash.child_log("watchd")
     try:
         events_path.parent.mkdir(parents=True, exist_ok=True)
         # Start from a clean log: events from an earlier run are not news.
@@ -183,10 +187,20 @@ def try_start(patterns: list[str] | tuple[str, ...], events_path: Path,
              "-watch", ",".join(patterns),
              "-events", str(events_path),
              "-poll", f"{max(0.1, float(poll_seconds)):.1f}s"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            # What the supervisor says about itself goes to `logs/child-watchd.log`
+            # rather than nowhere: "the sidecar is silently not running" was the
+            # failure this file's header describes, and its own output is the evidence.
+            stdout=output if output is not None else subprocess.DEVNULL,
+            stderr=subprocess.STDOUT if output is not None else subprocess.DEVNULL,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)
             if sys.platform == "win32" else 0,
         )
-    except Exception:
+    except Exception as error:
+        # Still a None, as documented above, and the caller still falls back to the
+        # Python watcher — but the reason is on the record instead of nowhere.
+        failures.note("sidecar.try_start", error, detail=str(binary))
         return None
+    finally:
+        if output is not None:
+            output.close()
     return SidecarFeed(process=process, events_path=events_path, started_at=time.time())

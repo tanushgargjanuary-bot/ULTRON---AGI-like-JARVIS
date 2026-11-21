@@ -35,6 +35,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -184,11 +185,32 @@ def _save(proposal: Proposal) -> None:
     path.write_text(json.dumps(proposal.as_dict(), indent=2), encoding="utf-8")
 
 
+# What an id looks like, because an id is turned into a file name. The model supplies
+# it, and `reject("../../api_keys")` once deleted `config/api_keys.json`: the path was
+# `<store>/proposals/../../api_keys.json`. Anything that is not exactly what
+# `_new_id` makes is "no such proposal", and never reaches the file system.
+_PROPOSAL_ID = re.compile(r"p[0-9a-f]{12}")
+# And a kept version is `v0001-20261120-101500.txt`; nothing else in the folder is one.
+_VERSION_NAME = re.compile(r"v\d{4,}-[0-9]{8}-[0-9]{6}\.txt")
+
+
+def _checked_id(proposal_id) -> str:
+    text = str(proposal_id or "").strip()
+    if not _PROPOSAL_ID.fullmatch(text):
+        raise KeyError(text)
+    return text
+
+
 def _load(proposal_id: str) -> Proposal:
-    path = _proposal_dir() / f"{proposal_id}.json"
+    path = _proposal_dir() / f"{_checked_id(proposal_id)}.json"
     if not path.exists():
         raise KeyError(proposal_id)
     return Proposal.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
+def load(proposal_id: str) -> Proposal:
+    """A staged proposal by id. Raises KeyError for an id that is not one."""
+    return _load(proposal_id)
 
 
 def _new_id(before: str, after: str) -> str:
@@ -291,9 +313,12 @@ def confirm(proposal_id: str, channel: str) -> str:
 
 
 def reject(proposal_id: str, why: str = "") -> str:
+    proposal_id = _checked_id(proposal_id)
     path = _proposal_dir() / f"{proposal_id}.json"
-    if path.exists():
-        path.unlink()
+    if not path.exists():
+        # "Dropped" for something that was never there reads as a success.
+        raise KeyError(proposal_id)
+    path.unlink()
     return f"Dropped {proposal_id}. Nothing changed." + (f" ({why})" if why else "")
 
 
@@ -302,10 +327,18 @@ def _apply(proposal: Proposal) -> str:
     ok, problems = validate(proposal.after)
     if not ok:
         raise ValueError("; ".join(problems))
+    previous = read()
+    # A proposal is a copy of the whole prompt with one edit in it. If the prompt has
+    # moved on since it was staged — another change was applied in between — writing
+    # `after` would quietly undo that change, and nobody would be told. (The owner is
+    # told, and the earlier text is in the version folder either way.)
+    if previous != proposal.before:
+        raise ValueError(
+            f"{proposal.id} was staged against an older prompt, and the prompt has "
+            f"changed since. Nothing was applied. Stage the change again.")
     folder = _store()
     folder.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    previous = read()
     version = folder / f"v{len(list(folder.glob('v*.txt'))) + 1:04d}-{stamp}.txt"
     version.write_text(previous, encoding="utf-8")
 
@@ -359,7 +392,10 @@ def versions() -> list[Path]:
 def propose_revert(version_name: str, reason: str = "go back to an earlier prompt",
                    author: str = "owner") -> Proposal:
     """Going back is a change like any other, with the same two confirmations."""
-    path = _store() / version_name
-    if not path.exists():
-        raise KeyError(version_name)
+    name = str(version_name or "").strip()
+    if not _VERSION_NAME.fullmatch(name):
+        raise KeyError(name)
+    path = _store() / name
+    if not path.is_file():
+        raise KeyError(name)
     return propose_text(path.read_text(encoding="utf-8"), reason=reason, author=author)

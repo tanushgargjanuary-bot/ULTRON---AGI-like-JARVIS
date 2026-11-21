@@ -56,7 +56,9 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QTabWidget, QTextEdit, QVBoxLayout, QWidget, QProgressBar, QSlider,
 )
 
+from core import display_text
 from core import expression as expression_mod
+from core import failures
 from core import identity
 from core import personas as personas_mod
 from core import themes as themes_mod
@@ -2713,9 +2715,13 @@ class ConfirmBanner(_HudOverlay):
 
     answered = pyqtSignal(bool)
     _OW = 430
+    _DETAIL_MAX_H = 240        # taller than this and the details scroll, and the banner says so
 
     def __init__(self, title: str, detail: str, parent=None):
         super().__init__(parent)
+        # What is drawn is what was sent: written-out invisible characters, plain text only, and a
+        # marker (never silence) if anything is clipped. See core/display_text.py.
+        title, detail = display_text.for_banner(title, detail)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"""
             ConfirmBanner {{
@@ -2736,17 +2742,38 @@ class ConfirmBanner(_HudOverlay):
         lay.addWidget(hdr)
 
         ttl = QLabel(title)
+        ttl.setTextFormat(Qt.TextFormat.PlainText)       # a QLabel guesses HTML unless told
         ttl.setWordWrap(True)
         ttl.setFont(QFont("Courier New", 10, QFont.Weight.Bold))
         ttl.setStyleSheet(f"color: {C.TEXT}; background: transparent;")
         lay.addWidget(ttl)
 
         if detail:
-            dtl = QLabel(detail)
-            dtl.setWordWrap(True)
-            dtl.setFont(QFont("Courier New", 8))
-            dtl.setStyleSheet(f"color: {C.TEXT_MED}; background: transparent;")
-            lay.addWidget(dtl)
+            # A read-only box, set with setPlainText: nothing in it is ever read as markup. It grows
+            # to fit the text up to _DETAIL_MAX_H and scrolls beyond that, so a long change or a long
+            # argument is read in full, with the buttons still on the screen.
+            box = QTextEdit()
+            box.setReadOnly(True)
+            box.setAcceptRichText(False)
+            box.setFrameShape(QFrame.Shape.NoFrame)
+            box.setFont(QFont("Courier New", 8))
+            box.setStyleSheet(
+                f"QTextEdit {{ color: {C.TEXT_MED}; background: transparent; border: none; }}")
+            box.setPlainText(detail)
+            inner = self._OW - 40                         # the layout margins are 20 a side
+            box.setFixedWidth(inner)
+            box.document().setTextWidth(inner - 22)       # room for the scroll bar
+            wanted = int(box.document().size().height()) + 14
+            box.setFixedHeight(min(wanted, self._DETAIL_MAX_H))
+            lay.addWidget(box)
+            if wanted > self._DETAIL_MAX_H:
+                more = QLabel(f"{len(detail):,} characters. Scroll the box above to read all of "
+                              f"it before you press CONFIRM.")
+                more.setTextFormat(Qt.TextFormat.PlainText)
+                more.setWordWrap(True)
+                more.setFont(QFont("Courier New", 8))
+                more.setStyleSheet(f"color: {C.ACC}; background: transparent;")
+                lay.addWidget(more)
 
         row = QHBoxLayout(); row.setSpacing(8)
 
@@ -6347,15 +6374,17 @@ class MainWindow(QMainWindow):
 
         voice_changed = target_voice != current_voice
         voice_map[persona.id] = target_voice
-        data["persona_id"] = persona.id
-        data["persona_voices"] = voice_map
-        data["ui_theme"] = theme_id
-        data["ui_color"] = theme["accent"]
-        data["voice_name"] = target_voice
-        if persona.id == "ultron":
-            data["assistant_name"] = "Ultron"
         try:
-            API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
+            # Through the settings module, not API_FILE.write_text: that wrote the whole file
+            # from a snapshot taken at the top of this method (and from {} if the read had
+            # failed), outside the lock, and said "Switched" whether or not it landed.
+            from memory.config_manager import save_settings_strict
+            chosen = {"persona_id": persona.id, "persona_voices": voice_map,
+                      "ui_theme": theme_id, "ui_color": theme["accent"],
+                      "voice_name": target_voice}
+            if persona.id == "ultron":
+                chosen["assistant_name"] = "Ultron"
+            save_settings_strict(**chosen)
             self._log.append_log(
                 f"SYS: Switched to {persona.name} — {persona.audience_label}; "
                 f"theme {theme['label']}"
@@ -6764,8 +6793,8 @@ class MainWindow(QMainWindow):
                 pass
             try:
                 self._wake_btns_sig.emit()
-            except (RuntimeError, Exception):
-                pass
+            except Exception as error:      # the window may be gone: closed during start-up
+                failures.note("ui.wake_state_warm", error)
         threading.Thread(target=work, daemon=True, name="wake-state-warm").start()
 
     def _toggle_drawer(self, checked: bool):
@@ -7932,19 +7961,17 @@ class MainWindow(QMainWindow):
                 voice_changed = True
 
         try:
-            data = _read_full_config()
-            data["assistant_name"] = self._assistant_name
-            data["user_name"] = user_name.strip()
+            from memory.config_manager import load_api_keys, save_settings_strict
+            chosen = {"assistant_name": self._assistant_name, "user_name": user_name.strip()}
             if ui_color:
-                data["ui_color"] = ui_color.strip().lower()
-                data["ui_theme"] = (ui_theme if themes_mod.theme(ui_theme) else "custom")
+                chosen["ui_color"] = ui_color.strip().lower()
+                chosen["ui_theme"] = (ui_theme if themes_mod.theme(ui_theme) else "custom")
             if voice:
-                voice_map = data.get("persona_voices")
-                if not isinstance(voice_map, dict):
-                    voice_map = {}
+                voice_map = load_api_keys().get("persona_voices")
+                voice_map = dict(voice_map) if isinstance(voice_map, dict) else {}
                 voice_map[_current_persona_id] = voice
-                data["persona_voices"] = voice_map
-            API_FILE.write_text(json.dumps(data, indent=4), encoding="utf-8")
+                chosen["persona_voices"] = voice_map
+            save_settings_strict(**chosen)
             self._log.append_log(f"SYS: Identity updated — {display}")
             if color_changed:
                 self._log.append_log(f"SYS: UI colour applied — {ui_color}")
@@ -8429,8 +8456,12 @@ class JarvisUI:
 
     def show_confirm(self, title: str, detail: str) -> None:
         """Thread-safe: raise the irreversible-action gate. Called from action
-        handlers running in executor threads, so it goes through a signal."""
-        self._win._confirm_sig.emit(str(title)[:120], str(detail)[:300])
+        handlers running in executor threads, so it goes through a signal.
+
+        The text is passed on whole. It used to be sliced here to 120 and 300 characters, without
+        a word, so an approval of "exact tool arguments" (up to 64 KB) showed about the first 230.
+        What the banner may clip, and how it says so, is decided in core/display_text.py."""
+        self._win._confirm_sig.emit(str(title), str(detail))
 
     def hide_confirm(self) -> None:
         """Thread-safe: take the gate down."""

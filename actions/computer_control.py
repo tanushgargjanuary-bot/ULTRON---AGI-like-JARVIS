@@ -15,7 +15,7 @@ import time
 import random
 from pathlib import Path
 
-from core import appidentity, failures, outcome
+from core import appidentity, applescript, failures, outcome
 from core.lazyimport import LazyModule, installed
 
 # pyautogui and pyperclip are imported on first USE, not at launch — see
@@ -285,29 +285,42 @@ def _focus_window(title: str) -> str:
             safe_title = title.replace("'", "''")
             script = ("(New-Object -ComObject WScript.Shell).AppActivate('"
                       + safe_title + "')")
-            subprocess.run(
+            result = subprocess.run(
                 ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                 capture_output=True, timeout=5, **_WIN_HIDE,
             )
+            # AppActivate answers True or False. The old code ignored the answer and
+            # said "Focused window" for a title that matched nothing.
+            if b"true" not in (result.stdout or b"").lower():
+                return (f"focus_window (Windows): no window with a title like '{title}' "
+                        "was found, so nothing was focused.")
             time.sleep(0.3)
             return f"Focused window: {title}"
         except Exception as e:
             return f"focus_window (Windows) failed: {e}"
 
     if os_name == "mac":
+        # `title` is model-supplied text going into a program that osascript runs, so it is
+        # quoted for AppleScript; unquoted, a title could end the string and run `do shell
+        # script`. See core/applescript.py.
         script = (
             f'tell application "System Events" to '
-            f'set frontmost of (first process whose name contains "{title}") to true'
+            f'set frontmost of (first process whose name contains {applescript.literal(title)}) '
+            f'to true'
         )
         try:
-            subprocess.run(
+            result = subprocess.run(
                 ["osascript", "-e", script],
                 capture_output=True, timeout=5,
             )
-            time.sleep(0.3)
-            return f"Focused window: {title}"
         except Exception as e:
             return f"focus_window (macOS) failed: {e}"
+        if result.returncode != 0:
+            said = (result.stderr or b"").decode("utf-8", errors="replace").strip()[:200]
+            return (f"focus_window (macOS) did not focus '{title}': "
+                    f"{said or 'no running application matched'}")
+        time.sleep(0.3)
+        return f"Focused window: {title}"
 
     if os_name == "linux":
         try:
@@ -325,6 +338,8 @@ def _focus_window(title: str) -> str:
                 ["xdotool", "search", "--name", title, "windowactivate"],
                 capture_output=True, timeout=5,
             )
+            if result.returncode != 0:
+                return f"focus_window (Linux): no window matched '{title}'."
             time.sleep(0.3)
             return f"Focused window: {title}"
         except FileNotFoundError:
@@ -468,7 +483,6 @@ def _screen_find(description: str) -> tuple[int, int] | None:
         return None
 
     try:
-        from google import genai
         from google.genai import types as gtypes
 
         _require_pyautogui()

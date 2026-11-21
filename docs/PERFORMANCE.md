@@ -184,7 +184,7 @@ document a person can actually feel.
 
 ## 8. The budget is enforced
 
-`tests/test_performance_budget.py` holds four ceilings, each at least twenty times
+`tests/test_suite_assistant.py:TurnBudget` holds four ceilings, each at least twenty times
 the measured value:
 
     policy over every tool     < 5 ms   (measured 0.009)

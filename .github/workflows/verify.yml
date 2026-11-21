@@ -11,9 +11,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Nothing here writes to the repository or calls the GitHub API: checkout needs to read, and the
+# artifact upload uses its own credential. A job that is given more has more to lose if a test
+# or a dependency misbehaves.
+permissions:
+  contents: read
+
 concurrency:
-  group: verify-${{ github.ref }}
-  cancel-in-progress: true
+  # A branch or a pull request: a newer push replaces the run in progress. `main`: every commit keeps
+  # its own run, because a cancelled run leaves that commit with no completed verification at all.
+  group: verify-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   linux:
@@ -23,9 +31,9 @@ jobs:
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
@@ -47,7 +55,10 @@ jobs:
           python -m pip install "PyQt6>=6.6,<6.12" "numpy>=1.24,<3" \
             "sounddevice>=0.4,<1" "google-genai>=2.8,<3" "httpx>=0.27,<1" \
             "mss>=9,<11" "psutil>=5.9,<8" "pillow>=10,<13" "requests>=2.31,<3" \
-            "beautifulsoup4>=4.12,<5" "jsonschema>=4.23,<5" "cryptography>=42,<50"
+            "beautifulsoup4>=4.12,<5" "jsonschema>=4.23,<5" "cryptography>=42,<50" \
+            "$(grep -E '^ruff==' requirements-dev.txt)"
+      # (ruff is here because tests/test_lint_ratchet.py runs the real thing; without it
+      # those tests skip and the gate's lint step would be exercised only by itself.)
 
       - name: Suite, self-checks, migration and mutation gates
         run: python scripts/verify.py
@@ -56,15 +67,22 @@ jobs:
       # tick said "something passed"; the PROVEN / PARTIAL / FAILED counts, which
       # are the actual claim, lived in an artifact nobody opened.
       - name: Proof gate
+        # `shell: bash` is what makes the gate able to fail this job. With no `shell:` GitHub runs
+        # `bash -e`, which has no pipefail, so the `| tee` below hands back tee's exit status (0)
+        # whatever the gate said. The status is kept, the summary is written either way, and then
+        # the step exits with the gate's own answer.
+        shell: bash
         run: |
           mkdir -p verification
-          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/proof-gate.txt
+          status=0
+          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/proof-gate.txt || status=$?
           {
             echo "### Proof gate — linux"
             echo '```'
             tail -n 20 verification/proof-gate.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
 
       - name: Instrument report (never blocks; it reports what this box cannot answer)
         run: python scripts/verify_all.py || true
@@ -72,7 +90,7 @@ jobs:
 
       - name: Keep the reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verification-linux
           path: |
@@ -87,9 +105,9 @@ jobs:
     env:
       PYTHONUTF8: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
@@ -125,17 +143,19 @@ jobs:
       - name: Proof gate
         shell: bash
         run: |
-          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/console-gate.txt
+          status=0
+          python scripts/proof_gate.py --json verification/proof-gate.json 2>&1 | tee verification/console-gate.txt || status=$?
           {
             echo "### Proof gate — windows"
             echo '```'
             tail -n 20 verification/console-gate.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
 
       - name: Keep the reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verification-windows
           path: |

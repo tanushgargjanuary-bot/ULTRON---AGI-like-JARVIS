@@ -512,7 +512,8 @@ def register_addon_tools(registry: ToolRegistry) -> None:
                 size = candidate.stat().st_size
                 if size > 4_000_000:
                     continue
-                lines = sum(1 for _ in candidate.open("rb"))
+                with candidate.open("rb") as handle:
+                    lines = sum(1 for _ in handle)
             except OSError:
                 continue
             scanned += 1

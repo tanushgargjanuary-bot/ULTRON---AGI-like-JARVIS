@@ -226,6 +226,23 @@ def run_fast_checks(environment: dict[str, str]) -> list[bool]:
             60,
         ),
         (
+            # Every plugin, through the real dispatcher, with the arguments a model would
+            # send. The fast gate passed for a week while all of them failed on one line.
+            "tool dispatch smoke",
+            [
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "test_dispatch_smoke.py",
+                "-q",
+            ],
+            60,                     # it takes about two seconds; a hang is the only way to 60
+        ),
+        (
             "seeded repair and boundary stress",
             [sys.executable, "scripts/stress_custom.py"],
             180,

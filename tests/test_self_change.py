@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -27,7 +28,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from core import confirm as hud  # noqa: E402
 from core import self_change
+from core.confirm import request as put_up_a_banner  # noqa: E402
+
+try:
+    from tempprompt import press_the_button
+except ImportError:                       # imported as tests.test_self_change
+    from tests.tempprompt import press_the_button
 
 APP = "def greeting():\n    return 'hello'\n"
 NEW_APP = "def greeting():\n    return 'hello, sir'\n"
@@ -80,6 +88,27 @@ class WithAFakeProject(unittest.TestCase):
         self_change.confirm(proposal["id"], "voice")
         self_change.confirm(proposal["id"], "panel")
         return proposal
+
+
+class WithABanner(WithAFakeProject):
+    """The interface: a banner the test can press, standing where ui.py stands."""
+
+    def setUp(self):
+        super().setUp()
+        self.banners: list[tuple[str, str]] = []
+        self.hud_log: list[str] = []
+        hud.bind(show=lambda title, detail: self.banners.append((title, detail)),
+                 hide=lambda: None, log=self.hud_log.append)
+        self.addCleanup(self._unbind)
+
+    @staticmethod
+    def _unbind():
+        hud._show_cb = hud._hide_cb = hud._log_cb = None
+        hud._pending = None
+
+    def click(self, accepted: bool = True) -> str:
+        """Press CONFIRM (or CANCEL) on the banner that is up, and wait for the work."""
+        return press_the_button(self.hud_log, accepted)
 
 
 class Staging(WithAFakeProject):
@@ -408,7 +437,7 @@ class Reverting(WithAFakeProject):
         self.assertIn("no change called", self_change.revert("cnosuchthing"))
 
 
-class TheTool(WithAFakeProject):
+class TheTool(WithABanner):
     @classmethod
     def setUpClass(cls):
         from actions import self_change as tool
@@ -451,8 +480,8 @@ class TheTool(WithAFakeProject):
         change = self_change.pending()[0]["id"]
         self.assertIn("staged", said.lower())
         self.assertIn("full test harness passed", self.call(action="rehearse", change=change))
-        self.call(action="confirm", change=change, channel="voice")
-        self.call(action="confirm", change=change, channel="panel")
+        self.call(action="confirm", change=change)         # the yes, and the button goes up
+        self.click()                                         # the owner presses it
         applied = self.call(action="apply", change=change)
         self.assertIn("Applied", applied)
         self.assertIn("restart", applied.lower())
@@ -489,6 +518,438 @@ class TheTool(WithAFakeProject):
 
     def test_an_unknown_action_lists_what_it_can_do(self):
         self.assertIn("rehearse", self.call(action="levitate"))
+
+
+class TheSecondConfirmationIsAPress(WithABanner):
+    """`confirm` records the first yes and puts a button up. Only the press records the second.
+
+    The two confirmations used to be two `confirm` calls whose `channel` argument the model wrote
+    (voice, then panel), so a model could stage, rehearse, confirm, confirm and apply with the only
+    human step being the approval banner on each call, which shows call arguments and not the change.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from actions import self_change as tool
+        cls.tool = tool
+
+    def call(self, **parameters) -> str:
+        return self.tool.self_modify(parameters)
+
+    def rehearsed(self, path="app.py", find="'hello'", replace="'hello, sir'", reason="politer",
+                  **kwargs) -> str:
+        proposal = self_change.propose(path, reason, find=find, replace=replace, **kwargs)
+        self.assertIn("passed", self.call(action="rehearse", change=proposal["id"]))
+        return proposal["id"]
+
+    def confirmations(self, change: str) -> list[str]:
+        return self_change.review(change)["confirmations"]
+
+    def test_stage_rehearse_confirm_voice_confirm_panel_applies_nothing(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change, channel="voice")
+        self.call(action="confirm", change=change, channel="panel")
+        said = self.call(action="apply", change=change)
+        self.assertIn("1 of 2", said)
+        self.assertEqual(self.read("app.py"), APP, "no person pressed anything")
+
+    def test_a_channel_the_model_names_is_not_recorded(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change, channel="panel")
+        self.assertEqual(self.confirmations(change), ["voice"], "the model does not get to say 'panel'")
+
+    def test_no_label_the_model_can_send_is_taken_for_the_press(self):
+        change = self.rehearsed()
+        for label in ("cli", "panel", "voice", "PANEL", "anything", ""):
+            self.call(action="approve", change=change, channel=label)
+        self.assertEqual(self.confirmations(change), ["voice"])
+        self.assertEqual(self.read("app.py"), APP)
+
+    def test_with_no_interface_nothing_is_recorded_as_a_press_and_it_says_so(self):
+        hud._show_cb = None
+        change = self.rehearsed()
+        said = self.call(action="confirm", change=change)
+        self.assertIn("not available", said)
+        self.assertEqual(self.confirmations(change), ["voice"])
+
+    def test_the_press_records_the_second_place_and_apply_then_writes(self):
+        change = self.rehearsed()
+        said = self.call(action="confirm", change=change)
+        self.assertIn("CONFIRMATION_PENDING", said)
+        self.assertIn("Your yes is recorded (1 of 2)", said)
+        self.assertEqual(self.read("app.py"), APP, "putting a button up writes nothing")
+        self.click()
+        self.assertEqual(self.confirmations(change), ["voice", "panel"])
+        self.assertEqual(self.read("app.py"), APP, "the press confirms; it does not apply")
+        self.assertIn("Applied", self.call(action="apply", change=change))
+        self.assertEqual(self.read("app.py"), NEW_APP)
+
+    def test_cancel_records_nothing_and_the_owner_can_be_asked_again(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change)
+        self.click(False)
+        self.assertEqual(self.confirmations(change), ["voice"])
+        self.call(action="confirm", change=change)
+        self.assertEqual(len(self.banners), 2)
+        self.click()
+        self.assertEqual(self.confirmations(change), ["voice", "panel"])
+
+    def test_a_banner_for_something_else_is_not_overwritten(self):
+        put_up_a_banner("shutdown", "Shut down?", "", lambda: "off")
+        change = self.rehearsed()
+        said = self.call(action="confirm", change=change)
+        self.assertIn("Another confirmation is waiting", said)
+        self.assertEqual(hud.pending_title(), "Shut down?")
+        self.assertEqual(len(self.banners), 1, "only the first banner was ever shown")
+        self.assertNotIn("panel", self.confirmations(change))
+
+    def test_a_change_that_was_not_rehearsed_gets_no_button(self):
+        proposal = self_change.propose("app.py", "politer", find="'hello'", replace="'hello, sir'")
+        said = self.call(action="confirm", change=proposal["id"])
+        self.assertIn("has not passed a rehearsal", said)
+        self.assertEqual(self.banners, [])
+        self.assertEqual(self.confirmations(proposal["id"]), [])
+
+    def test_a_change_confirmed_twice_does_not_put_up_a_second_button(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change)
+        self.click()
+        said = self.call(action="confirm", change=change)
+        self.assertIn("already confirmed twice", said)
+        self.assertEqual(len(self.banners), 1)
+
+    def test_a_change_swapped_after_the_banner_is_not_recorded(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change)
+        data = self_change._load_proposals()                 # something rewrites the staged change
+        data[change]["new"] = data[change]["new"].replace("hello, sir", "os.system('x')")
+        self_change._save_proposals(data)
+        said = self.click()
+        self.assertIn("not the change that was shown", said)
+        self.assertEqual(self.confirmations(change), ["voice"])
+
+    def test_a_change_dropped_after_the_banner_is_not_recorded(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change)
+        data = self_change._load_proposals()
+        data.pop(change)
+        self_change._save_proposals(data)
+        self.assertIn("is gone", self.click())
+
+    def test_the_banner_lists_every_changed_line_and_says_how_many(self):
+        old = "".join(f"value_{n} = {n}\n" for n in range(60))
+        new = "".join(f"value_{n} = {n + 1}\n" for n in range(60))
+        (self.project / "many.py").write_text(old, encoding="utf-8")
+        change = self.rehearsed("many.py", find=None, replace=None, new_text=new)
+        self.call(action="confirm", change=change)
+        detail = self.banners[0][1]
+        for n in range(60):
+            self.assertIn(f"-value_{n} = {n}\n", detail + "\n")
+            self.assertIn(f"+value_{n} = {n + 1}\n", detail + "\n")
+        self.assertIn("Every changed line (120)", detail)
+        self.assertIn(change, detail)
+        self.assertIn("many.py", detail)
+
+    def test_the_banner_says_what_was_run_in_the_copy(self):
+        change = self.rehearsed()
+        self.call(action="confirm", change=change)
+        self.assertIn("the full test harness passed in a copy", self.banners[0][1])
+
+    def test_a_changed_line_that_starts_with_dashes_is_on_the_banner(self):
+        (self.project / "a.sql").write_text("-- a comment\nx = 1\n", encoding="utf-8")
+        change = self.rehearsed("a.sql", find=None, replace=None, new_text="++ other\nx = 1\n")
+        self.call(action="confirm", change=change)
+        detail = self.banners[0][1]
+        self.assertIn("--- a comment", detail, "a removed line that starts '--' is a '---' row")
+        self.assertIn("+++ other", detail, "an added line that starts '++' is a '+++' row")
+
+    def test_a_character_that_changes_how_text_looks_is_written_out(self):
+        (self.project / "b.py").write_text("name = 'evil'\n", encoding="utf-8")
+        change = self.rehearsed("b.py", find="'evil'", replace="'evil\u202egpj.exe'")
+        self.call(action="confirm", change=change)
+        detail = self.banners[0][1]
+        self.assertNotIn("\u202e", detail)
+        self.assertIn("\\u202e", detail)
+
+    def test_the_reason_is_the_models_and_is_bounded(self):
+        change = self.rehearsed(reason="reassuring " * 500)
+        self.call(action="confirm", change=change)
+        reason = next(line for line in self.banners[0][1].splitlines() if line.startswith("Reason"))
+        self.assertLessEqual(len(reason), len("Reason, as the model wrote it: ") + self.tool.REASON_LIMIT + 1)
+
+    def test_a_change_too_big_to_read_is_refused_before_any_yes_and_any_button(self):
+        old = "".join(f"v{n} = 'an existing line of code, number {n}'\n" for n in range(700))
+        new = "".join(f"v{n} = 'a replaced line of code, number {n}!'\n" for n in range(700))
+        (self.project / "big.py").write_text(old, encoding="utf-8")
+        proposal = self_change.propose("big.py", "a rewrite", new_text=new)
+        self.assertIn("passed", self.call(action="rehearse", change=proposal["id"]))
+        said = self.call(action="confirm", change=proposal["id"])
+        self.assertIn("will not put up a button", said)
+        self.assertEqual(self.banners, [])
+        self.assertEqual(self.confirmations(proposal["id"]), [], "no yes was recorded either")
+
+    def test_staging_a_change_too_big_to_read_says_so_at_once(self):
+        old = "".join(f"v{n} = 'an existing line of code, number {n}'\n" for n in range(700))
+        new = "".join(f"v{n} = 'a replaced line of code, number {n}!'\n" for n in range(700))
+        (self.project / "big.py").write_text(old, encoding="utf-8")
+        said = self.call(action="propose", path="big.py", text=new, reason="a rewrite")
+        self.assertIn("will not put up a button", said)
+
+    def test_the_tool_declares_no_channel_and_the_rules_do_not_promise_one(self):
+        self.assertNotIn("channel", self.tool.TOOL["parameters"]["properties"])
+        rules = self.call(action="rules")
+        self.assertNotIn("voice, panel", rules)
+        self.assertIn("CONFIRM button", rules)
+
+    def test_the_old_two_call_api_still_counts_for_the_code_that_calls_it_directly(self):
+        # scripts/proof_gate.py checks the counting rule this way, not through the tool.
+        proposal = self.staged()
+        self_change.rehearse(proposal["id"])
+        self_change.confirm(proposal["id"], "voice")
+        self.assertIn("Confirmed twice", self_change.confirm(proposal["id"], "panel"))
+
+
+class TheDifferenceIsEveryChangedLine(WithAFakeProject):
+    """`diff` showed what a person asks of it, or it did not: three ways it did not."""
+
+    def stage_text(self, old: str, new: str) -> str:
+        (self.project / "d.py").write_text(old, encoding="utf-8")
+        return self_change.propose("d.py", "a test", new_text=new)["id"]
+
+    def rows(self, change: str, limit: int = 40) -> list[str]:
+        return [line.strip() for line in self_change.diff(change, limit).splitlines()[1:]]
+
+    def test_a_line_added_a_second_time_is_shown(self):
+        old = "def a():\n    remove(path)\n\ndef b():\n    pass\n"
+        new = "def a():\n    remove(path)\n\ndef b():\n    remove(path)\n"
+        rows = self.rows(self.stage_text(old, new))
+        self.assertEqual(rows, ["-     pass", "+     remove(path)"],
+                         "a line the file already had, now added in a second place")
+
+    def test_a_line_removed_from_one_place_and_still_standing_in_another_is_shown(self):
+        change = self.stage_text("remove(path)\nx = 1\nremove(path)\n", "remove(path)\nx = 1\n")
+        text = self_change.diff(change)
+        self.assertIn("- remove(path)", text)
+        self.assertNotIn("only the order", text)
+
+    def test_a_list_cut_at_the_limit_says_how_many_rows_it_did_not_show(self):
+        change = self.stage_text("", "".join(f"line_{n} = {n}\n" for n in range(60)))
+        text = self_change.diff(change, limit=40)
+        self.assertEqual(text.count("\n  + line_"), 40)
+        self.assertIn("20 more changed line(s) are not shown", text)
+
+    def test_a_limit_of_zero_lists_every_row_and_adds_no_marker(self):
+        change = self.stage_text("", "".join(f"line_{n} = {n}\n" for n in range(60)))
+        text = self_change.diff(change, limit=0)
+        self.assertEqual(text.count("\n  + line_"), 60)
+        self.assertNotIn("not shown", text)
+
+    def test_a_list_that_fits_has_no_marker(self):
+        change = self.stage_text("a = 1\n", "a = 2\n")
+        self.assertNotIn("not shown", self_change.diff(change))
+
+    def test_a_changed_line_that_starts_with_dashes_or_pluses_is_shown(self):
+        change = self.stage_text("-- old comment\nx = 1\n", "++ new line\nx = 1\n")
+        rows = self.rows(change)
+        self.assertEqual(rows, ["- -- old comment", "+ ++ new line"])
+
+    def test_a_difference_in_line_endings_only_is_said_not_shown_as_nothing(self):
+        change = self.stage_text("a = 1\n", "a = 1")
+        self.assertIn("no line differs", self_change.diff(change))
+
+    def test_an_unknown_change_is_a_sentence(self):
+        self.assertIn("no change called", self_change.diff("cnosuchthing"))
+
+    def test_the_tools_show_action_lists_more_than_twenty_rows(self):
+        from actions import self_change as tool
+        change = self.stage_text("", "".join(f"line_{n} = {n}\n" for n in range(60)))
+        said = tool.self_modify({"action": "show", "change": change})
+        self.assertEqual(said.count("\n  + line_"), 60)
+
+    def test_the_review_holds_every_row_and_a_digest_that_follows_the_text(self):
+        first = self.stage_text("a = 1\n", "a = 2\n")
+        view = self_change.review(first)
+        self.assertEqual(view["rows"], ["-a = 1", "+a = 2"])
+        self.assertEqual(view["digest"], self_change.review(first)["digest"])
+        second = self.stage_text("a = 1\n", "a = 3\n")
+        self.assertNotEqual(view["digest"], self_change.review(second)["digest"])
+        data = self_change._load_proposals()
+        data[first]["new"] = "a = 99\n"
+        self_change._save_proposals(data)
+        self.assertNotEqual(view["digest"], self_change.review(first)["digest"])
+
+    def test_the_review_of_nothing_is_none(self):
+        self.assertIsNone(self_change.review("cnosuchthing"))
+
+
+class TheRehearsalCopy(WithAFakeProject):
+    """A full rehearsal of this repository failed nine tests and errored on six more, because the copy
+    left out `.github` and the tests read the workflow files there."""
+
+    def lay_out_a_project_like_the_real_one(self):
+        (self.project / ".github" / "workflows").mkdir(parents=True)
+        (self.project / ".github" / "workflows" / "verify.yml").write_text("name: verify\n", encoding="utf-8")
+        (self.project / ".git").mkdir()
+        (self.project / ".git" / "THE_REAL_HISTORY").write_text("commits\n", encoding="utf-8")
+        (self.project / ".gitignore").write_text("config/api_keys.json\n", encoding="utf-8")
+        for name in (".venv", "node_modules", "uploads", "__pycache__"):
+            (self.project / name).mkdir()
+            (self.project / name / "x").write_text("x", encoding="utf-8")
+
+    PROBE = (
+        "import os, sys\n"
+        "need = ['.github/workflows/verify.yml', 'app.py']\n"
+        "gone = ['.git/THE_REAL_HISTORY', '.venv', 'node_modules', 'uploads', '__pycache__']\n"
+        "bad = [p for p in need if not os.path.exists(p)] + [p for p in gone if os.path.exists(p)]\n"
+        "print('wrong in the copy:', bad)\n"
+        "sys.exit(1 if bad else 0)\n"
+    )
+
+    def test_the_copy_has_the_workflows_and_leaves_out_the_history_and_the_packages(self):
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", self.PROBE])
+        self.assertTrue(result["ok"], result["tail"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is not installed")
+    def test_the_copy_is_a_repository_of_one_commit_that_knows_what_is_ignored_and_what_is_tracked(self):
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        git = shutil.which("git")
+        probe = (
+            f"import subprocess, sys\n"
+            f"def ask(*args):\n"
+            f"    return subprocess.run([{git!r}, *args], capture_output=True, text=True)\n"
+            f"ignored = ask('check-ignore', '-q', 'config/api_keys.json').returncode\n"
+            f"commits = ask('rev-list', '--count', 'HEAD').stdout.strip()\n"
+            f"tracked = ask('ls-files').stdout.split()\n"
+            f"waiting = ask('status', '--porcelain', '--untracked-files=all').stdout.split()\n"
+            f"print('ignored:', ignored, 'commits:', commits, 'tracked:', tracked, 'waiting:', waiting)\n"
+            f"ok = (ignored == 0 and commits == '1' and 'app.py' in tracked\n"
+            f"      and 'THE_REAL_HISTORY' not in ' '.join(tracked))\n"
+            f"sys.exit(0 if ok else 1)\n")
+        result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", probe])
+        self.assertTrue(result["ok"], result["tail"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is not installed")
+    def test_the_change_is_written_after_the_commit_so_it_reads_as_an_edit(self):
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        git = shutil.which("git")
+        probe = (f"import subprocess, sys\n"
+                 f"out = subprocess.run([{git!r}, 'status', '--porcelain'], capture_output=True, text=True).stdout\n"
+                 f"print(out)\n"
+                 f"sys.exit(0 if out.split() == ['M', 'app.py'] else 1)\n")
+        result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", probe])
+        self.assertTrue(result["ok"], result["tail"])
+
+    def test_a_machine_without_git_still_gets_a_copy(self):
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        with patch.object(self_change.shutil, "which", return_value=None):
+            result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", "print('ok')"])
+        self.assertTrue(result["ok"], result["tail"])
+
+    def test_a_git_that_will_not_start_is_noted_and_the_copy_still_runs(self):
+        from core import failures
+        failures.clear()
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        with patch.object(self_change.shutil, "which", return_value="/no/such/folder/git"):
+            result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", "print('ok')"])
+        self.assertTrue(result["ok"], result["tail"])
+        self.assertIn("self_change.copy_git", failures.summary())
+
+    def test_having_the_workflows_in_the_copy_does_not_make_them_writable(self):
+        self.lay_out_a_project_like_the_real_one()
+        self.assertIn(".github", self_change.SKIP_DIRS)
+        self.assertNotIn(".github", self_change.COPY_SKIP)
+        self.assertIn(".git", self_change.COPY_SKIP)
+        with self.assertRaises(ValueError):
+            self_change.propose(".github/workflows/verify.yml", "edit the CI", new_text="name: x\n")
+
+    def test_the_real_tree_is_untouched_by_a_rehearsal(self):
+        self.lay_out_a_project_like_the_real_one()
+        proposal = self.staged()
+        self_change.rehearse(proposal["id"], command=[sys.executable, "-c", "print('ok')"])
+        self.assertEqual(self.read("app.py"), APP)
+        self.assertEqual(sorted(path.name for path in (self.project / ".github").iterdir()), ["workflows"])
+
+
+class ALineEndingIsNotAChange(WithAFakeProject):
+    """`revert` says the file is "exactly what it was before". For a file with Windows line ends it was
+    not: the text of a change is held with Unix line ends, `apply` wrote them out for every line of the
+    file, and the kept copy had lost the Windows ones, so the put-back was a different file."""
+
+    WINDOWS = b"Write-Host 'one'\r\nWrite-Host 'two'\r\n"
+
+    def stage_in(self, name: str, original: bytes, find="'two'", replace="'three'") -> str:
+        (self.project / name).write_bytes(original)
+        proposal = self_change.propose(name, "a test", find=find, replace=replace)
+        self_change.rehearse(proposal["id"], command=[sys.executable, "-c", "pass"])
+        self_change.confirm(proposal["id"], "voice")
+        self_change.confirm(proposal["id"], "panel")
+        return proposal["id"]
+
+    def raw(self, name: str) -> bytes:
+        return (self.project / name).read_bytes()
+
+    def test_a_windows_file_stays_windows_after_a_change_and_comes_back_byte_for_byte(self):
+        change = self.stage_in("tool.ps1", self.WINDOWS)
+        self_change.apply(change)
+        self.assertEqual(self.raw("tool.ps1"), b"Write-Host 'one'\r\nWrite-Host 'three'\r\n",
+                         "every line keeps its Windows line end, not only the changed one")
+        self.assertIn("exactly what it was", self_change.revert(change))
+        self.assertEqual(self.raw("tool.ps1"), self.WINDOWS)
+
+    def test_the_kept_copy_is_the_exact_bytes(self):
+        change = self.stage_in("tool.ps1", self.WINDOWS)
+        self_change.apply(change)
+        self.assertEqual((self_change.store() / "backups" / f"{change}.bak").read_bytes(), self.WINDOWS)
+
+    def test_a_file_with_mixed_line_ends_is_written_with_unix_ends_and_still_comes_back_exactly(self):
+        mixed = b"a = 1\r\nb = 2\nc = 3\r\n"
+        change = self.stage_in("mixed.txt", mixed, find="b = 2", replace="b = 9")
+        self_change.apply(change)
+        self.assertEqual(self.raw("mixed.txt"), b"a = 1\nb = 9\nc = 3\n", "there is no one style to keep")
+        self_change.revert(change)
+        self.assertEqual(self.raw("mixed.txt"), mixed)
+
+    def test_a_unix_file_stays_unix(self):
+        change = self.stage_in("unix.txt", b"a = 1\nb = 2\n", find="b = 2", replace="b = 3")
+        self_change.apply(change)
+        self.assertEqual(self.raw("unix.txt"), b"a = 1\nb = 3\n")
+
+    def test_a_change_whose_text_has_windows_line_ends_does_not_double_them(self):
+        (self.project / "tool.ps1").write_bytes(self.WINDOWS)
+        proposal = self_change.propose("tool.ps1", "a test",
+                                       new_text="Write-Host 'one'\r\nWrite-Host 'three'\r\n")
+        self_change.rehearse(proposal["id"], command=[sys.executable, "-c", "pass"])
+        self_change.confirm(proposal["id"], "voice")
+        self_change.confirm(proposal["id"], "panel")
+        self_change.apply(proposal["id"])
+        self.assertEqual(self.raw("tool.ps1"), b"Write-Host 'one'\r\nWrite-Host 'three'\r\n")
+
+    def test_the_rehearsal_copy_holds_the_bytes_apply_would_write(self):
+        (self.project / "tool.ps1").write_bytes(self.WINDOWS)
+        proposal = self_change.propose("tool.ps1", "a test", find="'two'", replace="'three'")
+        probe = ("import sys\n"
+                 "data = open('tool.ps1', 'rb').read()\n"
+                 "print(data)\n"
+                 "sys.exit(0 if data == b\"Write-Host 'one'\\r\\nWrite-Host 'three'\\r\\n\" else 1)\n")
+        result = self_change.rehearse(proposal["id"], command=[sys.executable, "-c", probe])
+        self.assertTrue(result["ok"], result["tail"])
+
+    def test_a_file_that_is_not_utf8_is_refused_at_the_door(self):
+        (self.project / "legacy.txt").write_bytes(b"caf\xe9 = 1\n")
+        with self.assertRaises(ValueError) as caught:
+            self_change.propose("legacy.txt", "a test", find="= 1", replace="= 2")
+        self.assertIn("not valid UTF-8", str(caught.exception))
+        self.assertEqual(self.raw("legacy.txt"), b"caf\xe9 = 1\n")
+
+    def test_a_new_file_is_still_a_proposal(self):
+        proposal = self_change.propose("brand_new.py", "a test", new_text="x = 1\n")
+        self.assertEqual(proposal["before"], 0)
 
 
 if __name__ == "__main__":

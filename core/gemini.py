@@ -236,6 +236,7 @@ MIN_TIMEOUT_MS = 10_000
 
 _key_lock = threading.Lock()
 _cached_key: str | None = None
+_key_sig: tuple | None = None
 
 # A rung that answered 429 is out of quota, and on the free tier it will stay
 # that way for a while. Retrying it on every single call is a wasted round trip
@@ -260,8 +261,39 @@ def _cool(model: str, seconds: float = _COOLDOWN_SECONDS) -> None:
         _cooldown[model] = time.monotonic() + seconds
 
 
+# Where an error message carries its HTTP status. The google-genai SDK writes
+# "429 RESOURCE_EXHAUSTED. {...}", this app's providers write f"{status} {text}",
+# `requests` writes "429 Client Error: ...", and httpx "Client error '429 ...'".
+_STATUS_AT_START = re.compile(
+    r"^\W*(?:[A-Za-z_.]*(?:Error|Exception)\W+)?(?:HTTP\W*|status(?:[_ ]code)?\W+)?"
+    r"([1-5]\d\d)\b", re.I)
+_STATUS_HTTPX = re.compile(r"\b(?:Client|Server) error '([1-5]\d\d)\b")
+_STATUS_FIELD = re.compile(r"""["']?(?:status_code|code)["']?\s*[:=]\s*([1-5]\d\d)\b""",
+                           re.I)
+
+
+def http_status(err: str) -> int:
+    """The HTTP status an error message carries, or 0 when it carries none.
+
+    The classifiers below used to look for "429", "500", "403" ... ANYWHERE in the
+    text, so a 400 "maxOutputTokens 500 is too large" counted as a server error,
+    a request id containing 429 counted as quota, and the model was rested for
+    thirty minutes (six hours for a stray "404") for a mistake in the REQUEST that
+    resting does nothing about. The status is read from where a status is written.
+    """
+    for pattern in (_STATUS_AT_START, _STATUS_HTTPX, _STATUS_FIELD):
+        match = pattern.search(err or "")
+        if match:
+            return int(match.group(1))
+    return 0
+
+
 def is_quota_error(err: str) -> bool:
-    return "429" in err or "RESOURCE_EXHAUSTED" in err
+    status = http_status(err)
+    if status:
+        return status == 429
+    low = (err or "").lower()
+    return "resource_exhausted" in low or "exceeded your current quota" in low
 
 
 def is_unavailable_error(err: str) -> bool:
@@ -271,19 +303,28 @@ def is_unavailable_error(err: str) -> bool:
     fourteen seconds to arrive. Retrying that on every call puts the wait in
     front of everything the assistant does, so a rung that times out is rested
     like an exhausted one — for less long, since it is usually passing.
+
+    A status, when there is one, decides: 408 and 5xx are the server's trouble,
+    any other 4xx is the request's. Only a message with no status is judged by
+    its words.
     """
-    low = err.lower()
-    return ("503" in err or "504" in err or "502" in err or "500" in err
-            or "unavailable" in low or "deadline_exceeded" in low
+    status = http_status(err)
+    if status:
+        return status in (408, 500, 502, 503, 504)
+    low = (err or "").lower()
+    return ("unavailable" in low or "deadline_exceeded" in low
             or "timeout" in low or "timed out" in low
             or "connecterror" in low or "connection refused" in low)
 
 
 def is_gone_error(err: str) -> bool:
     """The model is not there, or not ours to use — a different thing from busy."""
-    low = err.lower()
-    return ("404" in err or "not found" in low or "is not supported" in low
-            or "permission" in low or "403" in err)
+    status = http_status(err)
+    if status:
+        return status in (403, 404)
+    low = (err or "").lower()
+    return ("not found" in low or "is not supported" in low
+            or "permission_denied" in low)
 
 
 def live_model() -> str:
@@ -325,18 +366,47 @@ def _cooling(model: str) -> bool:
         return False
 
 
+def _key_signature() -> tuple | None:
+    """Identifies the version of the settings file the cached key came from."""
+    try:
+        info = _KEY_FILE.stat()
+    except OSError:
+        return None
+    return (info.st_mtime_ns, info.st_size, getattr(info, "st_ino", 0))
+
+
 def api_key(refresh: bool = False) -> str:
-    """The Gemini key from config/api_keys.json. Cached; never raises."""
-    global _cached_key
+    """The Gemini key from config/api_keys.json. Cached; never raises.
+
+    The cache is checked against the file (a stat), not kept for the life of the
+    process. It used to be kept for good — and an EMPTY answer was kept too — so
+    somebody who started the app, saw the first-run screen and typed a key had every
+    one-shot call say "no key" until they restarted, and a key replaced after an
+    "API key not valid" error was never picked up. When the key does change, the
+    models set aside under the old one are brought back: a 403 or 404 was about
+    that key, not about the model.
+    """
+    global _cached_key, _key_sig
+    signature = _key_signature()
     with _key_lock:
-        if _cached_key is not None and not refresh:
+        if _cached_key is not None and not refresh and signature == _key_sig:
             return _cached_key
         try:
-            data = json.loads(_KEY_FILE.read_text(encoding="utf-8"))
-            _cached_key = str(data.get("gemini_api_key") or "")
-        except Exception:
-            _cached_key = ""
-        return _cached_key
+            data = json.loads(_KEY_FILE.read_text(encoding="utf-8-sig"))
+            fresh = str(data.get("gemini_api_key") or "") if isinstance(data, dict) else ""
+        except FileNotFoundError:
+            fresh = ""
+        except (OSError, ValueError) as error:
+            # Held open by another process for a moment, or half written. Keep what
+            # we had and look again next time rather than caching "no key".
+            failures.note("gemini.api_key", error)
+            return _cached_key or ""
+        changed = _cached_key is not None and fresh != _cached_key
+        _cached_key, _key_sig = fresh, signature
+    if changed:
+        with _cool_lock:
+            _cooldown.clear()
+    return fresh
 
 
 def client(timeout_ms: int = DEFAULT_TIMEOUT_MS, key: str = ""):
@@ -655,6 +725,53 @@ def _detect_local_fallback() -> str | None:
     return None
 
 
+_local_refusal_noted = False
+
+
+def _local_fallback_consented() -> bool:
+    """Has the owner enabled `local_fallback_consent`? False on any doubt."""
+    try:
+        from memory.config_manager import get_local_fallback_consent
+        return get_local_fallback_consent()
+    except Exception as exc:                                   # noqa: BLE001
+        failures.note("gemini.local_consent", exc)
+        return False
+
+
+def _local_failover(tried, contents, config, timeout_ms: int):
+    """Answer from a local model after every other rung failed, or return None.
+
+    DECISIONS.md: "a failover rung never switches silently, in any direction —
+    automatic failover onto this machine needs `local_fallback_consent`." The
+    conversation's own ladder (main.py) honours that. This one-shot path did not:
+    it scanned the loopback ports and sent the prompt — which can carry a
+    screenshot — to whatever answered there, without asking. Consent is checked
+    FIRST, so without it nothing is probed either. The outcome goes to the failure
+    trail, so a local answer is never invisible.
+    """
+    global _local_refusal_noted
+    if any(m.startswith(PROVIDER_PREFIX) for m in tried):
+        return None
+    if not _local_fallback_consented():
+        if not _local_refusal_noted:
+            _local_refusal_noted = True
+            failures.note("gemini.local_fallback",
+                          "every cloud model failed; a local model was not tried "
+                          "because local_fallback_consent is not enabled")
+        return None
+    target = _detect_local_fallback()
+    if not target:
+        return None
+    try:
+        reply = _provider_call(PROVIDER_PREFIX + target, contents, config, timeout_ms)
+    except Exception as exc:                                   # noqa: BLE001
+        failures.note("gemini.local_fallback", exc, detail=target)
+        return None
+    failures.note("gemini.local_fallback",
+                  "every cloud model failed; answered by a local model", detail=target)
+    return reply
+
+
 def _provider_call(model: str, contents, config, timeout_ms: int):
     """One generation through a configured provider. Raises like every other
     rung, so the loop's error classification applies to it unchanged."""
@@ -789,17 +906,10 @@ def call(contents, tier: str = FAST, config=None,
             else:
                 print(f"[Gemini] {model}: {type(e).__name__}: {msg[:140]}")
 
-    # When all configured rungs have failed (e.g. quota exhausted / 429), attempt
-    # automatic failover to any active local LLM before giving up.
+    # When every rung has failed, the last resort is a model running on this
+    # machine — but only if the owner said it may be used.
     if tier != SEARCH and not _carries_recording(contents):
-        local_target = _detect_local_fallback()
-        if local_target and not any(m.startswith(PROVIDER_PREFIX) for m in tried):
-            try:
-                print(f"[Gemini] all cloud rungs exhausted — failing over to local LLM ({local_target})")
-                return _provider_call(PROVIDER_PREFIX + local_target, contents, config, timeout_ms)
-            except Exception as exc:
-                failures.note("gemini.local_fallback", exc)
-                print(f"[Gemini] local fallback failed: {exc}")
+        return _local_failover(tried, contents, config, timeout_ms)
 
     return None
 

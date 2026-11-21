@@ -1,9 +1,24 @@
+"""Settings and keys: the one module that reads and writes `config/api_keys.json`.
+
+Every setter goes through a single read-modify-write (`_config_txn`): one lock held from the
+read to the replace, a temporary file of its own beside the settings file, and a rename over
+it (retried for a moment where Windows says another program has the file open). A file that
+exists but cannot be read is never replaced by something built from a failed read, and a file
+that does not parse is copied to `api_keys.json.broken-<epoch>` before the next save goes over
+it. The caller of a setter is not told whether it worked unless it asks (`save_settings_strict`
+raises). Tests: `tests/test_config_safety.py`, `tests/test_edge_cases.py`.
+"""
+
+import contextlib
 import json
 import os
 import sys
+import tempfile
+import threading
 import time
 
-from core import identity
+from core import failures, identity
+from core.atomic_file import replace_with_retry
 from pathlib import Path
 
 def get_base_dir() -> Path:
@@ -14,6 +29,17 @@ def get_base_dir() -> Path:
 BASE_DIR    = get_base_dir()
 CONFIG_DIR  = BASE_DIR / "config"
 CONFIG_FILE = CONFIG_DIR / "api_keys.json"
+
+def _report(where: str, message: str, error=None, detail: str = "") -> None:
+    """Say that a settings operation failed: once on the console, once in the trail.
+
+    The only print in this module. A settings failure used to be a console line that
+    a packaged build never shows, or nothing; `failures.note` puts it where the
+    Health Center reads it. Never raises.
+    """
+    print(f"❌ {message}")
+    failures.note(where, error if error is not None else message, detail=detail)
+
 
 def ensure_config_dir() -> bool:
     """Make sure the folder is there. False when it cannot be used.
@@ -29,7 +55,8 @@ def ensure_config_dir() -> bool:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         return True
     except OSError as e:
-        print(f"❌ Cannot use the config folder {CONFIG_DIR}: {e}")
+        _report("config_manager.dir", f"Cannot use the config folder {CONFIG_DIR}: {e}",
+                e, str(CONFIG_DIR))
         return False
 
 def config_exists() -> bool:
@@ -42,9 +69,8 @@ def save_api_keys(gemini_api_key: str) -> None:
     the last place still able to lose a damaged file's contents and to leave a
     half-written one behind. `_load_for_write` and `_write_config` are shared.
     """
-    data = _load_for_write()
-    data["gemini_api_key"] = str(gemini_api_key or "").strip()
-    _write_config(data)
+    with _config_txn() as data:
+        data["gemini_api_key"] = str(gemini_api_key or "").strip()
 
 def load_api_keys() -> dict:
     """The config, or {} if it is missing, unreadable, or not an object.
@@ -57,9 +83,16 @@ def load_api_keys() -> dict:
     if not CONFIG_FILE.exists():
         return {}
     try:
-        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        # Under the lock so an in-process replace cannot overlap the read (on
+        # Windows an open file cannot be replaced, and a file being replaced
+        # cannot be opened). `utf-8-sig`: Notepad and Windows PowerShell write a
+        # byte-order mark, which plain "utf-8" hands to json as a syntax error —
+        # a hand-edited file then read as "no keys at all".
+        with _CONFIG_LOCK:
+            data = json.loads(CONFIG_FILE.read_text(encoding="utf-8-sig"))
     except Exception as e:
-        print(f"❌ Failed to load api_keys.json: {e}")
+        _report("config_manager.load", f"Failed to load api_keys.json: {e}", e,
+                str(CONFIG_FILE))
         return {}
     return data if isinstance(data, dict) else {}
 
@@ -83,10 +116,9 @@ def get_user_name() -> str:
 
 def save_assistant_config(assistant_name: str, user_name: str) -> None:
     """Persist assistant name and user name to config."""
-    data = _load_for_write()
-    data["assistant_name"] = assistant_name.strip() or identity.NAME
-    data["user_name"] = user_name.strip()
-    _write_config(data)
+    with _config_txn() as data:
+        data["assistant_name"] = assistant_name.strip() or identity.NAME
+        data["user_name"] = user_name.strip()
 
 
 # ── Assistant voice ──────────────────────────────────────────────────────────
@@ -106,10 +138,9 @@ def get_voice() -> str:
 def save_voice(voice_name: str) -> None:
     """Persist the chosen Live voice. Unknown names collapse to the default so a
     bad value can never reach the API and break the session."""
-    data = _load_for_write()
     v = (voice_name or "").strip()
-    data["voice_name"] = v if v in AVAILABLE_VOICES else DEFAULT_VOICE
-    _write_config(data)
+    with _config_txn() as data:
+        data["voice_name"] = v if v in AVAILABLE_VOICES else DEFAULT_VOICE
 
 
 def get_digest_hour() -> str:
@@ -126,9 +157,8 @@ def save_digest_hour(value: str) -> None:
         clean = f"{max(0, min(23, int(hour))):02d}:{max(0, min(59, int(minute or 0))):02d}"
     except (TypeError, ValueError):
         clean = "20:00"
-    data = _load_for_write()
-    data["digest_hour"] = clean
-    _write_config(data)
+    with _config_txn() as data:
+        data["digest_hour"] = clean
 
 
 def get_wake_word_enabled() -> bool:
@@ -293,12 +323,11 @@ def get_turn_tuning() -> dict:
 
 
 def save_turn_tuning(values: dict) -> None:
-    data = _load_for_write()
-    cur = data.get("turn_tuning")
-    cur = dict(cur) if isinstance(cur, dict) else {}
-    cur.update(values or {})
-    data["turn_tuning"] = cur
-    _write_config(data)
+    with _config_txn() as data:
+        cur = data.get("turn_tuning")
+        cur = dict(cur) if isinstance(cur, dict) else {}
+        cur.update(values or {})
+        data["turn_tuning"] = cur
 
 
 def get_proactive_audio_enabled() -> bool:
@@ -337,9 +366,8 @@ def save_media_resolution(value: str) -> None:
 
 def _save_flag(key: str, value) -> None:
     """Read-modify-write one key without disturbing the rest of the config."""
-    data = _load_for_write()
-    data[key] = bool(value) if isinstance(value, bool) else value
-    _write_config(data)
+    with _config_txn() as data:
+        data[key] = bool(value) if isinstance(value, bool) else value
 
 
 def get_philosophy() -> dict:
@@ -401,38 +429,77 @@ def save_brief_enabled(enabled: bool) -> None:
 # both the factory setting and what an unresolvable saved device falls back to —
 # so unplugging a headset degrades to the built-in speakers instead of crashing.
 
+# One lock for every read-modify-write of api_keys.json in this process. The UI
+# thread, the session's asyncio thread, the tool worker threads and the dashboard
+# all save settings, and `core/tool_usage.py` saves one on EVERY tool call. Without
+# a lock two saves read the same file and the later write erased the earlier one;
+# worse, both wrote through one shared `api_keys.json.tmp`, so a replace could move
+# a half-written file into place (measured: a burst of concurrent tool calls left a
+# file with neither the Gemini key nor the providers, and readers saw torn JSON).
+# An RLock, so a setter used inside another setter's transaction cannot deadlock.
+_CONFIG_LOCK = threading.RLock()
+
+
+class _UnreadableConfig(dict):
+    """An empty settings dict that must never be written back.
+
+    `_load_for_write` returns this when api_keys.json EXISTS but could not be
+    read (a sharing violation while another process holds it, a permission
+    error, a backup that could not be made). It used to return a plain `{}`, and
+    the next setter then replaced the owner's whole file — every key — with the
+    one value it had just been given. `_write_config` refuses this type, so every
+    existing caller, including ones outside this module, is protected without
+    being edited.
+    """
+
+
 def _load_for_write() -> dict:
     """Read api_keys.json for a read-modify-write, without losing what is in it.
 
-    Two failures this exists to stop. The first: a truncated file (power lost
+    Three failures this exists to stop. The first: a truncated file (power lost
     mid-write, a full disk) used to read as `{}` and then be overwritten by the
     next setting saved — so the assistant forgot every provider key because a
     colour was changed. A file that exists but does not parse is copied to
-    `api_keys.json.broken-<epoch>` first, and then left alone.
-    The second: `write_text` truncates the destination before writing it, so an
+    `api_keys.json.broken-<epoch>` first, and the new setting is then saved
+    over it.
+    The second: a file that exists but CANNOT BE READ right now (another process
+    has it open) is not an empty file. It is returned as `_UnreadableConfig`,
+    which `_write_config` refuses, so nothing is overwritten. The same applies
+    when the damaged file cannot be copied aside first.
+    The third: `write_text` truncates the destination before writing it, so an
     interruption leaves exactly that half-written file. Writing to a temporary
     file and replacing it is atomic on Windows and on Linux.
+
+    Call it through `_config_txn()`, which also holds the lock until the write.
     """
     if not CONFIG_FILE.exists():
         return {}
     try:
-        raw = CONFIG_FILE.read_text(encoding="utf-8")
-    except Exception:
-        return {}
+        raw = CONFIG_FILE.read_bytes()
+    except OSError as e:
+        _report("config_manager.read",
+                f"Could not read {CONFIG_FILE}; settings will not be changed: {e}",
+                e, str(CONFIG_FILE))
+        return _UnreadableConfig()
     try:
-        parsed = json.loads(raw)
-    except Exception:
-        parsed = None
+        parsed = json.loads(raw.decode("utf-8-sig"))
+    except (ValueError, RecursionError):
+        parsed = None            # UnicodeDecodeError and JSONDecodeError are ValueErrors
     if isinstance(parsed, dict):
         return parsed
     if raw.strip():
+        backup = CONFIG_FILE.with_name(f"{CONFIG_FILE.name}.broken-{int(time.time())}")
         try:
-            CONFIG_FILE.with_name(
-                f"{CONFIG_FILE.name}.broken-{int(time.time())}"
-            ).write_text(raw, encoding="utf-8")
-        except Exception:
-            pass
+            backup.write_bytes(raw)
+        except OSError as e:
+            _report("config_manager.backup",
+                    f"{CONFIG_FILE} is damaged and could not be copied to {backup.name}; "
+                    f"settings will not be changed: {e}", e, str(backup))
+            return _UnreadableConfig()
     return {}
+
+
+_replace_with_retry = replace_with_retry     # one copy of the loop: core/atomic_file.py
 
 
 def _write_config(data: dict) -> bool:
@@ -440,22 +507,70 @@ def _write_config(data: dict) -> bool:
 
     Returns False when it could not be written. Nobody is obliged to look at the
     return value — every existing caller ignores it — but the ones that claim
-    success to the user now can.
+    success to the user now can. It never raises for a disk or value problem:
+    most callers are Qt slots, and PyQt6 aborts on an exception in a slot.
+
+    The temporary file has its own unique name, so two writers can never share
+    one, and it is created owner-only (mode 0600 on POSIX): this file holds API
+    keys.
     """
+    if isinstance(data, _UnreadableConfig):
+        _report("config_manager.write",
+                f"Settings were NOT saved: {CONFIG_FILE} exists but could not be "
+                "read, and writing now would replace it.", detail=str(CONFIG_FILE))
+        return False
     if not ensure_config_dir():
         return False
-    tmp = CONFIG_FILE.with_name(f"{CONFIG_FILE.name}.tmp")
     try:
-        tmp.write_text(json.dumps(data, indent=4), encoding="utf-8")
-        os.replace(tmp, CONFIG_FILE)
-        return True
-    except OSError as e:
-        print(f"❌ Could not save settings to {CONFIG_FILE}: {e}")
-        try:
-            tmp.unlink(missing_ok=True)
-        except OSError:
-            pass
+        text = json.dumps(data, indent=4)
+    except (TypeError, ValueError) as e:
+        _report("config_manager.write",
+                f"Could not save settings: a value cannot be written as JSON: {e}",
+                e, "not JSON-serialisable")
         return False
+    with _CONFIG_LOCK:
+        tmp = None
+        try:
+            fd, tmp_name = tempfile.mkstemp(dir=str(CONFIG_DIR), suffix=".tmp",
+                                            prefix=f"{CONFIG_FILE.name}.")
+            tmp = Path(tmp_name)
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(text)
+                handle.flush()
+                os.fsync(handle.fileno())
+            _replace_with_retry(tmp, CONFIG_FILE)
+            return True
+        except OSError as e:
+            _report("config_manager.write", f"Could not save settings to {CONFIG_FILE}: {e}",
+                    e, str(CONFIG_FILE))
+            if tmp is not None:
+                try:
+                    tmp.unlink(missing_ok=True)
+                except OSError as cleanup_error:
+                    failures.note("config_manager.write.cleanup", cleanup_error,
+                                  detail=str(tmp))
+            return False
+
+
+@contextlib.contextmanager
+def _config_txn(strict: bool = False):
+    """Read-modify-write api_keys.json as ONE step.
+
+        with _config_txn() as data:
+            data["voice_name"] = "Kore"
+
+    The lock is held from the read to the replace, so two saves from different
+    threads both land. Nothing is written when the block raises, and nothing is
+    written when the file could not be read (`_UnreadableConfig`). By default a
+    failed write is only reported through `_write_config`'s return value, as it
+    always was; with `strict=True` it raises OSError, for the one caller that
+    must not say "saved" when it was not.
+    """
+    with _CONFIG_LOCK:
+        data = _load_for_write()
+        yield data
+        if not _write_config(data) and strict:
+            raise OSError(f"could not save settings to {CONFIG_FILE}")
 
 
 def _patch_config(**fields) -> None:
@@ -464,9 +579,22 @@ def _patch_config(**fields) -> None:
     Every setter in this file open-coded this. Collapsing it here means a new
     setting is one line, and there is one place where a corrupt config file is
     handled instead of nine."""
-    data = _load_for_write()
-    data.update(fields)
-    _write_config(data)
+    with _config_txn() as data:
+        data.update(fields)
+
+
+def save_settings_strict(**fields) -> None:
+    """Change named settings; raise OSError if they were not written.
+
+    `patch_settings` and the setters report a failed write only through a return value that
+    nobody reads, which is right for a colour and wrong for a caller that goes on to say "saved".
+    The two UI paths that changed the persona and the identity wrote the whole file themselves
+    (`API_FILE.write_text`): over a settings file that could not be read at that moment they wrote
+    `{}` plus their few keys, and then announced the change. This keeps every other key, refuses
+    to write over a file it could not read, and raises when nothing was written.
+    """
+    with _config_txn(strict=True) as data:
+        data.update(fields)
 
 
 def patch_settings(**fields) -> dict:
@@ -515,7 +643,21 @@ def apply_first_run(*, os_name: str = "", gemini_api_key: str = "",
     An empty key is never written — a blank field means "I did not type one",
     not "delete the one I had". Returns the config as it stands afterwards.
     """
-    cfg = load_api_keys()
+    # One transaction: the old version read with load_api_keys() and wrote the
+    # WHOLE config back with _patch_config(**cfg), so any setting saved between
+    # the two (a tool call counts itself on a worker thread) was overwritten by
+    # the stale copy. `strict`: the caller (MainWindow) reports an exception on
+    # screen and otherwise assumes the answers were saved, so a refused or failed
+    # write must raise instead of returning a config that is not on disk.
+    with _config_txn(strict=True) as cfg:
+        _apply_first_run_answers(cfg, os_name=os_name, gemini_api_key=gemini_api_key,
+                                 providers=providers, mode=mode)
+    return dict(cfg)
+
+
+def _apply_first_run_answers(cfg: dict, *, os_name: str, gemini_api_key: str,
+                             providers: list | None, mode: str) -> None:
+    """Merge the first-run answers into `cfg` in place (see `apply_first_run`)."""
     if str(os_name or "").strip():
         cfg["os_system"] = str(os_name).strip()
     key = str(gemini_api_key or "").strip()
@@ -567,9 +709,6 @@ def apply_first_run(*, os_name: str = "", gemini_api_key: str = "",
     if block:
         cfg["providers"] = block
 
-    _patch_config(**cfg)
-    return cfg
-
 
 def get_input_device() -> str:
     """Microphone device name, or '' for the system default."""
@@ -615,27 +754,25 @@ def get_plugin_setting(namespace: str, key: str, default=None):
 def save_plugin_config(namespace: str, values: dict) -> None:
     """Merge `values` into a namespace's stored config (read-modify-write, like
     every other helper here). Only the provided keys are touched."""
-    data = _load_for_write()
-    pc = data.get("plugin_config")
-    if not isinstance(pc, dict):
-        pc = {}
-    cur = pc.get(namespace)
-    if not isinstance(cur, dict):
-        cur = {}
-    cur.update(values)
-    pc[namespace] = cur
-    data["plugin_config"] = pc
-    _write_config(data)
+    with _config_txn() as data:
+        pc = data.get("plugin_config")
+        if not isinstance(pc, dict):
+            pc = {}
+        cur = pc.get(namespace)
+        if not isinstance(cur, dict):
+            cur = {}
+        cur.update(values)
+        pc[namespace] = cur
+        data["plugin_config"] = pc
 
 
 def save_plugin_enabled(plugin_name: str, enabled: bool) -> None:
-    data = _load_for_write()
-    plugins_cfg = data.get("plugins_enabled")
-    if not isinstance(plugins_cfg, dict):
-        plugins_cfg = {}
-    plugins_cfg[plugin_name] = enabled
-    data["plugins_enabled"] = plugins_cfg
-    _write_config(data)
+    with _config_txn() as data:
+        plugins_cfg = data.get("plugins_enabled")
+        if not isinstance(plugins_cfg, dict):
+            plugins_cfg = {}
+        plugins_cfg[plugin_name] = enabled
+        data["plugins_enabled"] = plugins_cfg
 
 # ── Providers: local STT/LLM/TTS and non-Gemini APIs ─────────────────────────
 # Stored here rather than in a file of their own, for the same reason plugin
@@ -694,10 +831,15 @@ def _upgrade_ids(block: dict) -> dict:
     return block
 
 
+def _providers_in(cfg: dict) -> dict:
+    """The providers block of an already-loaded config, upgraded, as a copy."""
+    val = cfg.get("providers")
+    return _upgrade_ids(dict(val)) if isinstance(val, dict) else {}
+
+
 def get_providers() -> dict:
     """The whole providers block, or an empty dict."""
-    val = load_api_keys().get("providers")
-    return _upgrade_ids(dict(val)) if isinstance(val, dict) else {}
+    return _providers_in(load_api_keys())
 
 
 def get_provider_mode() -> str:
@@ -736,9 +878,10 @@ def get_sidecar_provider() -> str:
 
 
 def _patch_providers(**fields) -> None:
-    p = get_providers()
-    p.update(fields)
-    _patch_config(providers=p)
+    with _config_txn() as data:
+        p = _providers_in(data)
+        p.update(fields)
+        data["providers"] = p
 
 
 def save_provider_mode(mode: str) -> None:
@@ -751,28 +894,30 @@ def save_provider_mode(mode: str) -> None:
 def save_provider_config(provider_id: str, values: dict) -> None:
     """Merge settings for one provider. Only the given keys are touched, so the
     panel can save one field without reading and rewriting the rest."""
-    p = get_providers()
-    creds = p.get("creds")
-    if not isinstance(creds, dict):
-        creds = {}
-    cur = creds.get(provider_id)
-    cur = dict(cur) if isinstance(cur, dict) else {}
-    cur.update(values or {})
-    creds[provider_id] = cur
-    p["creds"] = creds
-    _patch_config(providers=p)
+    with _config_txn() as data:
+        p = _providers_in(data)
+        creds = p.get("creds")
+        if not isinstance(creds, dict):
+            creds = {}
+        cur = creds.get(provider_id)
+        cur = dict(cur) if isinstance(cur, dict) else {}
+        cur.update(values or {})
+        creds[provider_id] = cur
+        p["creds"] = creds
+        data["providers"] = p
 
 
 def save_pipeline(stt: str = None, llm: str = None, tts: str = None) -> None:
     """Set one or more pipeline slots. `None` leaves a slot alone; '' clears it."""
-    p = get_providers()
-    pipe = p.get("pipeline")
-    pipe = dict(pipe) if isinstance(pipe, dict) else {}
-    for slot, value in (("stt", stt), ("llm", llm), ("tts", tts)):
-        if value is not None:
-            pipe[slot] = str(value).strip()
-    p["pipeline"] = pipe
-    _patch_config(providers=p)
+    with _config_txn() as data:
+        p = _providers_in(data)
+        pipe = p.get("pipeline")
+        pipe = dict(pipe) if isinstance(pipe, dict) else {}
+        for slot, value in (("stt", stt), ("llm", llm), ("tts", tts)):
+            if value is not None:
+                pipe[slot] = str(value).strip()
+        p["pipeline"] = pipe
+        data["providers"] = p
 
 
 def save_sidecar_provider(provider_id: str) -> None:
@@ -791,6 +936,13 @@ def get_coding_provider() -> str:
 
 def save_coding_provider(provider_id: str) -> None:
     _patch_providers(coding=(provider_id or "").strip())
+
+
+def get_local_fallback_consent() -> bool:
+    """Has the owner agreed that a model on THIS machine may answer when the
+    hosted ones cannot? Only a literal `true` counts, as in main.py: the string
+    "true" or the number 1 in a hand-edited file is not consent."""
+    return load_api_keys().get("local_fallback_consent") is True
 
 
 def get_sidecar_first() -> bool:
@@ -826,34 +978,33 @@ def save_providers(mode: str = None, pipeline: dict = None, creds: dict = None,
     `None` leaves a section alone; `creds` is merged per provider so a panel
     that only edited one does not have to send the others.
     """
-    data = _load_for_write()
-    block = data.get("providers")
-    block = _upgrade_ids(dict(block)) if isinstance(block, dict) else {}
+    with _config_txn() as data:
+        block = data.get("providers")
+        block = _upgrade_ids(dict(block)) if isinstance(block, dict) else {}
 
-    if mode is not None:
-        m = str(mode).strip().lower()
-        block["mode"] = m if m in (PROVIDER_MODE_GEMINI,
-                                   PROVIDER_MODE_PIPELINE) else PROVIDER_MODE_GEMINI
-    if pipeline is not None:
-        current = block.get("pipeline")
-        current = dict(current) if isinstance(current, dict) else {}
-        current.update({k: str(v or "").strip() for k, v in pipeline.items()})
-        block["pipeline"] = current
-    if creds is not None:
-        store = block.get("creds")
-        store = dict(store) if isinstance(store, dict) else {}
-        for pid, values in (creds or {}).items():
-            one = store.get(pid)
-            one = dict(one) if isinstance(one, dict) else {}
-            one.update(values or {})
-            store[pid] = one
-        block["creds"] = store
-    if sidecar is not None:
-        block["sidecar"] = str(sidecar or "").strip()
-    if sidecar_first is not None:
-        block["sidecar_first"] = bool(sidecar_first)
-    if coding is not None:
-        block["coding"] = str(coding or "").strip()
+        if mode is not None:
+            m = str(mode).strip().lower()
+            block["mode"] = m if m in (PROVIDER_MODE_GEMINI,
+                                       PROVIDER_MODE_PIPELINE) else PROVIDER_MODE_GEMINI
+        if pipeline is not None:
+            current = block.get("pipeline")
+            current = dict(current) if isinstance(current, dict) else {}
+            current.update({k: str(v or "").strip() for k, v in pipeline.items()})
+            block["pipeline"] = current
+        if creds is not None:
+            store = block.get("creds")
+            store = dict(store) if isinstance(store, dict) else {}
+            for pid, values in (creds or {}).items():
+                one = store.get(pid)
+                one = dict(one) if isinstance(one, dict) else {}
+                one.update(values or {})
+                store[pid] = one
+            block["creds"] = store
+        if sidecar is not None:
+            block["sidecar"] = str(sidecar or "").strip()
+        if sidecar_first is not None:
+            block["sidecar_first"] = bool(sidecar_first)
+        if coding is not None:
+            block["coding"] = str(coding or "").strip()
 
-    data["providers"] = block
-    _write_config(data)
+        data["providers"] = block

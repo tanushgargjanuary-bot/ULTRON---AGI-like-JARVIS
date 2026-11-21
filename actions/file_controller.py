@@ -11,6 +11,7 @@ try:
 except ImportError:
     _SEND2TRASH = False
 
+from core import failures
 from core.undo import push_undo
 
 _OS = platform.system()  # "Windows" | "Darwin" | "Linux"
@@ -107,24 +108,64 @@ _SAFE_ROOTS: list[Path] = [
 # put in my own folders", which has no fixed shape. Denying by directory name and
 # by file name costs the user nothing they were going to ask for, and a refusal
 # that names the reason is something they can act on.
+# EVERY entry is lower-case and uses "/": the path it is compared with is lowered
+# and slash-normalised first. `.config/BraveSoftware` used to sit here in mixed case,
+# so it could never match anything — the Brave profile, which holds saved logins,
+# was readable while the owner's own list said browser profiles were not.
+#
+# An entry matches where it starts a path component and is not the front of a longer
+# name: `.ssh`, `.ssh/id_rsa` and `.ssh-old` match; `.dockerignore` does not match
+# `.docker` (a project file nobody means as a credential store, refused as one).
 _SENSITIVE_DIR_PARTS = (
     ".ssh", ".gnupg", ".aws", ".azure", ".kube", ".docker", ".password-store",
-    ".local/share/keyrings", ".config/gcloud",
+    ".local/share/keyrings", ".config/gcloud", ".config/gh", ".config/rclone",
+    ".thunderbird", ".git/config",          # a remote URL in .git/config can hold a token
     "appdata/roaming/microsoft/credentials", "appdata/roaming/microsoft/protect",
-    "google/chrome/user data", "mozilla/firefox/profiles", ".mozilla",
-    ".config/google-chrome", ".config/chromium", ".config/BraveSoftware",
+    "appdata/local/microsoft/credentials", "appdata/roaming/github cli",
+    "appdata/roaming/rclone", "appdata/roaming/thunderbird",
+    # browser profiles: saved logins, cookies, tokens
+    "google/chrome/user data", "microsoft/edge/user data",
+    "bravesoftware/brave-browser/user data", "vivaldi/user data",
+    "opera software", "mozilla/firefox/profiles", ".mozilla",
+    ".config/google-chrome", ".config/chromium", ".config/microsoft-edge",
+    ".config/bravesoftware", ".config/vivaldi", ".config/opera",
+    # macOS
+    "library/keychains", "library/application support/google/chrome",
+    "library/application support/firefox", "library/application support/microsoft edge",
+    "library/application support/bravesoftware",
 )
 _SENSITIVE_FILE_NAMES = {
     "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "api_keys.json",
     ".env", ".netrc", ".git-credentials", ".pgpass", "credentials",
     "login data", "cookies", "key4.db", "logins.json", "wallet.dat", "ntds.dit",
     "secrets.json", "secret.json",
+    # tokens and passwords that live in a plain file
+    ".npmrc", ".pypirc", ".yarnrc", ".yarnrc.yml", ".dockercfg", ".s3cfg", ".boto",
+    ".my.cnf", ".vault-token", ".htpasswd", "rclone.conf", "kubeconfig",
+    "terraform.tfstate", "terraform.tfstate.backup",
+    # shell histories collect whatever was pasted into a terminal, tokens included
+    ".bash_history", ".zsh_history", ".python_history", ".mysql_history",
+    ".psql_history", ".node_repl_history", "consolehost_history.txt",
 }
-_SENSITIVE_SUFFIXES = (".pem", ".key", ".pfx", ".p12", ".kdbx", ".keystore", ".jks")
+_SENSITIVE_SUFFIXES = (".pem", ".key", ".pfx", ".p12", ".kdbx", ".kdb", ".keystore",
+                       ".jks", ".ppk", ".ovpn", ".p8")
+# `id_rsa_work`, `id_ed25519.bak` — a copy of a private key is still one. The public
+# half (`.pub`) is meant to be shared and is left alone.
+_SENSITIVE_NAME_PREFIXES = ("id_rsa", "id_dsa", "id_ecdsa", "id_ed25519")
 _CRITICAL_SYSTEM_DIR_PARTS = (
     "windows/system32", "windows/syswow64", "windows/winsxs",
     "$recycle.bin", "system volume information",
 )
+
+
+def _parts_regex(parts) -> "re.Pattern":
+    """One compiled test for a tuple of path fragments (see the note above)."""
+    return re.compile(r"(?:^|/)(?:" + "|".join(re.escape(part) for part in parts)
+                      + r")(?![a-z0-9])")
+
+
+_SENSITIVE_DIR_RE = _parts_regex(_SENSITIVE_DIR_PARTS)
+_CRITICAL_DIR_RE = _parts_regex(_CRITICAL_SYSTEM_DIR_PARTS)
 
 
 def _as_posix_lower(target: Path) -> str:
@@ -138,14 +179,14 @@ def _as_posix_lower(target: Path) -> str:
 def _is_sensitive(target: Path) -> bool:
     """True for credential stores, system critical folders, and anything nobody means by 'a file'."""
     text = _as_posix_lower(target)
-    if any(part in text for part in _CRITICAL_SYSTEM_DIR_PARTS):
-        return True
-    if any(part in text for part in _SENSITIVE_DIR_PARTS):
+    if _CRITICAL_DIR_RE.search(text) or _SENSITIVE_DIR_RE.search(text):
         return True
     name = target.name.lower()
     if name in _SENSITIVE_FILE_NAMES:
         return True
     if name.startswith(".env.") or name.startswith("credentials."):
+        return True
+    if name.startswith(_SENSITIVE_NAME_PREFIXES) and not name.endswith(".pub"):
         return True
     return name.endswith(_SENSITIVE_SUFFIXES)
 
@@ -158,12 +199,31 @@ def _denial_message(target: Path) -> str:
     a different answer and deserves saying.
     """
     text = _as_posix_lower(target)
-    if any(part in text for part in _CRITICAL_SYSTEM_DIR_PARTS):
+    if _CRITICAL_DIR_RE.search(text):
         return (f"I will not touch {target.name} — it is a critical operating system directory.")
     if _is_sensitive(target):
         return (f"I will not touch {target.name} — it holds credentials. "
                 f"Open it yourself if you need what is in it.")
     return f"Access denied: {target}"
+
+
+def _configured_roots(cfg: dict) -> list[Path]:
+    """The folders the owner listed in `allowed_roots` that exist."""
+    raw = cfg.get("allowed_roots", [])
+    if not isinstance(raw, (list, tuple)):
+        failures.note("file_controller.roots",
+                      f"allowed_roots must be a list, not {type(raw).__name__}")
+        return []
+    found: list[Path] = []
+    for custom_path in raw:
+        try:
+            resolved = Path(custom_path).resolve()
+        except (OSError, RuntimeError, TypeError, ValueError) as error:
+            failures.note("file_controller.roots", error, detail=str(custom_path))
+            continue
+        if resolved.exists() and resolved not in found:
+            found.append(resolved)
+    return found
 
 
 def _get_laptop_roots() -> list[Path]:
@@ -172,22 +232,18 @@ def _get_laptop_roots() -> list[Path]:
     try:
         from memory.config_manager import load_api_keys
         cfg = load_api_keys()
-        for custom_path in cfg.get("allowed_roots", []):
-            try:
-                p = Path(custom_path).resolve()
-                if p.exists() and p not in roots:
-                    roots.append(p)
-            except Exception:
-                pass
-        # Enable multi-drive laptop access by default on Windows or when configured
-        if cfg.get("laptop_wide_access", True):
-            if _OS == "Windows":
-                for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
-                    drive = Path(f"{letter}:/")
-                    if drive.exists() and drive not in roots:
-                        roots.append(drive)
-    except Exception:
-        pass
+    except Exception as error:                                  # noqa: BLE001
+        failures.note("file_controller.roots", error)
+        return roots
+    for path in _configured_roots(cfg):
+        if path not in roots:
+            roots.append(path)
+    # Enable multi-drive laptop access by default on Windows or when configured
+    if cfg.get("laptop_wide_access", True) and _OS == "Windows":
+        for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
+            drive = Path(f"{letter}:/")
+            if drive.exists() and drive not in roots:
+                roots.append(drive)
     return roots
 
 
@@ -216,7 +272,8 @@ def _is_safe_path(target: Path) -> bool:
                        _get_pictures, _get_music, _get_videos):
             try:
                 path = helper()
-            except Exception:
+            except Exception as error:                          # noqa: BLE001
+                failures.note("file_controller.folders", error, detail=helper.__name__)
                 continue
             if path not in roots:
                 roots.append(path)
@@ -452,6 +509,13 @@ def move_file(path: str, name: str = "", destination: str = "") -> str:
         if dst.is_dir():
             dst = dst / src.name
 
+        # Refuse rather than replace. `shutil.move` onto an existing file replaces
+        # it, and the undo this registers moves the NEW file back — so the file that
+        # was overwritten was gone for good. `rename_file` already refuses.
+        if dst.exists():
+            return (f"'{dst.name}' already exists in {dst.parent.name}/ — nothing was "
+                    f"moved. Rename or remove one of them first.")
+
         dst.parent.mkdir(parents=True, exist_ok=True)
         origin = src.resolve()
         shutil.move(str(src), str(dst))
@@ -480,6 +544,13 @@ def copy_file(path: str, name: str = "", destination: str = "") -> str:
 
         if dst.is_dir():
             dst = dst / src.name
+
+        # Refuse rather than replace. `copy2` onto an existing file overwrites it, and
+        # the undo below deletes the destination — so undoing an overwriting copy
+        # removed the file that had been there first, with no way back.
+        if dst.exists():
+            return (f"'{dst.name}' already exists in {dst.parent.name}/ — nothing was "
+                    f"copied. Rename or remove one of them first.")
 
         dst.parent.mkdir(parents=True, exist_ok=True)
 

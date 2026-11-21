@@ -13,6 +13,10 @@ works" is true on a machine that has never seen this project. Three jobs:
   3. Fetch the Playwright browsers. Skiddable on purpose: set ULTRON_SKIP_BROWSERS=1
      to start the app now and download the browser engines later.
 
+Before any of that, on every launch, it asks `core/boot_guard.py` about the last change Ultron made
+to its own code: one that was started and never stayed up is put back, so a bad self-change costs
+one failed start and not a program that cannot open. See `check_the_last_self_change`.
+
 The outcome is cached in .venv/.ultron-ready, keyed by a hash of requirements.txt,
 the Python version and this file's own version, so every later launch skips
 straight to the app. Nothing is installed outside .venv.
@@ -26,6 +30,7 @@ requirements.txt is added once, not twice.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import os
 import re
 import subprocess
@@ -300,6 +305,25 @@ def ready_marker(requirements: Path) -> str:
 # ── entry point ──────────────────────────────────────────────────────────────
 
 
+def check_the_last_self_change() -> None:
+    """Put back a self-change that stopped the program from staying up. Never stops a launch.
+
+    `core/boot_guard.py` is loaded by its path, and it imports nothing of the program: the case it
+    exists for is a program that cannot start, so a guard that needed the program would fail with it.
+    """
+    path = ROOT / "core" / "boot_guard.py"
+    if not path.is_file():
+        return
+    try:
+        spec = importlib.util.spec_from_file_location("ultron_boot_guard", path)
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        guard.check_at_launch(ROOT, say=lambda text: print(text, flush=True))
+    except Exception as error:                      # noqa: BLE001 - see the docstring
+        print(f"The check of Ultron's last self-change could not run ({error}). Starting anyway.",
+              flush=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     configure_console()
     argv = sys.argv[1:] if argv is None else argv
@@ -314,6 +338,8 @@ def main(argv: list[str] | None = None) -> int:
               f"{sys.version_info[0]}.{sys.version_info[1]}.")
         print("Delete the .venv folder, install 64-bit Python 3.12, run run.bat again.")
         return 1
+
+    check_the_last_self_change()           # before the fast path below: it is the common launch
 
     requirements = ROOT / "requirements.txt"
     marker = Path(sys.prefix) / MARKER_NAME

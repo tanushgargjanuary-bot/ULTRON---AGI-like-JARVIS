@@ -1,12 +1,28 @@
+"""The long-term memory: what the user has asked Ultron to remember.
+
+`memory/long_term.json` holds six categories of facts (identity, preferences, projects,
+relationships, wishes, notes) and the last session summary. This module is about not losing
+or corrupting it. Writers share one lock and replace the file in one step (`core/atomic_file.py`)
+instead of truncating it; a file that cannot be parsed is set aside as
+`long_term.json.broken-<epoch>` and the user is told; a file that cannot be read right now is
+never written over; and a save that did not happen raises `MemoryWriteError` or says so in
+words, so nothing reports "remembered" for a write that failed.
+Tests: `tests/test_memory_safety.py`, `tests/test_memory_changes.py`, `tests/test_edge_cases.py`.
+"""
+
 import json
 import logging
 import os
 import re
 import tempfile
+import time
 from datetime import datetime
 from threading import Lock, RLock
 from pathlib import Path
 import sys
+
+from core import failures
+from core.atomic_file import replace_with_retry
 
 
 def get_base_dir() -> Path:
@@ -72,22 +88,85 @@ def _empty_memory() -> dict:
         "notes":         {},
     }
 
+class MemoryWriteError(OSError):
+    """The memory store could not be written. Nothing was saved, and the file on disk is
+    exactly what it was: callers must not tell the user "remembered"."""
+
+
+class _Unverified(dict):
+    """An empty memory returned because the file EXISTS and could not be read just now.
+
+    It is not what the user has stored, so it must never be saved over it: the old code
+    turned any failed read (a file another program had open, a permissions blip) into
+    "the memory is empty", merged one new fact into that, and wrote it back, replacing
+    everything the user had ever asked to be remembered.
+    """
+
+
+def _quarantine_damaged(error) -> bool:
+    """Move a store that is not valid JSON aside, so the next save cannot destroy it.
+
+    Returns True when the damaged file is out of the way (or there was nothing in it to
+    keep). Damage is what a crash in the middle of a write leaves, and what a text editor
+    that adds a byte-order mark used to look like to `json.loads`; both used to end the
+    same way: an empty memory, then the next save replaced the file with it.
+    """
+    try:
+        size = MEMORY_PATH.stat().st_size
+    except OSError as stat_error:
+        failures.note("memory.quarantine", stat_error, detail=str(MEMORY_PATH))
+        size = None
+    if size == 0:
+        return True                          # an empty file holds nothing to keep
+    stamp = int(time.time())
+    target = MEMORY_PATH.with_name(f"{MEMORY_PATH.name}.broken-{stamp}")
+    suffix = 0
+    while target.exists():                   # two in one second must not overwrite each other
+        suffix += 1
+        target = MEMORY_PATH.with_name(f"{MEMORY_PATH.name}.broken-{stamp}-{suffix}")
+    try:
+        os.replace(MEMORY_PATH, target)
+    except OSError as move_error:
+        failures.note("memory.quarantine", move_error, detail=str(MEMORY_PATH))
+        return False
+    failures.note("memory.load", error,
+                  detail=f"{MEMORY_PATH.name} could not be read; kept as {target.name}")
+    if _trim_notifier:
+        try:
+            _trim_notifier(f"SYS: My saved memory could not be read ({error}). The file is "
+                           f"kept as {target.name} in the same folder, and I am starting "
+                           "with an empty memory.")
+        except Exception as notify_error:
+            failures.note("memory.notify", notify_error)
+    return True
+
+
 def load_memory() -> dict:
     if not MEMORY_PATH.exists():
         return _empty_memory()
     with _lock:
         try:
-            data = json.loads(MEMORY_PATH.read_text(encoding="utf-8"))
-            if isinstance(data, dict):
-                base = _empty_memory()
-                for key in base:
-                    if key not in data:
-                        data[key] = {}
-                return data
+            # utf-8-sig: a store saved by Notepad starts with a byte-order mark, which
+            # plain utf-8 hands to json.loads as an illegal first character.
+            raw = MEMORY_PATH.read_text(encoding="utf-8-sig")
+        except OSError as error:
+            failures.note("memory.load", error, detail=f"{MEMORY_PATH}: not readable now")
+            return _Unverified(_empty_memory())
+        except ValueError as error:           # not text at all
+            return _empty_memory() if _quarantine_damaged(error) else _Unverified(_empty_memory())
+        if not raw.strip():
             return _empty_memory()
-        except Exception as e:
-            print(f"[Memory] ⚠️ Load error: {e}")
-            return _empty_memory()
+        try:
+            data = json.loads(raw)
+        except ValueError as error:
+            return _empty_memory() if _quarantine_damaged(error) else _Unverified(_empty_memory())
+        if not isinstance(data, dict):
+            error = TypeError(f"the top level is a {type(data).__name__}, not an object")
+            return _empty_memory() if _quarantine_damaged(error) else _Unverified(_empty_memory())
+        for key in _empty_memory():
+            if key not in data:
+                data[key] = {}
+        return data
 
 def _all_entries(memory: dict) -> list[tuple]:
     entries = []
@@ -135,16 +214,67 @@ def _trim_to_limit(memory: dict) -> dict:
             pass
     return memory
 
+def _write_store(memory: dict) -> None:
+    """Replace the store in one step, or leave it exactly as it was and raise.
+
+    `Path.write_text` truncates the file and then writes it: a crash, a full disk or a
+    kill in between leaves a half file, and a half file used to become an empty memory.
+    The text goes to a temporary file in the same folder, is flushed to disk, and is moved
+    over the store. Raises MemoryWriteError; never returns having written nothing.
+    """
+    temp_path = None
+    try:
+        text = json.dumps(memory, indent=2, ensure_ascii=False)
+        MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        fd, temp_name = tempfile.mkstemp(
+            prefix=f".{MEMORY_PATH.name}.", suffix=".tmp", dir=MEMORY_PATH.parent)
+        temp_path = Path(temp_name)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        replace_with_retry(temp_path, MEMORY_PATH)
+        temp_path = None
+    except (OSError, TypeError, ValueError) as error:
+        failures.note("memory.save", error, detail=str(MEMORY_PATH))
+        raise MemoryWriteError(f"the memory file could not be written: {error}") from error
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                failures.note("memory.save.cleanup", cleanup_error, detail=str(temp_path))
+
+
+def _refuse_unverified(memory) -> None:
+    if isinstance(memory, _Unverified):
+        error = MemoryWriteError(
+            "the memory file exists but could not be read, so saving now would replace "
+            "what is in it with an almost empty one; nothing was written")
+        failures.note("memory.save", error, detail=str(MEMORY_PATH))
+        raise error
+
+
 def save_memory(memory: dict) -> None:
+    """Store `memory`. Raises MemoryWriteError when it could not be written."""
     if not isinstance(memory, dict):
         return
+    _refuse_unverified(memory)
     memory = _trim_to_limit(memory)
-    MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
     with _lock:
-        MEMORY_PATH.write_text(
-            json.dumps(memory, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        _write_store(memory)
+
+
+def set_top_level(key: str, value) -> None:
+    """Replace one top-level entry of the store (e.g. "monitors"), under the writer lock.
+
+    `actions/background_monitor.py` did its own load, assignment and `write_text`, taking
+    only `_lock`, so it could interleave with `update_memory` and discard its write.
+    """
+    with _write_lock:
+        memory = load_memory()
+        memory[key] = value
+        save_memory(memory)
 
 
 def _truncate_value(val: str) -> str:
@@ -206,7 +336,7 @@ def update_memory(memory_update: dict) -> dict:
         memory = load_memory()
         changes: list = []
         if _recursive_update(memory, memory_update, changes):
-            save_memory(memory)
+            save_memory(memory)           # raises MemoryWriteError if it did not happen
             # The fact is already written. History failure cannot lose it.
             _record_changes(changes)
             print(f"[Memory] 💾 Saved: {list(memory_update.keys())}")
@@ -341,7 +471,7 @@ def format_memory_for_prompt(memory: dict | None) -> str:
             rest.append((updated, cat, key, val))
     rest.sort(key=lambda t: t[0], reverse=True)
 
-    used    = sum(len(l) + 1 for l in core_lines)
+    used    = sum(len(line) + 1 for line in core_lines)
     shown: dict[str, list[str]] = {}
     overflow: dict[str, list[str]] = {}
 
@@ -528,7 +658,10 @@ def remember(key: str, value: str, category: str = "notes") -> str:
     valid = {"identity", "preferences", "projects", "relationships", "wishes", "notes"}
     if category not in valid:
         category = "notes"
-    update_memory({category: {key: {"value": value}}})
+    try:
+        update_memory({category: {key: {"value": value}}})
+    except MemoryWriteError as error:
+        return f"Nothing was saved: {error}"
     return f"Remembered: {category}/{key} = {value}"
 
 
@@ -539,7 +672,10 @@ def forget(key: str, category: str = "notes") -> str:
         if key in cat:
             del cat[key]
             memory[category] = cat
-            save_memory(memory)
+            try:
+                save_memory(memory)
+            except MemoryWriteError as error:
+                return f"Nothing was changed: {error}"
             return f"Forgotten: {category}/{key}"
         return f"Not found: {category}/{key}"
 
@@ -570,12 +706,13 @@ def save_session_summary(summary: str, language: str = "") -> None:
             entry["language"] = language
         sessions.append(entry)
         memory["sessions"] = sessions[-_SESSION_MAX:]
-        with _lock:
-            MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-            MEMORY_PATH.write_text(
-                json.dumps(memory, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+        try:
+            with _lock:
+                _refuse_unverified(memory)
+                _write_store(memory)
+        except MemoryWriteError as error:
+            print(f"[Memory] Session summary not saved: {error}")
+            return
     print(f"[Memory] 📝 Session saved ({entry['date']}): {summary[:60]}…")
 
 
@@ -589,16 +726,13 @@ def pop_last_session() -> dict | None:
             if not MEMORY_PATH.exists():
                 return None
             try:
-                memory   = json.loads(MEMORY_PATH.read_text(encoding="utf-8"))
+                memory   = json.loads(MEMORY_PATH.read_text(encoding="utf-8-sig"))
                 sessions = memory.get("sessions", [])
                 if not isinstance(sessions, list) or not sessions:
                     return None
                 entry = sessions.pop()          # remove the last entry
                 memory["sessions"] = sessions
-                MEMORY_PATH.write_text(
-                    json.dumps(memory, indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
+                _write_store(memory)
                 return entry
             except Exception as e:
                 print(f"[Memory] ⚠️ pop_last_session error: {e}")

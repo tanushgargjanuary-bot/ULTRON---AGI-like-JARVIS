@@ -144,7 +144,7 @@ useful and safe. In the order that matters:
 ## What is honest about this list
 
 - Tier A is one day's work per tool with tests, and I can do it without the
-  tool installed by testing against a fake binary, the way `tests/test_bridges.py`
+  tool installed by testing against a fake binary, the way `tests/test_suite_providers.py` (the bridges section)
   does.
 - Tier B and C need Node, or a big download, or an administrator prompt. They
   cannot be proven on this machine. They can be written so that absence is a
