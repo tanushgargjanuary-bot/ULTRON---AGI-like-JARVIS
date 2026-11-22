@@ -135,9 +135,9 @@ means saying it was modified (CC BY-NC 4.0 section 3(a)(1)(A)(ii)). A changed li
 
 ## Not verified yet
 
-- The tool's tests have run on Linux, and once on Windows (the pull request's first hosted run): every test passed there but
-  two, which were faults in the tests themselves and have been fixed; the fixed versions have not run on Windows yet. macOS has
-  not been run at all.
+- The tool's tests have run on Linux and on Windows (the pull request's hosted runs: the first found three faults in the tests
+  themselves, which were fixed, and the next passed on both). The seven tests of the workflow's steps skip on Windows on
+  purpose, because they need a POSIX `bash` and `jq`. macOS has not been run at all.
 - The workflow has not run on GitHub. Its issue steps were run only with a stand-in `gh` that records what it is asked, and
   the schedule has not fired. One GitHub behaviour was checked on the real repository on 2026-11-22: `gh issue list --label X`
   for a label that does not exist yet prints nothing and exits 0, which is what the first scheduled run meets.

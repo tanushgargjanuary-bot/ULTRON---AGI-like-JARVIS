@@ -31,14 +31,17 @@ FIRST HOSTED RUN (run 45033789440): red on Linux and Windows in the suite step. 
     built from source, the same two failures by name). Tests no longer need a depth.
   - a fixture file named actions/nul.py: a device name on Windows. Renamed; the fixture writer now refuses such names everywhere.
   - the verify.py control crashed the child with ctypes.string_at(0), which on Windows raises OSError instead. Now
-    faulthandler._read_null(). That it crashes for real on Windows is a reading of CPython, not something seen.
-  - verify.py stops at the first failing step, so the later steps have not run on this pull request yet.
+    faulthandler._read_null(). That it crashes for real on Windows was a reading of CPython; the next run showed it held.
+  - verify.py stops at the first failing step, so the later steps had not run on this pull request until the next run.
+
+RUN ON THE FIXED COMMIT c3e6b09 (run 45036131001): green on Linux (Python 3.12.16) and Windows (3.12.10), every step. The Windows
+proof gate said 28 PROVEN, 9 PARTIAL, as on the merge of PR #22.
 
 MEASURED: Linux, Python 3.11.2 (CI uses 3.12), CI package set: 2,730 tests on this branch, 2,597 on pristine main, the same three
 inherited failures, none new. The two changed test modules also pass (145 tests) on a CPython 3.12.16 built for this.
-NOT CHECKED: the fixes above on Windows; the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go.
+NOT CHECKED: the seven workflow-step tests on Windows (they skip there on purpose); the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go.
 No Mark LVII code was run.
-LEFT FOR THE OWNER: "go" for slice 1; the merge once Linux and Windows are green; what to do with Dependabot's #23 to #32.
+LEFT FOR THE OWNER: "go" for slice 1; the merge (green on c3e6b09); what to do with Dependabot's #23 to #32.
 
 === 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
 
