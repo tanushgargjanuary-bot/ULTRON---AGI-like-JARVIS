@@ -1082,3 +1082,24 @@ is the record. A Windows test that passed only because D: was a permitted root w
 file). The merge of pull request #22, once the three required checks are green. The plan for following upstream Mark releases
 (the four answers are in the conversation: nothing that speaks news or runs by itself at launch; the new window layer last;
 a weekly read-only report; finish this pull request first).
+
+## 2026-11-22 — following upstream Mark: a read-only check, a weekly report, and what stays out
+
+**Asked for.** The original Mark was updated (it is now Mark LVII). The owner wants its newest features in Ultron, with excluded features such as news read out when the assistant opens kept out, and wants Ultron to follow every future Mark "with a system which handles the feature collision and bugs". A plan came first; his answers were the strictest exclusions, the new window layer (`gui/`) last, "report only", and drive-wide file access staying opt-in. Then he asked for `addyosmani/agent-skills` and `anthropics/skills` to be used as the working method (state assumptions, test first, small commits, a review before each pull request) and `alibaba/open-code-review` for that review.
+
+**What was done.** Six commits on `arena/8c75f708-ultron-agi-like-jarvis`, cut from `main` at `df115bb`:
+
+1. `b8bef93`, `scripts/verify.py` keeps the report and the last line when a step dies of a native crash. The hosted run of PR #22's merge had ended with one line, "exit -11". The cause is **not** found.
+2. `0404fb0`, `docs/MAP.md` for that tree. The fast gate had gone red on the previous commit because the map was stale.
+3. `836ec7d`, `scripts/upstream_sync.py` with its tests and guide, and the pin, ledger and exclusions in `docs/upstream/`.
+4. `b57f806`, the weekly workflow `.github/workflows/upstream-watch.yml`, its tests and the guide's weekly section.
+5. `e892999`, names, links and folders that come from upstream are not trusted (below).
+6. This record: changelog, decisions (section 8, open question 4 answered, five table rows), the maintenance procedure, the index, the Mark LVII review in `docs/UPSTREAM_RESEARCH.md`, this entry, `log.txt` and the handoff.
+
+**Review of the finished work.** A first read found five faults, all fixed test first (the old script and workflow showed 41 red items): relative imports were not followed; the weekly job never closed its issue; one unparsable Python file stopped the report; a git failure was read as "no such file"; and text from upstream could break the report's formatting. A second read, against the rules `ocr delegate rule` prints for these file types (that mode calls no model: it prints the rules, and the reading was done by hand), found three more: a path check that knew only POSIX rules (Windows reads `a\..\b`, `C:x` and `x.txt:stream` differently), a symlink followed out of the clone and a folder named like a module that crashed the run, and data-file lists that were not lists. Fixed test first; a mutation check of those guards caught 15 of 15 after a first run that caught 11 of 14 (a redundant condition removed, an unreachable branch given a test).
+
+**Evidence.** Linux, a copy of the tree with the CI package set: `unittest discover` runs 2,728 tests on this branch's code and 2,597 on pristine `main`, with the same three failures in both (inherited, not touched here), 59 skipped. `tests/test_upstream_sync.py` has 128 tests, each against a real git repository built in a temporary folder. The check on a clone of Mark LVII's head (`752ff61`): exit 20, 54 files differ, 17 held, two stop signs (`certifi`, `AGENTS.md`); the same answer before and after the script was corrected. The hosted fast gate: red on `b8bef93` (stale map), green on `b57f806` (run 45031276946).
+
+**Not checked.** Windows (the pull request's Windows job is the first run of these tests there; the seven workflow-step tests skip there on purpose). The schedule, which only runs from `main`. The issue steps on GitHub, which were run with a stand-in `gh`. macOS, Rust, Go. None of Mark LVII's code was run, because none was taken.
+
+**Left for the owner.** "Go" for the first catch-up slice (small proven fixes, test first, switched off by default). Merging this pull request once Linux and Windows are green. What to do with Dependabot's ten pull requests (#23 to #32). Pull request #21. Questions 5 and 6 in `DECISIONS.md`. The three referee files edited in PR #22 (`core/self_change.py`, `core/policy.py`, `core/ast_guardian.py`) are still waiting to be read by the owner.

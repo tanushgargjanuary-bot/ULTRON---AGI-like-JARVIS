@@ -1,3 +1,35 @@
+=== 2026-11-22 · build 1.2.38 · following upstream Mark: a read-only check, a weekly report, three exclusions written down ===
+
+Asked for: the original Mark was updated (now Mark LVII); the owner wants its newest features in Ultron, "excluded features like
+News updates when Jarvis is opened" kept out, and a system that follows every future Mark and handles collisions and bugs. His
+answers: strictest exclusions, the window layer last, report only, drive access stays opt-in. CHANGELOG.md ("Following upstream
+Mark") has the account, docs/engineering/SESSION_LOG.md the same in short, docs/UPSTREAM_RESEARCH.md section 10 the review.
+
+WHAT THE CHECK SAID (read only, a clone of Mark LVII's head 752ff61 against the copy base 0101e54)
+  - 54 files differ: 12 collide with Ultron's own changes, 8 combine as text, 31 are new (18,501 lines), 3 differ in line endings.
+  - 17 have no decision yet and are held. Two stop signs: requirements.txt adds certifi; AGENTS.md changed.
+  - Five files mention an exclusion (E1 news on open, E2 the 30-minute news watch, E3 routines that run tools at launch).
+  - core/cloud.py, core/screenview.py and core/screenact.py are imported by nothing in upstream's own program.
+
+WHAT CHANGED (nothing from Mark LVII is in Ultron; this only looks)
+  - scripts/upstream_sync.py (new): compares upstream-at-the-copy, Ultron-now and upstream-now, sorts each file into one of
+    twelve kinds, exits 0/10/20/2. It never edits, pushes or merges (a test hashes Ultron's tree before and after).
+  - docs/upstream/: PIN.json, LEDGER.json (a decision and a reason per kind of file), EXCLUSIONS.json (E1 to E3 and how each
+    is guarded). docs/UPSTREAM_SYNC.md is the guide.
+  - .github/workflows/upstream-watch.yml (new): Mondays 06:17 UTC; read the repository, write issues, nothing else; one open
+    issue labelled upstream-watch, closed when the pin has caught up.
+  - scripts/verify.py: a native crash in a step keeps the report and the last line. Cause of the "exit -11" NOT found.
+
+FOUND ON THE WAY, FIXED TEST FIRST
+  - relative imports not followed; the issue never closed; one unparsable file stopped the report; a git failure read as "no
+    such file"; text from upstream could break the report; names Windows reads as another folder or drive; a symlink followed;
+    a folder named like a module crashed the run; data-file lists that were not lists. Mutation check of the guards: 15 of 15.
+  - The fast gate went red on the first commit (docs/MAP.md stale). Regenerated; green on b57f806.
+
+MEASURED: Linux, CI package set: 2,728 tests on this branch, 2,597 on pristine main, the same three inherited failures, none new.
+NOT CHECKED: Windows; the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go. No Mark LVII code was run.
+LEFT FOR THE OWNER: "go" for slice 1; the merge once Linux and Windows are green; what to do with Dependabot's #23 to #32.
+
 === 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
 
 Asked for: "Yes, push and watch Windows" (the owner's answer to step 0 of the plan for following upstream Mark releases).

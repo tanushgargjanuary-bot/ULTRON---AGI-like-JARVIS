@@ -28,7 +28,7 @@
     {
       "paths": ["ui.py", "gui/*"],
       "disposition": "later",
-      "reason": "The owner chose to adopt upstream's window layer last, after the back-end features. Ultron's own window work lives in ui.py: the Tools panel, multi-provider setup, the confirm banner the self-change gate uses, and four checks read ui.py as text.",
+      "reason": "The owner chose to adopt upstream's window layer last, after the back-end features. Ultron's own window work lives in ui.py: the Tools panel, multi-provider setup, the confirm banner the self-change gate uses, and the proof gate and three test files read ui.py as text.",
       "decided": "owner, 2026-11-22"
     },
     {

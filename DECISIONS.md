@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-22** (open question 4: drive-wide file access is now opt-in; before that, a repository review pass: the system-prompt gate, settings and memory safety, the CI gates, and what the native core really runs).
+Last updated: **2026-11-22** (section 8: how Ultron follows new Mark releases, which is a report-only weekly check, three exclusions and the window layer last; open question 4 answered, drive-wide file access stays opt-in; before that, a repository review pass: the system-prompt gate, settings and memory safety, the CI gates, and what the native core really runs).
 
 ---
 
@@ -161,8 +161,13 @@ Enforced/documented by: `AGENTS.md`, `docs/AGENT_MAINTENANCE.md`, `docs/AGENT_PL
 - **Preserve licence and attribution.** The checked-in MARK-LVI licence specifies CC BY-NC 4.0. Commercial use is not permitted without separate written permission. Check older repositories and third-party models/assets separately.
 - **No blind community-fork imports.** A fork or PR is a candidate, not a trusted release. Check code, author, licence, tests, secrets, model provenance, and security boundaries.
 - **Record the decision.** Mark every reviewed proposal as adopted, already present, reimplemented, deferred, or rejected in `docs/UPSTREAM_RESEARCH.md`.
+- **Following a new Mark is report only (your choice, 2026-11-22).** A weekly read-only job (`.github/workflows/upstream-watch.yml`, which runs `scripts/upstream_sync.py`) keeps one issue open that says what upstream changed and where it collides with Ultron. It applies nothing. Code is ported only when you say go, one slice at a time: a test written first, switched off by default, and its own commit so it can be reverted.
+- **Three things stay out after every sync (your choice, the strictest option, 2026-11-22).** E1: news read out when Ultron opens. E2: a news check on a 30-minute timer. E3: routines that run tools by themselves at launch. They are listed in `docs/upstream/EXCLUSIONS.json` with how each is guarded, and the check names any upstream file that mentions one. A new exclusion needs your word.
+- **Mark's new window layer (`gui/`) is adopted last (your choice, 2026-11-22),** after the back-end features, because Ultron's own window work lives in `ui.py` (the Tools panel, multi-provider setup, the confirm banner the self-change gate uses) and the proof gate and three test files read `ui.py` as text.
+- **A changed licence, a new dependency, or a changed file that steers agents stops everything and asks you first.** The check exits 20 and puts it at the top of the report.
+- **A file from upstream is taken only on a recorded decision.** `docs/upstream/LEDGER.json` holds each decision with its reason. A file with none is "held": reported, never copied. For the steering files, the referee files and the readme the decision is made in advance, as `ours`: upstream's version is read, never applied.
 
-Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, and the source-level rules in `AGENTS.md`.
+Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, `docs/UPSTREAM_SYNC.md`, `scripts/upstream_sync.py` (with `tests/test_upstream_sync.py`), and the source-level rules in `AGENTS.md`.
 
 ## Open questions (deliberately unanswered)
 
@@ -247,20 +252,24 @@ Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, and the s
 | **Only changed code asks for a restart** | Skills, packs, config and data are read from disk when needed, so a documentation or data change is live at once. Action/plugin leaves reload at a safe reconnect boundary. Other `.py` changes still require a process restart until the approved worker-handoff design is implemented. | `custom_jarvis/selfupdate.py:apply`, `restart-required.json` |
 | **The restart marker lives beside the state** | A marker written into the repository is untracked, which makes the tree dirty, which makes the next update refuse — and it could be shipped by accident. It lives in the state folder, and `.gitignore` names it as a second lock. | `custom_jarvis/selfupdate.py:_default_marker` |
 | **A plan is written down between steps** | The planner keeps the running plan in memory, so a restart or a crash loses the work and the record of it. Each step transition writes `state/active_plan.json`: the goal, the steps, the index. It holds no output and no capture, and a step whose argument names a secret stops the record instead of writing a hole. Nothing resumes on its own — one line at start offers it, and `resume_checkpoint` reads the same file. Systems that carry a server for this (Temporal, Restate, DBOS) are the wrong size for one desktop. | `custom_jarvis/plan_state.py:save` |
+| **Drive-wide file access is opt-in** | The file tool reaches every drive on Windows only when the settings file holds a saved boolean `true` for `laptop_wide_access`. A missing entry, `"true"` in quotes or any other type leaves the drives off. It had been on by default, and the Windows proof gate's `acts` claim (a write outside your folders is refused) failed on it. You kept the opt-in on 2026-11-22. | `actions/file_controller.py`, `tests/test_file_controller_hardening.py:TheRoots` |
+| **Upstream is followed by reading, never by merging** | Ultron is a copy of Mark, not a GitHub fork, so git has no shared history to merge. `scripts/upstream_sync.py` compares upstream when Ultron was copied, Ultron now and upstream now, and only reports. A test hashes Ultron's tree before and after a run, and another reads the script for any `git` or `gh` command that writes. Porting is a separate slice you ask for. | `scripts/upstream_sync.py`, `tests/test_upstream_sync.py`, `.github/workflows/upstream-watch.yml` |
+| **What you excluded from Mark stays out, and a test says so** | E1 (news when Ultron opens) is held by a test that reads every place the briefing is started; E2 (a news check every 30 minutes) and E3 (routines that run tools by themselves at launch) by a tripwire over Ultron's own code, including `gui/` before it exists. | `docs/upstream/EXCLUSIONS.json`, `tests/test_upstream_sync.py:ExcludedFeatures`, `tests/test_suite_assistant.py:BriefingOptInTests` |
+| **A check that cannot run has not passed** | The upstream check exits 2 with a reason, and writes no report, when a data file is wrong, upstream cannot be fetched or a pinned commit is gone. It never reads a failure as "nothing changed" or "no such file". The weekly job fails red on it and leaves the open issue as it was. | `scripts/upstream_sync.py`, `tests/test_upstream_sync.py:TheGatesAndTheErrors` |
+| **Text from upstream is untrusted, down to its file names** | A name Windows reads as another folder, drive or hidden stream is left out and listed in the report; a link is never followed; upstream's words appear only inside code spans and nothing from it is pasted into a shell command. | `scripts/upstream_sync.py:safe_path`, `read_source`, `code`, `tests/test_upstream_sync.py:UpstreamEntriesThatAreNotOrdinaryFiles` |
 1. Which provider you actually use day to day — the runtime works with any, and the honest
    default is "whichever key you paste".
 2. Whether the Agentic OS gets a live bridge to Ultron later. Bundle first was the decision;
    the bridge was not rejected, only deferred.
 3. Which of `docs/CAPABILITIES.md` gets built next. That page is a menu, not a plan.
-4. Whether the file tools may reach every drive by default. As of 2026-11-22 they may not:
-   `laptop_wide_access` (Windows only) is off unless the settings file holds a saved `true`
-   (`actions/file_controller.py`, `tests/test_file_controller_hardening.py`, `TheRoots`). It had been on by
-   default since `cf02c0e` (2026-11-15), and the first hosted Windows run of the proof gate then found a
-   write outside your folders that was not refused, which the gate's `acts` claim says must be refused. This
-   was changed without a recorded decision of yours, so it is yours to overrule: keep it (one saved
-   setting turns the drives back on), or restore the default and change the claim in
-   `scripts/proof_gate.py` (a referee file). Wide reads with narrow writes is a third way, not built. The
-   credential-store and critical-folder deny-list holds either way.
+4. **Answered 2026-11-22: it stays opt-in.** (The question was whether the file tools may reach every drive by
+   default.) You kept the change: `laptop_wide_access` (Windows only) is off unless the settings file holds a
+   saved `true` (`actions/file_controller.py`, `tests/test_file_controller_hardening.py`, `TheRoots`). It had
+   been on by default since `cf02c0e` (2026-11-15), and the first hosted Windows run of the proof gate then
+   found a write outside your folders that was not refused, which the gate's `acts` claim says must be
+   refused. One saved setting turns the drives back on. Wide reads with narrow writes is a third way, not
+   built. The credential-store and critical-folder deny-list holds either way. The decision is in the table
+   above.
 5. Whether to close the two gaps left in "while a confirmation is waiting, nothing but a read
    runs" (`core/custom_gate.py`). (`self_modify` has its real button now, as the prompt editor
    does; this is what is left of the same question.) A call the model sends in the same message as
