@@ -13,6 +13,9 @@ Faults reproduced before they were fixed:
    and its undo moved the NEW file back, so the overwritten one was lost for good.
 3. Handlers in `_get_laptop_roots` discarded every error, and a malformed `allowed_roots`
    (a string, `null`) was iterated character by character.
+4. `laptop_wide_access` (every drive, on Windows) was on unless the settings said otherwise. The first
+   hosted Windows run of the proof gate then found that a write outside the owner's folders was not
+   refused (`\\tmp\\proof-gate-nope.txt`, at the top of the runner's D: drive). Only a saved `true` turns it on.
 """
 
 from __future__ import annotations
@@ -255,6 +258,46 @@ class TheRoots(unittest.TestCase):
                                                  "laptop_wide_access": False}):
                 roots = fc._get_laptop_roots()
             self.assertIn(Path(folder).resolve(), roots)
+
+    # `laptop_wide_access` reaches every drive: on Windows only, and only if the owner saved `true`.
+    # It used to be on unless the settings said otherwise, and the first hosted Windows run of the
+    # proof gate found a write outside the owner's folders that was not refused. `Path("C:/")` is
+    # only a name on Linux, so these tests make two drives, C: and D:, exist by name on every system.
+    def roots_with(self, config, system="Windows"):
+        from memory import config_manager
+        real_exists = Path.exists
+
+        def exists(path, *args, **kwargs):
+            name = str(path).rstrip("/\\")
+            if len(name) == 2 and name[1] == ":":
+                return name in {"C:", "D:"}
+            return real_exists(path, *args, **kwargs)
+
+        with mock.patch.object(fc, "_OS", system), \
+                mock.patch.object(config_manager, "load_api_keys", return_value=config), \
+                mock.patch.object(Path, "exists", exists):
+            return fc._get_laptop_roots()
+
+    def test_with_no_saved_choice_no_drive_is_added(self):
+        self.assertEqual(self.roots_with({}), list(fc._SAFE_ROOTS))
+
+    def test_a_choice_that_is_not_the_boolean_true_adds_no_drive(self):
+        for value in (False, "true", "yes", 1, [], None):
+            with self.subTest(value=value):
+                self.assertEqual(self.roots_with({"laptop_wide_access": value}),
+                                 list(fc._SAFE_ROOTS))
+
+    def test_a_saved_true_adds_every_drive_that_exists_and_no_other(self):
+        roots = self.roots_with({"laptop_wide_access": True})
+        self.assertIn(Path("C:/"), roots)
+        self.assertIn(Path("D:/"), roots)
+        self.assertNotIn(Path("E:/"), roots)
+
+    def test_the_setting_does_nothing_off_windows(self):
+        for system in ("Linux", "Darwin"):
+            with self.subTest(system=system):
+                self.assertEqual(self.roots_with({"laptop_wide_access": True}, system),
+                                 list(fc._SAFE_ROOTS))
 
 
 if __name__ == "__main__":

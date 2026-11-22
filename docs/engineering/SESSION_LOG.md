@@ -1048,3 +1048,37 @@ second Windows failure after this one would not be a surprise.
 
 **Left for the owner.** The same list as the entry above, and one thing more: whether the branch may be pushed again to
 let GitHub run Windows (no push has been made since the pull request was opened).
+
+## 2026-11-22 — follow-up: the second Windows run, and the proof gate's first word on Windows
+
+**Asked for.** "Yes, push and watch Windows": the owner's answer to the first step of the plan for following upstream Mark
+releases (finish pull request #22 first). The nine test fixes were committed (`2377b3a`) and pushed, and the run was read.
+
+**What the run said.** Run 45003997382, the Windows job. The suite step passed for the first time on Windows: 2,754 tests,
+71 skipped, 353 s; self-tests 108 of 108; 1,000 scenarios; 15 of 15 mutations; the module map. The proof gate, which had
+never run on Windows in this pull request, then reported 28 PROVEN, 8 PARTIAL and 1 FAILED. The failed claim is `acts`: a
+write to a path outside the owner's folders was not refused. The log was read through the job's log (the artifact cannot be
+downloaded from this sandbox). Linux, the fast gate, reviewdog, web-checks and CodeFactor passed; Kilo's review did not run
+("insufficient credits"; not a required check).
+
+**Cause.** The file tool adds every existing drive to its folders on Windows unless `laptop_wide_access` is `false`. That
+was added in `cf02c0e` (2026-11-15) with the default on. The Windows gate last passed on `e1237d2` (run 42876494213, 2026-11-10) and has not
+run on `main` since, because the suite step failed first. The question was already in `DECISIONS.md` (open question 4)
+and was unanswered. Read from the code, not reproduced on Windows: the runner's `/tmp/x` is `D:\tmp\x`, and `D:/` is a root.
+
+**What was done.** `actions/file_controller.py`: the drives are added only when the settings hold a saved boolean `true`.
+Four tests in `tests/test_file_controller_hardening.py` (`TheRoots`), red on the old file. `DECISIONS.md` question 4 now says
+what happened and that it is the owner's to overrule. No referee file was edited, no test loosened, the proof gate untouched
+(it was right: its claim was false as shipped).
+
+**Evidence** (Linux, a copy of the tree, bare Python 3.11.2 with none of the repository's packages installed): the four new tests fail against the old
+`actions/file_controller.py` and pass now; the whole suite ran 2,072 tests at the previous commit and 2,076 now, with the
+same 30 environment failures (missing packages, no repository in the copy) in both.
+
+**Not checked.** Windows after this change. The full chain on Linux was not re-run here; the hosted run on the pushed commit
+is the record. A Windows test that passed only because D: was a permitted root would show up in the next run.
+
+**Left for the owner.** Keep the opt-in default, or restore the old default and change the proof gate's claim (a referee
+file). The merge of pull request #22, once the three required checks are green. The plan for following upstream Mark releases
+(the four answers are in the conversation: nothing that speaks news or runs by itself at launch; the new window layer last;
+a weekly read-only report; finish this pull request first).

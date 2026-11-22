@@ -227,7 +227,8 @@ def _configured_roots(cfg: dict) -> list[Path]:
 
 
 def _get_laptop_roots() -> list[Path]:
-    """Retrieve allowed roots including configured roots and user partitions."""
+    """The folders the file tool may use: home, the owner's `allowed_roots`, and (Windows, only if
+    the owner turned `laptop_wide_access` on) every drive that exists."""
     roots = list(_SAFE_ROOTS)
     try:
         from memory.config_manager import load_api_keys
@@ -238,8 +239,14 @@ def _get_laptop_roots() -> list[Path]:
     for path in _configured_roots(cfg):
         if path not in roots:
             roots.append(path)
-    # Enable multi-drive laptop access by default on Windows or when configured
-    if cfg.get("laptop_wide_access", True) and _OS == "Windows":
+    # Every drive is a choice, not a default. It was on unless the settings said otherwise, and on
+    # Windows that made the proof gate's claim ("a write outside your folders is refused") false:
+    # the first hosted Windows run of the gate wrote \tmp\proof-gate-nope.txt at the top of the
+    # runner's D: drive. Only a saved `true` turns it on, as with the morning brief; a missing entry,
+    # "true" in quotes or any other type leaves the roots as they are. The credential and system
+    # deny-list still applies to every drive, and a write outside the approved workspace still asks
+    # first (`core/policy.py`).
+    if cfg.get("laptop_wide_access") is True and _OS == "Windows":
         for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
             drive = Path(f"{letter}:/")
             if drive.exists() and drive not in roots:

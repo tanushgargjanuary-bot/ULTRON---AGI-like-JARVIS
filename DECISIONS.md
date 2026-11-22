@@ -9,7 +9,7 @@ that had been agreed and then not implemented.
 Read this before changing anything. If a change contradicts an entry here, the entry wins
 unless you say otherwise — and then this file gets edited on the same day.
 
-Last updated: **2026-11-20** (a repository review pass: the system-prompt gate, settings and memory safety, the CI gates, and what the native core really runs).
+Last updated: **2026-11-22** (open question 4: drive-wide file access is now opt-in; before that, a repository review pass: the system-prompt gate, settings and memory safety, the CI gates, and what the native core really runs).
 
 ---
 
@@ -252,9 +252,15 @@ Enforced by: `docs/AGENT_MAINTENANCE.md`, `docs/UPSTREAM_RESEARCH.md`, and the s
 2. Whether the Agentic OS gets a live bridge to Ultron later. Bundle first was the decision;
    the bridge was not rejected, only deferred.
 3. Which of `docs/CAPABILITIES.md` gets built next. That page is a menu, not a plan.
-4. Whether the file tools may reach every drive by default. `laptop_wide_access` is on unless
-   the settings file says otherwise (`actions/file_controller.py`), and no decision above
-   chose that. The credential-store deny-list holds either way.
+4. Whether the file tools may reach every drive by default. As of 2026-11-22 they may not:
+   `laptop_wide_access` (Windows only) is off unless the settings file holds a saved `true`
+   (`actions/file_controller.py`, `tests/test_file_controller_hardening.py`, `TheRoots`). It had been on by
+   default since `cf02c0e` (2026-11-15), and the first hosted Windows run of the proof gate then found a
+   write outside your folders that was not refused, which the gate's `acts` claim says must be refused. This
+   was changed without a recorded decision of yours, so it is yours to overrule: keep it (one saved
+   setting turns the drives back on), or restore the default and change the claim in
+   `scripts/proof_gate.py` (a referee file). Wide reads with narrow writes is a third way, not built. The
+   credential-store and critical-folder deny-list holds either way.
 5. Whether to close the two gaps left in "while a confirmation is waiting, nothing but a read
    runs" (`core/custom_gate.py`). (`self_modify` has its real button now, as the prompt editor
    does; this is what is left of the same question.) A call the model sends in the same message as

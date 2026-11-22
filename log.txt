@@ -1,3 +1,27 @@
+=== 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
+
+Asked for: "Yes, push and watch Windows" (the owner's answer to step 0 of the plan for following upstream Mark releases).
+CHANGELOG.md ("Second Windows run") has the account, docs/engineering/SESSION_LOG.md the same in short.
+
+WHAT THE RUN SAID (run 45003997382, the commit with the nine test fixes)
+  - The whole suite step passed on Windows for the first time: 2,754 tests, 0 failed, 71 skipped; self-tests 108 of
+    108; 1,000 scenarios; 15 of 15 mutations; the module map.
+  - The Windows proof gate, never run there before in this pull request: 28 PROVEN, 8 PARTIAL, 1 FAILED. The failure
+    is `acts`: a write outside the owner's folders was not refused. On the runner it wrote D:\tmp\proof-gate-nope.txt.
+
+CAUSE
+  - cf02c0e (2026-11-15) made the file tool reach every drive on Windows unless the settings said no
+    (`laptop_wide_access`, default on). The gate had last passed on e1237d2 (2026-11-10); main's runs since stopped at the suite and
+    skipped it. DECISIONS.md open question 4 asked whether that default was wanted. Nobody had answered.
+
+WHAT CHANGED
+  - actions/file_controller.py: only a saved `true` turns the drives on. Four new tests (tests/test_file_controller_hardening.py,
+    TheRoots), red on the old file. No referee file edited, no test loosened. Credential and system-folder refusals and the
+    policy's "outside the workspace asks first" are unchanged.
+
+NOT CHECKED: Windows after this change (only a push runs it); the full chain on Linux (bare Python 3.11 only: 2,072 -> 2,076
+tests, the same 30 environment failures before and after). The owner may overrule the default (DECISIONS.md, question 4).
+
 === 2026-11-21 · build 1.2.38 · the first Windows run of pull request #22: nine tests, all written on Linux ===
 
 Asked for: nothing new. The entry below listed Windows under "NOT CHECKED", and the owner's standing instruction is

@@ -121,7 +121,7 @@ edit the module docstring instead and run it again.
 | `self_healing.py` | 470 | Bounded, evidence-driven repair orchestration and explicit provider escalation. | test_autonomy_upgrades, test_repair_judgment, test_self_healing |
 | `selfupdate.py` | 242 | custom_jarvis/selfupdate.py — update from GitHub without losing the session. | test_shipping |
 | `service.py` | 662 | MARK-hosted service: deterministic skills and evidence-scoped repair. | test_autonomy_upgrades, test_decision_layers, test_hud_fixes, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping, test_suite_assistant |
-| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_persona_switch_settings, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_verify_script |
+| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_file_controller_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_persona_switch_settings, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_verify_script |
 | `ship.py` | 427 | custom_jarvis/ship.py — sending the work to GitHub without sending a secret. | test_installer, test_readme, test_runtime_files_ignored, test_shipping |
 | `ship_tools.py` | 142 | custom_jarvis/ship_tools.py — the four handles for shipping and updating. | test_shipping |
 | `shortlist.py` | 132 | BM25 ranking: pick the few stored rules that match what was just said. | test_decision_layers |
@@ -152,7 +152,7 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 87 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 54 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 31 modules, 15,705 lines
+## `actions/` — 31 modules, 15,712 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -165,7 +165,7 @@ edit the module docstring instead and run it again.
 | `curriculum.py` | 280 | core/curriculum.py — the syllabus Ultron holds, reachable by voice. | test_curriculum, test_mental |
 | `desktop.py` | 582 | **no docstring** | test_applescript_quoting, test_autonomy_upgrades, test_capability_guide, test_computer_capability, test_edge_cases, test_source_hygiene, test_wallpaper_url |
 | `dev_agent.py` | 1,683 | **no docstring** | test_policy, test_runtime_files_ignored |
-| `file_controller.py` | 998 | **no docstring** | test_edge_cases, test_file_controller_hardening, test_file_controller_security, test_find_files_sensitive, test_mental, test_policy, test_suite_safety, test_tool_contract |
+| `file_controller.py` | 1,005 | **no docstring** | test_edge_cases, test_file_controller_hardening, test_file_controller_security, test_find_files_sensitive, test_mental, test_policy, test_suite_safety, test_tool_contract |
 | `file_processor.py` | 1,024 | file_processor.py — JARVIS Universal File Processor | test_capability_guide, test_dependency_policy, test_file_processor_safety, test_file_processor_undo, test_lint_ratchet, test_source_hygiene |
 | `flight_finder.py` | 407 | **no docstring** | test_tool_usage_loop, test_triggers |
 | `game_updater.py` | 1,101 | **no docstring** | test_policy |
@@ -256,7 +256,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 122 modules, 32,237 lines
+## `tests/` — 122 modules, 32,280 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -300,7 +300,7 @@ edit the module docstring instead and run it again.
 | `test_expression.py` | 214 | Offline tests for facial expression (core/expression.py + core/avatar.py). | — |
 | `test_fast_gate_groups.py` | 78 | The fast gate runs the checks the docs say it runs. | — |
 | `test_fast_verify.py` | 200 | Edge tests for the fast branch verification runner. | — |
-| `test_file_controller_hardening.py` | 261 | `actions/file_controller.py`: the credential deny-list, and copy/move over existing files. | — |
+| `test_file_controller_hardening.py` | 304 | `actions/file_controller.py`: the credential deny-list, and copy/move over existing files. | — |
 | `test_file_controller_security.py` | 38 | Platform-specific path safety regressions for the file controller. | — |
 | `test_file_processor_safety.py` | 30 | Tests that file processing refuses unsafe paths. | — |
 | `test_file_processor_undo.py` | 69 | Tests that processed files can be restored with undo. | — |
