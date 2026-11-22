@@ -47,7 +47,7 @@ pyautogui<1
 pyperclip<2
 
 # ── Vision & media ────────────────────────────────────────────────────────────
-pillow>=10,<13
+pillow>=13.0.0,<14
 opencv-python>=4.8,<5
 mss>=9,<11
 
