@@ -28,7 +28,7 @@ edit the module docstring instead and run it again.
 | `code_checks.py` | 728 | What the coding agent knows about ANY project before it writes, and how it | — |
 | `confirm.py` | 162 | core/confirm.py — a confirmation the model cannot forge. | test_ast_guardian_bypasses, test_boot_guard, test_gate_holds_input, test_mark_integration, test_memory_safety, test_mental, test_policy, test_prompt_editor, test_prompt_gate, test_runtime_files_ignored, test_self_change, test_self_modify_gate, test_suite_safety, test_ui_action |
 | `conversation_context.py` | 39 | Bounded transcript carry-over for session changes that cannot resume server state. | test_conversation_context |
-| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_provider_schema, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_video_player, test_web_platforms |
+| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_provider_schema, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_verify_script, test_video_player, test_web_platforms |
 | `curriculum.py` | 246 | core/curriculum.py — the eight subjects Ultron holds, from basics to advanced. | test_curriculum, test_mental |
 | `custom_gate.py` | 119 | Human-only, fail-closed action gate for both MARK voice engines. | test_display_text, test_gate_holds_input, test_mark_integration, test_policy |
 | `digest.py` | 215 | core/digest.py — the daily digest: it tells you, and it does nothing else. | test_background_loops, test_crash, test_plugins_bundle, test_proof_gate, test_self_change, test_suite_assistant |
@@ -217,7 +217,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
 | `memory_manager.py` | 739 | The long-term memory: what the user has asked Ultron to remember. | test_atomic_file, test_edge_cases, test_memory_changes, test_memory_safety, test_proof_gate, test_runtime_files_ignored, test_session_memory_search, test_suite_assistant, test_suite_safety, test_verify_script |
 
-## `scripts/` — 34 modules, 9,879 lines
+## `scripts/` — 34 modules, 9,892 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -248,7 +248,7 @@ edit the module docstring instead and run it again.
 | `render_asciinema_gif.py` | 122 | Render an asciinema v2 cast to a small terminal-window GIF. | — |
 | `show_prompt.py` | 110 | Print the instruction Ultron gives the model — from a terminal, no app needed. | — |
 | `stress_custom.py` | 195 | Reproducible local repair stress checks; no real model/provider calls. | — |
-| `verify.py` | 114 | Offline migration verification; never starts a voice session or contacts a provider. | test_boot_guard, test_dependency_policy, test_health_center, test_local_ocr, test_mental, test_metacog, test_schedule_packs, test_self_change, test_shipping, test_suite_algorithms, test_suite_safety, test_verify_script, test_web_platforms, test_workflow_hygiene |
+| `verify.py` | 127 | Offline migration verification; never starts a voice session or contacts a provider. | test_boot_guard, test_dependency_policy, test_health_center, test_local_ocr, test_mental, test_metacog, test_schedule_packs, test_self_change, test_shipping, test_suite_algorithms, test_suite_safety, test_verify_script, test_web_platforms, test_workflow_hygiene |
 | `verify_all.py` | 128 | Every capability check, one table, one verdict. | test_suite_algorithms, test_suite_safety |
 | `verify_audio.py` | 135 | Microphone and speaker, driven the way the app drives them. | test_suite_algorithms |
 | `verify_browser.py` | 209 | A real browser, on a real page, through the real engine. | test_suite_algorithms |
@@ -256,7 +256,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 122 modules, 32,280 lines
+## `tests/` — 122 modules, 32,331 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -376,7 +376,7 @@ edit the module docstring instead and run it again.
 | `test_ui_settings_writes.py` | 145 | The window must save identity and persona choices through the settings module. | test_persona_switch_settings, test_ui_settings_writes |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_update_releases.py` | 161 | Offline tests for release-manifest verification and local update-channel policy. | — |
-| `test_verify_script.py` | 147 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
+| `test_verify_script.py` | 198 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
 | `test_video_player.py` | 33 | Malformed model arguments must fail closed rather than crash video playback. | — |
 | `test_wallpaper_url.py` | 454 | `desktop_control wallpaper_url` downloads a picture from the public web, and only that. | — |
 | `test_web_platforms.py` | 325 | tests/test_web_platforms.py — the web layer, with no network in the room. | test_web_platforms |
