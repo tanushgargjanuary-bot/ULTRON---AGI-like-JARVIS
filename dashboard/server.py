@@ -1,10 +1,15 @@
 """
 dashboard/server.py — JARVIS Local HTTP Dashboard
 
-HTTPS on port 8000 with a self-signed certificate generated on first run, plus
-a second layer inside it: commands are encrypted with AES-256-GCM under a key
-derived from the pairing code with PBKDF2. LAN command access requires explicit owner permission and HTTPS with a
-locally generated certificate. The dashboard binds to loopback by default.
+Plain HTTP on 127.0.0.1:8000 by default. HTTPS is opt-in (`"dashboard_https": true` in
+config/api_keys.json): the first time it is needed a self-signed certificate is generated
+for this machine, and its private key is created readable by the owner only. Over HTTPS,
+commands are also encrypted with AES-256-GCM under a key derived from the pairing code with
+PBKDF2. Over plain HTTP that layer is not available (the browser's `crypto.subtle` needs a
+secure context) and commands cross the local network in clear; the page says so on its badge.
+The dashboard binds to loopback unless the owner allows LAN access, and LAN access additionally
+requires HTTPS. Wrong pairing keys are limited per address on `/login` and `/auto-login`
+together.
 
 Install deps:  pip install fastapi "uvicorn[standard]" cryptography
 """
@@ -31,13 +36,24 @@ try:
 except ImportError:
     pass
 
-# python-multipart is required for file uploads — optional dependency
-_UPLOAD_OK = False
-try:
-    from fastapi import UploadFile, File as FastAPIFile
-    _UPLOAD_OK = True
-except Exception:
-    pass
+# python-multipart is required for file uploads — optional dependency.
+#
+# The check is for the PACKAGE. It used to be `from fastapi import UploadFile`,
+# which succeeds without it; `_UPLOAD_OK` then said "available", declaring the
+# upload route raised RuntimeError("Form data requires python-multipart"), and
+# that took the whole dashboard down with it instead of reaching the 503 fallback
+# below (reproduced by hiding the package).
+def _multipart_installed() -> bool:
+    """Is python-multipart importable? (Asked of the package, not of FastAPI.)"""
+    try:
+        import importlib.util as util
+        return (util.find_spec("python_multipart") is not None
+                or util.find_spec("multipart") is not None)
+    except (ImportError, ValueError):
+        return False
+
+
+_UPLOAD_OK = _multipart_installed()
 
 BASE_DIR    = Path(__file__).resolve().parent.parent
 STATIC_DIR  = Path(__file__).parent / "static"
@@ -55,6 +71,160 @@ STATIC_DIR  = Path(__file__).parent / "static"
 PORT        = 8000      # HTTP, redirects to SECURE_PORT
 SECURE_PORT = 8001      # HTTPS, the dashboard itself
 MAX_UPLOAD_MB = 500
+# A multipart body is the file plus boundary lines and headers. This much more than
+# MAX_UPLOAD_MB is allowed to arrive; the exact file size is still enforced below.
+_MULTIPART_SLACK_BYTES = 64 * 1024
+
+
+class _UploadTooLarge(Exception):
+    """Raised from the request stream when the body passes the size limit."""
+
+
+def _safe_filename(raw: str) -> str:
+    """A file name that cannot leave the uploads folder or upset the filesystem."""
+    name = Path(raw).name                          # strip path components
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', name).strip(". ")
+    return name or "upload"
+
+
+def _create_unique(dest_dir: Path, safe: str):
+    """Create a NEW file named `safe` (or `stem_N.ext`) in `dest_dir` -> (path, handle).
+
+    Exclusive creation, so two uploads of the same name at the same moment cannot
+    both open one path and write into each other: the old `while dest.exists()`
+    check and the later `open(dest, "wb")` were two steps with a gap between them.
+    """
+    stem, suffix = Path(safe).stem, Path(safe).suffix
+    for counter in range(0, 10_000):
+        name = safe if counter == 0 else f"{stem}_{counter}{suffix}"
+        try:
+            path = dest_dir / name
+            return path, open(path, "xb")
+        except FileExistsError:
+            continue
+    raise OSError("could not find a free file name")
+
+
+async def _store_file(file, dest_dir: Path, max_bytes: int, too_large: tuple):
+    """Copy one parsed upload to a new file -> (status, body); removes a partial file."""
+    if file is None or not hasattr(file, "read"):
+        return 400, {"error": "No file in the request"}
+    size = 0
+    dest = None
+    try:
+        dest, fout = _create_unique(dest_dir, _safe_filename(
+            getattr(file, "filename", "") or "upload"))
+        with fout:
+            while size <= max_bytes:
+                chunk = await file.read(65536)
+                if not chunk:
+                    break
+                size += len(chunk)
+                fout.write(chunk)
+    except Exception as exc:                                    # noqa: BLE001
+        if dest is not None:
+            dest.unlink(missing_ok=True)
+        failures.note("dashboard.upload", exc)
+        return 500, {"error": str(exc)}
+    if size > max_bytes:
+        dest.unlink(missing_ok=True)
+        return too_large
+    return 200, {"ok": True, "name": dest.name, "size": size}
+
+
+async def _receive_upload(req, dest_dir: Path, max_mb: int):
+    """Take ONE uploaded file from a multipart request -> (status, body).
+
+    Called only after the token was checked. The size is bounded as the body streams
+    in — by its declared length first, then by counting what actually arrives — so a
+    sender cannot make this process read more than `max_mb` plus the multipart
+    framing, whatever it declares. FastAPI would otherwise parse the whole body
+    before any of our code ran.
+    """
+    max_bytes = max_mb * 1024 * 1024
+    limit = max_bytes + _MULTIPART_SLACK_BYTES
+    too_large = (413, {"error": f"File too large (max {max_mb} MB)"})
+    declared = req.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > limit:
+        return too_large
+    received = 0
+
+    async def capped_receive():
+        nonlocal received
+        message = await req.receive()
+        if message["type"] == "http.request":
+            received += len(message.get("body", b""))
+            if received > limit:
+                raise _UploadTooLarge()
+        return message
+
+    form = None
+    try:
+        form = await Request(req.scope, capped_receive).form()
+        return await _store_file(form.get("file"), dest_dir, max_bytes, too_large)
+    except _UploadTooLarge:
+        return too_large
+    finally:
+        if form is not None:
+            await form.close()
+
+
+def _inside(directory: Path, name: str) -> Path | None:
+    """`directory / name` if that is a file directly inside `directory`, else None.
+
+    The download route stripped slashes from the name and joined it. That is not containment:
+    on Windows `Path(folder) / "C:secret.txt"` is a drive-relative path that ignores `folder`
+    altogether, and `..` and a symlink both lead out. The only check that holds on every
+    platform is to resolve the result and look at where it is.
+    """
+    try:
+        root = directory.resolve()
+        candidate = (directory / name).resolve()
+    except (OSError, ValueError):                 # a NUL byte, an unrepresentable name
+        return None
+    if candidate.parent != root or not candidate.is_file():
+        return None
+    return candidate
+
+
+# The JSON routes carry a pairing key, a device token or one spoken command: well under a
+# kilobyte. 64 KB is generous, and it is a cap that exists at all, which the three routes below
+# did not have: they read whatever arrived into memory before looking at it.
+MAX_JSON_BYTES = 64 * 1024
+_BODY_PROBLEMS = {400: "Send a JSON object.", 413: "That request is too large."}
+
+
+async def _json_object(req) -> tuple[dict | None, int]:
+    """The request body as a JSON object, read within MAX_JSON_BYTES -> (object, 200).
+
+    Anything else is a refusal with a status, never an exception: an empty body, bytes that
+    are not JSON (the decoder guesses UTF-16 from a NUL byte and fails), JSON that is not an
+    object (a list has no `.get`), nesting deep enough to exhaust the parser, a body bigger
+    than the cap, a sender that hangs up half way. Each of these used to be an unhandled
+    exception, which the server turns into a 500 with a traceback in the log, from a
+    stranger, on a route that is reachable before anyone has logged in.
+    """
+    import json as _json
+    declared = req.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_JSON_BYTES:
+        return None, 413
+    chunks: list[bytes] = []
+    size = 0
+    try:
+        async for chunk in req.stream():
+            size += len(chunk)
+            if size > MAX_JSON_BYTES:
+                return None, 413
+            chunks.append(chunk)
+    except Exception as exc:                                    # noqa: BLE001
+        # ClientDisconnect (the sender left) or a transport error: nothing to answer.
+        failures.note("dashboard.json_body", exc)
+        return None, 400
+    try:
+        body = _json.loads(b"".join(chunks))
+    except (ValueError, RecursionError):                        # UnicodeDecodeError is a ValueError
+        return None, 400
+    return (body, 200) if isinstance(body, dict) else (None, 400)
 
 
 def _make_uploads_dir() -> Path:
@@ -85,7 +255,7 @@ def _get_gemini_key() -> str | None:
 _KEY_CHARS = [c for c in (string.ascii_uppercase + string.digits)
               if c not in ('O', 'I', 'L', '0', '1')]
 
-# ── AES-256-CBC ───────────────────────────────────────────────────────────────
+# ── AES-256-GCM ───────────────────────────────────────────────────────────────
 _AES_SALT = b'JARVIS-DASHBOARD-v1'
 
 
@@ -142,7 +312,7 @@ def _decrypt(aes_key: bytes, enc_b64: str) -> str:
 _BLOCK_CACHE = None
 
 
-def blocking_firewall_rules() -> list:
+def blocking_firewall_rules(refresh: bool = False) -> list:
     """Inbound Windows BLOCK rules aimed at the interpreter running this app.
 
     Public, read-only and never elevated, so the interface can warn about the
@@ -152,6 +322,10 @@ def blocking_firewall_rules() -> list:
     blocked.
 
     -> [(rule name, program path), ...]
+
+    `refresh=True` ignores the cached answer. The re-check after the elevated
+    repair must use it: the cache was filled BEFORE the repair, so without it the
+    check read the old list and could only ever answer "still blocked".
     """
     import sys
     if sys.platform != "win32":
@@ -162,7 +336,7 @@ def blocking_firewall_rules() -> list:
     # opens — a second of frozen interface every time, for an answer that only
     # changes when somebody edits their firewall.
     global _BLOCK_CACHE
-    if _BLOCK_CACHE is not None:
+    if _BLOCK_CACHE is not None and not refresh:
         return _BLOCK_CACHE
     import os
     import subprocess
@@ -199,6 +373,50 @@ def blocking_firewall_rules() -> list:
         print(f"[Dashboard] could not read the firewall rules: {exc}")
     _BLOCK_CACHE = found
     return found
+
+
+# Characters cmd.exe treats as syntax even inside a .bat line. A rule name is read
+# from `netsh` output, i.e. it is whatever the person who created the rule typed,
+# and the batch file it goes into runs ELEVATED.
+_CMD_SYNTAX = frozenset('"%&|<>^\r\n')
+
+
+def _split_removable_rules(blocked) -> tuple[list, list]:
+    """Split `blocking_firewall_rules()` output into (names the elevated batch may
+    delete, names that must be removed by hand).
+
+    `blocked` holds (rule name, program) PAIRS. The batch builder used to loop
+    `for rule_name in blocked` and format the pair itself, so it asked Windows to
+    delete a rule literally called "('Python (blocked)', 'c:\\python312\\python.exe')"
+    — which matches nothing, so the block that made the phone unreachable was
+    never removed while the comment above the loop said it was.
+
+    The same rule is listed once per matching program, and `delete rule name=X`
+    removes every rule with that name, so each name comes back once.
+    """
+    removable: list = []
+    by_hand: list = []
+    for name, _program in blocked:
+        bucket = by_hand if any(ch in _CMD_SYNTAX for ch in name) else removable
+        if name not in bucket:
+            bucket.append(name)
+    return removable, by_hand
+
+
+def _macos_allow_script(fw_ctl: str, py: str) -> str:
+    """The AppleScript that lets `py` through the macOS Application Firewall.
+
+    `sys.executable` goes into a shell command inside an AppleScript string. It was
+    pasted in unquoted, so an interpreter under a folder with a space in its name
+    ("/Users/Ana Ruiz/venv/bin/python") was split into two words by the shell, and a
+    quote in the path ended the AppleScript string early. Shell-quote it, then
+    escape for AppleScript.
+    """
+    import shlex
+    shell = f"{shlex.quote(fw_ctl)} --add {shlex.quote(py)} && " \
+            f"{shlex.quote(fw_ctl)} --unblockapp {shlex.quote(py)}"
+    escaped = shell.replace("\\", "\\\\").replace('"', '\\"')
+    return f'do shell script "{escaped}" with administrator privileges'
 
 
 _ACCESS_ASKED = False
@@ -255,11 +473,16 @@ def _ensure_network_access(*ports: int) -> None:
     macOS   : osascript admin dialog if the Application Firewall is on.
     Linux   : pkexec GUI → sudo -n → prints manual command as fallback.
     """
-    import sys, subprocess, os, tempfile, threading
+    import sys
+    import subprocess
+    import os
+    import tempfile
+    import threading
 
     # ── Windows ──────────────────────────────────────────────────────────────
     if sys.platform == "win32":
-        import ctypes, time
+        import ctypes
+        import time
 
         # Every port in one pass. Called once per port, this asked for
         # elevation once per port — two UAC dialogs for one dashboard, and two
@@ -311,6 +534,7 @@ def _ensure_network_access(*ports: int) -> None:
         # There were briefly two, and they disagreed about their return type,
         # which surfaced as 'too many values to unpack' in the error path.
         blocked      = blocking_firewall_rules()
+        removable, by_hand = _split_removable_rules(blocked)
         missing_ports = [pt for pt, nm in port_rules.items()
                          if not _netsh_rule_exists(nm)]
         need_prog    = not _netsh_rule_exists(prog_rule)
@@ -327,7 +551,11 @@ def _ensure_network_access(*ports: int) -> None:
                   f"{', '.join(sorted(set(os.path.basename(e) for e in py_exes)))} "
                   f"({len(blocked)} block rule(s)). Your phone cannot reach the "
                   f"dashboard until those are removed — asking for permission "
-                  f"to do that now.")
+                  f"to do that now."
+                  + (" Rules whose names contain characters that are not safe in an "
+                     "administrator script are left alone — delete them by hand in "
+                     "Windows Defender Firewall > Inbound Rules: "
+                     + ", ".join(repr(n) for n in by_hand) if by_hand else ""))
 
         if not missing_ports and not need_prog and not need_private and not blocked:
             return  # already fully configured
@@ -350,7 +578,7 @@ def _ensure_network_access(*ports: int) -> None:
         # Remove the blocks FIRST. Adding an allow rule beside a block rule
         # changes nothing at all — Windows resolves the conflict in the block's
         # favour — so this is the line that actually fixes the connection.
-        for rule_name in blocked:
+        for rule_name in removable:
             bat_lines.append(
                 f'netsh advfirewall firewall delete rule '
                 f'name="{rule_name}" dir=in'
@@ -426,7 +654,7 @@ def _ensure_network_access(*ports: int) -> None:
                 # dialog was accepted, not that netsh did what was asked — and
                 # the whole point of this release is not to report an outcome
                 # nobody looked at.
-                still = blocking_firewall_rules()
+                still = blocking_firewall_rules(refresh=True)
                 if still:
                     print("[Dashboard] ⚠️  Windows is STILL blocking inbound "
                           "connections to this interpreter.")
@@ -482,9 +710,7 @@ def _ensure_network_access(*ports: int) -> None:
 
             print("[Dashboard] One-time network setup — enter your password in the macOS dialog.")
             subprocess.run(
-                ["osascript", "-e",
-                 f'do shell script "{fw_ctl} --add {py} && {fw_ctl} --unblockapp {py}"'
-                 f' with administrator privileges'],
+                ["osascript", "-e", _macos_allow_script(fw_ctl, py)],
                 timeout=60,
             )
         except Exception:
@@ -589,6 +815,25 @@ def _local_ip() -> str:
     return "127.0.0.1"
 
 
+def _write_private(path: Path, data: bytes) -> None:
+    """Write a secret so that it is never readable by anyone else, not even briefly.
+
+    `write_bytes` then `chmod` leaves a window in which the file exists with the
+    process's default mode (0644 on most systems): a private key that any local user
+    can read for as long as it takes to reach the next line. Creating the file with
+    the mode already set closes the window. Where the platform has no such modes
+    (Windows) the flag is accepted and does nothing, as the `chmod` it replaces did.
+    """
+    import os as _os
+    descriptor = _os.open(str(path), _os.O_WRONLY | _os.O_CREAT | _os.O_TRUNC, 0o600)
+    with _os.fdopen(descriptor, "wb") as handle:
+        handle.write(data)
+    try:
+        _os.chmod(path, 0o600)    # a file that already existed keeps its old mode otherwise
+    except OSError as error:
+        failures.note("dashboard._write_private", error, detail=str(path))
+
+
 def _ensure_certs() -> bool:
     """
     Make sure config/certs holds a TLS key pair, generating a self-signed one the
@@ -656,18 +901,12 @@ def _ensure_certs() -> bool:
             .sign(key, hashes.SHA256())
         )
 
-        key_p.write_bytes(key.private_bytes(
+        _write_private(key_p, key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
             encryption_algorithm=serialization.NoEncryption(),
         ))
         crt_p.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
-
-        try:
-            import os as _os
-            _os.chmod(key_p, 0o600)   # best effort — largely a no-op on Windows
-        except Exception:
-            pass
 
         print(f"[Dashboard] Generated a self-signed certificate for this machine: {certs}")
         return True
@@ -695,6 +934,10 @@ _TOKEN_TTL_SECONDS = 12 * 3600
 _LOGIN_MAX_TRIES   = 6
 _LOGIN_WINDOW      = 300.0      # seconds the counter looks back over
 _LOGIN_LOCKOUT     = 300.0      # seconds an address waits after using them up
+# Addresses remembered at once. A household or a pairing window sees a handful; the number is a
+# bound on memory (a few hundred kilobytes), not a target. Without one the table grew with every
+# address that ever asked: 100,000 addresses took about 21 MB, and nothing took them out again.
+_THROTTLE_MAX_ADDRESSES = 4096
 
 
 class _Throttle:
@@ -704,6 +947,14 @@ class _Throttle:
     only alive for ten minutes, so nothing here needs to survive a restart.
     Successful logins clear the count, which keeps a household on one address
     from locking itself out because somebody fumbled the code once.
+
+    It remembers at most `_THROTTLE_MAX_ADDRESSES` addresses, and only an address that has
+    FAILED: asking whether an address is blocked records nothing. (It used to store an empty
+    list for every address that asked and never removed it, so the table grew without limit
+    even though nobody had failed.) When the table is full it forgets, in this order: addresses
+    whose failures are all older than the window, then addresses that are not locked out, oldest
+    first. An address that is locked out is the last thing to be forgotten, so filling the table
+    with other addresses cannot be used to unlock one.
     """
 
     def __init__(self):
@@ -715,18 +966,43 @@ class _Throttle:
         now = time.time()
         with self._lock:
             tries = [t for t in self._fails.get(who, []) if now - t < _LOGIN_WINDOW]
-            self._fails[who] = tries
+            if tries:
+                self._fails[who] = tries
+            else:
+                self._fails.pop(who, None)      # asking is not failing: keep no row for it
             if len(tries) < _LOGIN_MAX_TRIES:
                 return 0.0
             return max(0.0, _LOGIN_LOCKOUT - (now - tries[-1]))
 
     def record_failure(self, who: str) -> None:
+        now = time.time()
         with self._lock:
-            self._fails.setdefault(who, []).append(time.time())
+            tries = self._fails.setdefault(who, [])
+            tries.append(now)
+            # Only the last few can matter: blocking needs `_LOGIN_MAX_TRIES` of them inside the
+            # window and the lockout counts from the latest.
+            del tries[:-_LOGIN_MAX_TRIES]
+            if len(self._fails) > _THROTTLE_MAX_ADDRESSES:
+                self._forget(now)
 
     def clear(self, who: str) -> None:
         with self._lock:
             self._fails.pop(who, None)
+
+    def _forget(self, now: float) -> None:
+        """Make room. The lock is held by the caller."""
+        for who in [w for w, tries in self._fails.items()
+                    if not tries or now - tries[-1] >= _LOGIN_WINDOW]:
+            del self._fails[who]
+        if len(self._fails) <= _THROTTLE_MAX_ADDRESSES:
+            return
+        # Still full of live rows. Go below the limit, not just to it, so the next failure does
+        # not do this again: forget the ones that are not locked out first, the oldest first.
+        keep = _THROTTLE_MAX_ADDRESSES * 3 // 4
+        order = sorted(self._fails, key=lambda w: (len(self._fails[w]) >= _LOGIN_MAX_TRIES,
+                                                   self._fails[w][-1]))
+        for who in order[:len(self._fails) - keep]:
+            del self._fails[who]
 
 
 class DashboardServer:
@@ -928,7 +1204,13 @@ class DashboardServer:
                               f"{int(wait) + 1} seconds."},
                     status_code=429,
                 )
-            body    = await req.json()
+            body, problem = await _json_object(req)
+            if body is None:
+                # A request that is not a login attempt still costs one, or malformed
+                # bodies would be a way to hammer this route for free.
+                self._throttle.record_failure(who)
+                return JSONResponse({"ok": False, "error": _BODY_PROBLEMS[problem]},
+                                    status_code=problem)
             entered = str(body.get("pin", "")).strip().upper()
             now     = time.time()
             if entered in self._pending_keys and self._pending_keys[entered] > now:
@@ -950,10 +1232,26 @@ class DashboardServer:
                                 status_code=401)
 
         @app.get("/auto-login")
-        async def auto_login(key: str = ""):
-            """QR code target — validates one-time key, creates session, redirects phone."""
+        async def auto_login(req: Request, key: str = ""):
+            """QR code target — validates one-time key, creates session, redirects phone.
+
+            Counted against the same per-address throttle as `/login`: this route takes
+            the same pairing key, and a guess here was free while a guess there was
+            limited, so the limit only protected the door nobody had to use.
+            """
+            who  = _who(req)
+            wait = self._throttle.blocked_for(who)
+            if wait > 0:
+                return HTMLResponse(
+                    f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"></head>
+<body style="background:#07090f;color:#dde3ed;font-family:sans-serif;text-align:center;padding-top:30vh">
+<h2 style="color:#f87171">Too many attempts</h2>
+<p>Try again in {int(wait) + 1} seconds.</p></body></html>""",
+                    status_code=429)
             now = time.time()
             if not key or key not in self._pending_keys or self._pending_keys[key] <= now:
+                self._throttle.record_failure(who)
                 return HTMLResponse("""<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width">
 <style>
@@ -965,6 +1263,7 @@ class DashboardServer:
 <p>Press <strong style="color:#dde3ed">Remote Control</strong> in JARVIS to get a new QR code.</p>
 </div></body></html>""")
 
+            self._throttle.clear(who)
             del self._pending_keys[key]
             tok     = secrets.token_urlsafe(32)
             dev_tok = secrets.token_urlsafe(32)
@@ -999,11 +1298,12 @@ class DashboardServer:
         @app.post("/api/device-login")
         async def device_login_ep(req: Request):
             """Return a fresh auth token for a previously paired device token."""
-            try:
-                body = await req.json()
-            except Exception:
-                return JSONResponse({"ok": False}, status_code=400)
-            dev_tok = (body.get("device_token") or "").strip()
+            body, problem = await _json_object(req)
+            if body is None:
+                return JSONResponse({"ok": False, "error": _BODY_PROBLEMS[problem]},
+                                    status_code=problem)
+            dev_tok = body.get("device_token")
+            dev_tok = dev_tok.strip() if isinstance(dev_tok, str) else ""
             if not dev_tok or dev_tok not in self._device_sessions:
                 return JSONResponse({"ok": False}, status_code=401)
             session_key = self._device_sessions[dev_tok]["session_key"]
@@ -1047,15 +1347,21 @@ class DashboardServer:
         async def command(req: Request):
             if not _auth(req):
                 return JSONResponse({"error": "Unauthorized"}, status_code=401)
-            body  = await req.json()
+            body, problem = await _json_object(req)
+            if body is None:
+                return JSONResponse({"error": _BODY_PROBLEMS[problem]}, status_code=problem)
             token = req.headers.get("authorization", "").removeprefix("Bearer ").strip()
-            enc   = body.get("enc", "")
+            enc   = body.get("enc") or ""
+            sent  = body.get("text") or ""
+            if not isinstance(enc, str) or not isinstance(sent, str):
+                return JSONResponse({"error": "`text` and `enc` must be strings."},
+                                    status_code=400)
             if enc:
                 text = self._decrypt(token, enc)
                 if text is None:
                     return JSONResponse({"error": "Decryption failed"}, status_code=400)
             else:
-                text = (body.get("text") or "").strip()
+                text = sent.strip()
             if text:
                 await self._command_queue.put(text)
                 if self._wake_callback:
@@ -1082,9 +1388,14 @@ class DashboardServer:
             asyncio.create_task(self.broadcast(
                 {"type": "sys", "text": "Phone microphone live."}
             ))
+            ignored = 0               # text frames on the audio socket, noted once at the end
             try:
                 while True:
-                    data = await websocket.receive_bytes()
+                    try:
+                        data = await websocket.receive_bytes()
+                    except KeyError:
+                        ignored += 1      # a text frame: not audio
+                        continue
                     try:
                         self._phone_audio_queue.put_nowait(
                             {"data": data, "mime_type": "audio/pcm"}
@@ -1094,62 +1405,34 @@ class DashboardServer:
             except WebSocketDisconnect:
                 pass
             finally:
+                if ignored:
+                    failures.note("dashboard.phone_audio", f"ignored {ignored} text frame(s)")
                 asyncio.create_task(self.broadcast(
                     {"type": "sys", "text": "Phone microphone stopped."}
                 ))
 
         # ── File sharing ──────────────────────────────────────────────────────
 
-        def _safe_filename(raw: str) -> str:
-            name = Path(raw).name                          # strip path components
-            name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', name).strip(". ")
-            return name or "upload"
-
         if _UPLOAD_OK:
             @app.post("/api/upload")
-            async def upload_file(req: Request, file: UploadFile = FastAPIFile(...)):
+            async def upload_file(req: Request):
+                # Authenticate BEFORE any of the body is read. The route used to
+                # declare `file: UploadFile`, so FastAPI parsed and spooled the whole
+                # multipart body first, and a stranger's 40 MB was accepted before
+                # the 401 (measured). With no body parameter this function is called
+                # first, and `_receive_upload` parses the form through a bounded read.
                 if not _auth(req):
                     return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-                safe = _safe_filename(file.filename or "upload")
-                dest = self._uploads_dir / safe
-                stem, suffix = Path(safe).stem, Path(safe).suffix
-                counter = 1
-                while dest.exists():
-                    dest = self._uploads_dir / f"{stem}_{counter}{suffix}"
-                    counter += 1
-
-                size = 0
-                max_bytes = MAX_UPLOAD_MB * 1024 * 1024
-                try:
-                    with open(dest, "wb") as fout:
-                        while True:
-                            chunk = await file.read(65536)
-                            if not chunk:
-                                break
-                            size += len(chunk)
-                            if size > max_bytes:
-                                fout.close()
-                                dest.unlink(missing_ok=True)
-                                return JSONResponse(
-                                    {"error": f"File too large (max {MAX_UPLOAD_MB} MB)"},
-                                    status_code=413,
-                                )
-                            fout.write(chunk)
-                except Exception as exc:
-                    try:
-                        dest.unlink(missing_ok=True)
-                    except Exception:
-                        pass
-                    return JSONResponse({"error": str(exc)}, status_code=500)
-
-                asyncio.create_task(self.broadcast({
-                    "type": "file_received",
-                    "name": dest.name,
-                    "size": size,
-                    "saved_to": str(self._uploads_dir),
-                }))
-                return JSONResponse({"ok": True, "name": dest.name, "size": size})
+                status, body = await _receive_upload(req, self._uploads_dir,
+                                                     MAX_UPLOAD_MB)
+                if status == 200:
+                    asyncio.create_task(self.broadcast({
+                        "type": "file_received",
+                        "name": body["name"],
+                        "size": body["size"],
+                        "saved_to": str(self._uploads_dir),
+                    }))
+                return JSONResponse(body, status_code=status)
         else:
             @app.post("/api/upload")
             async def upload_unavailable(req: Request):
@@ -1181,10 +1464,10 @@ class DashboardServer:
             if not _valid(tok):
                 return JSONResponse({"error": "Unauthorized"}, status_code=401)
             safe = re.sub(r'[/\\]', '', filename)
-            path = self._uploads_dir / safe
-            if not path.exists() or not path.is_file():
+            path = _inside(self._uploads_dir, safe)
+            if path is None:
                 return JSONResponse({"error": "Not found"}, status_code=404)
-            return FileResponse(str(path), filename=safe)
+            return FileResponse(str(path), filename=path.name)
 
         @app.websocket("/ws")
         async def ws_ep(websocket: WebSocket, token: str = ""):
@@ -1199,20 +1482,35 @@ class DashboardServer:
                     await websocket.send_json(entry)
                 except Exception:
                     break
+            ignored = 0               # malformed frames, noted once when the socket closes
             try:
                 while True:
-                    data = await websocket.receive_json()
-                    if data.get("type") == "command":
-                        enc = data.get("enc", "")
-                        t   = self._decrypt(tok, enc) if enc else (data.get("text") or "").strip()
-                        if t:
-                            await self._command_queue.put(t)
-                            if self._wake_callback:
-                                self._wake_callback()
+                    try:
+                        data = await websocket.receive_json()
+                    except (ValueError, KeyError):
+                        ignored += 1      # not JSON, or a binary frame: keep the socket
+                        continue
+                    if not isinstance(data, dict):
+                        ignored += 1      # a list, a number, a string
+                        continue
+                    if data.get("type") != "command":
+                        continue          # some other kind of message: not ours to answer
+                    enc  = data.get("enc") or ""
+                    sent = data.get("text") or ""
+                    if not isinstance(enc, str) or not isinstance(sent, str):
+                        ignored += 1
+                        continue
+                    t = self._decrypt(tok, enc) if enc else sent.strip()
+                    if t:
+                        await self._command_queue.put(t)
+                        if self._wake_callback:
+                            self._wake_callback()
             except WebSocketDisconnect:
                 pass
             finally:
                 self._clients.discard(websocket)
+                if ignored:
+                    failures.note("dashboard.ws", f"ignored {ignored} malformed frame(s)")
 
         return app
 

@@ -1,3 +1,186 @@
+=== 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
+
+Asked for: "Yes, push and watch Windows" (the owner's answer to step 0 of the plan for following upstream Mark releases).
+CHANGELOG.md ("Second Windows run") has the account, docs/engineering/SESSION_LOG.md the same in short.
+
+WHAT THE RUN SAID (run 45003997382, the commit with the nine test fixes)
+  - The whole suite step passed on Windows for the first time: 2,754 tests, 0 failed, 71 skipped; self-tests 108 of
+    108; 1,000 scenarios; 15 of 15 mutations; the module map.
+  - The Windows proof gate, never run there before in this pull request: 28 PROVEN, 8 PARTIAL, 1 FAILED. The failure
+    is `acts`: a write outside the owner's folders was not refused. On the runner it wrote D:\tmp\proof-gate-nope.txt.
+
+CAUSE
+  - cf02c0e (2026-11-15) made the file tool reach every drive on Windows unless the settings said no
+    (`laptop_wide_access`, default on). The gate had last passed on e1237d2 (2026-11-10); main's runs since stopped at the suite and
+    skipped it. DECISIONS.md open question 4 asked whether that default was wanted. Nobody had answered.
+
+WHAT CHANGED
+  - actions/file_controller.py: only a saved `true` turns the drives on. Four new tests (tests/test_file_controller_hardening.py,
+    TheRoots), red on the old file. No referee file edited, no test loosened. Credential and system-folder refusals and the
+    policy's "outside the workspace asks first" are unchanged.
+
+NOT CHECKED: Windows after this change (only a push runs it); the full chain on Linux (bare Python 3.11 only: 2,072 -> 2,076
+tests, the same 30 environment failures before and after). The owner may overrule the default (DECISIONS.md, question 4).
+
+=== 2026-11-21 · build 1.2.38 · the first Windows run of pull request #22: nine tests, all written on Linux ===
+
+Asked for: nothing new. The entry below listed Windows under "NOT CHECKED", and the owner's standing instruction is
+to fix without asking first. CHANGELOG.md ("First Windows run of this pull request") has the table,
+docs/engineering/SESSION_LOG.md the account.
+
+WHAT THE RUN SAID
+  - Run 44930501422, Windows job: 2,751 tests, 8 failures and 1 error. Linux, the fast gate and the web checks passed.
+  - Four of the five files are new in this branch; the fifth broke because this branch made run.ps1 a protected file
+    and the fake project writes every protected file. None of the nine points at a fault in the program.
+  - scripts/verify.py stops at the first step that fails, so the steps after the suite and the proof gate have
+    never run on Windows.
+
+WHAT CHANGED
+  - scripts/verify.py returns forward-slash names (4 tests). New test, red on the old file on any system.
+  - The restart-line test is replaced by three that pin os.name. Two workflow tests and one wallpaper test skip on
+    Windows where bash cannot be driven or a file name cannot hold a quote. The burst test's reader pauses 5 ms on
+    Windows (a reading of how Windows treats an open file, not a reproduction). No assertion was loosened.
+
+NOT CHECKED: all of it on Windows (only a push runs it). Nothing has been pushed since the pull request was opened.
+
+=== 2026-11-21 · build 1.2.38 · what was left: the self-change pipeline (a referee file, edited with the owner's go-ahead) ===
+
+Asked for: "Do everything that's left, and give me a small CEO note." The left-over items were all about
+how Ultron changes its own code. core/self_change.py is a referee file; the edit is flagged here, in
+CHANGELOG.md ("Follow-up: what was left") and in DECISIONS.md. docs/engineering/SESSION_LOG.md has the account.
+
+WHAT CHANGED
+  - The second confirmation of a self-change is now a button press on a banner that lists every changed
+    line. Before, it was a "channel" the model wrote: on the old code the sequence propose, rehearse,
+    confirm voice, confirm panel, apply printed "Applied" with no person beyond the per-call banners.
+  - diff() is a real diff (it hid a line added twice, called a deletion "only the order changes", and
+    stopped at 40 rows without a word).
+  - The rehearsal copy keeps .github and gets a one-commit repository: a full rehearsal of this repository
+    used to fail 9 tests and error on 6, so "the full test harness passed in the copy" could not be true.
+  - A Windows file keeps its line ends through a change and comes back byte for byte (revert said "exactly
+    what it was" over a different file); a file that is not valid UTF-8 is refused.
+  - New boot guard (core/boot_guard.py, run first by scripts/bootstrap.py): a code change that stops the
+    program from starting is put back by the next start. Four more files are off limits to self-change:
+    core/boot_guard.py, scripts/bootstrap.py, run.bat, run.ps1.
+  - FOUND AND FIXED ON THE WAY: the model's own click and key-press tool (no banner of its own) could answer
+    any confirmation with "press tab", "press space". While a confirmation waits, core/custom_gate.py now
+    refuses every call that is not read-only. Two gaps stay, named in the file: a call in the same message as
+    the one that raises the banner, and anything that skips the dispatcher.
+  - FOUND AND FIXED ON THE WAY: config/self_change/ (every proposal with the whole old and new text, the
+    ledger, the kept copies) was not in .gitignore while "ship" runs git add -A. It is now, and ship refuses
+    if git would add any non-source file in memory/ or config/.
+
+MEASURED (Linux, Python 3.11.2, clean two-commit copy): scripts/verify.py exits 0 with the package set
+verify.yml installs (2,751 tests, 0 failed, 39 skipped; provider and UI self-tests 108 of 108; 1,000 stress
+scenarios; 15 of 15 mutations) and with the full set (2,751, 0 failed, 10 skipped); proof gate 24 PROVEN,
+13 PARTIAL, 0 FAILED, unchanged (self_modify PROVEN); fast gate 6 of 6; lint ratchet 146 findings vs 156 at
+the base; a full rehearsal of this tree, run in a copy of it, passes (it failed 9 tests and errored on 6
+before the fix). The first run of the chain failed one test, a document that named a runtime file; fixed.
+
+Every new group of tests fails on HEAD's version of the file it covers. NOT CHECKED: Windows (including
+run.bat and run.ps1 with the guard), macOS, GitHub Actions, the Rust and the Go, the banner and the dispatcher
+check with the real window.
+
+=== 2026-11-21 · build 1.2.38 · twelve findings from a second review of the review pass, all fixed ===
+
+Asked for: review the working tree with open-code-review, then fix what it finds without asking first.
+Same branch, same rule: nothing is committed, pushed or merged. CHANGELOG.md has each change under
+"Follow-up to the review pass"; docs/engineering/SESSION_LOG.md has the account and the evidence.
+
+HOW IT WAS REVIEWED. The tool ran in its delegation mode: it prepared the diffs and its rules, and the
+reading and the findings were mine, so this is a review by the same agent that wrote the first pass,
+with a tool's checklist; it is not an independent reviewer's opinion. It set 55 of 103 changed paths
+aside (31 tests, a lockfile, 23 documents); those were not read. The report file lived outside the
+repository and a sandbox reset removed it; the twelve findings are in the CHANGELOG and the SESSION_LOG.
+
+THE TWO THAT MATTERED MOST
+  - The banner the owner presses CONFIRM on for a change to the system prompt could show less than it
+    applied: it dropped lines beginning "++" or "--", cut the text at 900 characters, drew the model's
+    own reason as HTML, and the window clipped every banner at 300 characters without saying so. It
+    shows every changed line now, as plain text, in a box that scrolls; a change too large to read
+    there (more than 4,000 characters of difference) is refused instead of being shown in part.
+    Checked on an offscreen display only.
+  - The memory store sets a damaged file aside as memory/long_term.json.broken-<epoch>, a copy of
+    everything the user asked it to remember, and .gitignore did not name it while the app's own
+    "ship" stages with git add -A. It is ignored now, and a test makes the real code write each name
+    and asks git.
+
+THE REST: the key file and its backup were readable by every user of the machine after a local-model
+write (now owner-only); wallpaper_url fetched file:// and home-network addresses (now the public web
+only, images only, 25 MB at most); the AST guardian's header claimed it could only over-report (it could
+under-report; fixed and every remaining limit listed and tested; REFEREE FILE, second edit); the Linux
+proof-gate step could not fail the job; the dashboard's login throttle never forgot an address; the tool
+counter wrote settings on the event loop; the Job Object supervisor (Rust) set limits and then replaced
+them (rewritten by reading; never compiled); the lint ratchet's description promised more than it checks.
+
+MEASURED (Linux, Python 3.11.2, clean two-commit copy): scripts/verify.py exits 0 with the package set
+verify.yml installs (2,631 tests, 0 failed, 39 skipped; provider and UI self-tests 108 of 108; 1,000 stress
+scenarios; 15 of 15 mutations) and with the full set (2,631, 0 failed, 10 skipped); proof gate 24 PROVEN,
+13 PARTIAL, 0 FAILED, unchanged; fast gate 6 of 6; lint ratchet 141 findings vs 151 at the base.
+Every new test fails on the code it replaces, except the ones that pin behaviour that did not change.
+The repository's debt ceilings and the lint ratchet each caught something of mine on the way (six
+new "no-timeout" findings, two over-deep functions, an unused local); all fixed in the code.
+
+NOT CHECKED: Windows, macOS, GitHub Actions (verify.yml was simulated, not run), the Rust, the banner on
+a real screen, Python 3.12 and 3.13, real keys, audio.
+
+FOUND, NOT CHANGED THEN (referee file core/self_change.py; done in the entry above): diff() does not show
+a line added a second time elsewhere, reports a deletion as "only the order of lines changes" when the line
+still stands elsewhere, and cuts past 40 lines (20 when proposing) without a marker. Probed in a copy. The
+self_modify banner shows the call's arguments, not the change.
+
+=== 2026-11-20 · build 1.2.38 · a review pass: two red gates fixed, the safety gaps closed, nothing committed ===
+
+Asked for: review the repository, fix what was found, then search harder for malfunctions. The
+work is in the working tree of branch arena/850afbc9-ultron-agi-like-jarvis (cut from main at
+cf02c0e). Nothing is committed, pushed or merged. CHANGELOG.md has every change, one line each,
+under "Review pass, 2026-11-20"; docs/engineering/SESSION_LOG.md has the account.
+
+TWO RED GATES, AND WHY THE FAST ONE STAYED GREEN
+  1. Every plugin call raised: core/plugin_loader.py read an attribute the record does not have.
+     29 tests failed and the fast gate has no group that calls a tool. It has one now.
+  2. `verify` failed on every push to main from 60ee7a3: the provider self-test counted
+     Path.write_text calls that the atomic settings writer no longer makes. The assertion is
+     unchanged; it counts the rename that replaced them. 252a299 passes that check, 60ee7a3
+     fails it, this tree passes it.
+  Both fixed and measured. `verify` has not run on GitHub since.
+
+WHAT COULD HAVE COST THE OWNER SOMETHING (each one reproduced, then fixed, then tested)
+  - The model rewrote its own system prompt in three tool calls with nobody involved, and a
+    proposal id of "../../api_keys" deleted config/api_keys.json.
+  - Settings and memory files were replaced from a read that had failed; a burst of tool calls
+    lost the Gemini key and the providers in every run (counted 4 to 26 of 320 uses; 320 of 320 now).
+  - The phone dashboard's /login and /api/command raised on a malformed body (a 500 from a stranger,
+    on /login) and read a body of any size; the upload route read 40 MB before checking the token;
+    the pairing key could be guessed through /auto-login with no limit; the TLS key was readable
+    for a moment after it was written.
+  - A model-supplied window title could end an AppleScript string and run `do shell script`.
+  - The AST guardian let 12 of 14 known bypasses through.
+
+WHAT THE DOCUMENTS SAID THAT THE CODE DID NOT DO
+  The Rust core starts an audio ring and a pipe server and nothing else; the watchdog, rollback,
+  sandbox and "hardware" seal are library code nothing starts, and the seal is a home-made mix with
+  a constant key. The README's fixed "passing" badge sat above a red `verify`. DECISIONS.md and
+  ARCHITECTURE.md named eight test files that do not exist. All corrected; tests keep them true.
+
+THE FAST GATE'S LINT STEP FAILED A CHANGE FOR FINDINGS IT DID NOT MAKE
+  ui.py has 97 findings under the gate's own rule set, so touching it could not pass. The gate now
+  fails only for findings a change adds (scripts/lint_ratchet.py), and fails, not passes, if ruff
+  cannot run. More lenient about inherited findings: the owner may want the old rule (DECISIONS.md).
+
+MEASURED (Linux, Python 3.11.2): full suite 2,442 tests, 0 failed, 9 skipped; scripts/verify.py with
+the package set verify.yml installs exits 0 (suite 2,442 / 48 skipped, provider and UI self-tests
+99 of 99, 1,000 stress scenarios, 15 of 15 mutations detected); proof gate 24 PROVEN, 13 PARTIAL,
+0 FAILED; fast gate 6 of 6 groups. Before: cf02c0e ran 2,101 tests and 32 failed in both environments (29 from the plugin dispatcher fault, 3 from the repository's own debt-ceiling tests).
+
+NOT CHECKED: Windows, macOS, GitHub Actions (the workflow edits parse as YAML and have not run),
+the Rust and Go code (no toolchain here; the one Rust edit, a 1 MiB frame cap in ipc/server.rs, is
+uncompiled), Python 3.12 and 3.13, any real key, microphone or display.
+
+TWO REFEREE FILES WERE EDITED AT THE OWNER'S REQUEST, MINIMALLY: core/policy.py (self_modify asks on
+every call) and core/ast_guardian.py (stricter; of 325 Python files only custom_jarvis/addon_runtime.py
+is newly refused). Read those two diffs first.
+
 === 2026-11-07 · build 1.2.38 · later still · a longer list, measured against the code ===
 
 A second list arrived with its own priority shortlist, and it ended with the right instruction:

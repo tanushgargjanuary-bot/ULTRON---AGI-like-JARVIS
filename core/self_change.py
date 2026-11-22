@@ -12,10 +12,14 @@ THE FIVE STAGES. Every change walks them in order, and there is no other door.
   2. rehearse  the change is applied **in the copy** and a command is run there.
                By default that command compiles the changed file; with `full=True`
                it runs `scripts/verify.py`, which is the whole 1,500-test harness.
-  3. confirm   two confirmations, in two different channels, the same rule the
-               prompt editor uses. The rehearsal result is shown with them.
+  3. confirm   two confirmations, in two different places, the same rule the prompt
+               editor uses. This module counts the places it is told about. What makes
+               the second one a person is the tool (`actions/self_change.py`): it records
+               "panel" only when the owner presses CONFIRM on a banner that lists every
+               changed line, and it ignores any place the model names.
   4. apply     the file is written atomically, the old bytes are kept, the ledger
-               gets an entry, and a `.py` change writes a restart marker.
+               gets an entry, and a `.py` change writes a restart marker and is put
+               under watch (`core/boot_guard.py`).
   5. revert    any applied change can be put back, from its own kept copy.
 
 WHY A COPY, AND WHY THAT IS THE WHOLE POINT
@@ -24,9 +28,10 @@ WHY A COPY, AND WHY THAT IS THE WHOLE POINT
     folder and the body never knows.
 
 THE REFEREE IS OFF LIMITS
-    These files decide whether a change is allowed, or record that it happened:
-    `core/policy.py`, `core/confirm.py`, `core/self_change.py`, `scripts/proof_gate.py`,
-    the settings file, and anything under `.git`. A system that can rewrite its own
+    These files decide whether a change is allowed, or record that it happened, or take it
+    back when it stops the program from starting: `core/policy.py`, `core/confirm.py`,
+    `core/self_change.py`, `core/boot_guard.py`, `scripts/proof_gate.py`, `scripts/bootstrap.py`,
+    `run.bat`, `run.ps1`, the settings file, and anything under `.git`. A system that can rewrite its own
     referee has no referee, and that is the exact failure the films this assistant
     borrows from are about. The refusal is in code, not in a guideline.
 
@@ -35,6 +40,10 @@ WHAT STAGE C CANNOT DO
     when the process starts again. So the honest version is what is here: the change
     is verified, the marker is written, and the session survives the restart because
     its state is in files. `restart_command()` returns the line that does it.
+
+    The first real run of that code is that restart, with nobody watching. So `apply` also puts a
+    `.py` change under watch (`core/boot_guard.py`): a start made with run.bat or run.ps1 that does
+    not stay up, or end normally, is followed by a start that puts the old file back.
 """
 
 from __future__ import annotations
@@ -53,7 +62,7 @@ import time
 import uuid
 from pathlib import Path
 
-from core import failures
+from core import boot_guard, display_text, failures
 from core.mental.registry import implements
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -63,7 +72,11 @@ PROTECTED = (
     "core/policy.py",
     "core/confirm.py",
     "core/self_change.py",
+    "core/boot_guard.py",         # takes back a change that stops the program from starting
     "scripts/proof_gate.py",
+    "scripts/bootstrap.py",       # the launcher that runs it
+    "run.bat",                    # and the two files that run that
+    "run.ps1",
     "config/api_keys.json",
 )
 
@@ -71,6 +84,14 @@ PROTECTED = (
 SKIP_DIRS = {".git", ".github", "__pycache__", ".venv", ".venv.old", "node_modules",
              "build", "dist", ".pytest_cache", ".ruff_cache", ".mypy_cache",
              ".hypothesis", ".arena", ".npm", "uploads"}
+
+# What a rehearsal copy leaves out: history, caches, installed packages, the owner's uploads. It KEEPS
+# `.github`: a few kilobytes of workflow text that the tests read, and a copy without it fails those
+# tests for a reason that has nothing to do with the change being tried (a full rehearsal of this very
+# repository failed 9 tests and errored 6 more). `.github` stays in SKIP_DIRS: nothing may be written
+# there through this module. A copy is a temporary folder, so having the folder in it changes nothing.
+# `.git` stays out too, and the copy gets a repository of its own with one commit (`_make_the_copy_a_repository`).
+COPY_SKIP = frozenset(SKIP_DIRS) - {".github"}
 
 CONFIRMATIONS = 2
 CHANNELS = ("voice", "panel", "cli")
@@ -113,8 +134,13 @@ def store() -> Path:
     return folder
 
 
-def _read_regular_text(path: Path) -> str:
-    """Read a regular file only. Never follow a symlink from the state directory."""
+def _read_regular_text(path: Path, keep_newlines: bool = False) -> str:
+    """Read a regular file only. Never follow a symlink from the state directory.
+
+    Line ends are read as `\\n` unless `keep_newlines` is set, which returns the text as it is on disk:
+    that is what a kept copy and a put-back have to use, or "exactly what it was" is not true of a file
+    with Windows line ends.
+    """
     path = Path(path)
     try:
         info = path.lstat()
@@ -123,7 +149,37 @@ def _read_regular_text(path: Path) -> str:
     if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
             or info.st_nlink > 1):
         raise OSError(f"Refusing a linked or non-regular self-change state file: {path.name}")
-    return path.read_text(encoding="utf-8", errors="replace")
+    with path.open("r", encoding="utf-8", errors="replace",
+                   newline="" if keep_newlines else None) as handle:
+        return handle.read()
+
+
+def _in_the_files_line_endings(new: str, was: str) -> str:
+    """`new`, written the way the file it replaces was written: a file that was all CRLF stays all CRLF.
+
+    The text of a change is held with `\\n` line ends, and writing it back as it is would turn every line
+    of a Windows file, not only the changed ones, into a Unix line. A file with mixed line ends is
+    written with `\\n`: there is no single style to keep, and the kept copy has the exact bytes.
+    """
+    if "\r\n" in was and "\n" not in was.replace("\r\n", ""):
+        return new.replace("\r\n", "\n").replace("\n", "\r\n")
+    return new
+
+
+def _must_decode_exactly(path: Path) -> None:
+    """Refuse a file that is not valid UTF-8 text.
+
+    Reading it replaces the bytes it cannot decode, and a change or a put-back would write the
+    replacement characters out, so a sentence that says the file is "exactly what it was" would be false.
+    """
+    try:
+        path.read_bytes().decode("utf-8")
+    except FileNotFoundError:
+        return
+    except UnicodeDecodeError as error:
+        raise ValueError(f"'{path.name}' is not valid UTF-8 text ({error.reason}, byte {error.start}). "
+                         f"I would have to replace those bytes to change it, and I will not write "
+                         f"a file that differs from the one I was given.") from None
 
 
 def _atomic_write_text(
@@ -329,6 +385,7 @@ def propose(path: str, reason: str, new_text: str | None = None,
         # symlink name later could otherwise redirect an approved proposal to another file.
         canonical_path = target.relative_to(root().resolve()).as_posix()
         old = _read_regular_text(target)
+        _must_decode_exactly(target)
         new = _apply_edit(old, find, replace, new_text)
         if len(new) > MAX_PATCH:
             raise ValueError(f"That change is {len(new)} characters; the limit is "
@@ -368,12 +425,42 @@ def propose(path: str, reason: str, new_text: str | None = None,
         return proposal
 
 
+def _make_the_copy_a_repository(folder: Path) -> None:
+    """Give the copy a repository of its own: one commit of what it holds, no remote, no real history.
+
+    Tests ask git which files are meant to be ignored (`git check-ignore`) and which are tracked,
+    instead of keeping a second list that would go stale. In a folder that is not a repository git
+    answers every such question wrongly, and they fail for a reason that has nothing to do with the
+    change being tried; in an empty one, every file reads as new. One commit, made after the copy and
+    before the change is written into it, is the state of a clean checkout. It is local, runs no hook
+    and is signed by nobody, and it goes with the folder.
+    """
+    git = shutil.which("git")
+    if not git:
+        return
+    identity = ["-c", "user.name=rehearsal", "-c", "user.email=rehearsal@localhost",
+                "-c", "commit.gpgsign=false"]
+    for command in ([git, "init", "-q"], [git, "add", "-A"],
+                    [git, *identity, "commit", "-q", "--no-verify", "-m", "the copy being rehearsed"]):
+        try:
+            done = subprocess.run(command, cwd=folder, capture_output=True, text=True,
+                                  timeout=120, check=False)
+        except (OSError, subprocess.SubprocessError) as error:
+            failures.note("self_change.copy_git", error)
+            return
+        if done.returncode != 0:
+            failures.note("self_change.copy_git",
+                          RuntimeError((done.stderr or done.stdout or "git failed").strip()))
+            return
+
+
 def _copy_tree(destination: Path) -> None:
-    """A rehearsal copy of the project: source and data, never the history."""
+    """A rehearsal copy of the project: source, data and workflows, never the history."""
     def ignore(_folder, names):
-        return [name for name in names if name in SKIP_DIRS]
+        return [name for name in names if name in COPY_SKIP]
 
     shutil.copytree(root(), destination, ignore=ignore, dirs_exist_ok=True)
+    _make_the_copy_a_repository(destination)
 
 
 def rehearse(proposal_id: str, full: bool = False,
@@ -389,7 +476,9 @@ def rehearse(proposal_id: str, full: bool = False,
             _copy_tree(folder)
             target = folder / proposal["path"]
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(proposal["new"], encoding="utf-8")
+            was = _read_regular_text(target, keep_newlines=True)      # before the open below empties it
+            with target.open("w", encoding="utf-8", newline="") as handle:     # the bytes apply writes
+                handle.write(_in_the_files_line_endings(proposal["new"], was))
             if command is None:
                 command = ([sys.executable, "scripts/verify.py"] if full
                            else [sys.executable, "-m", "compileall", "-q", proposal["path"]])
@@ -464,11 +553,24 @@ def apply(proposal_id: str) -> dict:
             )
         backup = store() / "backups"
         backup.mkdir(parents=True, exist_ok=True)
-        _atomic_write_text(backup / f"{proposal_id}.bak", proposal["old"])
-        _atomic_write_text(
-            target, proposal["new"], default_mode=0o644, expected_sha256=expected_old
-        )
-        proposal["applied_sha256"] = _content_digest(proposal["new"])
+        was = _read_regular_text(target, keep_newlines=True)
+        _atomic_write_text(backup / f"{proposal_id}.bak", was)
+        is_code = proposal["path"].endswith(".py")
+        applied_sha256 = _content_digest(proposal["new"])
+        if is_code:
+            # Before the write, so that no code change is ever on disk without the net under it. If the
+            # net cannot be set (a store that will not take a file), the change is not made.
+            boot_guard.watch(store(), proposal_id, proposal["path"], expected_old, applied_sha256)
+        try:
+            _atomic_write_text(
+                target, _in_the_files_line_endings(proposal["new"], was),
+                default_mode=0o644, expected_sha256=expected_old
+            )
+        except BaseException:
+            if is_code:
+                boot_guard.forget(store(), proposal_id)
+            raise
+        proposal["applied_sha256"] = applied_sha256
         proposal["stage"] = "applied"
         proposal["applied_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
         data[proposal_id] = proposal
@@ -478,6 +580,7 @@ def apply(proposal_id: str) -> dict:
                "at": proposal["applied_at"], "reason": proposal["reason"],
                "restart_required": restart})
         return {"ok": True, "path": proposal["path"], "restart_required": restart,
+                "boot_watch": is_code,
                 "note": ("Applied. This file is code, so it needs a restart before it "
                          "runs; the session survives the restart because its state is in "
                          "files."
@@ -507,13 +610,14 @@ def revert(proposal_id: str) -> str:
                 "The current file was left untouched."
             )
         _atomic_write_text(
-            target, _read_regular_text(kept), default_mode=0o644,
+            target, _read_regular_text(kept, keep_newlines=True), default_mode=0o644,
             expected_sha256=expected_applied,
         )
         proposal["stage"] = "reverted"
         proposal["reverted_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
         data[proposal_id] = proposal
         _save_proposals(data)
+        boot_guard.forget(store(), proposal_id)
         restart = _write_marker(proposal)
         _note({"id": proposal_id, "event": "reverted", "path": proposal["path"],
                "at": proposal["reverted_at"]})
@@ -582,21 +686,49 @@ def describe(proposal_id: str) -> str:
     return "\n".join(lines)
 
 
+# Every changed line, in order, from a real diff (core/display_text.py). `diff` used to list the lines
+# of the new text that appear nowhere in the old one, then the lines of the old text that appear
+# nowhere in the new one: a line added a second time (a duplicated `return`, a repeated `import`) did
+# not show, a line deleted from one place and still present in another was reported as "only the
+# order of lines changes", and the list stopped at the limit without a word.
+_diff_rows = display_text.diff_rows
+
+
 def diff(proposal_id: str, limit: int = 40) -> str:
-    """A readable diff: the lines that are new, and the lines that go."""
+    """Every changed line, in order: `+` for a line that is new, `-` for a line that goes.
+
+    At most `limit` rows are listed (0 or less lists them all). When there are more, the last row says
+    how many are not shown, so a short list is never mistaken for a short change.
+    """
     item = _load_proposals().get(proposal_id)
     if item is None:
         return f"I have no change called '{proposal_id}'."
-    old_lines = item["old"].splitlines()
-    new_lines = item["new"].splitlines()
-    added = [line for line in new_lines if line not in old_lines][:limit]
-    removed = [line for line in old_lines if line not in new_lines][:limit]
+    rows = _diff_rows(item["old"], item["new"])
+    shown = rows[:limit] if limit and limit > 0 else rows
     lines = [f"{item['id']} {item['path']}"]
-    lines += [f"  + {line}" for line in added]
-    lines += [f"  - {line}" for line in removed]
-    if not added and not removed:
-        lines.append("  (only the order of lines changes)")
+    lines += [f"  {row[0]} {row[1:]}" for row in shown]
+    if len(shown) < len(rows):
+        lines.append(f"  … {len(rows) - len(shown)} more changed line(s) are not shown here")
+    if not rows:
+        lines.append("  (no line differs: only line endings, or the newline at the end of the file)")
     return "\n".join(lines)
+
+
+def review(proposal_id: str) -> dict | None:
+    """What a person is asked to decide on: the whole difference, and what stands behind it.
+
+    `digest` covers the old text and the new text. The CONFIRM banner remembers the digest it showed,
+    and a press records nothing if the staged change has a different one by then.
+    """
+    item = _load_proposals().get(proposal_id)
+    if item is None:
+        return None
+    rehearsal = item.get("rehearsal") or {}
+    return {"id": item["id"], "path": item["path"], "reason": item.get("reason", ""),
+            "stage": item["stage"], "rows": _diff_rows(item["old"], item["new"]),
+            "digest": hashlib.sha256((item["old"] + "\x00" + item["new"]).encode("utf-8")).hexdigest(),
+            "rehearsed": bool(rehearsal.get("ok")), "rehearsal": dict(rehearsal),
+            "confirmations": list(item.get("confirmations") or [])}
 
 
 def _clean(text: str) -> str:

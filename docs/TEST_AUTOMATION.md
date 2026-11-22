@@ -13,7 +13,7 @@ Latest verified main commit: `e1237d2e82ad7b981362f009baf568f7873415ea` (2026-11
 - Archive workflow: [run 42876494242](https://github.com/tanushgargjanuary-bot/ULTRON---AGI-like-JARVIS/actions/runs/42876494242), success; 12 exact-SHA recovery tags re-verified in archive-only mode. Branch refs were preserved.
 
 
-These workflows produce automatic status checks. They do **not** guarantee that GitHub blocks a merge when a check fails. On 2026-11-11, the connected GitHub integration returned HTTP 403 when reading `main` branch protection. Required-check enforcement is therefore **not verified** by this audit.
+These workflows produce automatic status checks, and `main` requires them: `GET /repos/<owner>/<repo>/branches/main`, read on 2026-11-20, reports `main` as protected with the three required status checks `fast offline gate`, `linux — suite and instruments` and `windows — the machine the claims are about`, at `enforcement_level: non_admins`. A pull request whose checks fail is therefore blocked for everyone who is not an administrator. Administrators are not bound (`enforce_admins` was read back as false on 2026-11-12, see `docs/specifications/SYSTEM_OVERVIEW.md`), so an administrator can push straight to `main` and the checks then only report. That has happened: every `verify` run on `main` from 2026-11-15 to 2026-11-20 (14 failed, 8 cancelled by the next push) is a push event, and GitHub lets a commit reach a branch that requires checks by direct push only when the pusher is exempt from the rule. The audit of 2026-11-11 could not read branch protection (HTTP 403) and recorded the enforcement as unverified; the full protection record (`/branches/main/protection`) still returns 403 to the integration used on 2026-11-20, so `enforce_admins` was not re-read then.
 
 ## Lane 1 — fast branch gate
 
@@ -25,12 +25,12 @@ Local command: **python scripts/fast_verify.py**
 The workflow:
 1. Checks out the commit with Git history so it can identify the exact update range.
 2. Runs **git diff --check** for whitespace and conflict-marker errors.
-3. Runs Ruff on changed Python files. It fails on selected Python correctness errors.
+3. Runs the lint ratchet (`scripts/lint_ratchet.py`): Ruff with rules `E4,E7,E9,F` on every changed Python file, compared with the same file at the base of the change. A file may not have more findings of a rule than it had, and a new file starts at zero; findings a file already had do not fail a change that did not make them. The comparison is a count per file and rule, so a change that fixes one finding and adds another of the same rule passes. It exits 2, and the step fails, if Ruff or Git cannot be run. Before this, every finding in a touched file failed the gate (`ui.py` has 97), so a one-line change there could not pass without cleaning the whole file. Locally: `python scripts/lint_ratchet.py --base origin/main`.
 4. Runs the offline fast verification script.
 5. Regenerates the module/test map and fails when the committed `docs/MAP.md` is stale.
 6. Cancels an older in-progress run for the same branch or pull request when a newer update arrives.
 
-The workflow installs Ruff for the changed-file static check, plus `requests` and `jsonschema` for imports used by the existing stress suite. These packages are not used to make live provider or model requests.
+The workflow installs Ruff (the version pinned in `requirements-dev.txt`) for the lint ratchet, plus `requests` and `jsonschema` for imports used by the existing stress suite. These packages are not used to make live provider or model requests.
 
 The Python fast verification script:
 - reads tracked and untracked, non-ignored paths through Git's NUL-delimited output;
@@ -40,6 +40,9 @@ The Python fast verification script:
 - tests its own path, syntax, timeout, missing-executable, and nonzero-exit handling;
 - runs the policy/confirmation regression tests;
 - checks README path and claim contracts;
+- runs the tool dispatch smoke test (`tests/test_dispatch_smoke.py`): every plugin in `plugins/` called
+  through the real dispatcher with the arguments a model would send, so a fault on the path every tool
+  takes fails here and not only on Windows;
 - runs the deterministic repair stress suite.
 
 The existing stress suite covers 1,000 seeded scenarios across input normalization, bounded-output rejection, workspace escape attempts, quarantine after ambiguous failures, abstention on unreviewed inputs, literal filename preservation, cross-workspace abstention, expired reviews, and repeated lifecycle/rollback behavior.
@@ -97,7 +100,7 @@ To make the test system a hard merge gate, configure branch protection for `main
 - `linux — suite and instruments`
 - `windows — the machine the claims are about`
 
-The fast gate also runs on every branch push. The full checks run on pull requests to `main` and pushes to `main`. Verify the required-check list in GitHub after changing repository settings. The 2026-11-11 audit could not inspect or change branch protection because the API returned HTTP 403. Do not claim that failed checks block merges until the settings have been read back and verified.
+The fast gate also runs on every branch push. The full checks run on pull requests to `main` and pushes to `main`. Verify the required-check list in GitHub after changing repository settings; it was read back on 2026-11-12 and on 2026-11-20 (above). It does not stop an administrator pushing a failing commit to `main`, and the red streak of 2026-11-15 shows it happening: turning on "do not allow bypassing the above settings" is the owner's decision.
 
 ## Failure handling
 

@@ -414,6 +414,47 @@ def folder(root: Path | None = None) -> str:
     return str(_folder(root))
 
 
+CHILD_LOG_MAX = 256 * 1024     # a child's log is cut when it grows past this, like FAULT_MAX
+
+
+def child_log_path(name: str, root: Path | None = None) -> Path:
+    """`logs/child-<name>.log`: where the output of a background program goes."""
+    clean = re.sub(r"[^A-Za-z0-9_.-]", "_", str(name or "child"))[:40] or "child"
+    return _folder(root) / f"child-{clean}.log"
+
+
+def child_log(name: str, root: Path | None = None):
+    """Open a file for a child process's output, to pass as `stdout=` with `stderr=STDOUT`.
+
+    The rule is that a child's output is never sent to DEVNULL unlogged: a background
+    program that fails to start, or dies a minute later, says why on its own output, and
+    that was being thrown away. This is the file it is written to instead. Each start
+    appends a dated header, and the file is cut first when it is over `CHILD_LOG_MAX`.
+    That bounds it ACROSS starts only: the child owns the handle, so a program that stays up
+    for months keeps appending to the same file. It is a record of starts that fail, not an
+    audit log, and a pipe drained by this process is not an alternative for a detached daemon
+    such as `ollama serve`, which would die of SIGPIPE when this process exited.
+
+    Returns a binary file object the caller closes after `Popen` (the child keeps its own
+    copy of the handle), or None if the file cannot be opened — recorded in `failures`,
+    and the caller then passes `subprocess.DEVNULL` knowing that is the reason.
+    """
+    path = child_log_path(name, root)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        mode = "ab"
+        if path.exists() and path.stat().st_size > CHILD_LOG_MAX:
+            mode = "wb"
+        handle = open(path, mode)
+        handle.write(f"\n--- {time.strftime('%Y-%m-%d %H:%M:%S')} {name} started ---\n"
+                     .encode("utf-8"))
+        handle.flush()
+        return handle
+    except OSError as error:
+        failures.note("crash.child_log", error, detail=str(path))
+        return None
+
+
 def summary(root: Path | None = None) -> dict:
     """How many reports, and what kind they were, for a status line."""
     rows = history(limit=KEEP, root=root)

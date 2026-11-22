@@ -130,7 +130,11 @@ class PluginRegistry:
         try:
             from core.action_loader import _clean_parameters, _coerce_parameters
             cleaned = _clean_parameters(parameters)
-            schema = rec.declaration.get("parameters") if isinstance(rec.declaration, dict) else None
+            # `PluginRecord` keeps the declared schema in `.parameters`. It has
+            # no `.declaration` — reading one raised AttributeError on EVERY
+            # plugin call, which the except below turned into "the plugin
+            # failed" for all fifteen of them while each plugin was fine.
+            schema = rec.parameters if isinstance(rec.parameters, dict) else None
             safe_params = _coerce_parameters(cleaned, schema)
             return _call_run(rec.run, safe_params, player, session_memory) or "Done."
         except Exception as e:

@@ -9,7 +9,8 @@ So this module does the unglamorous part in a fixed order, and it stops at the
 first thing that is not true:
 
     1. scan       every tracked file, for assignment-shaped secrets
-    2. guard      the ignore rules still protect the config and the memory file
+    2. guard      the ignore rules still protect the config and the memory file, and nothing
+                  the app wrote in those two folders is waiting to be added
     3. check      every changed Python file still parses; optionally the full gate
     4. commit     one structured message: what changed, why, what proves it
     5. push       fast-forward only, never forced, token used once and not stored
@@ -39,6 +40,13 @@ from typing import Any, Callable
 TIMEOUT = 120.0
 SHIP_LOG = "ship_log.json"
 MAX_LOG = 100
+
+# Folders the app writes its own data into, and the kinds of file that belong in them on purpose.
+# `.gitignore` is the real defence and is checked by name; this is the net under it for a name it does
+# not know yet (a copy set aside as `x.broken-123`, a new state folder). Anything else in these two
+# folders that git would add is data, and `git add -A` would publish it.
+APP_DATA_FOLDERS = ("memory", "config")
+SOURCE_SUFFIXES = frozenset({".py", ".md", ".ico"})
 
 # Assignment-shaped secrets: `key = "..."`, `token: "..."`. Deliberately narrow.
 # A broad pattern produces false alarms on tests and prose, and a check that
@@ -214,7 +222,12 @@ class Shipper:
         return {"files": files, "hits": hits, "allowed": allowed, "clean": not hits}
 
     def guards(self) -> dict:
-        """The ignore rules that must still hold before anything is published."""
+        """The ignore rules that must still hold before anything is published.
+
+        Two checks: the two files that hold keys and memory are ignored and untracked, and nothing
+        else the app may have written into `memory/` or `config/` is waiting to be added. The second
+        is a net, not a rule: it looks at what git would add, so it does not need to know the name.
+        """
         required = ["config/api_keys.json", "memory/long_term.json"]
         problems = []
         for name in required:
@@ -225,6 +238,14 @@ class Shipper:
         for name in required:
             if any(row.startswith(name) for row in tracked):
                 problems.append(f"{name} is tracked by git — remove it before shipping")
+        waiting = self.git("ls-files", "--others", "--exclude-standard", "--", *APP_DATA_FOLDERS)[1]
+        stray = [row for row in waiting.splitlines()
+                 if Path(row.strip('"')).suffix.lower() not in SOURCE_SUFFIXES]
+        for name in stray[:5]:
+            problems.append(f"{name} is not ignored by git, and the app keeps data in that folder — "
+                            f"a push would publish it")
+        if len(stray) > 5:
+            problems.append(f"… and {len(stray) - 5} more in {', '.join(APP_DATA_FOLDERS)}")
         return {"ok": not problems, "problems": problems}
 
     def check_syntax(self, files: list[str] | None = None) -> dict:

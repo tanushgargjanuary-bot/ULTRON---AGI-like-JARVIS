@@ -4,10 +4,10 @@ Checks DDG news once per day per topic; alerts JARVIS when a new headline appear
 No crypto, no finance, no uninvited tracking.
 """
 import hashlib
-import json
 import re
 from datetime import datetime
-from pathlib import Path
+
+from core import failures
 
 
 # ── Blocked categories (never monitor regardless of what user says) ────────────
@@ -43,15 +43,9 @@ def _load() -> dict:
     return data if isinstance(data, dict) else {}
 
 def _save(monitors: dict) -> None:
-    from memory.memory_manager import load_memory, MEMORY_PATH, _lock
-    memory = load_memory()
-    memory["monitors"] = monitors
-    with _lock:
-        MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-        MEMORY_PATH.write_text(
-            json.dumps(memory, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+    # One writer for the store: atomic, under the same lock as every other memory write.
+    from memory.memory_manager import set_top_level
+    set_top_level("monitors", monitors)
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
@@ -72,7 +66,10 @@ def add_monitor(topic: str) -> str:
         "last_check": "",
         "last_hash":  "",
     }
-    _save(monitors)
+    try:
+        _save(monitors)
+    except OSError as error:
+        return f"I could not save that, so I am not monitoring {topic}: {error}"
     print(f"[Monitor] ➕ Added: {topic}")
     return f"Now monitoring: {topic}"
 
@@ -84,13 +81,20 @@ def remove_monitor(topic: str) -> str:
     slug = _slug(topic)
     if slug in monitors:
         label = monitors.pop(slug)["topic"]
-        _save(monitors)
+        try:
+            _save(monitors)
+        except OSError as error:
+            return f"I could not save that, so I have not stopped monitoring {label}: {error}"
         return f"Stopped monitoring: {label}"
     # partial match fallback
     for key, val in list(monitors.items()):
         if topic in val.get("topic", "").lower():
             label = monitors.pop(key)["topic"]
-            _save(monitors)
+            try:
+                _save(monitors)
+            except OSError as error:
+                return (f"I could not save that, so I have not stopped monitoring "
+                        f"{label}: {error}")
             return f"Stopped monitoring: {label}"
     return f"Not found in monitored topics: {topic}"
 
@@ -154,6 +158,10 @@ def check_all() -> list[str]:
             print(f"[Monitor] ⚠️ Check failed for '{topic}': {e}")
 
     if changed:
-        _save(monitors)
+        try:
+            _save(monitors)
+        except OSError as error:
+            # The alerts already found are still worth giving; the write was recorded.
+            failures.note("monitor.save_state", error)
 
     return alerts

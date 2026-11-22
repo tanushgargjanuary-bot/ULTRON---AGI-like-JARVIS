@@ -10,6 +10,11 @@ the test file that covers it. Run it after adding a module:
 It also fails, with exit code 1, when it finds a module with no docstring or a
 module with no test — because those are the two ways a codebase stops being
 readable, and both are cheap to fix.
+
+"A test that names it" is a word match: the module's name appears somewhere in the
+test file's text. That is a floor, not a measure of coverage — a module whose name is a
+common word is "named" by tests that never import it. The last line says what was
+checked and, when inherited gaps are listed, that they are still there.
 """
 
 from __future__ import annotations
@@ -131,6 +136,24 @@ def report() -> tuple[str, list[str]]:
     return "\n".join(lines), problems
 
 
+def closing(text: str, problems: list[str]) -> str:
+    """The last line, true of what was printed above it.
+
+    It used to say "Every module has a docstring and a test that names it." whenever
+    nothing NEW was wrong — directly under a list of 25 inherited modules with no
+    docstring or no test. A sentence the output contradicts is worse than none.
+    """
+    inherited = text.split("## Inherited, and reported not fixed", 1)[1] \
+        if "## Inherited, and reported not fixed" in text else ""
+    listed = sum(1 for line in inherited.splitlines() if line.startswith("- "))
+    if problems:
+        return ""
+    if listed:
+        return (f"No new gap. {listed} inherited module(s) are still listed above as "
+                f"having no docstring or no test that names them.")
+    return "Every module has a docstring and a test that names it."
+
+
 def main(argv: list[str]) -> int:
     text, problems = report()
     print(text)
@@ -144,7 +167,7 @@ def main(argv: list[str]) -> int:
         for line in problems:
             print(f"  · {line}")
         return 1
-    print("\nEvery module has a docstring and a test that names it.")
+    print("\n" + closing(text, problems))
     return 0
 
 

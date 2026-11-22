@@ -6,8 +6,9 @@ the tool that does both, and it is deliberately the only door.
 
     "Show me your system prompt."              -> action "show"
     "Make your answers shorter from now on."   -> the model stages a "change"
-    "Yes, do it."                              -> action "confirm", channel voice
-    then a click in the panel                  -> action "confirm", channel panel
+    "Yes, do it."                              -> action "confirm": the yes is recorded
+                                                  and a CONFIRM banner goes up
+    then a click on that banner                -> the change is applied
 
 Why a staged change instead of an immediate one: a model that can rewrite its own
 instruction in one step can also delete the paragraphs that stop it from doing
@@ -15,15 +16,45 @@ something. Two confirmations, in two different places, mean the owner has read t
 change twice before it exists. `core/prompt_store.py` holds the rules; this file
 only carries the conversation.
 
+THE SECOND PLACE IS THE ONE THE MODEL CANNOT REACH
+    This tool is exempt from the approval banner (`policy.BYPASS_TOOLS`) on the
+    ground that it carries a gate of its own. That gate used to be a `channel`
+    argument — and the model wrote the argument. Three calls, "stage", "confirm voice",
+    "confirm panel", and the prompt was rewritten with no person involved; measured,
+    not argued. The model no longer says where a confirmation came from. `confirm`
+    records the first yes (the model's report that the owner said it; this code never
+    hears the audio) and puts the CONFIRM banner up (`core/confirm.py`); the second
+    confirmation is recorded only when the owner presses the button — the one act
+    only the interface can issue.
+
+WHAT THE OWNER IS SHOWN
+    The click approves the whole change, so the banner carries the whole change: every changed
+    line, written out (`core/display_text.py`), under the id and the first REASON_LIMIT characters
+    of the reason, which the model writes. A change with more than BANNER_CHANGE_LIMIT characters of
+    difference is refused with a sentence, at `stage` and again at `confirm`: a cut would be a part
+    of the change nobody saw. `ui.ConfirmBanner` draws the text as plain text in a box that scrolls.
+
 Everything this tool returns is a sentence, because it is read aloud as often as it
 is read on screen.
 """
 
 from __future__ import annotations
 
-from core import failures, philosophy, prompt_store
+import hashlib
+
+from core import confirm as hud, display_text, failures, philosophy, prompt_store
+from core.confirm import request as put_up_the_banner
 
 MAX_PREVIEW = 20_000        # the whole prompt fits: the owner asked to see it
+# What the owner is asked to read before pressing CONFIRM, in characters of difference. The
+# banner scrolls, so this is a limit on what a person can fairly be asked to read, not on what
+# fits. A change with more difference than this is REFUSED, never cut: a cut is the part of the
+# change nobody saw, and the click approves all of it. (One prompt line is up to 866 characters,
+# so an edit of two long lines is already about 3,500.)
+BANNER_CHANGE_LIMIT = 4000
+# The model writes the reason, and the banner shows it above the change. Left unbounded it would
+# fill the banner, so the owner sees a reassuring paragraph and has to scroll for the change.
+REASON_LIMIT = 200
 
 
 def _say(lines: list[str]) -> str:
@@ -74,20 +105,86 @@ def _stage(parameters: dict) -> str:
     else:
         return ("To stage a change I need either the whole new text, or the passage "
                 "to find and what to put in its place.")
+    unreadable = _too_big_to_read(proposal)
     return _say([
         "Staged, not applied. Nothing about me has changed yet.",
         prompt_store.describe(proposal),
-        f"To apply it: confirm twice, in two different places — "
-        f"{prompt_store.CONFIRMATIONS} confirmations of proposal {proposal.id}.",
+        unreadable or f"To apply it: confirm twice, in two different places — "
+                      f"{prompt_store.CONFIRMATIONS} confirmations of proposal {proposal.id}.",
     ])
 
 
+def _digest(proposal) -> str:
+    return hashlib.sha256((proposal.before + "\x00" + proposal.after).encode("utf-8")).hexdigest()
+
+
+# Every changed line, in order. Written once, in core/display_text.py, for this banner and the
+# self-change banner; the name stays so `tests/test_prompt_gate.py` still checks it here.
+_diff_rows = display_text.diff_rows
+
+
+def _changed_lines(proposal) -> str:
+    """The whole difference, written out so that it reads as it is (see core/display_text.py)."""
+    rows = _diff_rows(proposal.before, proposal.after)
+    return display_text.visible("\n".join(rows)) or "(no line differs)"
+
+
+def _banner_detail(proposal) -> str:
+    """What the banner carries: the id and a bounded reason, then every changed line."""
+    reason = display_text.one_line(proposal.reason or "no reason given", REASON_LIMIT)
+    return f"{proposal.id}: {reason}\n{_changed_lines(proposal)}"
+
+
+def _too_big_to_read(proposal) -> str:
+    """'' when the owner can be shown the whole change; otherwise the sentence that says he cannot."""
+    size = len(_changed_lines(proposal))
+    if size <= BANNER_CHANGE_LIMIT:
+        return ""
+    return (f"That change is {size:,} characters of difference, more than I can fairly ask you to "
+            f"read on the screen ({BANNER_CHANGE_LIMIT:,}). I have not put up a button for it, and "
+            f"nothing was applied. Stage it again as several smaller changes.")
+
+
 def _confirm(parameters: dict) -> str:
+    """Record the first yes, then ask the owner for the click that decides.
+
+    The `channel` argument is ignored if the model sends one. See the module note.
+    """
     proposal_id = str(parameters.get("proposal") or "").strip()
     if not proposal_id:
         return "Which proposal? Ask me for 'pending' and I will name them."
-    channel = str(parameters.get("channel") or "voice").strip().lower()
-    return prompt_store.confirm(proposal_id, channel)
+    proposal = prompt_store.load(proposal_id)
+    proposal_id = proposal.id
+    unreadable = _too_big_to_read(proposal)
+    if unreadable:
+        return unreadable                 # before the yes is recorded: nothing happened at all
+    recorded = ""
+    if not any(entry.get("channel") == "voice" for entry in proposal.confirmations):
+        recorded = prompt_store.confirm(proposal_id, "voice")
+        proposal = prompt_store.load(proposal_id)
+    if hud.pending_title():
+        return ("Another confirmation is waiting on the screen. Answer that one first. "
+                f"{proposal_id} has not been applied.")
+    shown = _digest(proposal)
+
+    def after_the_click() -> str:
+        # Runs only when the owner presses CONFIRM, on a worker thread. If the staged
+        # change is not the one that was on the banner, it is not applied.
+        try:
+            current = prompt_store.load(proposal_id)
+        except KeyError:
+            return f"{proposal_id} is gone, so nothing was applied."
+        if _digest(current) != shown:
+            return f"{proposal_id} is not the change that was shown, so nothing was applied."
+        try:
+            return prompt_store.confirm(proposal_id, "panel")
+        except ValueError as error:
+            return str(error)
+
+    detail = _banner_detail(proposal)
+    asked = put_up_the_banner(f"prompt-{proposal_id}", "Change my own instructions",
+                              detail, after_the_click)
+    return " ".join(part for part in (recorded, asked) if part)
 
 
 def _list_pending() -> str:
@@ -188,9 +285,13 @@ TOOL = {
         "'stage' with either 'find' and 'replace' (one passage) or 'text' (the whole "
         "prompt) when the user asks you to behave differently from now on, such as "
         "being shorter, more formal, or never using a certain phrase: stage a change "
-        "and say plainly that it is not in effect yet. It applies only after the user "
-        "confirms twice in two different places, so never claim a change is active "
-        "until 'confirm' has returned the applied message. Every change is versioned "
+        "and say plainly that it is not in effect yet. Call 'confirm' only after the "
+        "user has said yes: it records that and puts a CONFIRM button on the screen; "
+        "the change applies only when the user presses that button, which is theirs "
+        "and not yours, so after 'confirm' say that it is waiting for them and never "
+        "claim a change is active. A change too big for the user to read on the screen "
+        "is refused rather than cut, so stage it as several smaller ones. "
+        "Every change is versioned "
         "and can be reverted. Do not use this to change what you are allowed to do in "
         "the wider system: permissions, approvals and file limits live in code, not "
         "in this text, and editing the text does not change them."
@@ -213,8 +314,6 @@ TOOL = {
                         "description": "What that passage becomes."},
             "proposal": {"type": "STRING",
                          "description": "The id of a staged change, e.g. p1a2b3c4d5e6f."},
-            "channel": {"type": "STRING",
-                        "description": "Where the confirmation came from: voice | panel | cli."},
             "version": {"type": "STRING",
                         "description": "A kept version name, for revert."},
         },

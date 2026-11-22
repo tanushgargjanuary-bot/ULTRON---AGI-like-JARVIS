@@ -10,7 +10,7 @@ module-by-module version of this; `docs/INDEX.md` lists every document.
 |---|---|---|---|---|
 | 1 | **Host** | `main.py`, `ui.py`, `dashboard/` | what the user sees and says | contain logic the other layers own |
 | 2 | **Providers** | `providers/` | how a model is spoken to | know about tools or memory |
-| 3 | **Safety** | `core/policy.py`, `core/custom_gate.py`, `core/evidence*` | whether an act is allowed, and what proves it happened | be bypassed by any other layer |
+| 3 | **Safety** | `core/policy.py`, `core/custom_gate.py`, `core/outcome.py`, `core/action_audit.py` | whether an act is allowed, and what proves it happened | be bypassed by any other layer |
 | 4 | **Capability** | `actions/`, `plugins/`, `core/bridges.py`, `core/webapi.py` | one tool, one job | decide its own risk tier |
 | 5 | **Judgement** | `custom_jarvis/` | plan, verify, remember, decide, learn | act without the registry |
 | 6 | **State** | `memory/`, `custom_jarvis/settings.py`, `core/paths.py` | what survives a restart | hold a secret in a prompt |
@@ -54,7 +54,7 @@ Every arrow is a file you can open. Nothing happens "inside the model".
 | Invariant | Enforced by |
 |---|---|
 | A tool cannot escape the workspace | `addon_runtime.PATH_ARGUMENTS` + `prepare_args`, tested per tool |
-| A tool has a risk tier, or it asks | `tests/test_policy_new_tools.py` |
+| A tool has a risk tier, or it asks | `tests/test_policy.py` (`test_unknown_tool_is_guarded_not_trusted`), `tests/test_suite_safety.py:Tiers` |
 | A promise in a docstring needs a file | `scripts/proof_gate.py` (`NOT PRESENT` is a verdict) |
 | Confidence is a lower bound, never a ratio | `custom_jarvis/metacog.py`, `tests/test_metacog.py`, gate claim `metacognition` |
 | A decision can refuse | `custom_jarvis/decision.py`, gate claim `decisions` |
@@ -66,6 +66,11 @@ Every arrow is a file you can open. Nothing happens "inside the model".
 | A version that does not parse is put back | `custom_jarvis/selfupdate.py:apply`, gate claim `self_update` |
 | Nothing flashes a console window | gate claim `console`, `tests/test_*` |
 | Every module has a docstring and a test | `python scripts/map.py` (exit 1 on a new gap) |
+| A settings or memory file is replaced atomically, and never from a read that failed | `core/atomic_file.py`, `memory/config_manager.py`, `memory/memory_manager.py`, `tests/test_config_safety.py`, `tests/test_memory_safety.py` |
+| A loop that lives as long as the process is held, and says how it ended | `core/background_tasks.py`, `tests/test_background_loops.py` |
+| Text a model chose cannot end a string inside a program another program runs | `core/applescript.py`, `tests/test_applescript_quoting.py` |
+| The system prompt changes only on a click the model cannot make | `actions/prompt_editor.py`, `core/prompt_store.py`, `tests/test_prompt_gate.py` |
+| A document about the native core says what runs | `tests/test_native_claims.py` |
 
 ## Data on disk
 

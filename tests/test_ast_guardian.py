@@ -1,3 +1,5 @@
+"""The AST guardian: what it approves, and every way code has tried to get past it."""
+
 import unittest
 from core.ast_guardian import ASTGuardian
 

@@ -13,6 +13,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from core import failures
 from core.routing import (
     Provider, Purpose, Refusal, Route, RoutingTable, apply_switch, parse_switch,
 )
@@ -93,8 +94,11 @@ class RoutedLLM:
                 client_caps = getattr(active_client, "caps", {}) or {}
                 if "vision" in client_caps:
                     base["vision"] = bool(client_caps["vision"])
-        except Exception:
-            pass
+        except Exception as error:
+            # The shared capabilities are still a safe answer, but a conversation
+            # route that cannot be chosen is a configuration fault: leave a trace.
+            failures.note("routing_runtime.caps", error,
+                          detail="no active conversation route; using shared caps")
         return base
 
     def select(self, purpose: Purpose | str = Purpose.CONVERSATION):

@@ -153,6 +153,19 @@ class WorkspaceTools(Base):
         self.assertIn(".py", data["languages"])
         self.assertGreaterEqual(data["lines"], 7)
 
+    def test_measure_code_leaves_no_file_open(self):
+        # `sum(1 for _ in path.open("rb"))` never closed what it opened; the handle lived
+        # until a collection, and on Windows a handle that is still open blocks the rename
+        # or delete of that file.
+        import gc
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            self.tool("measure_code", path=str(self.workspace))
+            gc.collect()
+        leaked = [str(w.message) for w in caught if issubclass(w.category, ResourceWarning)]
+        self.assertEqual(leaked, [])
+
     def test_measure_code_is_bounded(self):
         data = json.loads(self.tool("measure_code", path=str(self.workspace),
                                     max_files=1)["output"])

@@ -1,5 +1,6 @@
 # Static checks for the fast branch gate (.github/workflows/fast-checks.yml
-# runs `ruff check --select E4,E7,E9,F` on every changed Python file).
+# runs scripts/lint_ratchet.py: ruff with `--select E4,E7,E9,F` on every changed Python
+# file, failing a change for the findings it adds, not for ones the file already had).
 #
 # main.py is the launcher, not a library. Its imports deliberately sit after
 # the stdout reconfiguration and the launch guard: the guard must refuse a

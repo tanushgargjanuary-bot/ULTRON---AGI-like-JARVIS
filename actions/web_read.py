@@ -105,8 +105,16 @@ def _public_address(host: str, port: int) -> str:
     return addresses[0]
 
 
-def _request_once(url: str) -> tuple[int, dict[str, str], bytes]:
-    """Make one bounded GET to a pinned public IP while retaining TLS hostname checks."""
+HTML_ACCEPT = "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1"
+
+
+def _request_once(url: str, *, accept: str | None = None,
+                  max_bytes: int = MAX_BYTES) -> tuple[int, dict[str, str], bytes]:
+    """Make one bounded GET to a pinned public IP while retaining TLS hostname checks.
+
+    `accept` and `max_bytes` default to what the page reader has always sent and allowed;
+    `fetch_public_bytes` passes its own for a file that is not a page.
+    """
     normalized = _normalize_url(url)
     parsed = urlsplit(normalized)
     host = parsed.hostname or ""
@@ -124,15 +132,16 @@ def _request_once(url: str) -> tuple[int, dict[str, str], bytes]:
         conn.request("GET", target, headers={
             "Host": authority,
             "User-Agent": USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1",
+            "Accept": accept or HTML_ACCEPT,
             "Accept-Encoding": "identity",
             "Connection": "close",
         })
         response = conn.getresponse()
         headers = {key.lower(): value for key, value in response.getheaders()}
-        body = response.read(MAX_BYTES + 1)
-        if len(body) > MAX_BYTES:
-            raise ValueError(f"The page exceeds the {MAX_BYTES // 1_000_000} MB read limit.")
+        body = response.read(max_bytes + 1)
+        if len(body) > max_bytes:
+            noun = "page" if max_bytes == MAX_BYTES else "file"
+            raise ValueError(f"The {noun} exceeds the {max_bytes / 1_000_000:g} MB read limit.")
         return response.status, headers, body
     finally:
         conn.close()
@@ -198,6 +207,34 @@ def _fetch_page(url: str) -> tuple[str, str, bytes, str]:
             charset = raw_type.lower().split("charset=", 1)[1].split(";", 1)[0].strip(" \"'") or "utf-8"
         return current, content_type, body, charset
     raise RuntimeError("The page redirected too many times.")
+
+
+def fetch_public_bytes(url: str, max_bytes: int, accept: str = "*/*") -> tuple[str, dict[str, str], bytes]:
+    """Download one file from a public web address; return (final address, headers, body).
+
+    For a caller that wants a file (an image) rather than a page, and must not be talked into
+    reading the owner's disk or the owner's network: only http and https, no credentials, only
+    standard ports, only public addresses (the name is resolved once and the connection goes to
+    that checked address), and every redirect is checked the same way. The body is capped at
+    `max_bytes`. It does not read robots.txt: that is a courtesy for a program that reads pages
+    on its own, and this is one file the owner named. Raises ValueError, RuntimeError or OSError
+    with a message that can be said aloud.
+    """
+    current = _normalize_url(url)
+    for hop in range(MAX_REDIRECTS + 1):
+        status, headers, body = _request_once(current, accept=accept, max_bytes=max_bytes)
+        if status in {301, 302, 303, 307, 308}:
+            location = headers.get("location", "").strip()
+            if not location:
+                raise RuntimeError(f"The site returned HTTP {status} without a redirect target.")
+            if hop >= MAX_REDIRECTS:
+                raise RuntimeError("The address redirected too many times.")
+            current = _normalize_url(urljoin(current, location))
+            continue
+        if status >= 400:
+            raise RuntimeError(f"The server answered HTTP {status}.")
+        return current, headers, body
+    raise RuntimeError("The address redirected too many times.")
 
 
 def _extract_with_stdlib(text: str) -> tuple[str, str]:

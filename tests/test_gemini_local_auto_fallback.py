@@ -27,7 +27,10 @@ class TestGeminiLocalAutoFallback(unittest.TestCase):
 
         fake_reply = gemini._Reply("Generated answer from local Qwen")
 
-        with patch("core.local_detector.scan_running_servers", return_value=[fake_model]):
+        # DECISIONS.md: automatic failover onto this machine needs the owner's
+        # `local_fallback_consent`; tests/test_gemini_resilience.py covers its absence.
+        with patch("core.local_detector.scan_running_servers", return_value=[fake_model]), \
+                patch.object(gemini, "_local_fallback_consented", return_value=True):
             with patch.object(gemini, "_provider_call", return_value=fake_reply) as mock_prov_call:
                 # Force cloud models to fail by putting them on cooldown
                 with patch.object(gemini, "_cooling", return_value=True):

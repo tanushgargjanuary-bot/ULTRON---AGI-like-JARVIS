@@ -1,5 +1,31 @@
 # ULTRON: Production-Grade Autonomous Self-Evolution Architecture
 
+## Status of this document (read first)
+
+This is a **design**. Sections 1-5 and the diagrams describe what the architecture is meant to
+do. The Rust crate `native/ultron-core` implements part of it, and the rest is code that is
+present but not running:
+
+- `native/ultron-core/src/main.rs` starts two things: the shared audio ring and the named-pipe
+  IPC server (`\\.\pipe\ultron-core`). That is all it starts.
+- The IPC server echoes heartbeat frames (channel `0x06`) and keeps no clock, so **nothing in
+  the Rust core terminates a stalled worker today**, and nothing counts crashes.
+- `watchdog::boot_guard`, `git::recovery`, `orchestrator::blue_green`, `process::supervisor`
+  (the Job Object sandbox), `vision::capture` and `integrity::referee_sealer` are library
+  modules that `main.rs` does not start. This document says they are **NOT started by
+  `main.rs`**; `tests/test_native_claims.py` fails when that stops being true, so whoever wires
+  one in must come back and change this paragraph.
+- `integrity::referee_sealer` is neither BLAKE3 nor HMAC and is not bound to the machine (its
+  key is a constant string); the "BLAKE3 + hardware key" seals in the diagrams and in section
+  4.1 are the intended design, not something that runs.
+- `git::recovery` runs `git reset --hard` in the repository, which discards uncommitted work,
+  and falls back to the current `HEAD` when no verified tag is recorded; keep it unwired until
+  it refuses to run on a dirty tree.
+- Nothing in CI builds or tests the Rust crate or the Go sidecar (`sidecar/watchd`). The Rust
+  crate targets Windows only (`tokio::net::windows::named_pipe`, the `windows` crate).
+- What does run, in Python: `core/ast_guardian.py`, `core/policy.py`, `core/self_change.py`
+  (five stages, two confirmations), `core/heartbeat.py` and `core/ipc_client.py`.
+
 ## Master System Diagram
 
 ```mermaid
@@ -415,7 +441,7 @@ The background evolutionary loop operates on a 4-hour cycle:
 
 ### 3.1 Dead Man's Switch / Boot Loop Guard
 
-- The Rust supervisor receives heartbeats every 5 seconds over the `\pipe\ultron-ipc` Named Pipe.
+- The Rust supervisor receives heartbeats every 5 seconds over the `\\.\pipe\ultron-core` Named Pipe (design; today the server only echoes them, see "Status of this document").
 - If no heartbeat is received within 30 seconds, the supervisor terminates the stalled worker.
 - **Boot Loop Detection**: If 3 crashes occur within a 90-second rolling window:
   1. Identifies the last verified release tag (`config/last_verified_release.txt`).

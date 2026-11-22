@@ -64,6 +64,64 @@ class Base(unittest.TestCase):
                        log_path=self.base / "ship_log.json")
 
 
+class DataTheAppKeepsInItsOwnFolders(Base):
+    """`.gitignore` names the files the app writes; this is the net under it for a name it lacks.
+
+    The self-change pipeline kept its proposals (the whole old and new text of the file), its ledger
+    and a copy of each replaced file in `config/self_change/`, and no ignore rule named that folder, so
+    `ship` — which runs `git add -A` — would have committed and pushed all of it.
+    """
+
+    def leave(self, name: str, text: str = "{}\n") -> None:
+        path = self.work / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_a_data_file_git_would_add_in_the_state_folder_stops_the_ship_before_the_commit(self):
+        self.leave("config/self_change/proposals.json")
+        guards = self.shipper().guards()
+        self.assertFalse(guards["ok"])
+        self.assertIn("config/self_change/proposals.json", guards["problems"][0])
+        before = git(self.work, "log", "--oneline").count("\n")
+        result = self.shipper().ship("a change")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["stage"], "guard")
+        self.assertEqual(git(self.work, "log", "--oneline").count("\n"), before, "nothing was committed")
+
+    def test_a_data_file_in_memory_is_caught_too(self):
+        self.leave("memory/notes_backup.json")
+        self.assertFalse(self.shipper().guards()["ok"])
+
+    def test_source_files_in_those_folders_are_not_in_the_way(self):
+        self.leave("memory/a_new_module.py", "x = 1\n")
+        self.leave("config/README.md", "# config\n")
+        guards = self.shipper().guards()
+        self.assertTrue(guards["ok"], guards["problems"])
+
+    def test_a_data_file_that_is_ignored_is_not_in_the_way(self):
+        self.leave("config/api_keys.json")
+        self.leave("memory/long_term.json")
+        guards = self.shipper().guards()
+        self.assertTrue(guards["ok"], guards["problems"])
+
+    def test_a_data_file_that_is_already_tracked_is_not_a_new_leak(self):
+        self.leave("config/mcp_servers.json")
+        git(self.work, "add", "config/mcp_servers.json")
+        git(self.work, "commit", "-q", "-m", "a tracked config file")
+        self.assertTrue(self.shipper().guards()["ok"])
+
+    def test_more_than_five_are_counted_not_listed(self):
+        for number in range(8):
+            self.leave(f"memory/stray_{number}.json")
+        problems = self.shipper().guards()["problems"]
+        self.assertEqual(len(problems), 6)
+        self.assertIn("3 more", problems[-1])
+
+    def test_data_elsewhere_is_not_this_checks_business(self):
+        self.leave("notes/todo.json")
+        self.assertTrue(self.shipper().guards()["ok"])
+
+
 class Secrets(Base):
 
     def test_a_marked_fixture_line_is_exempt_and_counted(self):

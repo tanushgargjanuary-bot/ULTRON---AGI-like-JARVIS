@@ -16,7 +16,7 @@ Supports two backends — selected via  "llm_provider"  in config/api_keys.json:
         Note: tool-calling support depends on the model; use a model that
         supports function/tool calls (e.g. Qwen2.5, Llama-3.1, Mistral).
 """
-from core import failures
+from core import crash, failures
 import json
 import re
 import subprocess
@@ -82,7 +82,7 @@ def ensure_ollama_running(timeout: int = 15) -> bool:
             return ok
         except Exception as e:
             print(
-                f"[LLM] Cannot reach OpenAI-compatible server at {url}.\n"
+                f"[LLM] Cannot reach OpenAI-compatible server at {url} ({e}).\n"
                 "      Make sure LM Studio / LocalAI / Jan is running and the server is started."
             )
             return False
@@ -100,8 +100,15 @@ def ensure_ollama_running(timeout: int = 15) -> bool:
         return True
 
     print("[LLM] Ollama not running — launching 'ollama serve'…")
+    # Its output goes to logs/child-ollama.log, not to DEVNULL: when the server dies on
+    # start (a port already taken, a damaged model folder) that file is the only place
+    # that says so.
+    output = crash.child_log("ollama")
     try:
-        kwargs: dict = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        kwargs: dict = {
+            "stdout": output if output is not None else subprocess.DEVNULL,
+            "stderr": subprocess.STDOUT if output is not None else subprocess.DEVNULL,
+        }
         if sys.platform == "win32":
             kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
         subprocess.Popen(["ollama", "serve"], **kwargs)
@@ -111,6 +118,9 @@ def ensure_ollama_running(timeout: int = 15) -> bool:
     except Exception as e:
         print(f"[LLM] Could not launch Ollama: {e}")
         return False
+    finally:
+        if output is not None:
+            output.close()
 
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -119,7 +129,8 @@ def ensure_ollama_running(timeout: int = 15) -> bool:
             print("[LLM] Ollama started successfully.")
             return True
 
-    print("[LLM] Ollama did not respond within the timeout.")
+    print("[LLM] Ollama did not respond within the timeout. "
+          f"Its own output is in {crash.child_log_path('ollama')}.")
     return False
 
 

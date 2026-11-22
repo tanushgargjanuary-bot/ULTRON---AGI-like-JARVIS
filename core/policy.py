@@ -155,6 +155,11 @@ _GUARDED_REASONS: dict[str, str] = {
     "save_memory": "memory is permanent — remembering is approval-gated",
     "forget_memory": "memory is permanent — forgetting is approval-gated",
     "shutdown_jarvis": "turns the assistant off",
+    # Named, not left to the "unclassified" fallback: that fallback is what put
+    # "unclassified tool - treated conservatively" on the banner for the tool that
+    # rewrites this program's own source, which says nothing about what is being
+    # approved. Still guarded, still asks, for every action the tool has.
+    "self_modify": "changes this program's own source code - each stage is approved here",
     # net_check with no action is not one of its three verbs, so it must not fall
     # through to "unclassified": it is a network tool, and the answer stays ask.
     "net_check": "probes a host the user named — say what to check",

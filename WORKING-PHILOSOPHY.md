@@ -86,7 +86,7 @@ Each of these has been broken once, and the cost is in `docs/engineering/HISTORI
 | Bypass `ControlledRegistry` or `EvidenceEngine` path confinement | It is the reason a tool cannot write outside his folders |
 | Hardcode a provider, a model name or a feature list | He asked for a system that switches by voice and configures itself |
 | Write to `config/api_keys.json` directly | It holds his keys; `memory/config_manager.py` owns it |
-| Edit the referee: `core/policy.py`, `core/confirm.py`, `core/self_change.py`, `scripts/proof_gate.py` | A system that can rewrite its own referee has none |
+| Edit the referee: `core/policy.py`, `core/confirm.py`, `core/self_change.py`, `core/boot_guard.py`, `scripts/proof_gate.py`, `scripts/bootstrap.py`, `run.bat`, `run.ps1` | A system that can rewrite its own referee has none |
 | Add a launcher file | The installer reuses `run.ps1`; a second entry point is a second thing to break |
 | Keep a promise in a docstring that has no file behind it | Three docstrings described a WhatsApp driver that did not exist |
 | Enforce a workspace size/file-count ceiling | The owner withdrew the 100 MB / 5,000-file budget on 2026-11-07. Keep caches, build output, and machine state out of Git, but do not impose an arbitrary size limit. |

@@ -5,7 +5,9 @@ Three properties matter, and each one is a class below.
     readable     what the model is given can be shown, in full, to the person who
                  instructs it;
     deliberate   no change happens on one instruction — a proposal is staged, and it
-                 applies only after two confirmations made in two different places;
+                 applies only after two confirmations made in two different places:
+                 the first yes, and the owner pressing CONFIRM on the banner the tool
+                 puts up (the model cannot press it; see tests/test_prompt_gate.py);
     reversible   every applied change keeps the text it replaced, and going back is
                  a change like any other.
 
@@ -16,9 +18,7 @@ which is the one thing this project has never allowed.
 
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -27,39 +27,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from actions import prompt_editor
-from core import failures, policy, prompt_store
+from core import policy, prompt_store
 
-
-class WithATemporaryPrompt(unittest.TestCase):
-    """Every test gets its own prompt file and its own history folder."""
-
-    def setUp(self):
-        self.folder = Path(tempfile.mkdtemp())
-        self.prompt = self.folder / "prompt.txt"
-        shutil.copyfile(ROOT / "core" / "prompt.txt", self.prompt)
-        self._real_prompt = prompt_store.PROMPT_PATH
-        prompt_store.PROMPT_PATH = self.prompt
-        prompt_store.set_store(self.folder / "versions")
-        failures.clear()
-
-    def tearDown(self):
-        prompt_store.PROMPT_PATH = self._real_prompt
-        prompt_store.set_store(None)
-        shutil.rmtree(self.folder, ignore_errors=True)
-
-    def call(self, **parameters) -> str:
-        return prompt_editor.system_prompt(parameters)
-
-    # A passage that is in the shipped prompt, and the change the test wants to see
-    # applied. The first version of this test used "Be concise.", which the prompt
-    # does not contain — the stage was refused, correctly, and eleven tests failed
-    # because of a fixture rather than a fault.
-    FIND = "Brevity is the default."
-    REPLACE = "Brevity is the default, and one line is usually enough."
-
-    def stage_small_change(self, reason="be shorter"):
-        return self.call(action="stage", reason=reason,
-                         find=self.FIND, replace=self.REPLACE)
+try:
+    from tempprompt import WithATemporaryPrompt
+except ImportError:                       # imported as tests.test_prompt_editor
+    from tests.tempprompt import WithATemporaryPrompt
 
 
 class TheOwnerCanSeeIt(WithATemporaryPrompt):
@@ -104,21 +77,33 @@ class AChangeNeedsTwoPeople(WithATemporaryPrompt):
 
     def test_one_confirmation_changes_nothing(self):
         proposal = self.proposal_id()
-        said = self.call(action="confirm", proposal=proposal, channel="voice")
+        said = self.call(action="confirm", proposal=proposal)
         self.assertIn("Nothing has changed yet", said)
         self.assertEqual(prompt_store.read(), self.prompt.read_text(encoding="utf-8"))
+        self.assertEqual(len(self.banners), 1, "and the owner is asked for the click")
 
     def test_the_same_place_twice_is_not_two_confirmations(self):
+        # The store's own rule, unchanged: one place cannot confirm twice.
         proposal = self.proposal_id()
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        said = self.call(action="confirm", proposal=proposal, channel="voice")
+        prompt_store.confirm(proposal, "voice")
+        said = prompt_store.confirm(proposal, "voice")
         self.assertIn("somewhere else", said)
         self.assertEqual(len(prompt_store.pending()), 1)
 
+    def test_asking_twice_through_the_tool_is_not_two_confirmations(self):
+        # Through the tool the model cannot name the place, so asking again is still
+        # one yes — and the second ask finds the banner already up.
+        proposal = self.proposal_id()
+        self.call(action="confirm", proposal=proposal)
+        said = self.call(action="confirm", proposal=proposal, channel="panel")
+        self.assertIn("waiting on the screen", said)
+        self.assertEqual(len(prompt_store.pending()), 1)
+        self.assertEqual(prompt_store.read(), self.prompt.read_text(encoding="utf-8"))
+
     def test_two_different_places_apply_it(self):
         proposal = self.proposal_id()
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        said = self.call(action="confirm", proposal=proposal, channel="panel")
+        self.call(action="confirm", proposal=proposal)           # the first yes
+        said = self.click()                                      # the owner's button
         self.assertIn("Applied", said)
         self.assertIn(self.REPLACE, prompt_store.read())
         self.assertEqual(prompt_store.pending(), [])
@@ -126,16 +111,14 @@ class AChangeNeedsTwoPeople(WithATemporaryPrompt):
     def test_an_applied_change_keeps_what_it_replaced(self):
         before = prompt_store.read()
         proposal = self.proposal_id()
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        self.call(action="confirm", proposal=proposal, channel="panel")
+        self.confirm_by_voice_and_click(proposal)
         kept = prompt_store.versions()
         self.assertEqual(len(kept), 1)
         self.assertEqual(kept[0].read_text(encoding="utf-8"), before)
 
     def test_the_changelog_names_who_confirmed_and_why(self):
         proposal = self.proposal_id()
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        self.call(action="confirm", proposal=proposal, channel="panel")
+        self.confirm_by_voice_and_click(proposal)
         row = prompt_store.history()[0]
         self.assertEqual(row["reason"], "be shorter")
         self.assertEqual(sorted(row["confirmations"]), ["panel", "voice"])
@@ -147,7 +130,7 @@ class AChangeNeedsTwoPeople(WithATemporaryPrompt):
         self.assertEqual(prompt_store.pending(), [])
 
     def test_an_unknown_proposal_is_answered_not_raised(self):
-        said = self.call(action="confirm", proposal="p000000000000", channel="voice")
+        said = self.call(action="confirm", proposal="p000000000000")
         self.assertIn("no proposal", said.lower())
 
     def test_staging_without_a_reason_is_refused(self):
@@ -198,8 +181,7 @@ class GoingBack(WithATemporaryPrompt):
     def apply_one_change(self):
         self.stage_small_change()
         proposal = prompt_store.pending()[0].id
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        self.call(action="confirm", proposal=proposal, channel="panel")
+        self.confirm_by_voice_and_click(proposal)
         return prompt_store.versions()[0].name
 
     def test_revert_is_staged_like_any_other_change(self):
@@ -214,8 +196,7 @@ class GoingBack(WithATemporaryPrompt):
         version = self.apply_one_change()
         self.call(action="revert", version=version)
         proposal = prompt_store.pending()[0].id
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        self.call(action="confirm", proposal=proposal, channel="panel")
+        self.confirm_by_voice_and_click(proposal)
         self.assertEqual(prompt_store.read(), original)
 
     def test_asking_for_versions_lists_them(self):
@@ -252,8 +233,7 @@ class TheToolIsSafeByConstruction(WithATemporaryPrompt):
     def test_the_file_is_replaced_in_one_step(self):
         self.stage_small_change()
         proposal = prompt_store.pending()[0].id
-        self.call(action="confirm", proposal=proposal, channel="voice")
-        self.call(action="confirm", proposal=proposal, channel="panel")
+        self.confirm_by_voice_and_click(proposal)
         self.assertFalse((self.prompt.parent / "prompt.txt.new").exists(),
                          "a half-written prompt would be a broken assistant")
 

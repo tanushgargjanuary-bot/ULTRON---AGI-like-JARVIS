@@ -25,99 +25,28 @@ def _stray_host_files():
     existed: the suite created one here, containing the test's 1600x900. Run on a
     real installation, that is somebody's remembered window size and, on the
     read-modify-write path, a file written beside the one holding their keys.
+
+    Names are returned with forward slashes on every system. On Windows `str(relative_to)` gives
+    `config\\api_keys.json`, and the tests (and the person reading the report) compare with
+    `config/api_keys.json`; the first Windows run of this check failed four tests on exactly that.
     """
     stray = []
     if USER_CONFIG.exists() and not USER_CONFIG.read_bytes().strip() == b"":
-        stray.append(str(USER_CONFIG.relative_to(ROOT)))
-    for pattern in ("api_keys.json.tmp", "api_keys.json.broken-*", "setup-log.txt"):
+        stray.append(USER_CONFIG.relative_to(ROOT).as_posix())
+    # `api_keys.json.<random>.tmp` is what `memory/config_manager.py` writes before it
+    # replaces the file (a name of its own per write, so two writers never share one);
+    # the old fixed `api_keys.json.tmp` is kept in the list for trees from before that.
+    for pattern in ("api_keys.json.tmp", "api_keys.json.*.tmp", "api_keys.json.broken-*",
+                    "setup-log.txt"):
         for path in (ROOT / "config").glob(pattern):
-            stray.append(str(path.relative_to(ROOT)))
+            stray.append(path.relative_to(ROOT).as_posix())
+    # The memory store's own: the copy it sets aside when the store will not parse, and the
+    # temporary file of a write that was cut short. Each is a copy of everything the user asked
+    # to be remembered, so a suite that leaves one in a real folder has leaked it.
+    for pattern in ("long_term.json.broken-*", ".long_term.json.*.tmp"):
+        for path in (ROOT / "memory").glob(pattern):
+            stray.append(path.relative_to(ROOT).as_posix())
     return stray
-
-
-def _count_lines(root):
-    total = 0
-    for folder, dirs, files in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in
-                   {".git", ".venv", "__pycache__", ".ruff_cache", ".hypothesis"}]
-        for filename in files:
-            if filename.endswith(".py"):
-                total += len((Path(folder) / filename).read_text(
-                    encoding="utf-8-sig", errors="replace").splitlines())
-    return total
-
-
-def refresh_readme_sizes(files):
-    """Files and lines are facts about the tree, true before anything runs.
-
-    They must be written before the suite, because the suite contains a test that
-    compares them. The TEST count is different — it depends on which modules import
-    cleanly — so it is written afterwards, and only if every check passed.
-    """
-    import re
-    readme = Path(ROOT) / "readme.md"
-    if not readme.exists():
-        return
-    text = readme.read_text(encoding="utf-8")
-    found = re.search(r"\*\*(\d+) Python files\. ([\d,]+) lines\.", text)
-    if found is None:
-        return
-    lines = f"{_count_lines(ROOT):,}"
-    if found.group(1) == str(files) and found.group(2) == lines:
-        return
-    replaced = text.replace(found.group(0), f"**{files} Python files. {lines} lines.",
-                            1)
-    readme.write_text(replaced, encoding="utf-8")
-    print(f"Readme sizes refreshed: {files} Python files, {lines} lines.", flush=True)
-
-
-def refresh_readme_numbers(files):
-    """Keep the page's numbers true, in the one place that knows them.
-
-    The page states three numbers: Python files, lines, tests. Two of them are
-    facts about this tree and one — the test count — depends on which optional
-    packages are installed, because several tests exist only to check what happens
-    when a package is MISSING. So the number is not stable across machines, and a
-    hand-maintained copy is wrong the moment either one changes.
-
-    verify.py therefore owns that line: it counts, compares, rewrites, and says
-    what it changed. A red build then means the code is wrong, not that someone
-    forgot to edit a number.
-    """
-    import re
-    import unittest
-    readme = Path(ROOT) / "readme.md"
-    if not readme.exists():
-        return
-    loader = unittest.defaultTestLoader
-    tests_dir = str(Path(ROOT) / "tests")
-    # Same two paths the command line uses: the project as the import root, and the
-    # test folder as its own start directory. Getting this wrong raises
-    # "Start directory is not importable", which is what the first version did.
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
-    suite = loader.discover(tests_dir, top_level_dir=tests_dir)
-    tests = suite.countTestCases()
-    lines = _count_lines(ROOT)
-    text = readme.read_text(encoding="utf-8")
-    current = re.search(r"\*\*\d+ Python files\..*?(\d[\d,]*) tests\.\*\*", text)
-    previous = int(current.group(1).replace(",", "")) if current else 0
-    # A guard, learned from a real failure: an environment missing one shared
-    # library lost eighty-five tests to an import error, and the first version of
-    # this function wrote that smaller number onto the page as if it were the truth.
-    # A collapse is an environment problem, so the page is left exactly as it is.
-    if previous and tests < previous * 0.9:
-        print(f"Readme test count NOT refreshed: this run collected {tests:,} tests "
-              f"against {previous:,} on the page — that gap means modules failed to "
-              f"import, not that tests were removed.", flush=True)
-        return
-    new = f"**{files} Python files. {lines:,} lines. {tests:,} tests.**"
-    found = re.search(r"\*\*\d+ Python files\..*?tests\.\*\*", text)
-    if found is None:
-        return
-    if found.group(0) != new:
-        readme.write_text(text.replace(found.group(0), new, 1), encoding="utf-8")
-        print(f"Readme numbers refreshed: {new.strip('*')}", flush=True)
 
 
 def main():
@@ -134,10 +63,11 @@ def main():
                 ast.parse(path.read_text(encoding="utf-8-sig"), filename=str(path))
                 count += 1
     print(f"Syntax parsed {count} Python files.", flush=True)
-    refresh_readme_sizes(count)
-    # Before the suite, because the suite contains the test that compares this
-    # number to the page. The collapse guard inside makes that safe.
-    refresh_readme_numbers(count)
+    # The front page no longer states file, line or test counts (`tests/test_readme.py`
+    # forbids them: they differ by machine). Two functions here used to keep those
+    # numbers true; their pattern matched nothing on the page, yet the second one
+    # still imported every test module in this process, once, to count them — on
+    # every run, including each self-change rehearsal that runs this script.
     environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
     stray_before = set(_stray_host_files())
     checks = [

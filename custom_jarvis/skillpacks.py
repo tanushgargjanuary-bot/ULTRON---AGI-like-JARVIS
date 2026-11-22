@@ -168,8 +168,16 @@ def install(pack: Any, directory: Path | str, tool_names: Iterable[str] = ()) ->
 
 
 def remove(identity: str, directory: Path | str) -> dict:
-    """Delete a pack's file and unload it. A built-in is never touched."""
+    """Delete a pack's file and unload it. A built-in is never touched.
+
+    The id becomes a file name, and the model chooses it: `remove("../../notes")` was
+    `<workspace>/skills/../../notes.json`, a file outside the folder the packs live in.
+    `install` has always held an id to `ID_PATTERN`; removing is held to the same rule,
+    so only a name that `install` could have written can be deleted.
+    """
     name = _clean(identity, 40)
+    if not ID_PATTERN.match(name):
+        return {"ok": False, "note": f"There is no pack called '{name}'."}
     path = folder(directory) / f"{name}.json"
     if not path.exists():
         return {"ok": False, "note": f"There is no pack called '{name}'."}

@@ -15,6 +15,17 @@ CHANGED 2026-11-05 — risk tiers instead of a four-name allowlist
     arguments, a real HUD confirmation, a token only the interface can issue.
 
     Unknown tools are still guarded. Adding a tool does not add trust.
+
+CHANGED 2026-11-21 — nothing but a read runs while the owner is being asked something
+    A confirmation banner is a button, and a button is pressed by a click, or by a key press, or by a
+    typed space once it has the focus. `computer_control` sends all three and is a routine tool: it
+    runs with no banner of its own. So a model that wanted a banner answered could send the answer
+    itself, two calls long, and every promise that "only a person can press it" rested on the model
+    not trying. While a confirmation is waiting, a call that is allowed to run is now allowed only if
+    it is read-only; any other call is refused with a sentence, and runs when it is asked again after
+    the owner has answered. Not covered: a call sent in the same message as the call that raised the
+    banner (it is dispatched before the banner exists), and anything that does not come through
+    `dispatch` below.
 """
 
 from __future__ import annotations
@@ -22,7 +33,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-from core import confirm, policy
+from core import confirm, display_text, policy
 from core import undo as undo_mod
 
 # Only explicitly named observational tools bypass a confirmation. Kept for the
@@ -35,6 +46,20 @@ async def dispatch(fc, handler, player, response_factory):
     decision = policy.decide(name, getattr(fc, "args", None))
 
     if decision.allow:
+        waiting = confirm.pending_title()
+        if waiting and decision.tier is not policy.Tier.OBSERVE:
+            return response_factory(
+                id=fc.id,
+                name=name,
+                response={
+                    "result": (
+                        f"A confirmation is waiting for the user on the screen: "
+                        f"'{display_text.one_line(waiting, 80)}'. I did not run {name}, "
+                        f"because it could change the machine or answer that confirmation. "
+                        f"Ask the user to answer it first, then try again."
+                    )
+                },
+            )
         # Routine work runs now: the user asked for it and can take it back.
         # Nothing is parked, nothing is frozen, and the undo stack carries it.
         return await handler(fc)
