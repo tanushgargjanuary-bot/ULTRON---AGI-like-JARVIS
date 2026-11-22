@@ -108,6 +108,23 @@ The owner's own data never comes from upstream: `config/api_keys.json`, `memory/
 
 **Rollback.** Revert the slice's commit, or switch its setting off. The ledger entry stays, so the file is reported again.
 
+## The weekly job
+
+`.github/workflows/upstream-watch.yml` runs the check every Monday at 06:17 UTC and can be started by hand (Actions tab,
+"Upstream watch", Run workflow). It may read the repository and write issues, and nothing else (`contents: read`,
+`issues: write`); a test holds it to that, and every action in it is pinned to a commit.
+
+- Upstream moved (exit 10 or 20): it keeps **one** open issue labelled `upstream-watch` and rewrites it, so there is never a
+  pile of them.
+- The pin has caught up (exit 0): it closes that issue with a comment. Without this the issue would go on saying "Yes,
+  upstream moved" after you had adopted or set aside the drop.
+- The check could not be made (exit 2 or a crash): the run fails, red, and the issue is left as it was.
+
+GitHub runs a schedule only from the default branch, can delay or drop a run, and switches schedules off in a public
+repository after 60 days without activity. So every check compares with the pin, never with "last week": a missed run loses
+nothing, and the next one reports the whole gap. To switch the schedule off, revert the commit that added the workflow file;
+the tool stays.
+
 ## Licence and attribution
 
 CC BY-NC 4.0: publishing is allowed, selling is not, and the attribution in `LICENSE` and the readme stays. Taking material
@@ -117,5 +134,8 @@ means saying it was modified (CC BY-NC 4.0 section 3(a)(1)(A)(ii)). A changed li
 
 - The tool and its tests have run on Linux only. The pull request's Windows job is their first Windows run. macOS has not
   been run at all.
+- The workflow has not run on GitHub. Its issue steps were run only with a stand-in `gh` that records what it is asked, and
+  the schedule has not fired. One GitHub behaviour was checked on the real repository on 2026-11-22: `gh issue list --label X`
+  for a label that does not exist yet prints nothing and exits 0, which is what the first scheduled run meets.
 - What the report says about upstream's code comes from reading its files and the lines it added. None of upstream's code
   was run.

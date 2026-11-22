@@ -1,0 +1,84 @@
+name: Upstream watch
+
+# Reads upstream Mark and keeps ONE issue open saying what moved. It cannot change the repository: it may
+# read it and write issues, and nothing else (tests/test_upstream_sync.py holds it to that). Taking
+# anything from upstream is a separate, reviewed change; see docs/UPSTREAM_SYNC.md.
+#
+# A schedule runs only from the default branch, and GitHub can delay or drop a scheduled run and switches
+# schedules off in a public repository after 60 days without activity. So the check compares with the
+# pinned drop (docs/upstream/PIN.json), never with "last week": a missed run loses nothing.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: upstream watch (reads only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Compare with upstream
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          python scripts/upstream_sync.py check --markdown "$RUNNER_TEMP/report.md" --json "$RUNNER_TEMP/report.json"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ -f "$RUNNER_TEMP/report.md" ]; then cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"; fi
+          exit 0
+
+      - name: Fail if the check could not be made
+        if: steps.check.outputs.code != '0' && steps.check.outputs.code != '10' && steps.check.outputs.code != '20'
+        shell: bash
+        run: |
+          echo "The check could not be made (exit ${{ steps.check.outputs.code }}), so nothing is known about upstream."
+          exit 1
+
+      - name: Keep one issue open
+        if: steps.check.outputs.code == '10' || steps.check.outputs.code == '20'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Upstream moved: $(jq -r '.version + " @ " + .new_sha[0:7]' "$RUNNER_TEMP/report.json")"
+          gh label create upstream-watch --color 5319e7 --description "Upstream Mark moved" --force
+          number="$(gh issue list --label upstream-watch --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --title "$title" --body-file "$RUNNER_TEMP/report.md"
+          else
+            gh issue create --title "$title" --label upstream-watch --body-file "$RUNNER_TEMP/report.md"
+          fi
+
+      - name: Close the issue once the pin has caught up
+        if: steps.check.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          number="$(gh issue list --label upstream-watch --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            head="$(jq -r '.new_sha[0:7]' "$RUNNER_TEMP/report.json")"
+            gh issue close "$number" --comment "Nothing is waiting: docs/upstream/PIN.json now matches upstream's head ($head). Closing."
+          fi

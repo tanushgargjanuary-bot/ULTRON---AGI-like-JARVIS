@@ -32,6 +32,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -1275,6 +1276,214 @@ class TheReportAsAWhole(unittest.TestCase):
 
     def test_a_file_with_no_folder_is_called_top_level(self):
         self.assertIn("`(top level)` 1", sync.render(self.report(sync.FileChange("main.py", "COLLIDES")), EXCLUSIONS))
+
+
+# ------------------------------------------------------------------ the weekly workflow
+
+WORKFLOW = ROOT / ".github" / "workflows" / "upstream-watch.yml"
+
+CLOSE = "Close the issue once the pin has caught up"
+GH = """#!/bin/sh
+# Stands in for `gh`: records each call on one line (arguments split by a unit separator, so spaces
+# survive) and answers `issue list` with the number of the open issue the test chose, if any.
+printf 'gh' >> "$FAKE_LOG"
+for argument in "$@"; do printf '\\037%s' "$argument" >> "$FAKE_LOG"; done
+printf '\\n' >> "$FAKE_LOG"
+if [ "$1 $2" = "issue list" ]; then printf '%s' "$FAKE_OPEN_ISSUE"; fi
+"""
+PYTHON = """#!/bin/sh
+# Stands in for `python scripts/upstream_sync.py check ...`: writes the report when asked, exits as told.
+if [ -n "$FAKE_REPORT" ]; then printf '%s' "$FAKE_REPORT" > "$RUNNER_TEMP/report.md"; fi
+exit "${FAKE_CODE:-0}"
+"""
+
+
+def a_bash_we_can_drive() -> str | None:
+    """The `bash` these tests run, or None where there is not one they can drive (a Windows PATH's `bash` is
+    usually the launcher for the Linux subsystem; tests/test_workflow_hygiene.py learned that the hard way).
+    The steps only ever run on the Linux runner, and the Linux job runs these tests."""
+    return None if os.name == "nt" else shutil.which("bash")
+
+
+def step_named(name: str) -> list:
+    """The lines of the workflow step with this name, up to the next step."""
+    lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
+    start = next((index for index, line in enumerate(lines) if line.strip() == f"- name: {name}"), None)
+    if start is None:
+        raise LookupError(f"{WORKFLOW.name} has no step named {name!r}")
+    end = next((index for index in range(start + 1, len(lines)) if lines[index].startswith("      - ")), len(lines))
+    return lines[start:end]
+
+
+def script_of(name: str) -> str:
+    """The shell text of a step's `run: |` block, dedented."""
+    lines = step_named(name)
+    run = next(index for index, line in enumerate(lines) if line.strip() == "run: |")
+    margin = len(lines[run]) - len(lines[run].lstrip())
+    body = []
+    for line in lines[run + 1:]:
+        if line.strip() and len(line) - len(line.lstrip()) <= margin:
+            break
+        body.append(line)
+    inner = min(len(line) - len(line.lstrip()) for line in body if line.strip())
+    return "\n".join(line[inner:] for line in body) + "\n"
+
+
+def condition_of(name: str) -> str:
+    return next(line.split("if:", 1)[1].strip() for line in step_named(name) if line.strip().startswith("if:"))
+
+
+class TheWeeklyWorkflow(unittest.TestCase):
+    """It reads upstream and writes one issue. It cannot change the repository, and nothing a stranger wrote runs."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = WORKFLOW.read_text(encoding="utf-8")
+
+    def under(self, key: str) -> list:
+        """The lines indented under a top-level key."""
+        lines = self.text.splitlines()
+        found = []
+        for line in lines[lines.index(f"{key}:") + 1:]:
+            if line.strip() and not line.startswith(" "):
+                break
+            if line.strip() and not line.strip().startswith("#"):
+                found.append(line)
+        return found
+
+    def test_it_may_read_the_repository_and_write_issues_and_nothing_else(self):
+        self.assertEqual([line.strip() for line in self.under("permissions")], ["contents: read", "issues: write"])
+        self.assertEqual(len(re.findall(r"(?m)^\s*permissions:", self.text)), 1, "a block inside the job could widen it")
+
+    def test_it_starts_on_a_schedule_or_by_hand_and_by_nothing_a_stranger_can_do(self):
+        triggers = {line.strip().rstrip(":") for line in self.under("on") if not line.startswith("    ")}
+        self.assertEqual(triggers, {"schedule", "workflow_dispatch"})
+
+    def test_the_schedule_is_weekly(self):
+        crons = re.findall(r'cron:\s*"([^"]+)"', self.text)
+        self.assertEqual(len(crons), 1)
+        minute, hour, day, month, weekday = crons[0].split()
+        self.assertTrue(minute.isdigit() and hour.isdigit() and weekday.isdigit(), crons[0])
+        self.assertEqual((day, month), ("*", "*"))
+
+    def test_every_action_is_pinned_to_a_commit_and_checkout_keeps_no_credentials(self):
+        uses = re.findall(r"(?m)^\s*- uses:\s*(\S+)(.*)$", self.text)
+        self.assertGreaterEqual(len(uses), 2)
+        for target, rest in uses:
+            self.assertRegex(target, r"^[\w.-]+/[\w.-]+@[0-9a-f]{40}$", "a tag can be moved; a commit cannot")
+            self.assertRegex(rest, r"#\s*v\d", "say which release the commit is")
+        self.assertRegex(self.text, r"persist-credentials:\s*false")
+
+    def test_the_only_things_pasted_into_a_script_are_the_token_and_our_own_exit_status(self):
+        self.assertEqual(set(re.findall(r"\$\{\{\s*(.*?)\s*\}\}", self.text)), {"github.token", "steps.check.outputs.code"})
+
+    def test_it_has_no_way_to_change_the_repository(self):
+        for forbidden in ("git push", "git commit", "git add", "contents: write", "pull-requests: write",
+                          "gh pr ", "gh release", "gh api", "secrets."):
+            self.assertNotIn(forbidden, self.text)
+
+    def test_each_step_acts_on_the_exit_status_the_script_documents(self):
+        moved = {str(sync.EXIT_MOVED), str(sync.EXIT_STOP)}
+        tolerated = set(re.findall(r"!= '(\d+)'", condition_of("Fail if the check could not be made")))
+        self.assertEqual(tolerated, {str(sync.EXIT_SAME)} | moved, "any other status means the check could not be made")
+        self.assertEqual(set(re.findall(r"== '(\d+)'", condition_of("Keep one issue open"))), moved)
+        self.assertEqual(set(re.findall(r"== '(\d+)'", condition_of(CLOSE))), {str(sync.EXIT_SAME)})
+
+
+@unittest.skipUnless(a_bash_we_can_drive() and shutil.which("jq"), "needs a POSIX bash and jq (Windows skips; the Linux job runs it)")
+class TheStepsOfTheWorkflow(unittest.TestCase):
+    """The shell of each step, run as GitHub runs it, with a stand-in `gh` that records what it was asked to do."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.addCleanup(folder.cleanup)
+        self.work = Path(folder.name)
+        self.runner, self.bin = self.work / "runner", self.work / "bin"
+        self.runner.mkdir()
+        self.bin.mkdir()
+        self.log = self.work / "calls.log"
+        self.log.write_text("", encoding="utf-8")
+        for name, text in (("gh", GH), ("python", PYTHON)):
+            (self.bin / name).write_text(text, encoding="utf-8", newline="\n")
+            (self.bin / name).chmod(0o755)
+
+    def run_step(self, name: str, code: str = "0", **environment) -> subprocess.CompletedProcess:
+        script = script_of(name).replace("${{ steps.check.outputs.code }}", code)
+        env = {**os.environ, "PATH": f"{self.bin}{os.pathsep}{os.environ['PATH']}", "RUNNER_TEMP": str(self.runner),
+               "GITHUB_OUTPUT": str(self.work / "output"), "GITHUB_STEP_SUMMARY": str(self.work / "summary"),
+               "FAKE_LOG": str(self.log), **environment}
+        # The flags GitHub runs `shell: bash` with.
+        return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],  # noqa: S603, S607
+                              cwd=self.work, env=env, capture_output=True, text=True, timeout=60, check=False)
+
+    def calls(self) -> list:
+        return [line.split("\x1f")[1:] for line in self.log.read_text(encoding="utf-8").splitlines() if line]
+
+    def with_report(self, moved: bool) -> Outcome:
+        """A real report from the script, put where the steps look for it."""
+        story = a_story(self.addCleanup)
+        if not moved:
+            story.pin(story.head_sha)
+        outcome = story.run()
+        (self.runner / "report.md").write_text(outcome.markdown, encoding="utf-8")
+        (self.runner / "report.json").write_text(json.dumps(outcome.report), encoding="utf-8")
+        return outcome
+
+    def title(self, outcome: Outcome) -> str:
+        return f"Upstream moved: {outcome.report['version']} @ {outcome.report['new_sha'][:7]}"
+
+    def test_a_move_with_no_issue_open_opens_one_with_the_report_as_its_body(self):
+        outcome = self.with_report(moved=True)
+        done = self.run_step("Keep one issue open", FAKE_OPEN_ISSUE="")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        label, listing, create = self.calls()
+        self.assertEqual(label[:3], ["label", "create", "upstream-watch"])
+        self.assertIn("--force", label, "the label is made again without failing when it exists")
+        self.assertEqual(listing[:2], ["issue", "list"])
+        self.assertEqual(create, ["issue", "create", "--title", self.title(outcome), "--label", "upstream-watch",
+                                  "--body-file", str(self.runner / "report.md")])
+
+    def test_a_move_with_an_issue_already_open_updates_that_one_and_opens_no_second(self):
+        outcome = self.with_report(moved=True)
+        self.assertEqual(self.run_step("Keep one issue open", FAKE_OPEN_ISSUE="12").returncode, 0)
+        edit = self.calls()[-1]
+        self.assertEqual(edit, ["issue", "edit", "12", "--title", self.title(outcome), "--body-file", str(self.runner / "report.md")])
+        self.assertNotIn(["issue", "create"], [call[:2] for call in self.calls()])
+
+    def test_when_the_pin_has_caught_up_the_open_issue_is_closed_with_the_reason(self):
+        # Review finding 2: nothing closed the issue, so after the owner adopted or set aside a drop it
+        # went on saying "Yes, upstream moved" until someone noticed.
+        outcome = self.with_report(moved=False)
+        self.assertEqual(self.run_step(CLOSE, FAKE_OPEN_ISSUE="12").returncode, 0)
+        closing = self.calls()[-1]
+        self.assertEqual(closing[:3], ["issue", "close", "12"])
+        self.assertEqual(closing[3], "--comment")
+        self.assertIn(outcome.report["new_sha"][:7], closing[4])
+        self.assertIn("Nothing is waiting", closing[4])
+
+    def test_when_the_pin_has_caught_up_and_no_issue_is_open_nothing_is_opened_or_closed(self):
+        self.with_report(moved=False)
+        self.assertEqual(self.run_step(CLOSE, FAKE_OPEN_ISSUE="").returncode, 0)
+        self.assertEqual([call[:2] for call in self.calls()], [["issue", "list"]])
+
+    def test_the_check_step_never_fails_by_itself_and_hands_on_the_exit_status(self):
+        for code in ("0", "10", "20", "2", "1", "127"):
+            with self.subTest(code):
+                (self.work / "output").write_text("", encoding="utf-8")
+                done = self.run_step("Compare with upstream", FAKE_CODE=code, FAKE_REPORT="the report text")
+                self.assertEqual(done.returncode, 0, "a later step decides what is a failure")
+                self.assertEqual((self.work / "output").read_text(encoding="utf-8").strip(), f"code={code}")
+                self.assertIn("the report text", (self.work / "summary").read_text(encoding="utf-8"))
+
+    def test_the_check_step_copes_with_a_script_that_wrote_no_report(self):
+        done = self.run_step("Compare with upstream", FAKE_CODE="2")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertFalse((self.work / "summary").exists() and (self.work / "summary").read_text(encoding="utf-8"))
+
+    def test_the_step_that_fails_the_job_fails_and_names_the_status(self):
+        done = self.run_step("Fail if the check could not be made", code="2")
+        self.assertEqual(done.returncode, 1)
+        self.assertIn("exit 2", done.stdout)
 
 
 if __name__ == "__main__":

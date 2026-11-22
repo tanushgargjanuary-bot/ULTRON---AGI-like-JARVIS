@@ -117,7 +117,7 @@ edit the module docstring instead and run it again.
 | `repair_adapter.py` | 391 | A bounded Python-shaped argument adapter language, NOT arbitrary Python exec. | test_autonomy_upgrades, test_repair_judgment, test_self_healing |
 | `repair_judgment.py` | 100 | Deterministic repair applicability, not model confidence or authorization. | test_repair_judgment |
 | `runtime.py` | 165 | Explicit execution boundaries for the native command center. | test_dispatch_smoke, test_health_center, test_repair_judgment, test_routing_runtime, test_self_healing, test_suite_providers |
-| `schedule.py` | 148 | custom_jarvis/schedule.py — when to interrupt you, and when not to. | test_expression, test_schedule_packs, test_session_memory_search, test_suite_providers |
+| `schedule.py` | 148 | custom_jarvis/schedule.py — when to interrupt you, and when not to. | test_expression, test_schedule_packs, test_session_memory_search, test_suite_providers, test_upstream_sync |
 | `self_healing.py` | 470 | Bounded, evidence-driven repair orchestration and explicit provider escalation. | test_autonomy_upgrades, test_repair_judgment, test_self_healing |
 | `selfupdate.py` | 242 | custom_jarvis/selfupdate.py — update from GitHub without losing the session. | test_shipping |
 | `service.py` | 662 | MARK-hosted service: deterministic skills and evidence-scoped repair. | test_autonomy_upgrades, test_decision_layers, test_hud_fixes, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping, test_suite_assistant |
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 123 modules, 33,612 lines
+## `tests/` — 123 modules, 33,821 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -377,13 +377,13 @@ edit the module docstring instead and run it again.
 | `test_ui_settings_writes.py` | 145 | The window must save identity and persona choices through the settings module. | test_persona_switch_settings, test_ui_settings_writes |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_update_releases.py` | 161 | Offline tests for release-manifest verification and local update-channel policy. | — |
-| `test_upstream_sync.py` | 1,281 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
+| `test_upstream_sync.py` | 1,490 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
 | `test_verify_script.py` | 198 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
 | `test_video_player.py` | 33 | Malformed model arguments must fail closed rather than crash video playback. | — |
 | `test_wallpaper_url.py` | 454 | `desktop_control wallpaper_url` downloads a picture from the public web, and only that. | — |
 | `test_web_platforms.py` | 325 | tests/test_web_platforms.py — the web layer, with no network in the room. | test_web_platforms |
 | `test_web_read.py` | 80 | The page reader refuses unsafe targets and extracts only bounded public text. | — |
-| `test_workflow_hygiene.py` | 151 | The workflows: a gate that cannot fail is not a gate, and a job gets only the access it needs. | — |
+| `test_workflow_hygiene.py` | 151 | The workflows: a gate that cannot fail is not a gate, and a job gets only the access it needs. | test_upstream_sync |
 
 ## Inherited, and reported not fixed
 
