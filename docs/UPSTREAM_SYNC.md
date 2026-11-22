@@ -34,7 +34,8 @@ and says so in the report. `--upstream DIR_OR_URL` reads a local clone instead, 
 | 2 | The check could not be made: a data file is wrong, upstream cannot be fetched, the pinned base commit or a `reconciled` commit is gone. No report is written. A check that cannot run has not passed. |
 
 Any other number is a crash in the script itself, and a scheduled run treats it as a failure too. One Python file in
-upstream that cannot be parsed (a NUL byte, nesting too deep) does not stop the report: it is named under Notes.
+upstream that cannot be read (a NUL byte, nesting too deep, a link, a folder named like a module) does not stop the
+report: it is named under Notes.
 
 ## Reading the report
 
@@ -64,7 +65,9 @@ upstream (history was rewritten; the report then measures from the copy).
 
 **Text from upstream is untrusted.** File names, the readme title and requirement lines come from someone else. They are
 shown only inside code spans, the readme title is cut to 60 printable characters, and nothing from upstream is ever pasted
-into a shell command.
+into a shell command. A name that is not a plain relative path (a `..`, a backslash, a colon, a character that is not
+valid text) is left out and listed under Notes: Windows would read it as another folder, another drive or a hidden
+stream of another file. A link in upstream is never followed.
 
 ## The three data files
 

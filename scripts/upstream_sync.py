@@ -157,10 +157,13 @@ def check_pin(pin: dict) -> dict:
 
 def check_ledger(ledger: dict) -> dict:
     need(ledger, "LEDGER.json", "entries")
+    if not isinstance(ledger["entries"], list):
+        raise CannotRun("LEDGER.json entries must be a list")
     for number, entry in enumerate(ledger["entries"], 1):
         where = f"LEDGER.json entry {number}"
         need(entry, where, "paths", "disposition", "reason")
-        if not entry["paths"] or not all(isinstance(item, str) and item for item in entry["paths"]):
+        paths = entry["paths"]        # a bare string would be read letter by letter, and a number would crash
+        if not isinstance(paths, list) or not paths or not all(isinstance(item, str) and item for item in paths):
             raise CannotRun(f"{where} needs a list of path patterns")
         if entry["disposition"] not in DISPOSITIONS:
             raise CannotRun(f"{where}: {entry['disposition']!r} is not one of {', '.join(DISPOSITIONS)}")
@@ -173,6 +176,8 @@ def check_ledger(ledger: dict) -> dict:
 
 def check_exclusions(data: dict) -> dict:
     need(data, "EXCLUSIONS.json", "exclusions")
+    if not isinstance(data["exclusions"], list):
+        raise CannotRun("EXCLUSIONS.json exclusions must be a list")
     seen: set[str] = set()
     for item in data["exclusions"]:
         need(item, "an exclusion", "id", "name", "rule", "needles", "guard")
@@ -306,8 +311,16 @@ def count_lines(data: bytes | None) -> int:
 
 
 def safe_path(path: str) -> bool:
-    parts = PurePosixPath(path).parts
-    return bool(parts) and not PurePosixPath(path).is_absolute() and ".." not in parts
+    """True for a name that is an ordinary relative path on every system this runs on.
+
+    Git accepts names that Windows reads as something else: `a\\..\\b` climbs out of its folder, `C:x` is on another
+    drive, `x.txt:stream` is a hidden stream of another file. U+FFFD is what a name that is not valid UTF-8 turns
+    into when it is read here, and it cannot be looked up again. A name that fails is left out, and the report says so.
+    """
+    if any(char in path for char in ("\\", ":", "\0", "\ufffd")):
+        return False
+    posix = PurePosixPath(path)
+    return bool(posix.parts) and not posix.is_absolute() and ".." not in posix.parts
 
 
 def read_ours(root: Path, path: str) -> bytes | None:
@@ -452,6 +465,20 @@ def longest_known(name: str, known: dict[str, Path]) -> str | None:
     return None
 
 
+def read_source(path: Path) -> str:
+    """The text of a file inside the clone. The clone is somebody else's repository, so not everything is one.
+
+    A link is `Unreadable` without being followed: it may lead out of the clone, to a file that is not upstream's.
+    So is anything the system will not open: a folder named like a module, or a file nobody may read.
+    """
+    if path.is_symlink():
+        raise Unreadable("a link")
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        raise Unreadable(type(error).__name__) from error
+
+
 def reachable(tree: Path) -> tuple[set[str], list[str]]:
     """Modules that upstream's own main program, tools, plugins or providers can reach, and files it could not read."""
     files = {module_name(tree, item): item for item in tree.rglob("*.py") if ".git" not in item.parts}
@@ -467,7 +494,7 @@ def reachable(tree: Path) -> tuple[set[str], list[str]]:
         path = files[name]
         package = name if path.name == "__init__.py" else name.rpartition(".")[0]
         try:
-            imports = imported_names(path.read_text(encoding="utf-8", errors="replace"), package)
+            imports = imported_names(read_source(path), package)
         except Unreadable:
             unreadable.append(path.relative_to(tree).as_posix())
             continue
@@ -620,13 +647,20 @@ def survey(clone: Path, pin: dict, ledger: dict, exclusions: dict, root: Path, f
         return {**report, "moved": False, "files": [], "counts": {}, "commits": 0}
     scope, gates = scope_for(clone, pin, full)
     context = Context(clone, root, pin, ledger, exclusions, new_sha)
-    paths = [path for path in changed_paths(clone, scope, new_sha) if safe_path(path)]
+    every = changed_paths(clone, scope, new_sha)
+    paths = [path for path in every if safe_path(path)]
+    refused = [path for path in every if not safe_path(path)]
     changes = [describe_file(context, path) for path in paths]
     unreadable = mark_unwired(changes, clone)
     gates += terms_gates(clone, pin, new_sha, full, scope) + steering_gates(changes)
     commits = int(text_of(git(clone, "rev-list", "--count", f"{scope}..{new_sha}")) or 0)
-    notes = [f"{len(unreadable)} Python file(s) in upstream could not be read to see what they import ({names(unreadable)}), "
-             "so the list of new code nothing imports may be incomplete."] if unreadable else []
+    notes = []
+    if refused:
+        notes.append(f"{len(refused)} path(s) in upstream were left out because their names are not plain relative paths "
+                     f"(a '..', a backslash, a colon or an unreadable character): {names(refused)}.")
+    if unreadable:
+        notes.append(f"{len(unreadable)} Python file(s) in upstream could not be read to see what they import ({names(unreadable)}), "
+                     "so the list of new code nothing imports may be incomplete.")
     return {**report, "moved": True, "gates": gates, "notes": notes, "files": [asdict(item) for item in changes],
             "counts": summarise(changes), "commits": commits, "scope": scope}
 

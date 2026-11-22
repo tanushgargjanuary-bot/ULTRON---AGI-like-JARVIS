@@ -93,8 +93,8 @@ class FakeUpstream:
                     "GIT_AUTHOR_EMAIL": "upstream@example.invalid", "GIT_COMMITTER_EMAIL": "upstream@example.invalid"}
         self.git("init", "--quiet")
 
-    def git(self, *args: str) -> bytes:
-        done = subprocess.run(["git", *args], cwd=self.path, env=self.env, capture_output=True,  # noqa: S603, S607
+    def git(self, *args: str, input: bytes | None = None) -> bytes:
+        done = subprocess.run(["git", *args], cwd=self.path, env=self.env, capture_output=True, input=input,  # noqa: S603, S607
                               timeout=60, check=False)    # a fixed git command in a scratch repository
         if done.returncode:
             raise RuntimeError(f"git {' '.join(args)} failed: {done.stderr.decode('utf-8', 'replace')}")
@@ -104,6 +104,18 @@ class FakeUpstream:
         """Write these files (None removes one), commit everything, return the commit id."""
         write_tree(self.path, files)
         self.git("add", "--all")
+        self.git("commit", "--quiet", "--allow-empty", "-m", message)
+        return self.git("rev-parse", "HEAD").decode().strip()
+
+    def commit_entries(self, entries: dict, message: str = "raw entries") -> str:
+        """Commit paths exactly as given, without touching the working tree: `{path: (mode, bytes)}`.
+
+        For what a file system may not take (a backslash in a name) or a test must not create (a symlink,
+        mode 120000). Nothing may be committed with `commit()` after this, which would stage their removal.
+        """
+        for path, (mode, content) in entries.items():
+            blob = self.git("hash-object", "-w", "--stdin", input=content).decode().strip()
+            self.git("update-index", "--add", "--cacheinfo", f"{mode},{blob},{path}")
         self.git("commit", "--quiet", "--allow-empty", "-m", message)
         return self.git("rev-parse", "HEAD").decode().strip()
 
@@ -611,6 +623,83 @@ class AFileThatCannotBeParsed(unittest.TestCase):
         self.assertIn("## Notes", outcome.markdown)
 
 
+class UpstreamEntriesThatAreNotOrdinaryFiles(unittest.TestCase):
+    """Upstream is somebody else's repository: a name, a symlink or a folder in it is not trusted to be a plain file."""
+
+    NAMES = {
+        "core/x.py": True, "a/b/c.txt": True, "name with spaces.py": True, "dots.in.name.py": True,
+        ".github/workflows/x.yml": True,
+        "": False, ".": False, "..": False, "../x": False, "a/../x": False, "a/..": False, "/etc/passwd": False,
+        "a\\..\\b": False, "a\\b": False, "C:/x": False, "C:x": False, "x.txt:stream": False, "a\0b": False, "a\ufffdb": False,
+    }
+
+    def tree(self, folder: str) -> Path:
+        tree = Path(folder, "tree")
+        (tree / "actions").mkdir(parents=True)
+        (tree / "core").mkdir()
+        (tree / "main.py").write_text("", encoding="utf-8")
+        (tree / "core" / "orphan.py").write_text("X = 1\n", encoding="utf-8")
+        return tree
+
+    def test_only_names_that_stay_inside_the_folder_are_read(self):
+        # Git allows names that Windows reads as something else (`a\\..\\b` leaves the folder, `C:x` is another
+        # drive, `x.txt:stream` is a hidden stream), and this script runs there too.
+        for name, expected in self.NAMES.items():
+            self.assertEqual(sync.safe_path(name), expected, repr(name))
+
+    def test_a_name_that_could_leave_the_folder_is_left_out_and_the_report_says_so(self):
+        story = a_story(self.addCleanup)
+        try:
+            story.upstream.commit_entries({"core\\..\\..\\outside.py": (100644, b"X = 1\n"), "fine/inside.py": (100644, b"X = 2\n")})
+        except RuntimeError as refused:
+            self.skipTest(f"this git will not store that name here, so only the table above runs: {refused}")
+        outcome = story.run()
+        self.assertEqual(outcome.code, sync.EXIT_MOVED, outcome.err)
+        self.assertIn("fine/inside.py", outcome.kinds())
+        self.assertEqual([name for name in outcome.kinds() if "outside" in name], [], "the unsafe name is not described")
+        notes = " ".join(outcome.report["notes"])
+        self.assertIn("1 path(s) in upstream were left out because their names are not plain relative paths", notes)
+        self.assertIn("outside.py", notes)
+
+    def test_a_folder_named_like_a_module_is_unreadable_and_nothing_more(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as folder:
+            tree = self.tree(folder)
+            (tree / "actions" / "dir.py").mkdir()
+            (tree / "actions" / "ok.py").write_text("import core.orphan\n", encoding="utf-8")
+            seen, unreadable = sync.reachable(tree)
+        self.assertEqual(unreadable, ["actions/dir.py"])
+        self.assertIn("core.orphan", seen, "the readable file next to it still counts")
+
+    def test_the_report_still_comes_when_upstream_has_a_folder_named_like_a_module(self):
+        story = a_story(self.addCleanup, {"actions/dir.py/inner.txt": "not python\n", "actions/ok.py": "X = 1\n"})
+        outcome = story.run()
+        self.assertEqual(outcome.code, sync.EXIT_MOVED, outcome.err)
+        self.assertEqual(outcome.err, "")
+        self.assertIn("`actions/dir.py`", " ".join(outcome.report["notes"]))
+
+    def test_a_file_the_system_will_not_open_is_unreadable_and_not_a_crash(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as folder:
+            target = Path(folder, "locked.py")
+            target.write_text("X = 1\n", encoding="utf-8")
+            with mock.patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+                with self.assertRaises(sync.Unreadable):
+                    sync.read_source(target)
+            self.assertEqual(sync.read_source(target), "X = 1\n", "the same file reads normally when nothing stops it")
+
+    def test_a_symlink_in_upstream_is_not_followed_out_of_the_clone(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as folder:
+            tree = self.tree(folder)
+            outside = Path(folder, "outside.py")
+            outside.write_text("import core.orphan\n", encoding="utf-8")       # what a followed link would read
+            try:
+                os.symlink(outside, tree / "actions" / "link.py")
+            except (OSError, NotImplementedError) as refused:
+                self.skipTest(f"this system will not make a symlink here: {refused}")
+            seen, unreadable = sync.reachable(tree)
+        self.assertNotIn("core.orphan", seen, "the link's target was read")
+        self.assertEqual(unreadable, ["actions/link.py"])
+
+
 # ------------------------------------------------------------------ stop and ask, and the errors
 
 class TheGatesAndTheErrors(unittest.TestCase):
@@ -720,6 +809,11 @@ class TheGatesAndTheErrors(unittest.TestCase):
             ("PIN.json", {k: v for k, v in good.items() if k != "reviewed"}, "is missing reviewed"),
             ("PIN.json", [1], "must hold one JSON object"),
             ("LEDGER.json", {}, "is missing entries"),
+            ("LEDGER.json", {"entries": 5}, "entries must be a list"),
+            ("LEDGER.json", {"entries": "abc"}, "entries must be a list"),
+            ("LEDGER.json", {"entries": [{**entry, "paths": "abc"}]}, "needs a list of path patterns"),
+            ("LEDGER.json", {"entries": [{**entry, "paths": 5}]}, "needs a list of path patterns"),
+            ("EXCLUSIONS.json", {"exclusions": 5}, "exclusions must be a list"),
             ("LEDGER.json", {"entries": [{**entry, "disposition": "maybe"}]}, "'maybe' is not one of"),
             ("LEDGER.json", {"entries": [{**entry, "reason": "  "}]}, "has no reason"),
             ("LEDGER.json", {"entries": [{**entry, "paths": []}]}, "needs a list of path patterns"),

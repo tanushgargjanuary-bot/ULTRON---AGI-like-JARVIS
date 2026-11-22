@@ -217,7 +217,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
 | `memory_manager.py` | 739 | The long-term memory: what the user has asked Ultron to remember. | test_atomic_file, test_edge_cases, test_memory_changes, test_memory_safety, test_proof_gate, test_runtime_files_ignored, test_session_memory_search, test_suite_assistant, test_suite_safety, test_verify_script |
 
-## `scripts/` — 35 modules, 10,728 lines
+## `scripts/` — 35 modules, 10,762 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -248,7 +248,7 @@ edit the module docstring instead and run it again.
 | `render_asciinema_gif.py` | 122 | Render an asciinema v2 cast to a small terminal-window GIF. | — |
 | `show_prompt.py` | 110 | Print the instruction Ultron gives the model — from a terminal, no app needed. | — |
 | `stress_custom.py` | 195 | Reproducible local repair stress checks; no real model/provider calls. | — |
-| `upstream_sync.py` | 836 | Compare upstream Mark with Ultron and say, in plain words, what moved and what needs a decision. | test_upstream_sync |
+| `upstream_sync.py` | 870 | Compare upstream Mark with Ultron and say, in plain words, what moved and what needs a decision. | test_upstream_sync |
 | `verify.py` | 127 | Offline migration verification; never starts a voice session or contacts a provider. | test_boot_guard, test_dependency_policy, test_health_center, test_local_ocr, test_mental, test_metacog, test_schedule_packs, test_self_change, test_shipping, test_suite_algorithms, test_suite_safety, test_verify_script, test_web_platforms, test_workflow_hygiene |
 | `verify_all.py` | 128 | Every capability check, one table, one verdict. | test_suite_algorithms, test_suite_safety |
 | `verify_audio.py` | 135 | Microphone and speaker, driven the way the app drives them. | test_suite_algorithms |
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 123 modules, 33,821 lines
+## `tests/` — 123 modules, 33,915 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -377,7 +377,7 @@ edit the module docstring instead and run it again.
 | `test_ui_settings_writes.py` | 145 | The window must save identity and persona choices through the settings module. | test_persona_switch_settings, test_ui_settings_writes |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_update_releases.py` | 161 | Offline tests for release-manifest verification and local update-channel policy. | — |
-| `test_upstream_sync.py` | 1,490 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
+| `test_upstream_sync.py` | 1,584 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
 | `test_verify_script.py` | 198 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
 | `test_video_player.py` | 33 | Malformed model arguments must fail closed rather than crash video playback. | — |
 | `test_wallpaper_url.py` | 454 | `desktop_control wallpaper_url` downloads a picture from the public web, and only that. | — |
