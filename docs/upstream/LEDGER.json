@@ -1,0 +1,53 @@
+{
+  "what": "One decision per kind of upstream file, first match wins. `*` matches anything, `/` included. A file no entry matches is HELD: reported, never copied. Dispositions: ours (Ultron's version always wins; upstream's is read, not applied), take (apply upstream's change after tests), merge (by hand), later (wanted, in a planned slice), parked (known, not copied), rejected. Add `reconciled` (a full upstream commit id) once a file has been brought up to that upstream version, so the next comparison measures from there.",
+  "entries": [
+    {
+      "paths": ["AGENTS.md", "DECISIONS.md", "WORKING-PHILOSOPHY.md", "GATEKEEPERS.md", "core/prompt.txt", "LICENSE"],
+      "disposition": "ours",
+      "reason": "They steer agents and models, or hold the licence terms. Upstream's version is read and never applied (DECISIONS.md section 8); anything worth keeping is written into Ultron's own file by hand.",
+      "decided": "DECISIONS.md section 8"
+    },
+    {
+      "paths": ["core/policy.py", "core/confirm.py", "core/self_change.py", "core/boot_guard.py", "core/ast_guardian.py", "scripts/proof_gate.py", "scripts/bootstrap.py", "run.bat", "run.ps1", ".github/*"],
+      "disposition": "ours",
+      "reason": "Ultron's safety, launch and CI files. The in-app agent may not edit them, and an upstream version is never taken in their place.",
+      "decided": "AGENTS.md, DECISIONS.md section 8"
+    },
+    {
+      "paths": ["readme.md"],
+      "disposition": "ours",
+      "reason": "Ultron's own readme. What a new Mark adds is credited by hand in docs/UPSTREAM_RESEARCH.md; the attribution paragraph stays.",
+      "decided": "DECISIONS.md section 8"
+    },
+    {
+      "paths": ["memory/config_manager.py"],
+      "disposition": "merge",
+      "reason": "Ultron's read, lock and write rules for the settings file win (the file is never replaced by one made from a failed read). New upstream settings are ported by hand, through this file only.",
+      "decided": "DECISIONS.md, the settings-file row"
+    },
+    {
+      "paths": ["ui.py", "gui/*"],
+      "disposition": "later",
+      "reason": "The owner chose to adopt upstream's window layer last, after the back-end features. Ultron's own window work lives in ui.py: the Tools panel, multi-provider setup, the confirm banner the self-change gate uses, and four checks read ui.py as text.",
+      "decided": "owner, 2026-11-22"
+    },
+    {
+      "paths": ["core/cloud.py", "core/screenview.py", "core/screenact.py"],
+      "disposition": "parked",
+      "reason": "Nothing in upstream's own program imports them (checked at 752ff61). They open sockets, deploy to a server over SSH and talk to Telegram. Not copied until upstream wires them in and the owner agrees.",
+      "decided": "plan approved by the owner, 2026-11-22"
+    },
+    {
+      "paths": ["core/tasks/*", "actions/background_tasks.py", "agents/*"],
+      "disposition": "later",
+      "reason": "Planned slice: background tasks and deep research. Ships switched off, and reuses Ultron's public-address guard instead of keeping upstream's second copy.",
+      "decided": "plan approved by the owner, 2026-11-22"
+    },
+    {
+      "paths": ["core/routines/*", "actions/routines.py"],
+      "disposition": "later",
+      "reason": "Planned slice: routines. It must satisfy exclusions E1 to E3 in EXCLUSIONS.json: no news on open, no news watch, nothing that runs tools by itself at launch.",
+      "decided": "plan approved by the owner, 2026-11-22"
+    }
+  ]
+}

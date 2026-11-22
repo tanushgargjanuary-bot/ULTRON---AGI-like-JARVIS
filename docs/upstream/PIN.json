@@ -1,0 +1,19 @@
+{
+  "what": "Which upstream commit Ultron was copied from, and which upstream drop a person last reviewed. Read by scripts/upstream_sync.py. Change it in the same pull request that adopts or sets aside a drop (docs/UPSTREAM_SYNC.md), never on its own.",
+  "upstream": {
+    "repo_id": 1170311800,
+    "name": "FatihMakes/Mark-LVII",
+    "url": "https://github.com/FatihMakes/Mark-LVII.git",
+    "note": "One GitHub repository that is renamed with each Mark (it was Mark-LVI when Ultron was copied). The number identifies it; the old name still opens it. It has no releases, tags or other branches: a new Mark is the first line of its readme.md changing."
+  },
+  "base_sha": "0101e540ac4b16cc3a862d9979e08fefcc1c7a01",
+  "base_note": "The 2026-11-04 commit (MARK LVI, 56) that HANDOFF.md and docs/UPSTREAM_RESEARCH.md record as the source of the copy. A ledger entry with a 'reconciled' commit is measured from that commit instead.",
+  "reviewed": {
+    "sha": "752ff618a4e6a4bf2e675866b993071d739cfce2",
+    "date": "2026-11-11",
+    "version": "MARK LVII (57)",
+    "licence_sha256": "1745038849ab88641f0b3629f3d106384d96430098bfc208498d416b29148670",
+    "requirements_sha256": "a51e9a550b1c2ab1f1b4c5c64bdca7cda7ce4644c91fd00d2079d1ac19ff8a53",
+    "note": "Looked at on 2026-11-22 for the plan in docs/UPSTREAM_SYNC.md. Nothing from it has been adopted yet. The two fingerprints are SHA-256 of upstream's LICENSE and requirements.txt with line endings normalised to LF; `python scripts/upstream_sync.py pin` prints them."
+  }
+}
