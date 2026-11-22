@@ -61,7 +61,7 @@ fastapi>=0.110,<1
 uvicorn[standard]>=0.27,<1
 cryptography>=42,<50
 python-multipart>=0.0.9,<1
-qrcode[pil]>=7,<9
+qrcode[pil]>=8.2,<9
 
 # ── Plugin extras ─────────────────────────────────────────────────────────────
 # Plugins are downloaded one file at a time from the community, so their
