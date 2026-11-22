@@ -14,6 +14,9 @@ Two faults:
 from __future__ import annotations
 
 import importlib.util
+import inspect
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -141,6 +144,54 @@ class ItDoesOnlyItsJob(unittest.TestCase):
     def test_it_never_rewrites_the_front_page(self):
         source = (ROOT / "scripts" / "verify.py").read_text(encoding="utf-8")
         self.assertNotIn("readme.md", source)
+
+
+class ANativeCrashLeavesAnAccount(unittest.TestCase):
+    """A step that dies of a native crash must say where, and keep what it had printed.
+
+    The hosted run of the merge of pull request #22 on `main` ended in the UI self-tests with one line,
+    `exit -11`, on a tree that had passed the same step three times: no report of where it died, and the
+    end of the output was whatever the pipe had last been flushed to. A Qt crash looks the same on every
+    system, so the child below crashes the same way everywhere: it says one thing without flushing it,
+    then reads address 0. On Windows it first turns off the crash dialog nobody is there to click.
+    """
+
+    CRASH = (
+        "import ctypes, sys\n"
+        "if sys.platform == 'win32':\n"
+        "    ctypes.windll.kernel32.SetErrorMode(0x0002 | 0x8000)\n"
+        "print('the last thing it said', end='')\n"
+        "ctypes.string_at(0)\n"
+    )
+
+    def crash(self, environment: dict) -> tuple[int, str, str]:
+        # S603: the interpreter running this test and a program written above, nothing from outside
+        done = subprocess.run([sys.executable, "-c", self.CRASH], env=environment, capture_output=True,  # noqa: S603
+                              timeout=120, check=False)
+        return done.returncode, done.stdout.decode("utf-8", "replace"), done.stderr.decode("utf-8", "replace")
+
+    def test_the_old_environment_loses_both_which_is_why_it_changed(self):
+        # The control: without the two variables the crash is silent and the line is gone. If this
+        # ever fails, the test below proves nothing, because the crash no longer shows what it fixes.
+        environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+        for name in ("PYTHONFAULTHANDLER", "PYTHONUNBUFFERED"):
+            environment.pop(name, None)
+        code, out, err = self.crash(environment)
+        self.assertNotEqual(code, 0)
+        self.assertEqual(out, "")
+        self.assertNotIn("most recent call first", err)
+
+    def test_the_step_environment_keeps_the_report_and_the_last_line(self):
+        code, out, err = self.crash(verify.step_environment())
+        self.assertNotEqual(code, 0)
+        self.assertEqual(out, "the last thing it said")
+        self.assertIn("most recent call first", err)
+        self.assertEqual(verify.step_environment()["QT_QPA_PLATFORM"], "offscreen")
+
+    def test_every_step_of_the_chain_runs_with_it(self):
+        source = inspect.getsource(verify.main)
+        self.assertIn("step_environment()", source)
+        self.assertNotIn("dict(os.environ", source)
 
 
 if __name__ == "__main__":
