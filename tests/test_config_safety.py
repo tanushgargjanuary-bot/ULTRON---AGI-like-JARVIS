@@ -233,6 +233,14 @@ class ConcurrentWriters(WithATemporaryConfig):
         stop = threading.Event()
         torn = []
         refused = []
+        # On Windows an open file cannot be replaced. A reader that re-opens the file with no pause
+        # keeps a handle on it almost all the time, and the writers' 0.3 s of retrying
+        # (`core/atomic_file.py`) runs out: the first Windows run counted 276 of 320. That is the
+        # reading from how Windows treats an open file; it was not reproduced on a Windows machine.
+        # Antivirus, a backup or an editor hold a file for milliseconds, not for ever, so on Windows
+        # this reader lets go between reads. Linux keeps the tight loop, which is what caught the
+        # torn reads before the fix.
+        breath = 0.005 if os.name == "nt" else 0
 
         def reader():
             while not stop.is_set():
@@ -242,6 +250,8 @@ class ConcurrentWriters(WithATemporaryConfig):
                     refused.append(type(error).__name__)   # Windows refuses a read mid-replace
                 except ValueError as error:
                     torn.append(repr(error))
+                if breath:
+                    stop.wait(breath)
 
         def worker(n):
             for _ in range(40):

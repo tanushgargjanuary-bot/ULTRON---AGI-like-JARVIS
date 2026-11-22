@@ -25,23 +25,27 @@ def _stray_host_files():
     existed: the suite created one here, containing the test's 1600x900. Run on a
     real installation, that is somebody's remembered window size and, on the
     read-modify-write path, a file written beside the one holding their keys.
+
+    Names are returned with forward slashes on every system. On Windows `str(relative_to)` gives
+    `config\\api_keys.json`, and the tests (and the person reading the report) compare with
+    `config/api_keys.json`; the first Windows run of this check failed four tests on exactly that.
     """
     stray = []
     if USER_CONFIG.exists() and not USER_CONFIG.read_bytes().strip() == b"":
-        stray.append(str(USER_CONFIG.relative_to(ROOT)))
+        stray.append(USER_CONFIG.relative_to(ROOT).as_posix())
     # `api_keys.json.<random>.tmp` is what `memory/config_manager.py` writes before it
     # replaces the file (a name of its own per write, so two writers never share one);
     # the old fixed `api_keys.json.tmp` is kept in the list for trees from before that.
     for pattern in ("api_keys.json.tmp", "api_keys.json.*.tmp", "api_keys.json.broken-*",
                     "setup-log.txt"):
         for path in (ROOT / "config").glob(pattern):
-            stray.append(str(path.relative_to(ROOT)))
+            stray.append(path.relative_to(ROOT).as_posix())
     # The memory store's own: the copy it sets aside when the store will not parse, and the
     # temporary file of a write that was cut short. Each is a copy of everything the user asked
     # to be remembered, so a suite that leaves one in a real folder has leaked it.
     for pattern in ("long_term.json.broken-*", ".long_term.json.*.tmp"):
         for path in (ROOT / "memory").glob(pattern):
-            stray.append(str(path.relative_to(ROOT)))
+            stray.append(path.relative_to(ROOT).as_posix())
     return stray
 
 

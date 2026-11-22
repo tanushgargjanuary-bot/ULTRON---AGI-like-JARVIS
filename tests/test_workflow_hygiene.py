@@ -14,6 +14,7 @@ These tests read the workflow text, so they need no YAML library and no network.
 step's own script under the flags GitHub uses and checks that a failing gate fails the step.
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -41,6 +42,18 @@ def steps(text: str) -> list[str]:
         elif current is not None and re.match(r"^(\S|  \S|    \S)", line):
             current = None                      # dedented: out of the steps
     return ["\n".join(block) for block in blocks]
+
+
+def a_bash_we_can_drive() -> str | None:
+    """The `bash` these tests run, or None where there is not one they can drive.
+
+    Not on Windows. A `bash` on a Windows PATH is usually `System32\\bash.exe`, the launcher for the
+    Linux subsystem, which exits 1 when no distribution is installed; the first Windows run of these
+    two tests saw exactly that (exit 1 where 0 was expected; the cause is inferred from that, not
+    confirmed). The tests also hand bash a POSIX `PATH`. Nothing is lost: they run the very step
+    text that both jobs use, and the Linux job runs them under a real bash.
+    """
+    return None if os.name == "nt" else shutil.which("bash")
 
 
 def run_script(step: str) -> str:
@@ -90,7 +103,7 @@ class TheVerifyWorkflow(unittest.TestCase):
         self.assertIn("github.ref == 'refs/heads/main' && github.sha || github.ref", self.text,
                       "on main every commit needs a group of its own")
 
-    @unittest.skipUnless(shutil.which("bash"), "bash is not installed")
+    @unittest.skipUnless(a_bash_we_can_drive(), "no POSIX bash to drive here (Windows skips; Linux runs it)")
     def test_a_failing_gate_fails_the_step_and_the_summary_is_still_written(self):
         for gate in self.gates:
             script = run_script(gate)
@@ -117,8 +130,8 @@ class TheVerifyWorkflow(unittest.TestCase):
     def test_the_old_form_of_the_step_really_did_swallow_the_failure(self):
         # The control for the test above: the same pipe under `bash -e` (what a step with no `shell:`
         # gets) passes whatever the gate exits. If this ever stops being true, the lesson has moved.
-        if not shutil.which("bash"):
-            self.skipTest("bash is not installed")
+        if not a_bash_we_can_drive():
+            self.skipTest("no POSIX bash to drive here (Windows skips; Linux runs it)")
         done = subprocess.run(["bash", "-e", "-c", "false | tee /dev/null"], capture_output=True)
         self.assertEqual(done.returncode, 0)
 

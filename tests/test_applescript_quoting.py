@@ -137,7 +137,13 @@ class WallpaperScript(unittest.TestCase):
         from pathlib import Path
         with tempfile.TemporaryDirectory() as folder:
             image = Path(folder) / 'a" & (do shell script "id") & ".png'
-            image.write_bytes(b"\x89PNG")
+            try:
+                image.write_bytes(b"\x89PNG")
+            except OSError:
+                # Windows does not allow a double quote in a file name, so this path cannot
+                # exist there (the first Windows run: "Invalid argument"). Nothing is lost by
+                # skipping: the quoting is tested above on the same hostile text with no file.
+                self.skipTest("this file system cannot hold a file name with a double quote")
             seen = []
 
             def fake_run(command, **kwargs):

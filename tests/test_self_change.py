@@ -20,6 +20,7 @@ import os
 import shutil
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -390,8 +391,24 @@ class Applying(WithAFakeProject):
         self.assertEqual(rows[0]["path"], "app.py")
         self.assertIn("a clearer greeting", rows[0]["reason"])
 
+    # `restart_command()` reads only `os.name`, so the tests pin it: the answer is different on
+    # Windows, and a test that depended on the machine running it passed on Linux and failed on the
+    # first Windows run (the fake project holds a `run.ps1` now that the launcher is protected).
     def test_the_restart_line_names_the_program(self):
-        self.assertIn("main.py", self_change.restart_command())
+        with patch.object(self_change, "os", types.SimpleNamespace(name="posix")):
+            self.assertIn("main.py", self_change.restart_command())
+
+    def test_on_windows_the_restart_line_names_the_launcher_when_there_is_one(self):
+        self.assertTrue((self.project / "run.ps1").exists(), "the fake project has a launcher")
+        with patch.object(self_change, "os", types.SimpleNamespace(name="nt")):
+            line = self_change.restart_command()
+        self.assertIn("run.ps1", line, "the launcher keeps the boot guard on; main.py would skip it")
+        self.assertNotIn("main.py", line)
+
+    def test_on_windows_without_a_launcher_the_restart_line_names_main_py(self):
+        (self.project / "run.ps1").unlink()
+        with patch.object(self_change, "os", types.SimpleNamespace(name="nt")):
+            self.assertIn("main.py", self_change.restart_command())
 
 
 class Reverting(WithAFakeProject):

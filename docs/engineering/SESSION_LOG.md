@@ -1010,3 +1010,41 @@ launcher's Python step and real child processes were run), Python 3.12 and 3.13,
 **Left for the owner** (`docs/specifications/SYSTEM_OVERVIEW.md`): read the referee edits (`core/self_change.py` this
 time, with the new four off-limits files; `core/policy.py`; `core/ast_guardian.py`); whether to close the two gaps in
 the dispatcher check; which "100%" he means; and the earlier open questions.
+
+## 2026-11-21 — follow-up: the first Windows run of the pull request
+
+**Asked for.** Nothing new: the previous entry listed Windows under "Not checked", and the owner's standing
+instruction is to fix without asking first. This is what the first Windows run said, and the fix.
+
+**What the run said.** Pull request #22, run 44930501422, the Windows job: 2,751 tests, 8 failures and 1 error, in
+five test files. Four of the files are new in this branch (`tests/test_verify_script.py`,
+`tests/test_workflow_hygiene.py`, `tests/test_config_safety.py`, `tests/test_applescript_quoting.py`); the fifth,
+`tests/test_self_change.py`, broke because this branch made `run.ps1` a protected file and its fake project writes
+every protected file. The suite never got as far as the steps after it or the proof gate, so what they do on Windows
+is still unknown. The log was read from the job's own log (the run's artifact could not be downloaded from this
+sandbox).
+
+**What was done** (table and reasons: `CHANGELOG.md`, "First Windows run of this pull request"):
+1. `scripts/verify.py` returns forward-slash names (four failing tests), with a new test that is red on the old file
+   on any system (a real path whose `relative_to` answers like Windows).
+2. The restart-line test was replaced by three that pin `os.name`; the program is unchanged.
+3. Two workflow tests skip on Windows, one wallpaper test skips where a file name cannot hold a double quote.
+4. The burst test's reader pauses 5 ms on Windows. This one is a reading, not a reproduction.
+
+**Evidence** (Linux, Python 3.11.2): the five changed modules ran 145 tests at the previous commit and 148 now; the new
+`scripts/verify.py` test fails against the old file; three probes made Linux behave like the Windows run (the file
+system refusing a quoted name gives a skip, not an error; the bash helper answers "none" on `nt`; the old restart
+assertion fails under `nt` with a launcher present, which is the message the Windows log showed).
+
+**Whole tree** (Linux, Python 3.11.2, a clean two-commit copy, the same chain as the entry above): `scripts/verify.py`
+in the package set `verify.yml` installs exits 0 with 2,754 tests, 0 failed, 39 skipped, provider and UI self-tests
+108 of 108, 1,000 stress scenarios and 15 of 15 seeded mutations; the full package set exits 0 with 2,754 tests, 0
+failed, 10 skipped; the proof gate is 24 PROVEN, 13 PARTIAL, 0 FAILED; the fast gate is 6 of 6; the lint ratchet
+against `cf02c0e` is 146 findings against 156; the module map is fresh.
+
+**Not checked.** All of it on Windows: it is only run by a push. The burst-test cause is inferred. The `bash` that
+failed on the runner is inferred from an exit code. Whatever the steps after the suite do on Windows is unknown, so a
+second Windows failure after this one would not be a surprise.
+
+**Left for the owner.** The same list as the entry above, and one thing more: whether the branch may be pushed again to
+let GitHub run Windows (no push has been made since the pull request was opened).

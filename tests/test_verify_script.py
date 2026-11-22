@@ -17,7 +17,7 @@ import importlib.util
 import sys
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,6 +91,29 @@ class TheLeftoverCheck(WithAScratchProject):
         self.assertEqual(verify._stray_host_files(), [])
         self.touch("api_keys.json", '{"window_width": 1600}')
         self.assertEqual(verify._stray_host_files(), ["config/api_keys.json"])
+
+    def test_names_use_forward_slashes_even_where_the_system_writes_backslashes(self):
+        # `str(path.relative_to(root))` is `config\api_keys.json` on Windows, and four tests
+        # failed on the first Windows run for that alone. This path is a real one on this
+        # machine whose `relative_to` answers the way Windows does, so the same mistake fails
+        # here too, without a Windows machine.
+        class LooksLikeWindows(type(Path())):
+            def relative_to(self, *args, **kwargs):
+                return PureWindowsPath(*super().relative_to(*args, **kwargs).parts)
+
+        self.touch("api_keys.json", '{"window_width": 1600}')
+        self.touch("api_keys.json.k3j2x9ab.tmp")
+        (self.root / "memory").mkdir()
+        (self.root / "memory" / "long_term.json.broken-1700000000").write_text("x", encoding="utf-8")
+        with mock.patch.object(verify, "ROOT", LooksLikeWindows(self.root)), \
+                mock.patch.object(verify, "USER_CONFIG",
+                                  LooksLikeWindows(self.root / "config" / "api_keys.json")):
+            found = verify._stray_host_files()
+        self.assertEqual(len(found), 3, found)
+        for name in found:
+            self.assertNotIn("\\", name)
+        self.assertEqual(set(found), {"config/api_keys.json", "config/api_keys.json.k3j2x9ab.tmp",
+                                      "memory/long_term.json.broken-1700000000"})
 
     def test_the_temp_name_the_writer_makes_matches_the_pattern(self):
         # Both ends of the contract in one place: whatever the writer names its temp

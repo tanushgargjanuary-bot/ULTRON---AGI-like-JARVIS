@@ -13,7 +13,7 @@ edit the module docstring instead and run it again.
 | `appidentity.py` | 894 | core/appidentity.py — what applications this machine is running, and which of | test_app_resolver, test_suite_assistant, test_suite_providers |
 | `applescript.py` | 31 | core/applescript.py — put model-supplied text inside an AppleScript string, and keep it there. | test_applescript_quoting |
 | `ast_guardian.py` | 497 | core/ast_guardian.py — Production AST safety analysis for autonomous code modifications. | test_ast_guardian, test_ast_guardian_bypasses |
-| `atomic_file.py` | 32 | core/atomic_file.py — the one retry for "another program has this file open". | test_atomic_file, test_memory_safety |
+| `atomic_file.py` | 32 | core/atomic_file.py — the one retry for "another program has this file open". | test_atomic_file, test_config_safety, test_memory_safety |
 | `audio_devices.py` | 694 | core/audio_devices.py — pick which microphone and which speakers JARVIS uses. | test_crash |
 | `audio_features.py` | 238 | core/audio_features.py — is that speech, and have they finished? | test_audio_features |
 | `audio_ring.py` | 66 | Shared memory circular audio ring buffer reader for ULTRON. | test_hybrid_ipc |
@@ -217,7 +217,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
 | `memory_manager.py` | 739 | The long-term memory: what the user has asked Ultron to remember. | test_atomic_file, test_edge_cases, test_memory_changes, test_memory_safety, test_proof_gate, test_runtime_files_ignored, test_session_memory_search, test_suite_assistant, test_suite_safety, test_verify_script |
 
-## `scripts/` — 34 modules, 9,875 lines
+## `scripts/` — 34 modules, 9,879 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -248,7 +248,7 @@ edit the module docstring instead and run it again.
 | `render_asciinema_gif.py` | 122 | Render an asciinema v2 cast to a small terminal-window GIF. | — |
 | `show_prompt.py` | 110 | Print the instruction Ultron gives the model — from a terminal, no app needed. | — |
 | `stress_custom.py` | 195 | Reproducible local repair stress checks; no real model/provider calls. | — |
-| `verify.py` | 110 | Offline migration verification; never starts a voice session or contacts a provider. | test_boot_guard, test_dependency_policy, test_health_center, test_local_ocr, test_mental, test_metacog, test_schedule_packs, test_self_change, test_shipping, test_suite_algorithms, test_suite_safety, test_verify_script, test_web_platforms, test_workflow_hygiene |
+| `verify.py` | 114 | Offline migration verification; never starts a voice session or contacts a provider. | test_boot_guard, test_dependency_policy, test_health_center, test_local_ocr, test_mental, test_metacog, test_schedule_packs, test_self_change, test_shipping, test_suite_algorithms, test_suite_safety, test_verify_script, test_web_platforms, test_workflow_hygiene |
 | `verify_all.py` | 128 | Every capability check, one table, one verdict. | test_suite_algorithms, test_suite_safety |
 | `verify_audio.py` | 135 | Microphone and speaker, driven the way the app drives them. | test_suite_algorithms |
 | `verify_browser.py` | 209 | A real browser, on a real page, through the real engine. | test_suite_algorithms |
@@ -256,7 +256,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 122 modules, 32,168 lines
+## `tests/` — 122 modules, 32,237 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -265,7 +265,7 @@ edit the module docstring instead and run it again.
 | `test_action_audit.py` | 35 | The HUD line reports a policy tier and a tool's own outcome, without guessing. | — |
 | `test_agent_workspace.py` | 26 | Tests for the read-only agent workspace report helpers. | — |
 | `test_app_resolver.py` | 213 | Offline tests for capability-based application resolution (core/app_resolver.py) | — |
-| `test_applescript_quoting.py` | 158 | Model-supplied text must not be able to leave an AppleScript string (macOS paths). | — |
+| `test_applescript_quoting.py` | 164 | Model-supplied text must not be able to leave an AppleScript string (macOS paths). | — |
 | `test_ast_guardian.py` | 47 | The AST guardian: what it approves, and every way code has tried to get past it. | — |
 | `test_ast_guardian_bypasses.py` | 296 | The AST guardian against renaming, building a name out of pieces, and odd paths. | — |
 | `test_atomic_file.py` | 76 | `core.atomic_file.replace_with_retry`: the loop both stores share. | — |
@@ -281,7 +281,7 @@ edit the module docstring instead and run it again.
 | `test_child_output.py` | 230 | A background program's output is logged, not thrown away. | — |
 | `test_collect_install.py` | 206 | Offline tests for scripts/collect_install.py. | — |
 | `test_computer_capability.py` | 22 | Computer-control failures are recorded without running real desktop actions. | — |
-| `test_config_safety.py` | 330 | `memory/config_manager.py` must never lose the owner's keys. | test_config_safety |
+| `test_config_safety.py` | 340 | `memory/config_manager.py` must never lose the owner's keys. | test_config_safety |
 | `test_conversation_context.py` | 32 | Tests that prior conversation is carried into a new session. | — |
 | `test_crash.py` | 334 | A crash leaves a record, and the next run reads it. | test_crash |
 | `test_curriculum.py` | 247 | The syllabus Ultron holds, and the four things that make it usable. | test_curriculum |
@@ -351,7 +351,7 @@ edit the module docstring instead and run it again.
 | `test_routing_runtime.py` | 270 | Tests for provider routing at run time. | — |
 | `test_runtime_files_ignored.py` | 213 | Every file the app can leave in the project folder is ignored by git, or this fails. | — |
 | `test_schedule_packs.py` | 354 | tests/test_schedule_packs.py — the queue, the packs, and the GitHub reminders. | test_schedule_packs |
-| `test_self_change.py` | 956 | Ultron changing its own source: the five stages, and the four refusals. | test_self_change, test_self_modify_gate |
+| `test_self_change.py` | 973 | Ultron changing its own source: the five stages, and the four refusals. | test_self_change, test_self_modify_gate |
 | `test_self_healing.py` | 528 | Bounded repair-loop, adversarial adapter, routing, persistence and rollback tests. | — |
 | `test_self_modify_gate.py` | 91 | `self_modify` and `system_prompt`: the two tools that change the assistant itself. | — |
 | `test_selfimprove.py` | 293 | tests/test_selfimprove.py — does the improvement loop only keep real gains? | test_selfimprove |
@@ -376,12 +376,12 @@ edit the module docstring instead and run it again.
 | `test_ui_settings_writes.py` | 145 | The window must save identity and persona choices through the settings module. | test_persona_switch_settings, test_ui_settings_writes |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_update_releases.py` | 161 | Offline tests for release-manifest verification and local update-channel policy. | — |
-| `test_verify_script.py` | 124 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
+| `test_verify_script.py` | 147 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
 | `test_video_player.py` | 33 | Malformed model arguments must fail closed rather than crash video playback. | — |
 | `test_wallpaper_url.py` | 454 | `desktop_control wallpaper_url` downloads a picture from the public web, and only that. | — |
 | `test_web_platforms.py` | 325 | tests/test_web_platforms.py — the web layer, with no network in the room. | test_web_platforms |
 | `test_web_read.py` | 80 | The page reader refuses unsafe targets and extracts only bounded public text. | — |
-| `test_workflow_hygiene.py` | 138 | The workflows: a gate that cannot fail is not a gate, and a job gets only the access it needs. | — |
+| `test_workflow_hygiene.py` | 151 | The workflows: a gate that cannot fail is not a gate, and a job gets only the access it needs. | — |
 
 ## Inherited, and reported not fixed
 

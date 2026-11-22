@@ -1,3 +1,24 @@
+=== 2026-11-21 · build 1.2.38 · the first Windows run of pull request #22: nine tests, all written on Linux ===
+
+Asked for: nothing new. The entry below listed Windows under "NOT CHECKED", and the owner's standing instruction is
+to fix without asking first. CHANGELOG.md ("First Windows run of this pull request") has the table,
+docs/engineering/SESSION_LOG.md the account.
+
+WHAT THE RUN SAID
+  - Run 44930501422, Windows job: 2,751 tests, 8 failures and 1 error. Linux, the fast gate and the web checks passed.
+  - Four of the five files are new in this branch; the fifth broke because this branch made run.ps1 a protected file
+    and the fake project writes every protected file. None of the nine points at a fault in the program.
+  - scripts/verify.py stops at the first step that fails, so the steps after the suite and the proof gate have
+    never run on Windows.
+
+WHAT CHANGED
+  - scripts/verify.py returns forward-slash names (4 tests). New test, red on the old file on any system.
+  - The restart-line test is replaced by three that pin os.name. Two workflow tests and one wallpaper test skip on
+    Windows where bash cannot be driven or a file name cannot hold a quote. The burst test's reader pauses 5 ms on
+    Windows (a reading of how Windows treats an open file, not a reproduction). No assertion was loosened.
+
+NOT CHECKED: all of it on Windows (only a push runs it). Nothing has been pushed since the pull request was opened.
+
 === 2026-11-21 · build 1.2.38 · what was left: the self-change pipeline (a referee file, edited with the owner's go-ahead) ===
 
 Asked for: "Do everything that's left, and give me a small CEO note." The left-over items were all about
