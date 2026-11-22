@@ -153,15 +153,19 @@ class ANativeCrashLeavesAnAccount(unittest.TestCase):
     `exit -11`, on a tree that had passed the same step three times: no report of where it died, and the
     end of the output was whatever the pipe had last been flushed to. A Qt crash looks the same on every
     system, so the child below crashes the same way everywhere: it says one thing without flushing it,
-    then reads address 0. On Windows it first turns off the crash dialog nobody is there to click.
+    then makes a real invalid read of address 0 with `faulthandler._read_null()`, the call CPython's own
+    tests use for that. It also turns off the crash dialog nobody is there to click.
+
+    The first version read address 0 through `ctypes.string_at(0)`. The hosted Windows run showed that
+    this does not crash there: ctypes catches the fault and raises an ordinary OSError, so the child
+    exited normally and flushed its line, and the control below failed. A native crash is not something
+    to imitate with a library that is built to survive one.
     """
 
     CRASH = (
-        "import ctypes, sys\n"
-        "if sys.platform == 'win32':\n"
-        "    ctypes.windll.kernel32.SetErrorMode(0x0002 | 0x8000)\n"
+        "import faulthandler\n"
         "print('the last thing it said', end='')\n"
-        "ctypes.string_at(0)\n"
+        "faulthandler._read_null()\n"
     )
 
     def crash(self, environment: dict) -> tuple[int, str, str]:

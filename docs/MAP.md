@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 123 modules, 33,915 lines
+## `tests/` — 123 modules, 33,955 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -377,8 +377,8 @@ edit the module docstring instead and run it again.
 | `test_ui_settings_writes.py` | 145 | The window must save identity and persona choices through the settings module. | test_persona_switch_settings, test_ui_settings_writes |
 | `test_ui_tree.py` | 297 | tests/test_ui_tree.py — the snapshot model, without an operating system. | test_ui_tree |
 | `test_update_releases.py` | 161 | Offline tests for release-manifest verification and local update-channel policy. | — |
-| `test_upstream_sync.py` | 1,584 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
-| `test_verify_script.py` | 198 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
+| `test_upstream_sync.py` | 1,620 | `scripts/upstream_sync.py`: it says truthfully what upstream Mark changed, and it changes nothing. | — |
+| `test_verify_script.py` | 202 | `scripts/verify.py`: it catches what the suite leaves behind, and it does only its job. | — |
 | `test_video_player.py` | 33 | Malformed model arguments must fail closed rather than crash video playback. | — |
 | `test_wallpaper_url.py` | 454 | `desktop_control wallpaper_url` downloads a picture from the public web, and only that. | — |
 | `test_web_platforms.py` | 325 | tests/test_web_platforms.py — the web layer, with no network in the room. | test_web_platforms |

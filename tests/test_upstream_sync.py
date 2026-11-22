@@ -62,9 +62,20 @@ def with_line(text: str, number: int, new: str, ending: str = "\n") -> str:
     return "".join(lines)
 
 
+# Windows keeps these names for devices, with any extension: `nul.py` is the NUL device, not a file.
+WINDOWS_DEVICE_NAMES = {"CON", "PRN", "AUX", "NUL", *(f"COM{n}" for n in range(1, 10)), *(f"LPT{n}" for n in range(1, 10))}
+
+
 def write_tree(folder: Path, files: dict) -> None:
-    """Write these files under `folder`; a value of None removes the file."""
+    """Write these files under `folder`; a value of None removes the file.
+
+    A fixture named like a Windows device cannot exist there (the hosted Windows run found `actions/nul.py`),
+    so it is refused here on every system and the mistake shows up on the machine it is made on.
+    """
     for name, content in files.items():
+        device = [part for part in name.split("/") if part.split(".")[0].upper() in WINDOWS_DEVICE_NAMES]
+        if device:
+            raise ValueError(f"{name!r}: {device[0]!r} is a device name on Windows, so no file can have it")
         target = folder / name
         if content is None:
             target.unlink()
@@ -593,33 +604,58 @@ class Unwired(unittest.TestCase):
 
 
 class AFileThatCannotBeParsed(unittest.TestCase):
-    """Review finding 3: one strange file in upstream must not stop the weekly report."""
+    """Review finding 3: one strange file in upstream must not stop the weekly report.
+
+    How deep Python's parser can nest is a constant of each build, not a rule of the language: the hosted
+    Linux job (3.12.16) parses 5,000 nested operators that the hosted Windows job (3.12.10) and a 3.11 build
+    refuse. So no test here needs a particular depth to fail. The files that are unreadable on every Python
+    are a NUL byte and a syntax error; the two ways a parser gives up on depth are made to happen by a
+    stand-in for `ast.parse`; and real deep files are held only to the rule that matters, which is that
+    the answer is "read" or "unreadable" and never an error that escapes.
+    """
 
     NUL = "x = 1\0\n"
-    DEEP = "x = " + "-" * 5000 + "1\n"
-    TOO_DEEP = "x = " + "-" * 100000 + "1\n"
+    BROKEN = "def (:\n"
 
     def test_the_reader_of_imports_says_a_file_is_unreadable_and_nothing_else(self):
-        for label, source in (("a NUL byte", self.NUL), ("5,000 nested operators", self.DEEP),
-                              ("100,000 nested operators", self.TOO_DEEP), ("a syntax error", "def (:\n")):
+        for label, source in (("a NUL byte", self.NUL), ("a syntax error", self.BROKEN)):
             with self.subTest(label), self.assertRaises(sync.Unreadable):
                 sync.imported_names(source)
         self.assertEqual(sync.imported_names("import os\n"), {"os"})
 
+    def test_a_parser_that_gives_up_on_depth_is_unreadable_too(self):
+        for gave_up in (RecursionError("maximum recursion depth exceeded"), MemoryError()):
+            with self.subTest(type(gave_up).__name__), mock.patch.object(sync.ast, "parse", side_effect=gave_up):
+                with self.assertRaises(sync.Unreadable):
+                    sync.imported_names("import os\n")
+
+    def test_a_file_nested_deeper_than_most_parsers_allow_is_read_or_unreadable_and_nothing_else(self):
+        def answer(depth: int):
+            try:
+                return sync.imported_names("x = " + "-" * depth + "1\n")
+            except sync.Unreadable:
+                return "unreadable"
+
+        for depth in (5_000, 100_000):
+            with self.subTest(depth=depth):
+                # Whether it parses is a constant of the Python build. Either way, nothing is imported in it.
+                self.assertIn(answer(depth), (set(), "unreadable"))
+
     def test_the_report_still_comes_and_says_which_files_it_could_not_read(self):
         # Only files upstream's own program can reach are read (the tool folders always count), so the strange
         # ones sit there; the one nothing imports is never opened and is not mentioned.
-        story = Scenario(self.addCleanup, {**TERMS, "main.py": "print('hi')\n"},
-                         {"actions/strange.py": self.DEEP, "actions/nul.py": self.NUL, "actions/fine.py": "X = 1\n",
-                          "core/unused_and_strange.py": self.DEEP}, {**TERMS, "main.py": "print('hi')\n"})
+        main = {**TERMS, "main.py": "print('hi')\n"}
+        story = Scenario(self.addCleanup, main,
+                         {"actions/broken.py": self.BROKEN, "actions/nulbyte.py": self.NUL, "actions/fine.py": "X = 1\n",
+                          "core/unused_and_broken.py": self.BROKEN}, main)
         outcome = story.run()
         self.assertEqual(outcome.code, sync.EXIT_MOVED, outcome.err)
         self.assertEqual(outcome.err, "")
         notes = " ".join(outcome.report["notes"])
         self.assertIn("2 Python file(s) in upstream could not be read to see what they import", notes)
-        self.assertIn("`actions/nul.py`, `actions/strange.py`", notes)
+        self.assertIn("`actions/broken.py`, `actions/nulbyte.py`", notes)
         self.assertNotIn("fine.py", notes)
-        self.assertNotIn("unused_and_strange", notes)
+        self.assertNotIn("unused_and_broken", notes)
         self.assertIn("## Notes", outcome.markdown)
 
 
