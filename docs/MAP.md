@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 123 modules, 33,955 lines
+## `tests/` — 123 modules, 33,976 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -309,7 +309,7 @@ edit the module docstring instead and run it again.
 | `test_fuzzy.py` | 374 | tests/test_fuzzy.py — the matcher, measured as an accuracy, not a vibe. | test_fuzzy |
 | `test_gate_holds_input.py` | 120 | While the owner is being asked something, nothing but a read runs. | — |
 | `test_gemini_local_auto_fallback.py` | 44 | Test automatic local model failover when cloud rungs are exhausted. | test_gemini_resilience |
-| `test_gemini_resilience.py` | 338 | `core/gemini.py`: what counts as an outage, which key is in use, and who may answer. | test_gemini_local_auto_fallback |
+| `test_gemini_resilience.py` | 359 | `core/gemini.py`: what counts as an outage, which key is in use, and who may answer. | test_gemini_local_auto_fallback |
 | `test_health_center.py` | 181 | Persistent issue notices and non-applying background repair jobs. | — |
 | `test_hud_fixes.py` | 347 | tests/test_hud_fixes.py — the three things the owner could see were wrong. | test_bugfix_pass, test_hud_fixes |
 | `test_hybrid_ipc.py` | 427 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | — |

@@ -111,6 +111,26 @@ class ErrorClassification(unittest.TestCase):
                 self.assertEqual(classify(str(error)), expected, str(error))
 
 
+class _StoppedClock:
+    """`time` as `core.gemini` sees it, with a monotonic clock that has not ticked.
+
+    Windows' clock in Python 3.12 moves in steps of 15.6 ms, so two reads in a row often give
+    the same second. These tests read a rest back as `deadline - now`, and at some seconds of
+    uptime that sum is not exact in floating point: 300.00000000000006 was seen on a hosted
+    Windows runner (CI run 45037801726) against a limit of 300. With the clock standing at a
+    whole second the sum is exact, so each test says what it means: this model is rested for
+    exactly this long. Everything else on `time` stays real.
+    """
+
+    NOW = 1000.0
+
+    def monotonic(self):
+        return self.NOW
+
+    def __getattr__(self, name):
+        return getattr(time, name)
+
+
 class LadderBehaviour(unittest.TestCase):
     """Drive `call()` with a fake client and look at which model is rested afterwards."""
 
@@ -120,6 +140,7 @@ class LadderBehaviour(unittest.TestCase):
         failures.clear()
         patches = [
             mock.patch.object(gemini, "_cooldown", {}),
+            mock.patch.object(gemini, "time", _StoppedClock()),
             mock.patch.object(gemini, "_LADDERS", {gemini.FAST: (self.MODEL,),
                                                    gemini.SMART: (self.MODEL,),
                                                    gemini.SEARCH: (self.MODEL,)}),
@@ -152,20 +173,20 @@ class LadderBehaviour(unittest.TestCase):
         with self.fail_with("503 UNAVAILABLE. overloaded"):
             self.call_without_local()
         self.assertTrue(gemini._cooling(self.MODEL))
-        remaining = gemini._cooldown[self.MODEL] - time.monotonic()
-        self.assertLessEqual(remaining, gemini._UNAVAILABLE_SECONDS)
+        remaining = gemini._cooldown[self.MODEL] - _StoppedClock.NOW
+        self.assertEqual(remaining, gemini._UNAVAILABLE_SECONDS)
         self.assertGreater(remaining, gemini._COOLDOWN_SECONDS)
 
     def test_an_exhausted_model_is_rested_for_the_quota_time(self):
         with self.fail_with("429 RESOURCE_EXHAUSTED. quota"):
             self.call_without_local()
-        remaining = gemini._cooldown[self.MODEL] - time.monotonic()
-        self.assertLessEqual(remaining, gemini._COOLDOWN_SECONDS)
+        remaining = gemini._cooldown[self.MODEL] - _StoppedClock.NOW
+        self.assertEqual(remaining, gemini._COOLDOWN_SECONDS)
 
     def test_a_missing_model_is_set_aside_for_the_long_time(self):
         with self.fail_with("404 NOT_FOUND. models/x is not found"):
             self.call_without_local()
-        remaining = gemini._cooldown[self.MODEL] - time.monotonic()
+        remaining = gemini._cooldown[self.MODEL] - _StoppedClock.NOW
         self.assertGreater(remaining, gemini._UNAVAILABLE_SECONDS)
 
 

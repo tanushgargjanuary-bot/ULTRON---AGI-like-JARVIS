@@ -37,11 +37,20 @@ FIRST HOSTED RUN (run 45033789440): red on Linux and Windows in the suite step. 
 RUN ON THE FIXED COMMIT c3e6b09 (run 45036131001): green on Linux (Python 3.12.16) and Windows (3.12.10), every step. The Windows
 proof gate said 28 PROVEN, 9 PARTIAL, as on the merge of PR #22.
 
+THEN, ON 1abb11f (documents only, run 45037801726): Linux green; Windows red in ONE test, by chance, nothing to do with this pull request.
+  - test_gemini_resilience ... quota_time: "300.00000000000006 not less than or equal to 300". The test (from PR #22) reads a rest
+    back as deadline - now; Windows' clock in Python 3.12 moves in 15.6 ms steps, so two reads can be equal, and (t + 300) - t is not
+    always exactly 300 in floating point (212.007 s gives the failing value). Its 30-minute sibling has the same fault.
+  - Fixed in tests/test_gemini_resilience.py only: core/gemini.py sees a clock standing at 1000.0; two assertLessEqual became
+    assertEqual (REPLACED ASSERTIONS, each stricter). Old tests at the bad seconds: same message. New: pass. Six planted wrong rest
+    times: the new tests catch 6, the old 3.
+  - NOT measured: how often it fails (it depends on the runner's uptime). NOT run on Windows yet.
+
 MEASURED: Linux, Python 3.11.2 (CI uses 3.12), CI package set: 2,730 tests on this branch, 2,597 on pristine main, the same three
 inherited failures, none new. The two changed test modules also pass (145 tests) on a CPython 3.12.16 built for this.
 NOT CHECKED: the seven workflow-step tests on Windows (they skip there on purpose); the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go.
 No Mark LVII code was run.
-LEFT FOR THE OWNER: "go" for slice 1; the merge (green on c3e6b09); what to do with Dependabot's #23 to #32.
+LEFT FOR THE OWNER: "go" for slice 1; the merge (read the latest run of pull request #33 first); what to do with Dependabot's #23 to #32.
 
 === 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
 
