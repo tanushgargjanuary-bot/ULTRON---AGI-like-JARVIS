@@ -67,6 +67,12 @@
       "disposition": "merge",
       "reason": "By hand, a piece at a time, never dropped in: upstream's new lines hold E1 (news on open) and E2 (the news watch). Taken so far: sleep() tells the wake-word detector to forget what it heard.",
       "decided": "the owner's go, 2026-11-24; DECISIONS.md section 8"
+    },
+    {
+      "paths": ["actions/computer_settings.py"],
+      "disposition": "merge",
+      "reason": "By hand, a piece at a time, never dropped in. Taken so far: the mute words (mute and unmute set the state asked for instead of flipping it, a real toggle, an answer read back from the mute flag, undo that restores the flag, and the word unmute shown to the model; tests/test_mute_state.py). Still to take, each as its own piece: volume_set switching the sound on, the volume-key fallback, the volume step size, brightness on macOS and Linux.",
+      "decided": "the owner's go, 2026-11-24; docs/UPSTREAM_RESEARCH.md section 10"
     }
   ]
 }

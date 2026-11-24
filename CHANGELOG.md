@@ -10,6 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Mute means muted, 2026-11-24 — the fourth piece of Mark LVII, written test first
+
+**Asked for.** "Do the next piece": the mute half of the volume and mute piece, proposed at the end of the last one with a guess of "yes". Nothing new to use: no setting, no dependency, no network call, no referee file.
+
+**What was wrong** (`actions/computer_settings.py`; read in the code, and shown by the new tests failing on it):
+- "Mute", "unmute" and "toggle mute" were one function. On Windows and Linux it was a flip (the mute key, or `pactl set-sink-mute … toggle`), so "unmute" on a machine that was not muted muted it, and "mute" said twice unmuted it again. On macOS it always muted, so "unmute" muted.
+- The answer read the volume level before and after. Muting does not move the level, so it was always "unverified", with a reason about the volume.
+- "Undo" after a mute put the volume level back, which changes nothing that can be heard.
+- The model was shown the word `mute` and never `unmute`.
+
+**What changed.** The three words are three actions that set the state asked for: `mute_get` reads the state, `mute_set` sets it, and a toggle reads first and then sets the opposite. The answer is read back from the mute flag, undo puts the flag back, and the model is now told `unmute`. That last part has to ride along: with `mute` meaning only "mute", a model that was never told `unmute` would mute when the user said "unmute". Windows uses the audio interface that the volume code already used; the mute key stays as the last resort when that cannot be reached, and then the answer says that nothing could be confirmed.
+
+**Different from Mark's version** (`752ff61`, read, not copied): `pactl` is asked in plain English (`LC_ALL=C`), because it prints the yes or no in the user's language (`pa_yes_no_localised` in PulseAudio's `pactl.c`, read) and a translated answer would have made every reading "unknown"; a toggle whose starting point could not be read is reported as not confirmed, where his code reports it as confirmed; `toggle_mute` is not added to the words the model is shown (see the next paragraph).
+
+**Found while reading, not changed.** `core/policy.py` lists this tool's actions as `volume`, `set_volume` and `brightness`, but the actions are `volume_up`, `volume_down`, `volume_set`, `brightness_up`, `brightness_down` and `toggle_mute`. `policy.classify("computer_settings", {"action": "volume_up"})` answers guarded and not allowed, and `core/custom_gate.dispatch` answers a guarded call with a confirmation banner on the HUD. So "volume up" should ask for a click, while "mute" and "unmute", which the table names correctly, do not. Read in the code and run through the policy function; **not seen in the running app**. It is a referee file, so it was not edited, and whether these names should be routine is the owner's decision. It is also why `toggle_mute` is not shown to the model: it would add one more banner.
+
+**Not taken yet** (the next piece): `volume_set` switching the sound on when it sets a level, the volume-key fallback, the volume step size, brightness on macOS and Linux, and the rest of that file's changes.
+
+**Evidence.** `tests/test_mute_state.py`: 18 tests. 13 fail on the original code; the other 5 guard what must not change (the volume level is never touched, and every word the model is shown still resolves). All 18 pass on the new code. A stand-in machine holds one mute flag and is reached the three ways a real one is: Windows (the audio interface and the mute key), macOS (`osascript`) and Linux (`pactl`). 29 faults planted one at a time in the new code (a flip instead of a set, true and false swapped on each system, a reading read upside down, an undo that restores the opposite, an answer that never compares, the wrong audio device, and so on): all 29 are refused. One of them got through on the first run (a toggle on a machine whose mute state cannot be read at all) and a new test closed it; two other gaps were closed before that run, by thinking it through (the exact sentence for "cannot read it", and commands aimed at the wrong audio device).
+
+**A correction to the last piece.** The program that planted faults last time could run a cached copy of the previous fault, so its "34 of 34" was not reliable evidence on its own. It now deletes the cache before every run and refuses to start unless the unmutated code passes (the problem showed here when the unmutated code failed after a run of faults). A fresh set of 34 faults against the merged scroll, wake-word and Piper code: all 34 are caught.
+
+**Not verified.** A real Windows audio device, a real PulseAudio or PipeWire server, a real Mac. The stand-in encodes my reading of their documentation and source. The confirmation banner in the running app.
+
 ### First pieces of Mark LVII, 2026-11-24 — three small fixes, each written test first
 
 **Asked for.** "go" for the first piece of Mark LVII's changes, and to use `addyosmani/agent-skills`, `anthropics/skills` and `alibaba/open-code-review` "for code review and skills". I took that the way you chose it on 2026-11-22: work as those repositories teach, and review with `open-code-review` before the pull request. If you meant that their skills should be put inside Ultron, say so; nothing of the kind was added.
