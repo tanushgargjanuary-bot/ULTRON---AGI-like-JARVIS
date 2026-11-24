@@ -15,8 +15,8 @@ What the owner relies on, and what these tests pin:
 * what the owner excluded (news on open, the 30-minute news watch, tools run by themselves at launch)
   is named whenever upstream touches it, and a tripwire fails if it appears in Ultron's own code;
 * text that comes from upstream (a file name, a readme line, a requirement) cannot break the issue;
-* the weekly job can read the repository and write issues and nothing else, and it closes its issue
-  once the pin has caught up with upstream.
+* the scheduled job looks nine times a month, can read the repository and write issues and nothing
+  else, and it closes its issue once the pin has caught up with upstream.
 
 The upstream below is a real git repository in a temporary folder: no network, and no `gh` except the
 stand-in the issue-step tests put first on the PATH.
@@ -25,7 +25,9 @@ stand-in the issue-step tests put first on the PATH.
 from __future__ import annotations
 
 import ast
+import calendar
 import dataclasses
+import datetime
 import hashlib
 import importlib.util
 import io
@@ -604,7 +606,7 @@ class Unwired(unittest.TestCase):
 
 
 class AFileThatCannotBeParsed(unittest.TestCase):
-    """Review finding 3: one strange file in upstream must not stop the weekly report.
+    """Review finding 3: one strange file in upstream must not stop the scheduled report.
 
     How deep Python's parser can nest is a constant of each build, not a rule of the language: the hosted
     Linux job (3.12.16) parses 5,000 nested operators that the hosted Windows job (3.12.10) and a 3.11 build
@@ -1180,7 +1182,7 @@ class ExcludedFeatures(unittest.TestCase):
         self.assertIn("- **E2 News watch every 30 minutes** stays out (tripwire guard)", outcome.markdown)
         self.assertIn("## Touches what you excluded", outcome.markdown)
 
-    def test_a_line_upstream_already_had_does_not_raise_the_alarm_again_every_week(self):
+    def test_a_line_upstream_already_had_does_not_raise_the_alarm_again_at_every_look(self):
         old = "ROUTINES = [{'id': 'news_watch'}]\n" + numbered()
         story = Scenario(self.addCleanup, {**TERMS, "core/r.py": old}, {"core/r.py": old + "print('x')\n"}, {**TERMS, "core/r.py": old})
         story.write("EXCLUSIONS.json", self.exclusions)
@@ -1408,7 +1410,7 @@ class TheReportAsAWhole(unittest.TestCase):
         self.assertIn("`(top level)` 1", sync.render(self.report(sync.FileChange("main.py", "COLLIDES")), EXCLUSIONS))
 
 
-# ------------------------------------------------------------------ the weekly workflow
+# ------------------------------------------------------------------ the scheduled workflow
 
 WORKFLOW = ROOT / ".github" / "workflows" / "upstream-watch.yml"
 
@@ -1463,7 +1465,7 @@ def condition_of(name: str) -> str:
     return next(line.split("if:", 1)[1].strip() for line in step_named(name) if line.strip().startswith("if:"))
 
 
-class TheWeeklyWorkflow(unittest.TestCase):
+class TheScheduledWorkflow(unittest.TestCase):
     """It reads upstream and writes one issue. It cannot change the repository, and nothing a stranger wrote runs."""
 
     @classmethod
@@ -1489,12 +1491,37 @@ class TheWeeklyWorkflow(unittest.TestCase):
         triggers = {line.strip().rstrip(":") for line in self.under("on") if not line.startswith("    ")}
         self.assertEqual(triggers, {"schedule", "workflow_dispatch"})
 
-    def test_the_schedule_is_weekly(self):
+    # The owner asked for "9 times in a month" instead of weekly (2026-11-24). Cron cannot say "nine a month", so the
+    # line names nine days of the month. These tests hold it to what he asked for, not to one particular set of days.
+
+    def days_it_looks(self) -> list:
+        """The days of the month in the one schedule line, as numbers. They must be a plain list: a step such as
+        `*/3` reads as "every third day" but is ten or eleven days in a long month, and a range hides the count."""
         crons = re.findall(r'cron:\s*"([^"]+)"', self.text)
-        self.assertEqual(len(crons), 1)
+        self.assertEqual(len(crons), 1, "one schedule, so the count below is the whole count")
         minute, hour, day, month, weekday = crons[0].split()
-        self.assertTrue(minute.isdigit() and hour.isdigit() and weekday.isdigit(), crons[0])
-        self.assertEqual((day, month), ("*", "*"))
+        self.assertTrue(minute.isdigit() and hour.isdigit(), f"once on each named day, not every hour: {crons[0]}")
+        self.assertEqual((month, weekday), ("*", "*"), f"a month or a weekday changes what the days mean: {crons[0]}")
+        self.assertRegex(day, r"^\d{1,2}(,\d{1,2})*$", f"name the days as a list; */3 is 10 or 11 days in a long month: {crons[0]}")
+        days = [int(part) for part in day.split(",")]
+        self.assertTrue(all(1 <= each <= 31 for each in days), f"a day of the month is 1 to 31: {crons[0]}")
+        return days
+
+    def test_it_looks_nine_times_in_every_month_february_included(self):
+        days = self.days_it_looks()
+        self.assertEqual(len(set(days)), len(days), "a day named twice is still one look")
+        for year in range(2026, 2034):                          # two leap years among the eight
+            for month in range(1, 13):
+                last = calendar.monthrange(year, month)[1]
+                real = [day for day in days if day <= last]
+                self.assertEqual(len(real), 9, f"{year}-{month:02d} has {last} days, so {len(real)} of the named days are real")
+
+    def test_it_never_waits_longer_between_looks_than_the_week_it_replaced(self):
+        days = self.days_it_looks()
+        dates = sorted(datetime.date(year, month, day) for year in range(2026, 2034) for month in range(1, 13)
+                       for day in set(days) if day <= calendar.monthrange(year, month)[1])
+        longest = max((dates[index + 1] - dates[index]).days for index in range(len(dates) - 1))
+        self.assertLessEqual(longest, 7, "nine looks bunched into one part of the month leave the rest unwatched")
 
     def test_every_action_is_pinned_to_a_commit_and_checkout_keeps_no_credentials(self):
         uses = re.findall(r"(?m)^\s*- uses:\s*(\S+)(.*)$", self.text)

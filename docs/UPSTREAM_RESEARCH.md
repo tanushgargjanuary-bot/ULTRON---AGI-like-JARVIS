@@ -361,4 +361,4 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 
 **Announced, not code.** Upstream's readme roadmap names, for LVIII and later: MCP tools, an approval policy for actions, event-driven proactivity, a knowledge folder, conversation history and interrupt by voice. That is a plan, and it was not reviewed. An MCP client (`custom_jarvis/mcp_client.py`; issues #133 and #159 in section 4) and an approval policy (`core/policy.py`) already exist in ULTRON; check before building a second copy.
 
-**Not reviewed.** Mark-LVII's issues and pull requests (only the code drop was compared); `gui/` line by line (it was measured and sorted, not read); community forks. The weekly report (`docs/UPSTREAM_SYNC.md`) will say when upstream moves again.
+**Not reviewed.** Mark-LVII's issues and pull requests (only the code drop was compared); `gui/` line by line (it was measured and sorted, not read); community forks. The scheduled report (`docs/UPSTREAM_SYNC.md`) will say when upstream moves again.

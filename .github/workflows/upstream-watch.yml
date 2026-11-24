@@ -4,12 +4,18 @@ name: Upstream watch
 # read it and write issues, and nothing else (tests/test_upstream_sync.py holds it to that). Taking
 # anything from upstream is a separate, reviewed change; see docs/UPSTREAM_SYNC.md.
 #
+# It looks nine times a month, as the owner asked on 2026-11-24 (it was weekly before): on days 1, 4, 7, 10, 13,
+# 16, 19, 22 and 25 at 06:17 UTC, which is 11:47 in India. Cron cannot say "nine a month", so the days are named.
+# None is past the 28th, so February has all nine, and the longest wait between two looks is seven days (the 25th
+# to the 1st of a 31-day month). Do not write a step such as */3 here: it is ten or eleven days in a long month.
+# tests/test_upstream_sync.py checks the count in every month and the longest wait.
+#
 # A schedule runs only from the default branch, and GitHub can delay or drop a scheduled run and switches
 # schedules off in a public repository after 60 days without activity. So the check compares with the
-# pinned drop (docs/upstream/PIN.json), never with "last week": a missed run loses nothing.
+# pinned drop (docs/upstream/PIN.json), never with "the last look": a missed run loses nothing.
 on:
   schedule:
-    - cron: "17 6 * * 1"
+    - cron: "17 6 1,4,7,10,13,16,19,22,25 * *"
   workflow_dispatch:
 
 permissions:

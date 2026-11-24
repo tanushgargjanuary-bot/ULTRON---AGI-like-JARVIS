@@ -70,7 +70,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`LANGUAGE_MATRIX.md`](LANGUAGE_MATRIX.md) | Language comparison and measured selection rationale |
 | [`BRANCH_REVIEW.md`](BRANCH_REVIEW.md) | Dated branch audits, selected work, and rejected candidates |
 | [`UPSTREAM_RESEARCH.md`](UPSTREAM_RESEARCH.md) | FatihMakes MARK/JARVIS repositories, source comparison, issues/PRs, reuse decisions, and licence controls |
-| [`UPSTREAM_SYNC.md`](UPSTREAM_SYNC.md) | How ULTRON follows new Mark releases: the read-only check, the weekly report, the pin and the ledger, what stays out, and how to take a slice in and roll it back |
+| [`UPSTREAM_SYNC.md`](UPSTREAM_SYNC.md) | How ULTRON follows new Mark releases: the read-only check, the scheduled report, the pin and the ledger, what stays out, and how to take a slice in and roll it back |
 | [`BRANCH_ARCHIVE.md`](BRANCH_ARCHIVE.md) | Exact archived branch tips, cleanup rules, and restore commands |
 | [`TEST_AUTOMATION.md`](TEST_AUTOMATION.md) | Fast checks on every branch update, full Linux/Windows regression gates, local commands, and edge-case coverage |
 | [`CODE_REVIEW.md`](CODE_REVIEW.md) | CI, Reviewdog/Ruff, optional PR-Agent, and manual review standards |

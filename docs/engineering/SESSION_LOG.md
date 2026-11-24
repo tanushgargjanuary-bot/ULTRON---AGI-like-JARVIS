@@ -1123,3 +1123,15 @@ a weekly read-only report; finish this pull request first).
 **Could not be done.** "Automatically delete head branches": HTTP 403 "Resource not accessible by integration" for this account. Still off.
 
 **Left for the owner.** The switch (Settings, General, Pull Requests). "Delete branch" on pull request #22. Pull request #21: keep or archive (the guarded archive workflow only handles its fixed list of reviewed branches, so archiving #21 means adding it there or tagging its tip by hand). Checked: Dependabot's own check on the pull request ("Dependabot config file validation: All changes look good") accepted the file. Not verified: what it opens after the merge (up to three grouped pull requests, once); whether security fixes are on for this repository.
+
+## 2026-11-24 — the upstream check looks nine times a month
+
+**Asked for.** He said yes to merging pull request #33, "but instead of weekly check, it should check 9 times in a month."
+
+**Assumptions.** (1) Nine looks in every calendar month, spread through it. (2) Cron cannot say "nine a month", so nine days are named, at the same 06:17 UTC: 1, 4, 7, 10, 13, 16, 19, 22 and 25. They stop at the 25th so February has all nine; a step such as `*/3` would be ten or eleven days in a long month. (3) The days are cheap to move, so no question was asked first. (4) His "yes" covers the merge once the change is in and the required checks are green.
+
+**What was done.** Test first. `test_the_schedule_is_weekly` asserted the old behaviour and was **replaced (flagged)** by two tests in the class now named `TheScheduledWorkflow`: nine looks in every month of 2026 to 2033, and no wait longer than seven days. Both were red on the weekly line (`Tuples differ: ('*', '1') != ('*', '*')`) and green after the change to `.github/workflows/upstream-watch.yml`. A class, a docstring, a section comment and a test name that said "weekly" or "every week" were renamed. Documents corrected: `CHANGELOG.md`, `DECISIONS.md` (section 8 and the row on a check that cannot run), `docs/UPSTREAM_SYNC.md`, `docs/AGENT_MAINTENANCE.md`, `docs/INDEX.md`, `docs/UPSTREAM_RESEARCH.md`, `docs/specifications/SYSTEM_OVERVIEW.md` and `docs/MAP.md` (line counts). Entries above this one that say "weekly" were true when they were written. The guide said to switch the schedule off by reverting the commit that added the workflow; a later commit now changes that file, so it says to delete the file.
+
+**Evidence.** 17 planted wrong schedules were all refused and four right ones passed (the list is in `CHANGELOG.md`). From GitHub's documentation, read on docs.github.com on 2026-11-24: the comma is a list operator in any of the five fields; a schedule runs only from the default branch; it can be delayed, most at the start of an hour; a public repository's schedules are switched off after 60 days with no repository activity. The hosted run on the pushed commit is the record for the rest.
+
+**Not checked.** A scheduled run on GitHub (it runs only from `main`, so the first is after the merge).

@@ -111,11 +111,18 @@ The owner's own data never comes from upstream: `config/api_keys.json`, `memory/
 
 **Rollback.** Revert the slice's commit, or switch its setting off. The ledger entry stays, so the file is reported again.
 
-## The weekly job
+## The scheduled job
 
-`.github/workflows/upstream-watch.yml` runs the check every Monday at 06:17 UTC and can be started by hand (Actions tab,
-"Upstream watch", Run workflow). It may read the repository and write issues, and nothing else (`contents: read`,
-`issues: write`); a test holds it to that, and every action in it is pinned to a commit.
+`.github/workflows/upstream-watch.yml` runs the check nine times a month, on days 1, 4, 7, 10, 13, 16, 19, 22 and 25 at
+06:17 UTC (11:47 in India), and can be started by hand (Actions tab, "Upstream watch", Run workflow). It may read the
+repository and write issues, and nothing else (`contents: read`, `issues: write`); a test holds it to that, and every
+action in it is pinned to a commit.
+
+Why named days and not "every three days": cron cannot say "nine a month", and a step such as `*/3` is ten or eleven days
+in a long month. The list stops at the 25th so that February has all nine, and the longest wait between two looks is seven
+days (the 25th to the 1st of a 31-day month), no longer than the weekly check this replaced (you changed it from weekly on
+2026-11-24, before the first run). A test counts the looks in every month and the longest wait, and does not care which
+nine days they are: to move them, change the list in the workflow file and in this paragraph.
 
 - Upstream moved (exit 10 or 20): it keeps **one** open issue labelled `upstream-watch` and rewrites it, so there is never a
   pile of them.
@@ -123,10 +130,10 @@ The owner's own data never comes from upstream: `config/api_keys.json`, `memory/
   upstream moved" after you had adopted or set aside the drop.
 - The check could not be made (exit 2 or a crash): the run fails, red, and the issue is left as it was.
 
-GitHub runs a schedule only from the default branch, can delay or drop a run, and switches schedules off in a public
-repository after 60 days without activity. So every check compares with the pin, never with "last week": a missed run loses
-nothing, and the next one reports the whole gap. To switch the schedule off, revert the commit that added the workflow file;
-the tool stays.
+GitHub runs a schedule only from the default branch, can delay or drop a run (06:17 is off the hour on purpose: the start
+of an hour is when it is busiest), and switches schedules off in a public repository after 60 days without activity. So
+every check compares with the pin, never with "the last look": a missed run loses nothing, and the next one reports the
+whole gap. To switch the schedule off, delete the workflow file; the tool stays.
 
 ## Licence and attribution
 
@@ -139,7 +146,8 @@ means saying it was modified (CC BY-NC 4.0 section 3(a)(1)(A)(ii)). A changed li
   themselves, which were fixed, and the next passed on both). The seven tests of the workflow's steps skip on Windows on
   purpose, because they need a POSIX `bash` and `jq`. macOS has not been run at all.
 - The workflow has not run on GitHub. Its issue steps were run only with a stand-in `gh` that records what it is asked, and
-  the schedule has not fired. One GitHub behaviour was checked on the real repository on 2026-11-22: `gh issue list --label X`
+  the schedule has not fired (GitHub's documentation allows a list of days in the day-of-month field, read 2026-11-24; a run
+  on the named days has not been seen). One GitHub behaviour was checked on the real repository on 2026-11-22: `gh issue list --label X`
   for a label that does not exist yet prints nothing and exits 0, which is what the first scheduled run meets.
 - What the report says about upstream's code comes from reading its files and the lines it added. None of upstream's code
   was run.

@@ -1,3 +1,17 @@
+=== 2026-11-24 · build 1.2.38 · the upstream check looks nine times a month, not once a week ===
+
+Asked for: on pull request #33, "I say yes, but instead of weekly check, it should check 9 times in a month." CHANGELOG.md ("The upstream
+check looks nine times a month") has the account.
+
+DONE
+  - .github/workflows/upstream-watch.yml: days 1, 4, 7, 10, 13, 16, 19, 22 and 25 of every month at 06:17 UTC (it was every Monday).
+    Cron cannot say "nine a month", so the days are named. None is past the 28th, so February has all nine; the longest wait is seven days.
+  - tests/test_upstream_sync.py: test_the_schedule_is_weekly replaced (flagged) by two tests, red on the weekly line and green on the new
+    one: nine looks in every month of 2026 to 2033, and no wait longer than seven days. 17 of 17 planted wrong schedules refused; four
+    right ones pass. A test name that said "every week" now says "at every look".
+  - Documents that said weekly or Monday about the job corrected. The guide's way to switch the job off is now "delete the workflow file".
+NOT VERIFIED: that GitHub fires the schedule on those days (it runs only from main, so the first run is after the merge).
+
 === 2026-11-24 · build 1.2.38 · branch clean-up: fourteen branches to four, and a robot that can no longer open ten at once ===
 
 Asked for: "why are there a lot of branches? is everything okay?", then "Fix this." CHANGELOG.md ("Branch clean-up") has the account.
