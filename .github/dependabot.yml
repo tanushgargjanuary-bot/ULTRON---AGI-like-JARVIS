@@ -1,24 +1,42 @@
 # Keeps three things that are pinned from going stale: the GitHub Actions (every one is
 # pinned to a commit, so nothing else will move them), the Python requirements, and the web
 # app's packages (package-lock.json). A pin that nothing updates is how a fixed vulnerability
-# stays in the build. One pull request per ecosystem at a time, once a month; delete this
-# file to turn it off.
+# stays in the build.
+#
+# At most one pull request per ecosystem is open at a time, and it carries every update that
+# ecosystem has, once a month. The first version of this file said "one pull request per
+# ecosystem at a time" while allowing 2, 3 and 3, and Dependabot opened ten at once, a branch
+# each (4, 4 and 2): a limit alone did not hold. A group is one pull request, so each
+# ecosystem has one group that takes every package, and the limit of 1 is a second guard.
+# tests/test_dependency_policy.py holds this file to that.
+#
+# Turning this off is a decision, not a tidy-up: DECISIONS.md ("a pin has a reason") and that
+# test both name this file. Security fixes follow separate GitHub settings, not this file.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 1
+    groups:
+      actions-all:
+        patterns: ["*"]
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
+    groups:
+      python-all:
+        patterns: ["*"]
 
   - package-ecosystem: "npm"
     directory: "/webapp"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
+    groups:
+      webapp-all:
+        patterns: ["*"]

@@ -1087,7 +1087,7 @@ a weekly read-only report; finish this pull request first).
 
 **Asked for.** The original Mark was updated (it is now Mark LVII). The owner wants its newest features in Ultron, with excluded features such as news read out when the assistant opens kept out, and wants Ultron to follow every future Mark "with a system which handles the feature collision and bugs". A plan came first; his answers were the strictest exclusions, the new window layer (`gui/`) last, "report only", and drive-wide file access staying opt-in. Then he asked for `addyosmani/agent-skills` and `anthropics/skills` to be used as the working method (state assumptions, test first, small commits, a review before each pull request) and `alibaba/open-code-review` for that review.
 
-**What was done.** Nine commits on `arena/8c75f708-ultron-agi-like-jarvis`, cut from `main` at `df115bb`:
+**What was done.** Ten commits on `arena/8c75f708-ultron-agi-like-jarvis`, cut from `main` at `df115bb`:
 
 1. `b8bef93`, `scripts/verify.py` keeps the report and the last line when a step dies of a native crash. The hosted run of PR #22's merge had ended with one line, "exit -11". The cause is **not** found.
 2. `0404fb0`, `docs/MAP.md` for that tree. The fast gate had gone red on the previous commit because the map was stale.
@@ -1098,6 +1098,7 @@ a weekly read-only report; finish this pull request first).
 7. `c3e6b09`, the fix for what the first hosted run found (below): three faults in the new tests.
 8. `1abb11f`, four sentences corrected once the run on `c3e6b09` had passed.
 9. The fix for one test that failed by chance on Windows (below).
+10. The Dependabot limit and the branch clean-up (the entry after this one).
 
 **Review of the finished work.** A first read found five faults, all fixed test first (the old script and workflow showed 41 red items): relative imports were not followed; the weekly job never closed its issue; one unparsable Python file stopped the report; a git failure was read as "no such file"; and text from upstream could break the report's formatting. A second read, against the rules `ocr delegate rule` prints for these file types (that mode calls no model: it prints the rules, and the reading was done by hand), found three more: a path check that knew only POSIX rules (Windows reads `a\..\b`, `C:x` and `x.txt:stream` differently), a symlink followed out of the clone and a folder named like a module that crashed the run, and data-file lists that were not lists. Fixed test first; a mutation check of those guards caught 15 of 15 after a first run that caught 11 of 14 (a redundant condition removed, an unreachable branch given a test).
 
@@ -1109,4 +1110,16 @@ a weekly read-only report; finish this pull request first).
 
 **Not checked.** The seven workflow-step tests on Windows (they skip there on purpose and ran on Linux). The schedule, which only runs from `main`. The issue steps on GitHub, which were run with a stand-in `gh`. macOS, Rust, Go. None of Mark LVII's code was run, because none was taken.
 
-**Left for the owner.** "Go" for the first catch-up slice (small proven fixes, test first, switched off by default). Merging this pull request (pull request #33; read the latest run on it first). What to do with Dependabot's ten pull requests (#23 to #32). Pull request #21. Questions 5 and 6 in `DECISIONS.md`. The three referee files edited in PR #22 (`core/self_change.py`, `core/policy.py`, `core/ast_guardian.py`) are still waiting to be read by the owner.
+**Left for the owner.** "Go" for the first catch-up slice (small proven fixes, test first, switched off by default). Merging this pull request (pull request #33; read the latest run on it first). Dependabot's ten pull requests (#23 to #32) were closed on 2026-11-22 (next entry). Pull request #21. Questions 5 and 6 in `DECISIONS.md`. The three referee files edited in PR #22 (`core/self_change.py`, `core/policy.py`, `core/ast_guardian.py`) are still waiting to be read by the owner.
+
+## 2026-11-22 — branch clean-up: fourteen branches to four
+
+**Asked for.** "Why are there a lot of branches? Is everything okay? How will we fix this?", then "Fix this."
+
+**What was found.** Fourteen branches: `main`; this pull request's branch; `arena/850afbc9-ultron-agi-like-jarvis` (merged as #22, kept because "Automatically delete head branches" is off; GitHub says 0 commits in it that `main` lacks); `feat/computer-use-skills` (#21, opened 2026-11-13, 2 commits, 22 files, 26 commits behind `main`); and ten `dependabot/*` branches for #23 to #32, all opened at 09:32 on 2026-11-22 by the `.github/dependabot.yml` that #22 added. The file's comment said "one pull request per ecosystem at a time", its limits said 2, 3 and 3, and Dependabot opened 4, 4 and 2; why is not known. The twelve `archive/…` names are tags (five fully inside `main`, seven holding commits `main` lacks), not branches.
+
+**What was done.** #23 to #32 closed without merging, with a comment, their branches deleted (14 became 4, read back). `.github/dependabot.yml` now has `open-pull-requests-limit: 1` and one catch-all group per ecosystem. Deleting it was the first plan and was not done: `DECISIONS.md` ("a pin has a reason") and `test_dependabot_keeps_the_pins_moving` name the file. A new test, `test_dependabot_opens_one_grouped_pull_request_per_ecosystem`, is red on the old file and green on the new; it catches six of six planted faults, the older test one (unchanged). Documents that said the ten were open were corrected.
+
+**Could not be done.** "Automatically delete head branches": HTTP 403 "Resource not accessible by integration" for this account. Still off.
+
+**Left for the owner.** The switch (Settings, General, Pull Requests). "Delete branch" on pull request #22. Pull request #21: keep or archive (the guarded archive workflow only handles its fixed list of reviewed branches, so archiving #21 means adding it there or tagging its tip by hand). Not verified: that Dependabot accepts the new file; what it opens after the merge (up to three grouped pull requests, once); whether security fixes are on for this repository.

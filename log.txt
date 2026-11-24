@@ -1,3 +1,24 @@
+=== 2026-11-22 · build 1.2.38 · branch clean-up: fourteen branches to four, and a robot that can no longer open ten at once ===
+
+Asked for: "why are there a lot of branches? is everything okay?", then "Fix this." CHANGELOG.md ("Branch clean-up") has the account.
+
+FOUND: fourteen branches (the rule: main is the only permanent one). Ten were Dependabot's, one per pull request #23 to #32, opened at
+09:32 on 2026-11-22 by the settings file that PR #22 added. The others besides main and this branch: the merged branch of #22 (kept,
+because the repository setting "delete head branches" is off) and the branch of pull request #21 (2026-11-13, not merged).
+The file's comment said "one pull request per ecosystem at a time"; its limits said 2, 3, 3; Dependabot opened 4, 4, 2. Cause not known.
+
+DONE
+  - #23 to #32 closed without merging, their branches deleted (14 branches became 4, read back from GitHub).
+  - .github/dependabot.yml: limit 1 and one group per ecosystem (a group is one pull request). Still monthly, still three ecosystems.
+    Deleting it was the first plan; DECISIONS.md (a pin has a reason) and a test name the file, so turning it off is the owner's call.
+  - tests/test_dependency_policy.py: a new test makes the file's comment true. Red on the old file, green on the new; 6 of 6 planted
+    faults caught (the older test, unchanged, catches 1).
+CANNOT: switch on "Automatically delete head branches": GitHub said 403 to this account. Still off.
+LEFT FOR THE OWNER: that switch; "Delete branch" on pull request #22; keep or archive pull request #21.
+NOT VERIFIED: that Dependabot accepts the new file; what it opens after the merge (up to three grouped pull requests, once);
+whether security fixes are on for this repository (a separate setting this account cannot read).
+
+
 === 2026-11-22 · build 1.2.38 · following upstream Mark: a read-only check, a weekly report, three exclusions written down ===
 
 Asked for: the original Mark was updated (now Mark LVII); the owner wants its newest features in Ultron, "excluded features like
@@ -50,7 +71,7 @@ MEASURED: Linux, Python 3.11.2 (CI uses 3.12), CI package set: 2,730 tests on th
 inherited failures, none new. The two changed test modules also pass (145 tests) on a CPython 3.12.16 built for this.
 NOT CHECKED: the seven workflow-step tests on Windows (they skip there on purpose); the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go.
 No Mark LVII code was run.
-LEFT FOR THE OWNER: "go" for slice 1; the merge (read the latest run of pull request #33 first); what to do with Dependabot's #23 to #32.
+LEFT FOR THE OWNER: "go" for slice 1; the merge (read the latest run of pull request #33 first); Dependabot's #23 to #32 were closed on 2026-11-22 (see the block at the top).
 
 === 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
 
