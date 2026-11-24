@@ -129,6 +129,7 @@ class WakeWordDetector:
         self._running = False
         self._model = None
         self._ready = False
+        self._reset_pending = False
 
     def start(self) -> bool:
         """Load the model and spawn the inference thread. Returns True on success.
@@ -164,6 +165,25 @@ class WakeWordDetector:
     def ready(self) -> bool:
         return self._ready
 
+    def reset(self) -> None:
+        """Forget what was heard so far; call it when the assistant goes to sleep.
+
+        Only a request: the detector's own thread does it before the next frame, because that is the
+        only thread that touches the model."""
+        self._reset_pending = True
+
+    def _reset_model(self) -> None:
+        # The model keeps its recent audio features and scores. Left alone, one phrase can fire again on
+        # the frames after it, and audio from before the assistant woke is still in there when it goes
+        # back to sleep, so words said minutes earlier can wake it again.
+        model = self._model
+        if model is None:
+            return
+        try:
+            model.reset()
+        except Exception as error:
+            failures.note("wake_word.reset", error)
+
     def feed(self, frame_int16) -> None:
         """Called from the mic callback (real-time thread). Must stay cheap and
         never block — the frame is copied and dropped if the queue is backed up."""
@@ -185,6 +205,9 @@ class WakeWordDetector:
                 frame = self._queue.get()
                 if frame is None or not self._running:
                     break
+                if self._reset_pending:
+                    self._reset_pending = False
+                    self._reset_model()
                 scores = self._model.predict(np.asarray(frame, dtype=np.int16))
                 score = 0.0
                 if isinstance(scores, dict):
@@ -195,8 +218,9 @@ class WakeWordDetector:
                     if score == 0.0 and scores:
                         score = max(float(v) for v in scores.values())
                 if score >= self._threshold:
-                    # drain any backlog so we don't double-fire on the same utterance
+                    # drain any backlog and clear the model, so one utterance is one wake
                     self._drain()
+                    self._reset_model()
                     try:
                         self._on_detect()
                     except Exception as e:

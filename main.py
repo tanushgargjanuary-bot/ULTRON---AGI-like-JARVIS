@@ -975,6 +975,9 @@ class JarvisLive:
         if not self._awake:
             return
         self._awake = False
+        detector = self._wake_detector
+        if detector is not None:
+            detector.reset()        # nothing heard before sleeping may wake it again
         self.set_speaking(False)
         self.ui.set_state("SLEEPING")
         self.ui.write_log(f"SYS: Sleeping — {reason}. Say 'Hey Jarvis' to wake me.")
