@@ -350,7 +350,7 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 
 | Decision | What |
 |---|---|
-| Adopted | Nothing. No upstream code has been taken. |
+| Adopted | Nothing at the time of the review (see "Taken since the review" below). |
 | Already present | The three files that differ only in line endings. |
 | Reimplemented | Nothing yet. The plan for background tasks is to reuse ULTRON's public-address guard (`actions/web_read.fetch_public_bytes`) instead of keeping upstream's second copy. |
 | Deferred | Everything wanted, in slices that wait for the owner's go. (1) Small fixes found by reading the diff, not run: wake-word reset, Windows scroll units, volume, brightness and seek, video seek, the Gemini fallback ladder, speech output, shutdown (which touches the boot guard, a referee file) and the TLS file (which needs the `certifi` consent). (2) Background tasks and deep research: `core/tasks/`, `actions/background_tasks.py`, `agents/`. (3) Routines, only in a form that satisfies E1 to E3. (4) `gui/`, last: ULTRON's own window work lives in `ui.py`, and the proof gate and three test files read `ui.py` as text. Each is in `docs/upstream/LEDGER.json` as `later`; 17 files have no decision yet and are held. |
@@ -362,3 +362,18 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 **Announced, not code.** Upstream's readme roadmap names, for LVIII and later: MCP tools, an approval policy for actions, event-driven proactivity, a knowledge folder, conversation history and interrupt by voice. That is a plan, and it was not reviewed. An MCP client (`custom_jarvis/mcp_client.py`; issues #133 and #159 in section 4) and an approval policy (`core/policy.py`) already exist in ULTRON; check before building a second copy.
 
 **Not reviewed.** Mark-LVII's issues and pull requests (only the code drop was compared); `gui/` line by line (it was measured and sorted, not read); community forks. The scheduled report (`docs/UPSTREAM_SYNC.md`) will say when upstream moves again.
+
+**Taken since the review.** The owner said "go" on 2026-11-24 for the small fixes. They are taken a piece at a time, each with its tests written first (every behaviour test was red on the old code), and every decision is in `docs/upstream/LEDGER.json`. The pull request that carries the first three is the record of the commits.
+
+| Piece | Decision | What |
+|---|---|---|
+| Windows scroll units, `actions/computer_control.py` | Adopted | `_scroll` counts wheel notches (120 units each on Windows), never turns round for a negative amount, and holds the amount between 1 and 60. Upstream's only hunk in this file. `tests/test_scroll_units.py`. |
+| Wake-word reset, `core/wake_word.py` and `JarvisLive.sleep` in `main.py` | Adopted | The detector clears the model after a detection, and `sleep()` asks it to forget what it heard. Upstream's silent `except Exception: pass` became `failures.note`. `tests/test_wake_word.py`. |
+| Piper voice download, `providers/tts_piper.py` | Reimplemented | A voice downloads into a scratch folder and moves in only when both files are whole, the model last. Unlike upstream's: one scratch folder and one lock per voice, so a second voice is not held up and no voice name can point the folder elsewhere. `tests/test_piper_download.py`. |
+| Piper `certifi` retry (macOS) | Deferred | Waits for the owner's consent about `certifi`. |
+| `focuses` in `actions/proactive.py` | Deferred | A hook for routines; it goes with the routines slice. |
+| Not going to sleep when no detector can wake it (`_run_sleep_watch`, `_ui_wake_toggle` in `main.py`) | Deferred | The next small piece; not yet read against Ultron's tests. |
+| ElevenLabs voice name to voice ID (`providers/tts_elevenlabs.py`) | Deferred | Not yet read against how Ultron's settings panel saves the voice. |
+| Volume, brightness and seek (`actions/computer_settings.py`, 483 changed lines), video seek (`actions/video_player.py`, 286), the Gemini ladder (`core/gemini.py`, 127), shutdown (`main.py`), `actions/reminder.py` (55), `core/appidentity.py` (117) | Deferred | The next pieces. Each is larger than these three, so each is read and split before it is taken. |
+
+**Found while reading, not changed.** On Windows pyautogui's `hscroll` is the vertical scroll (its docstring: horizontal scrolling is "currently just Linux"), so "scroll left" and "scroll right" move the page down and up there. `WakeWordDetector._drain` records the `queue.Empty` that ends every drain as a failure, so the failure trail gets one false entry per wake.
