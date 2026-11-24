@@ -48,6 +48,25 @@
       "disposition": "later",
       "reason": "Planned slice: routines. It must satisfy exclusions E1 to E3 in EXCLUSIONS.json: no news on open, no news watch, nothing that runs tools by itself at launch.",
       "decided": "plan approved by the owner, 2026-11-22"
+    },
+    {
+      "paths": ["core/wake_word.py", "actions/computer_control.py"],
+      "disposition": "take",
+      "reason": "Everything upstream changed in these two files is now in Ultron: the wake-word reset (with Ultron's failure trail in place of a silent pass, and one call in main.py's sleep()) and the Windows scroll units. Each was written test first (tests/test_wake_word.py, tests/test_scroll_units.py).",
+      "decided": "the owner's go, 2026-11-24; docs/UPSTREAM_RESEARCH.md section 10",
+      "reconciled": "752ff618a4e6a4bf2e675866b993071d739cfce2"
+    },
+    {
+      "paths": ["providers/tts_piper.py"],
+      "disposition": "merge",
+      "reason": "Partly taken, by hand: a voice downloads into a scratch folder and moves in only when whole (reimplemented, with a lock per voice and the model moved last; tests/test_piper_download.py). Left out: upstream's certifi retry for macOS, which waits for the owner's consent about certifi.",
+      "decided": "the owner's go, 2026-11-24; docs/UPSTREAM_RESEARCH.md section 10"
+    },
+    {
+      "paths": ["main.py"],
+      "disposition": "merge",
+      "reason": "By hand, a piece at a time, never dropped in: upstream's new lines hold E1 (news on open) and E2 (the news watch). Taken so far: sleep() tells the wake-word detector to forget what it heard.",
+      "decided": "the owner's go, 2026-11-24; DECISIONS.md section 8"
     }
   ]
 }

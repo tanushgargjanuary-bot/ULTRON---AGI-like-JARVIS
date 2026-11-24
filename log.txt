@@ -1,3 +1,22 @@
+=== 2026-11-24 · build 1.2.38 · first pieces of Mark LVII: three small fixes, each written test first ===
+
+Asked for: "go", and "also use the 3 github repos for code review and skills" (agent-skills, anthropics/skills, open-code-review: the method,
+as chosen on 2026-11-22; nothing was installed inside Ultron). CHANGELOG.md ("First pieces of Mark LVII") has the account.
+
+DONE (one commit each; no feature, setting, dependency or network call; no referee file)
+  - actions/computer_control.py: "scroll down 3" sent 3 to Windows, which counts 120 units to a notch. It sends 360 now; a negative amount no
+    longer turns the direction round; 1 to 60 notches.
+  - core/wake_word.py, main.py (sleep): the model is cleared after a detection and sleeping asks it to forget, so one phrase is one wake.
+  - providers/tts_piper.py: a voice downloads into a folder of its own and moves in only when both files are whole (one lock per voice;
+    the folder's name is escaped). Left out: Mark's certifi retry for macOS (waits for the owner's consent about certifi).
+  - docs/upstream/LEDGER.json, docs/UPSTREAM_RESEARCH.md section 10: what was taken, what is deferred.
+TESTS: 25 new (6 + 10 + 9); 19 red on the original code, 6 guards; 34 of 34 planted faults refused.
+REVIEW: open-code-review in delegation mode + the five axes of agent-skills' code-review-and-quality. Found before the push: one lock for all
+  voices (a second voice would wait behind a stalled first); a folder name that could point elsewhere; a getattr that could hide a rename.
+  A trial run of the whole suite caught an exec in my test (debt ceiling dangerous-call 1 -> 2); the checks now read main.py's source.
+NOT VERIFIED: a real scroll on Windows, the real wake-word model, a real Piper download, the hosted Windows run (these ran on Linux).
+FOUND, NOT CHANGED: pyautogui's hscroll is the vertical scroll on Windows; _drain notes a queue.Empty as a failure on every wake.
+
 === 2026-11-24 · build 1.2.38 · the upstream check looks nine times a month, not once a week ===
 
 Asked for: on pull request #33, "I say yes, but instead of weekly check, it should check 9 times in a month." CHANGELOG.md ("The upstream
