@@ -152,7 +152,7 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 87 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 54 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 31 modules, 15,712 lines
+## `actions/` — 31 modules, 15,716 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -160,10 +160,10 @@ edit the module docstring instead and run it again.
 | `browser_control.py` | 1,315 | **no docstring** | test_capability_guide, test_policy, test_suite_providers, test_tool_contract |
 | `capability_guide.py` | 179 | Map a user's goal to existing tools and skills, including common synonyms. | test_capability_guide |
 | `code_helper.py` | 636 | **no docstring** | test_tool_contract |
-| `computer_control.py` | 815 | **no docstring** | test_applescript_quoting, test_capability_guide, test_computer_capability, test_gate_holds_input, test_policy, test_tool_contract, test_ui_control_action |
+| `computer_control.py` | 819 | **no docstring** | test_applescript_quoting, test_capability_guide, test_computer_capability, test_gate_holds_input, test_policy, test_scroll_units, test_tool_contract, test_ui_control_action |
 | `computer_settings.py` | 1,098 | **no docstring** | test_policy, test_tool_contract |
 | `curriculum.py` | 280 | core/curriculum.py — the syllabus Ultron holds, reachable by voice. | test_curriculum, test_mental |
-| `desktop.py` | 582 | **no docstring** | test_applescript_quoting, test_autonomy_upgrades, test_capability_guide, test_computer_capability, test_edge_cases, test_source_hygiene, test_wallpaper_url |
+| `desktop.py` | 582 | **no docstring** | test_applescript_quoting, test_autonomy_upgrades, test_capability_guide, test_computer_capability, test_edge_cases, test_scroll_units, test_source_hygiene, test_wallpaper_url |
 | `dev_agent.py` | 1,683 | **no docstring** | test_policy, test_runtime_files_ignored |
 | `file_controller.py` | 1,005 | **no docstring** | test_edge_cases, test_file_controller_hardening, test_file_controller_security, test_find_files_sensitive, test_mental, test_policy, test_suite_safety, test_tool_contract |
 | `file_processor.py` | 1,024 | file_processor.py — JARVIS Universal File Processor | test_capability_guide, test_dependency_policy, test_file_processor_safety, test_file_processor_undo, test_lint_ratchet, test_source_hygiene |
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 123 modules, 34,024 lines
+## `tests/` — 124 modules, 34,116 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -352,6 +352,7 @@ edit the module docstring instead and run it again.
 | `test_routing_runtime.py` | 270 | Tests for provider routing at run time. | — |
 | `test_runtime_files_ignored.py` | 213 | Every file the app can leave in the project folder is ignored by git, or this fails. | — |
 | `test_schedule_packs.py` | 354 | tests/test_schedule_packs.py — the queue, the packs, and the GitHub reminders. | test_schedule_packs |
+| `test_scroll_units.py` | 92 | `actions/computer_control.py` `_scroll`: "scroll down 3" is three wheel notches on every system. | — |
 | `test_self_change.py` | 973 | Ultron changing its own source: the five stages, and the four refusals. | test_self_change, test_self_modify_gate |
 | `test_self_healing.py` | 528 | Bounded repair-loop, adversarial adapter, routing, persistence and rollback tests. | — |
 | `test_self_modify_gate.py` | 91 | `self_modify` and `system_prompt`: the two tools that change the assistant itself. | — |
