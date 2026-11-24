@@ -24,7 +24,7 @@ Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section i
 
 **Evidence.** 25 new tests: `tests/test_scroll_units.py` (6), `tests/test_wake_word.py` (10), `tests/test_piper_download.py` (9). On the original code 19 of them are red (the other 6 guard what must not change); on the new code all pass. 34 planted faults (a wrong notch size, a reset that never happens, a voice written straight to its final name, one lock for every voice, and so on) are all refused. Mark's own files were read next to Ultron's, not copied; the ledger (`docs/upstream/LEDGER.json`) records what was taken.
 
-**Not verified.** A real scroll on a real Windows desktop; the real wake-word model; a real Piper download; the hosted Windows run of these tests (they were run on Linux).
+**Not verified.** A real scroll on a real Windows desktop; the real wake-word model; a real Piper download; which of these tests ran, and which skipped, on the hosted Windows machine (the Windows job passed on pull request 35, but the per-test list was not read; the tests were written and run on Linux).
 
 ### The upstream check looks nine times a month, 2026-11-24 — in place of once a week
 
