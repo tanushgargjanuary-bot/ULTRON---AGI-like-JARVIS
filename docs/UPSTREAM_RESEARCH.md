@@ -6,6 +6,8 @@
 **ULTRON comparison baseline:** `76484ebc4cbf4b5d4a23889ed6eeddfbf844083c`  
 **Purpose:** Preserve upstream research and turn useful MARK/JARVIS work into safe, traceable ULTRON improvements.
 
+**Later review:** [section 10](#10-mark-lvii-reviewed-2026-11-22), Mark LVII (head `752ff618a4e6a4bf2e675866b993071d739cfce2`, 2026-11-11), reviewed 2026-11-22. Nothing from it has been adopted.
+
 ## 1. What this audit covers
 
 The user asked ULTRON to make use of the work published by FatihMakes around the MARK/JARVIS assistant.
@@ -326,3 +328,37 @@ Do not start all six tasks in parallel. Treat the source comparison as complete 
 - Re-run this audit after significant upstream releases or when the user identifies a specific fork/resource.
 
 The rule is simple: **use the strongest relevant upstream work, but keep ULTRON's own safety, evidence, tests, and license obligations intact.**
+
+## 10. Mark LVII, reviewed 2026-11-22
+
+**Source.** [FatihMakes/Mark-LVII](https://github.com/FatihMakes/Mark-LVII), GitHub repository id 1170311800. It is the repository audited above, renamed: upstream publishes a new Mark by renaming the repository, and a new Mark is the first line of `readme.md` changing (12 times between 2026-06-06 and 2026-11-11, read through the GitHub API on the day of the review). There are no tags or releases. Head: `752ff618a4e6a4bf2e675866b993071d739cfce2` (2026-11-11, "Add files via upload"), one commit after `0101e540ac4b16cc3a862d9979e08fefcc1c7a01`, the commit ULTRON was copied from (still the base; the pin is `docs/upstream/PIN.json`).
+
+**How it was measured.** `python scripts/upstream_sync.py check --full --upstream <a clone of 752ff61> --no-api`, which only reads, on the day of the review and again after the script was corrected (the same answer both times). Three versions of every changed file are compared: upstream at the copy, ULTRON now, upstream now. The comparison read upstream's files and the lines it added. **None of upstream's code was run.** Exit 20: two stop signs.
+
+**Licence and dependency.** `LICENSE` is unchanged (its fingerprint equals the pinned one): CC BY-NC 4.0, "Copyright (c) 2026 FatihMakes". Attribution stays. `requirements.txt` gains `certifi>=2024.2.2`. The new `core/tls.py` (74 lines) makes HTTPS trust the system's roots plus certifi's list; certifi is already installed with `requests`, but listing it is a dependency change and needs the owner's consent. The other stop sign: upstream changed `AGENTS.md`, which steers agents; its version is read and never applied.
+
+**What differs: 54 files.**
+
+| Kind | Files | Which |
+|---|---:|---|
+| Collides (both changed the same place) | 12 | `main.py` (8 places git cannot combine; E1 and E2 are in its new lines), `ui.py` (upstream cut it from 7,505 to 384 lines because the window moved to `gui/`), `memory/config_manager.py`, `core/gemini.py`, `actions/browser_control.py`, `actions/computer_settings.py`, `actions/desktop.py`, `actions/video_player.py`, `providers/llm_openai.py`, `providers/_tests.py`, `AGENTS.md`, `readme.md` |
+| Combines as text, still needs tests | 8 | `actions/computer_control.py`, `actions/proactive.py`, `actions/reminder.py`, `core/appidentity.py`, `core/wake_word.py`, `providers/tts_elevenlabs.py`, `providers/tts_piper.py`, `requirements.txt` |
+| New | 31 | `gui/` 10 files, 8,976 lines; `core/cloud.py`, `core/screenview.py`, `core/screenact.py`, `core/tls.py` 6,271 lines; `core/tasks/` 9 files, 2,193 lines; `core/routines/` 4 files, 693 lines; `actions/background_tasks.py` and `actions/routines.py` 329 lines; `agents/` 2 files, 39 lines (18,501 lines in all) |
+| Line endings only | 3 | `core/_smoke_harness.py`, `core/code_checks.py`, `providers/registry.py` |
+
+**The five decisions, as of this review.**
+
+| Decision | What |
+|---|---|
+| Adopted | Nothing. No upstream code has been taken. |
+| Already present | The three files that differ only in line endings. |
+| Reimplemented | Nothing yet. The plan for background tasks is to reuse ULTRON's public-address guard (`actions/web_read.fetch_public_bytes`) instead of keeping upstream's second copy. |
+| Deferred | Everything wanted, in slices that wait for the owner's go. (1) Small fixes found by reading the diff, not run: wake-word reset, Windows scroll units, volume, brightness and seek, video seek, the Gemini fallback ladder, speech output, shutdown (which touches the boot guard, a referee file) and the TLS file (which needs the `certifi` consent). (2) Background tasks and deep research: `core/tasks/`, `actions/background_tasks.py`, `agents/`. (3) Routines, only in a form that satisfies E1 to E3. (4) `gui/`, last: ULTRON's own window work lives in `ui.py`, and the proof gate and three test files read `ui.py` as text. Each is in `docs/upstream/LEDGER.json` as `later`; 17 files have no decision yet and are held. |
+| Parked (neither adopted nor rejected) | `core/cloud.py`, `core/screenview.py`, `core/screenact.py` (6,197 lines): nothing in upstream's own program imports them, which the script found and a plain `grep` of upstream confirmed (the three are mentioned only in each other and in comments). They open sockets, deploy to a server over SSH and talk to Telegram. Not copied until upstream wires them in and the owner agrees. |
+| Rejected | The owner's three exclusions, chosen on 2026-11-22 (strictest option): **E1** news read out when ULTRON opens, **E2** the news check every 30 minutes, **E3** routines that run tools by themselves at launch. Five upstream files mention one of them: `main.py` (E1, E2), `core/cloud.py` (E1), `actions/routines.py` (E2, E3), `core/routines/desktop.py` (E1, E2, E3), `core/routines/engine.py` (E3). Upstream's own `AGENTS.md`, `readme.md` and the referee files are decided `ours` and never applied. |
+
+**Worth knowing.** Upstream's routine engine falls back to a news briefing when a routine does not say otherwise, and its `actions/desktop.py` failed 44 of ULTRON's wallpaper checks: both were measured on 2026-11-22 in a scratch tree and not re-run since, which is why files are never dropped in unchanged (upstream's files also took nine of twelve debt ceilings over). The new tools are `background_tasks` and `routines`. 98 added strings say JARVIS or MARK; ULTRON's name is ULTRON. New code that runs other programs is in 8 files, that opens network connections in 4, that uses the Windows registry in 2, that installs packages in 1, and that deploys over SSH in 1 (`core/cloud.py`).
+
+**Announced, not code.** Upstream's readme roadmap names, for LVIII and later: MCP tools, an approval policy for actions, event-driven proactivity, a knowledge folder, conversation history and interrupt by voice. That is a plan, and it was not reviewed. An MCP client (`custom_jarvis/mcp_client.py`; issues #133 and #159 in section 4) and an approval policy (`core/policy.py`) already exist in ULTRON; check before building a second copy.
+
+**Not reviewed.** Mark-LVII's issues and pull requests (only the code drop was compared); `gui/` line by line (it was measured and sorted, not read); community forks. The scheduled report (`docs/UPSTREAM_SYNC.md`) will say when upstream moves again.

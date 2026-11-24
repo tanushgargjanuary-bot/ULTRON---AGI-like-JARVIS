@@ -1,3 +1,93 @@
+=== 2026-11-24 · build 1.2.38 · the upstream check looks nine times a month, not once a week ===
+
+Asked for: on pull request #33, "I say yes, but instead of weekly check, it should check 9 times in a month." CHANGELOG.md ("The upstream
+check looks nine times a month") has the account.
+
+DONE
+  - .github/workflows/upstream-watch.yml: days 1, 4, 7, 10, 13, 16, 19, 22 and 25 of every month at 06:17 UTC (it was every Monday).
+    Cron cannot say "nine a month", so the days are named. None is past the 28th, so February has all nine; the longest wait is seven days.
+  - tests/test_upstream_sync.py: test_the_schedule_is_weekly replaced (flagged) by two tests, red on the weekly line and green on the new
+    one: nine looks in every month of 2026 to 2033, and no wait longer than seven days. 17 of 17 planted wrong schedules refused; four
+    right ones pass. A test name that said "every week" now says "at every look".
+  - Documents that said weekly or Monday about the job corrected. The guide's way to switch the job off is now "delete the workflow file".
+NOT VERIFIED: that GitHub fires the schedule on those days (it runs only from main, so the first run is after the merge).
+
+=== 2026-11-24 · build 1.2.38 · branch clean-up: fourteen branches to four, and a robot that can no longer open ten at once ===
+
+Asked for: "why are there a lot of branches? is everything okay?", then "Fix this." CHANGELOG.md ("Branch clean-up") has the account.
+
+FOUND: fourteen branches (the rule: main is the only permanent one). Ten were Dependabot's, one per pull request #23 to #32, opened at
+09:32 on 2026-11-22 by the settings file that PR #22 added. The others besides main and this branch: the merged branch of #22 (kept,
+because the repository setting "delete head branches" is off) and the branch of pull request #21 (2026-11-13, not merged).
+The file's comment said "one pull request per ecosystem at a time"; its limits said 2, 3, 3; Dependabot opened 4, 4, 2. Cause not known.
+
+DONE
+  - #23 to #32 closed without merging, their branches deleted (14 branches became 4, read back from GitHub).
+  - .github/dependabot.yml: limit 1 and one group per ecosystem (a group is one pull request). Still monthly, still three ecosystems.
+    Deleting it was the first plan; DECISIONS.md (a pin has a reason) and a test name the file, so turning it off is the owner's call.
+  - tests/test_dependency_policy.py: a new test makes the file's comment true. Red on the old file, green on the new; 6 of 6 planted
+    faults caught (the older test, unchanged, catches 1).
+CANNOT: switch on "Automatically delete head branches": GitHub said 403 to this account. Still off.
+LEFT FOR THE OWNER: that switch; "Delete branch" on pull request #22; keep or archive pull request #21.
+CHECKED: Dependabot's own check on the pull request ("Dependabot config file validation") said "All changes look good".
+NOT VERIFIED: what it opens after the merge (up to three grouped pull requests, once); whether security fixes are on for this
+repository (a separate setting this account cannot read).
+
+
+=== 2026-11-22 · build 1.2.38 · following upstream Mark: a read-only check, a weekly report, three exclusions written down ===
+
+Asked for: the original Mark was updated (now Mark LVII); the owner wants its newest features in Ultron, "excluded features like
+News updates when Jarvis is opened" kept out, and a system that follows every future Mark and handles collisions and bugs. His
+answers: strictest exclusions, the window layer last, report only, drive access stays opt-in. CHANGELOG.md ("Following upstream
+Mark") has the account, docs/engineering/SESSION_LOG.md the same in short, docs/UPSTREAM_RESEARCH.md section 10 the review.
+
+WHAT THE CHECK SAID (read only, a clone of Mark LVII's head 752ff61 against the copy base 0101e54)
+  - 54 files differ: 12 collide with Ultron's own changes, 8 combine as text, 31 are new (18,501 lines), 3 differ in line endings.
+  - 17 have no decision yet and are held. Two stop signs: requirements.txt adds certifi; AGENTS.md changed.
+  - Five files mention an exclusion (E1 news on open, E2 the 30-minute news watch, E3 routines that run tools at launch).
+  - core/cloud.py, core/screenview.py and core/screenact.py are imported by nothing in upstream's own program.
+
+WHAT CHANGED (nothing from Mark LVII is in Ultron; this only looks)
+  - scripts/upstream_sync.py (new): compares upstream-at-the-copy, Ultron-now and upstream-now, sorts each file into one of
+    twelve kinds, exits 0/10/20/2. It never edits, pushes or merges (a test hashes Ultron's tree before and after).
+  - docs/upstream/: PIN.json, LEDGER.json (a decision and a reason per kind of file), EXCLUSIONS.json (E1 to E3 and how each
+    is guarded). docs/UPSTREAM_SYNC.md is the guide.
+  - .github/workflows/upstream-watch.yml (new): Mondays 06:17 UTC; read the repository, write issues, nothing else; one open
+    issue labelled upstream-watch, closed when the pin has caught up.
+  - scripts/verify.py: a native crash in a step keeps the report and the last line. Cause of the "exit -11" NOT found.
+
+FOUND ON THE WAY, FIXED TEST FIRST
+  - relative imports not followed; the issue never closed; one unparsable file stopped the report; a git failure read as "no
+    such file"; text from upstream could break the report; names Windows reads as another folder or drive; a symlink followed;
+    a folder named like a module crashed the run; data-file lists that were not lists. Mutation check of the guards: 15 of 15.
+  - The fast gate went red on the first commit (docs/MAP.md stale). Regenerated; green on b57f806.
+
+FIRST HOSTED RUN (run 45033789440): red on Linux and Windows in the suite step. Three faults in my own new tests, none in the script:
+  - a 5,000-nested-operators fixture that Python 3.12.16 on Linux parses (the depth limit is per build; reproduced on a 3.12.16
+    built from source, the same two failures by name). Tests no longer need a depth.
+  - a fixture file named actions/nul.py: a device name on Windows. Renamed; the fixture writer now refuses such names everywhere.
+  - the verify.py control crashed the child with ctypes.string_at(0), which on Windows raises OSError instead. Now
+    faulthandler._read_null(). That it crashes for real on Windows was a reading of CPython; the next run showed it held.
+  - verify.py stops at the first failing step, so the later steps had not run on this pull request until the next run.
+
+RUN ON THE FIXED COMMIT c3e6b09 (run 45036131001): green on Linux (Python 3.12.16) and Windows (3.12.10), every step. The Windows
+proof gate said 28 PROVEN, 9 PARTIAL, as on the merge of PR #22.
+
+THEN, ON 1abb11f (documents only, run 45037801726): Linux green; Windows red in ONE test, by chance, nothing to do with this pull request.
+  - test_gemini_resilience ... quota_time: "300.00000000000006 not less than or equal to 300". The test (from PR #22) reads a rest
+    back as deadline - now; Windows' clock in Python 3.12 moves in 15.6 ms steps, so two reads can be equal, and (t + 300) - t is not
+    always exactly 300 in floating point (212.007 s gives the failing value). Its 30-minute sibling has the same fault.
+  - Fixed in tests/test_gemini_resilience.py only: core/gemini.py sees a clock standing at 1000.0; two assertLessEqual became
+    assertEqual (REPLACED ASSERTIONS, each stricter). Old tests at the bad seconds: same message. New: pass. Six planted wrong rest
+    times: the new tests catch 6, the old 3.
+  - NOT measured: how often it fails (it depends on the runner's uptime). NOT run on Windows yet.
+
+MEASURED: Linux, Python 3.11.2 (CI uses 3.12), CI package set: 2,730 tests on this branch, 2,597 on pristine main, the same three
+inherited failures, none new. The two changed test modules also pass (145 tests) on a CPython 3.12.16 built for this.
+NOT CHECKED: the seven workflow-step tests on Windows (they skip there on purpose); the schedule (runs only from main); the issue steps on GitHub; macOS; Rust; Go.
+No Mark LVII code was run.
+LEFT FOR THE OWNER: "go" for slice 1; the merge (read the latest run of pull request #33 first); Dependabot's #23 to #32 were closed on 2026-11-24 (see the block at the top).
+
 === 2026-11-22 · build 1.2.38 · the second Windows run of pull request #22: the suite passes, the proof gate does not ===
 
 Asked for: "Yes, push and watch Windows" (the owner's answer to step 0 of the plan for following upstream Mark releases).

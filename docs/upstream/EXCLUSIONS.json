@@ -1,0 +1,36 @@
+{
+  "what": "Things from upstream that must stay out of Ultron, whatever a new Mark brings. `needles` are regular expressions the check script looks for in the lines upstream adds or changes, so a change that touches an exclusion is named in the weekly report. `guard` says what keeps it out here: a test that exercises the behaviour, or a tripwire (a test that fails if any needle appears in Ultron's own code). Add an exclusion only with the owner's word.",
+  "tripwire_scope": ["main.py", "ui.py", "core", "actions", "plugins", "providers", "custom_jarvis", "memory", "gui"],
+  "exclusions": [
+    {
+      "id": "E1",
+      "name": "News on open",
+      "rule": "Nothing fetches or says the news when Ultron opens unless the owner saved the morning brief on. A missing or malformed setting means off.",
+      "decided": "DECISIONS.md, 'Startup morning brief is opt-in'; confirmed by the owner on 2026-11-22",
+      "needles": ["_send_startup_briefing", "top world news today", "morning_brief_enabled", "builtin\\s*=\\s*[\"']briefing[\"']"],
+      "guard": {
+        "kind": "test",
+        "tests": [
+          "tests/test_upstream_sync.py::ExcludedFeatures.test_the_briefing_is_only_started_behind_the_owners_choice",
+          "tests/test_suite_assistant.py::BriefingOptInTests"
+        ]
+      }
+    },
+    {
+      "id": "E2",
+      "name": "News watch every 30 minutes",
+      "rule": "No routine speaks news headlines on a timer. Ultron's own topic monitor, which speaks only for topics the owner asked it to follow, is unchanged.",
+      "decided": "owner, 2026-11-22",
+      "needles": ["news_watch"],
+      "guard": {"kind": "tripwire"}
+    },
+    {
+      "id": "E3",
+      "name": "Startup routines that run tools",
+      "rule": "Nothing runs an instruction with tools by itself when Ultron opens.",
+      "decided": "owner, 2026-11-22",
+      "needles": ["[\"']type[\"']\\s*:\\s*[\"']startup[\"']"],
+      "guard": {"kind": "tripwire"}
+    }
+  ]
+}

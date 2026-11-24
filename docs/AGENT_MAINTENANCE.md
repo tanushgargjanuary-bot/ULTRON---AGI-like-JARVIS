@@ -145,6 +145,8 @@ Use this procedure whenever an agent researches or imports work from MARK/JARVIS
 9. Update the source inventory and canonical handoff when a medium/large upstream review occurs. Add the source to `docs/UPSTREAM_RESEARCH.md` and keep it in `docs/INDEX.md`.
 10. Re-run focused tests, `python scripts/verify.py`, and relevant proof-gate/platform checks after a port. A test result from the source project does not prove the ULTRON port.
 
+**For a new Mark release, start with the check.** `python scripts/upstream_sync.py check` is read-only (`--full` measures from the copy ULTRON was made from, `--upstream DIR` reads a local clone). It does the bookkeeping of steps 1 and 4: it names the exact commit and sorts every changed file by whether it collides with a change ULTRON made. It adopts nothing and replaces none of the steps above. A scheduled job (nine times a month), `.github/workflows/upstream-watch.yml`, runs it and keeps one open issue. How to read the report, take a slice in and roll it back is in [`UPSTREAM_SYNC.md`](UPSTREAM_SYNC.md). In the pull request that adopts or sets aside a drop, move the pin, add the ledger entry (`docs/upstream/LEDGER.json`) and add the row to `docs/UPSTREAM_RESEARCH.md`.
+
 The current MARK/JARVIS source inventory and its reuse decisions are in [`UPSTREAM_RESEARCH.md`](UPSTREAM_RESEARCH.md). Its search limits are explicit. Do not claim that all global GitHub forks or mentions have been reviewed.
 
 ## 8. Required close-out

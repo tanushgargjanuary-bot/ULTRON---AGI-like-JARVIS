@@ -264,6 +264,27 @@ class WorkflowsAreNotMovable(unittest.TestCase):
         self.assertEqual(len(re.findall(r"open-pull-requests-limit:\s*\d", text)), 3,
                          "an unbounded stream of update PRs is its own problem")
 
+    def test_dependabot_opens_one_grouped_pull_request_per_ecosystem(self):
+        """Its first run opened ten pull requests at once, a branch each, and none was read.
+
+        The file said "one pull request per ecosystem at a time" while allowing 2, 3 and 3,
+        and Dependabot opened 4, 4 and 2: the limit alone did not hold. A group is one pull
+        request, so every ecosystem gets one group that takes every package, and the limit
+        stays at 1 as a second guard.
+        """
+        text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        entries = re.split(r"(?m)^  - package-ecosystem:", text)[1:]
+        self.assertGreaterEqual(len(entries), 3, "github-actions, pip and npm at least")
+        for entry in entries:
+            ecosystem = entry.splitlines()[0].strip()
+            with self.subTest(ecosystem=ecosystem):
+                self.assertRegex(entry, r"(?m)^    open-pull-requests-limit:\s*1\s*$")
+                self.assertRegex(
+                    entry,
+                    r'(?m)^    groups:\s*\n      [\w-]+:\s*\n        patterns:\s*\["\*"\]\s*$',
+                    f"{ecosystem}: one group that takes every package",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

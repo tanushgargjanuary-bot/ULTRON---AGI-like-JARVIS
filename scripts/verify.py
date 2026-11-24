@@ -49,6 +49,19 @@ def _stray_host_files():
     return stray
 
 
+def step_environment() -> dict:
+    """What every step of the chain runs with.
+
+    A step that dies of a native crash (a segmentation fault in Qt, an access violation on Windows) used to
+    leave one line, `exit -11`, and the end of whatever its output had been flushed: standard output to a
+    pipe is block-buffered, so that end was an arbitrary eight kilobytes before the crash. The hosted run of
+    the merge of pull request #22 on `main` ended that way in the UI self-tests, on a tree that had passed
+    the same step three times. `PYTHONFAULTHANDLER` makes Python print where the crash happened, and
+    `PYTHONUNBUFFERED` makes the output stop where the crash did.
+    """
+    return dict(os.environ, QT_QPA_PLATFORM="offscreen", PYTHONFAULTHANDLER="1", PYTHONUNBUFFERED="1")
+
+
 def main():
     count = 0
     for folder, dirs, files in os.walk(ROOT):
@@ -68,7 +81,7 @@ def main():
     # numbers true; their pattern matched nothing on the page, yet the second one
     # still imported every test module in this process, once, to count them — on
     # every run, including each self-change rehearsal that runs this script.
-    environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    environment = step_environment()
     stray_before = set(_stray_host_files())
     checks = [
         (
