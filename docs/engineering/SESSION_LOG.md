@@ -1110,9 +1110,9 @@ a weekly read-only report; finish this pull request first).
 
 **Not checked.** The seven workflow-step tests on Windows (they skip there on purpose and ran on Linux). The schedule, which only runs from `main`. The issue steps on GitHub, which were run with a stand-in `gh`. macOS, Rust, Go. None of Mark LVII's code was run, because none was taken.
 
-**Left for the owner.** "Go" for the first catch-up slice (small proven fixes, test first, switched off by default). Merging this pull request (pull request #33; read the latest run on it first). Dependabot's ten pull requests (#23 to #32) were closed on 2026-11-22 (next entry). Pull request #21. Questions 5 and 6 in `DECISIONS.md`. The three referee files edited in PR #22 (`core/self_change.py`, `core/policy.py`, `core/ast_guardian.py`) are still waiting to be read by the owner.
+**Left for the owner.** "Go" for the first catch-up slice (small proven fixes, test first, switched off by default). Merging this pull request (pull request #33; read the latest run on it first). Dependabot's ten pull requests (#23 to #32) were closed on 2026-11-24 (next entry). Pull request #21. Questions 5 and 6 in `DECISIONS.md`. The three referee files edited in PR #22 (`core/self_change.py`, `core/policy.py`, `core/ast_guardian.py`) are still waiting to be read by the owner.
 
-## 2026-11-22 — branch clean-up: fourteen branches to four
+## 2026-11-24 — branch clean-up: fourteen branches to four
 
 **Asked for.** "Why are there a lot of branches? Is everything okay? How will we fix this?", then "Fix this."
 
@@ -1122,4 +1122,4 @@ a weekly read-only report; finish this pull request first).
 
 **Could not be done.** "Automatically delete head branches": HTTP 403 "Resource not accessible by integration" for this account. Still off.
 
-**Left for the owner.** The switch (Settings, General, Pull Requests). "Delete branch" on pull request #22. Pull request #21: keep or archive (the guarded archive workflow only handles its fixed list of reviewed branches, so archiving #21 means adding it there or tagging its tip by hand). Not verified: that Dependabot accepts the new file; what it opens after the merge (up to three grouped pull requests, once); whether security fixes are on for this repository.
+**Left for the owner.** The switch (Settings, General, Pull Requests). "Delete branch" on pull request #22. Pull request #21: keep or archive (the guarded archive workflow only handles its fixed list of reviewed branches, so archiving #21 means adding it there or tagging its tip by hand). Checked: Dependabot's own check on the pull request ("Dependabot config file validation: All changes look good") accepted the file. Not verified: what it opens after the merge (up to three grouped pull requests, once); whether security fixes are on for this repository.

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
-### Branch clean-up, 2026-11-22 — fourteen branches to four, and the robot that made ten of them
+### Branch clean-up, 2026-11-24 — fourteen branches to four, and the robot that made ten of them
 
 **What was found.** Fourteen branches on GitHub, where the rule is that `main` is the only permanent one: `main`; this pull request's branch; `arena/850afbc9-ultron-agi-like-jarvis` (merged as #22 and kept, because the repository setting "Automatically delete head branches" is off); `feat/computer-use-skills` (pull request #21, opened 2026-11-13, never merged, 26 commits behind `main`); and ten `dependabot/*` branches, one for each of the pull requests #23 to #32, all opened at 09:32 on 2026-11-22, a minute after #22 merged. The settings file that started them, `.github/dependabot.yml`, came in with #22. Its comment said "one pull request per ecosystem at a time", its limits said 2, 3 and 3, and Dependabot opened 4, 4 and 2. Why the limits did not hold is not known. The twelve `archive/…` names are tags, not branches.
 
@@ -18,7 +18,7 @@ Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section i
 
 **What could not be done.** Turning on "Automatically delete head branches": GitHub answered 403, "Resource not accessible by integration", so the account this work runs under cannot change repository settings. Read back: still off. Left for the owner: that switch (Settings, General, Pull Requests); the merged branch `arena/850afbc9-ultron-agi-like-jarvis` (the "Delete branch" button on pull request #22; everything in it is already in `main`); and pull request #21: keep it or archive it.
 
-**Not verified.** That Dependabot accepts the new file (GitHub shows file errors on the repository's Dependabot page; here it was only parsed as YAML), and what it opens after this reaches `main`: it may open up to three grouped pull requests once. Whether security fixes are switched on for this repository: they follow separate GitHub settings that this account cannot read (HTTP 403).
+**Checked by Dependabot itself.** On this pull request Dependabot's own check, "Dependabot config file validation", passed with "All changes look good", so it accepts the new file. **Not verified.** What it opens after this reaches `main`: it may open up to three grouped pull requests once. Whether security fixes are switched on for this repository: they follow separate GitHub settings that this account cannot read (HTTP 403).
 
 ### One test failed by chance on Windows, 2026-11-22 — a rest time read back through floating point
 
@@ -61,7 +61,7 @@ Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section i
 
 **Not verified.** The seven workflow-step tests on Windows: they need a POSIX `bash` and `jq`, so they skip there on purpose (they ran on Linux). The schedule: GitHub runs a schedule only from `main`, so its first run comes after a merge. The issue steps on GitHub (they were run with a stand-in `gh`; one GitHub behaviour was checked live: listing issues by a label that does not exist yet prints nothing and exits 0). macOS. Rust and Go. None of Mark LVII's code was run, because none of it was taken.
 
-**For the owner.** Nothing is ported until you say go; the first slice would be the small proven fixes, each with a test first and switched off by default. Dependabot's ten pull requests (#23 to #32) were closed on 2026-11-22 at the owner's request, and the robot is limited to one grouped pull request per ecosystem (see "Branch clean-up" above).
+**For the owner.** Nothing is ported until you say go; the first slice would be the small proven fixes, each with a test first and switched off by default. Dependabot's ten pull requests (#23 to #32) were closed on 2026-11-24 at the owner's request, and the robot is limited to one grouped pull request per ecosystem (see "Branch clean-up" above).
 
 ### Second Windows run, 2026-11-22 — the suite passes; the proof gate finds that every drive was reachable by default
 
