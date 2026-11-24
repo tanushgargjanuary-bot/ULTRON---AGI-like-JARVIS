@@ -44,11 +44,14 @@ from core import failures
 
 import asyncio
 import json
+import os
+import shutil
 import threading
 import time
 from importlib.util import find_spec
 from pathlib import Path
 from typing import AsyncIterator, Optional
+from urllib.parse import quote
 
 from . import audio
 from .base import DEFAULT_CAPS, Field
@@ -109,6 +112,7 @@ _CATALOG_URL = ("https://huggingface.co/rhasspy/piper-voices/resolve/main/"
 # a bug.
 _catalog: Optional[dict] = None
 _catalog_lock = threading.Lock()
+_download_locks: dict[str, threading.Lock] = {}   # per voice: one voice is fetched once, different voices in parallel
 _voices: dict = {}          # model path -> loaded PiperVoice
 _voice_lock = threading.Lock()
 
@@ -191,19 +195,37 @@ def language_of(voice: str) -> str:
 
 
 def download(voice: str, log=None) -> Path:
-    """Fetch one voice. Blocking — callers run it off the interface thread."""
+    """Fetch one voice. Blocking — callers run it off the interface thread.
+
+    Piper (piper-tts 1.8.0) writes the model straight to its final name and fetches a file again only
+    when it is missing or empty, so a download cut short left a truncated `.onnx` that `installed()`
+    took for a finished voice and that nothing repaired. So it writes into a scratch folder of its own
+    (named after the voice, escaped, so no voice name can point it elsewhere), and the files move in
+    only once both are whole, the model last because `installed()` looks for the model. One voice is
+    fetched by one caller at a time; different voices are fetched in parallel."""
     from piper.download_voices import download_voice
 
     _VOICE_DIR.mkdir(parents=True, exist_ok=True)
     target = _VOICE_DIR / f"{voice}.onnx"
     if target.exists():
         return target
-    if log:
-        log(f"SYS: downloading the {voice} voice (about 60 MB, once)")
-    t0 = time.monotonic()
-    download_voice(voice, _VOICE_DIR)
-    if log:
-        log(f"SYS: {voice} downloaded in {time.monotonic() - t0:.1f}s")
+    with _download_locks.setdefault(voice, threading.Lock()):
+        if target.exists():                 # another caller finished it while this one waited
+            return target
+        if log:
+            log(f"SYS: downloading the {voice} voice (about 60 MB, once)")
+        t0 = time.monotonic()
+        partial = _VOICE_DIR / f".partial-{quote(voice, safe='')}"
+        shutil.rmtree(partial, ignore_errors=True)
+        partial.mkdir(parents=True, exist_ok=True)
+        try:
+            download_voice(voice, partial)
+            for part in sorted(partial.iterdir(), key=lambda item: item.suffix == ".onnx"):
+                os.replace(part, _VOICE_DIR / part.name)
+        finally:
+            shutil.rmtree(partial, ignore_errors=True)
+        if log:
+            log(f"SYS: {voice} downloaded in {time.monotonic() - t0:.1f}s")
     return target
 
 

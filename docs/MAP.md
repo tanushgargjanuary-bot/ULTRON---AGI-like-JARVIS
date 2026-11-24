@@ -28,7 +28,7 @@ edit the module docstring instead and run it again.
 | `code_checks.py` | 728 | What the coding agent knows about ANY project before it writes, and how it | — |
 | `confirm.py` | 162 | core/confirm.py — a confirmation the model cannot forge. | test_ast_guardian_bypasses, test_boot_guard, test_gate_holds_input, test_mark_integration, test_memory_safety, test_mental, test_policy, test_prompt_editor, test_prompt_gate, test_runtime_files_ignored, test_self_change, test_self_modify_gate, test_suite_safety, test_ui_action |
 | `conversation_context.py` | 39 | Bounded transcript carry-over for session changes that cannot resume server state. | test_conversation_context |
-| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_provider_schema, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_verify_script, test_video_player, test_wake_word, test_web_platforms |
+| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_piper_download, test_provider_schema, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_verify_script, test_video_player, test_wake_word, test_web_platforms |
 | `curriculum.py` | 246 | core/curriculum.py — the eight subjects Ultron holds, from basics to advanced. | test_curriculum, test_mental |
 | `custom_gate.py` | 119 | Human-only, fail-closed action gate for both MARK voice engines. | test_display_text, test_gate_holds_input, test_mark_integration, test_policy |
 | `digest.py` | 215 | core/digest.py — the daily digest: it tells you, and it does nothing else. | test_background_loops, test_crash, test_plugins_bundle, test_proof_gate, test_self_change, test_suite_assistant |
@@ -78,7 +78,7 @@ edit the module docstring instead and run it again.
 | `tool_prompt.py` | 120 | How a tool is described to the model — and what makes it ever get called. | test_triggers |
 | `tool_usage.py` | 234 | Which tools are actually called — the other half of a trigger. | test_bugfix_pass, test_config_safety, test_tool_usage_loop, test_triggers |
 | `trie.py` | 137 | core/trie.py — a prefix tree for "what could they be about to say?". | test_suite_algorithms |
-| `tts.py` | 473 | Text-to-Speech engines for MARK XL. | test_local_fallback, test_tts_fallback |
+| `tts.py` | 473 | Text-to-Speech engines for MARK XL. | test_local_fallback, test_piper_download, test_tts_fallback |
 | `ui_action.py` | 413 | core/ui_action.py — acting on a ref, and knowing when not to. | test_ui_action, test_ui_ladder |
 | `ui_browser.py` | 315 | core/ui_browser.py — a real tree for the one place the desktop tree is empty. | — |
 | `ui_ladder.py` | 291 | core/ui_ladder.py — what to do when the button tree is not there. | test_ui_ladder |
@@ -188,11 +188,11 @@ edit the module docstring instead and run it again.
 | `web_search.py` | 441 | **no docstring** | test_action_audit, test_bugfix_pass, test_mental, test_policy, test_tool_usage_loop, test_triggers |
 | `youtube_video.py` | 471 | **no docstring** | — |
 
-## `providers/` — 11 modules, 5,060 lines
+## `providers/` — 11 modules, 5,082 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_dashboard_hardening, test_evolution_rubrics, test_health_center, test_live_config, test_native_claims, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
+| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_dashboard_hardening, test_evolution_rubrics, test_health_center, test_live_config, test_native_claims, test_piper_download, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
 | `base.py` | 341 | The contract every provider signs — and the only thing the rest of the app is | test_autonomy_upgrades, test_collect_install, test_crash, test_dashboard_hardening, test_decision_layers, test_lint_ratchet, test_live_config, test_live_transport, test_local_detector, test_mark_integration, test_metacog_service, test_migrate_legacy, test_repair_judgment, test_routing_runtime, test_shipping, test_suite_algorithms, test_suite_assistant, test_upstream_sync |
 | `connections.py` | 197 | providers/connections.py — one connection, reused, instead of one per call. | test_suite_providers, test_upstream_sync |
 | `engine_pipeline.py` | 1,311 | The second way to hold the conversation: speech in, a model, speech out. | test_audio_features, test_live_config, test_live_transport, test_routing_runtime, test_suite_assistant |
@@ -201,7 +201,7 @@ edit the module docstring instead and run it again.
 | `schema.py` | 458 | Tool declarations, translated — and trimmed to what a small model can hold. | test_edge_cases, test_hybrid_ipc, test_live_config, test_mcp_client, test_prompt_gate, test_provider_schema, test_repair_judgment, test_self_modify_gate, test_tool_contract |
 | `stt_whisper.py` | 369 | Speech recognition — on this machine, or through a transcription API. | test_local_fallback, test_suite_providers |
 | `tts_elevenlabs.py` | 274 | ElevenLabs speech synthesis — the multilingual voice. | test_suite_providers |
-| `tts_piper.py` | 496 | Piper — a neural voice that runs on this machine, in about fifty languages. | test_suite_providers |
+| `tts_piper.py` | 518 | Piper — a neural voice that runs on this machine, in about fifty languages. | test_piper_download, test_suite_providers |
 | `tts_system.py` | 434 | Speech synthesis through the operating system's own voices. | test_tts_fallback |
 
 ## `dashboard/` — 1 modules, 1,650 lines
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 125 modules, 34,293 lines
+## `tests/` — 126 modules, 34,490 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -338,6 +338,7 @@ edit the module docstring instead and run it again.
 | `test_persona_switch_settings.py` | 186 | Switching persona or theme: what is saved, what is kept, and what the window says. | test_persona_switch_settings |
 | `test_personas.py` | 43 | Tests for persona names, labels, and prompts. | — |
 | `test_philosophy.py` | 286 | The minds Ultron thinks with, and the three things that make them safe. | test_philosophy |
+| `test_piper_download.py` | 197 | `providers/tts_piper.py` `download`: a voice is listed as installed only when both of its files are whole. | — |
 | `test_plan_state.py` | 260 | A plan must survive a restart. These tests kill the process and start it again. | — |
 | `test_plugins_bundle.py` | 262 | Tests for the twelve shipped plugins, run through the real plugin loader. | — |
 | `test_policy.py` | 301 | Offline tests for risk-tiered consent (core/policy.py + core/custom_gate.py). | — |
