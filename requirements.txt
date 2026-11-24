@@ -15,19 +15,19 @@
 # (offscreen CI, headless VM, a box with no sound device). 6.8.x constructs the
 # same widget cleanly. A crash at launch is the worst failure mode there is, so
 # the ceiling sits below the version that does it until that is re-tested.
-PyQt6>=6.6,<6.12
-sounddevice>=0.4,<1
-numpy>=1.24,<3
-google-genai>=2.8.0,<3
+PyQt6>=6.12.1,<6.13
+sounddevice>=0.5.6,<1
+numpy>=2.5.5,<3
+google-genai>=3.6.1,<4
 # Declared even though google-genai already installs it. providers/ imports it
 # directly, and a package you import is a package you depend on — relying on
 # somebody else's transitive dependency works right up until they drop it.
-httpx>=0.27,<1
+httpx>=0.28.1,<1
 
 # ── Web search & browser control ──────────────────────────────────────────────
-requests>=2.31,<3
-beautifulsoup4>=4.12,<5
-playwright>=1.40,<2
+requests>=2.34.2,<3
+beautifulsoup4>=4.15.0,<5
+playwright>=1.65.2,<2
 
 # ── Video on the HUD ──────────────────────────────────────────────────────────
 # Qt plays local files and direct media URLs on its own — QtMultimedia comes
@@ -47,21 +47,21 @@ pyautogui<1
 pyperclip<2
 
 # ── Vision & media ────────────────────────────────────────────────────────────
-pillow>=10,<13
-opencv-python>=4.8,<5
-mss>=9,<11
+pillow>=13.0.0,<14
+opencv-python>=5.1.0.95,<6
+mss>=10.2.0,<11
 
 # ── System, files & documents ─────────────────────────────────────────────────
-psutil>=5.9,<8
+psutil>=7.2.2,<8
 send2trash<3                 # file_controller — recoverable deletes
 python-pptx<2                # file_processor — presentation reading
 
 # ── Remote dashboard (control from your phone) ────────────────────────────────
-fastapi>=0.110,<1
-uvicorn[standard]>=0.27,<1
-cryptography>=42,<50
-python-multipart>=0.0.9,<1
-qrcode[pil]>=7,<9
+fastapi>=0.165.0,<1
+uvicorn[standard]>=0.54.0,<1
+cryptography>=50.0.2,<51
+python-multipart>=0.0.34,<1
+qrcode[pil]>=8.2,<9
 
 # ── Plugin extras ─────────────────────────────────────────────────────────────
 # Plugins are downloaded one file at a time from the community, so their
@@ -101,11 +101,11 @@ pywinauto<1;  sys_platform == "win32"
 # ── Documents, media & hardware readouts ──────────────────────────────────────
 # Also try/except-guarded at the point of use. They are declared because a
 # feature that silently does nothing is worse than a slightly longer install.
-ddgs>=9,<10                  # web_search — the maintained successor to
+ddgs>=9.16.1,<10                  # web_search — the maintained successor to
                              # duckduckgo-search, which is tried first and
                              # falls back to the old name automatically
 pdfplumber<1                 # file_processor — PDF text and tables
-pypdf>=6.21.4,<8             # file_processor — PDF fallback reader. Replaces PyPDF2, whose
+pypdf>=7.1.1,<8             # file_processor — PDF fallback reader. Replaces PyPDF2, whose
                              # last release was in December 2022: pypdf has since fixed dozens of
                              # crafted-PDF hangs and memory blow-ups, and 6.21.4 is the first
                              # release with every advisory in GitHub's database fixed (checked
@@ -160,4 +160,4 @@ pynvml<14                    # system_monitor + the HUD's GPU meter (NVIDIA)
 # packages are needed there — nothing Windows-specific is ever pulled in.
 
 # Custom evidence-scoped repair schemas (no extra model or audio dependency).
-jsonschema>=4.23,<5
+jsonschema>=4.26.0,<5
