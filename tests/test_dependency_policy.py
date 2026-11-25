@@ -410,6 +410,14 @@ class DependabotKeepsToThePins(unittest.TestCase):
     GitHub's own check of `dependabot.yml` refused it on the pull request ("did not match one of the following values:
     lockfile-only, auto, increase, increase-if-necessary"), and the test that asserted `widen` had passed, because a
     test that repeats its author's belief is not evidence. So the value is also held to the list GitHub gave.
+
+    The same mistake a second time, found on Dependabot's first pull request under the file (#39, 2026-11-25). The Qt
+    rule named `update-types` (minor and major) and a test asserted those words, so it was green. Dependabot raised the
+    ceiling to `<6.13` anyway. Why is not known (its own log could not be read), but every requirement here is a range,
+    and a rule on update types did not hold for one. The test that fails a pull request which moves the ceiling did
+    hold, and #39 went red on that single test (none of the 2,966 others failed); it was the rule that did nothing.
+    So the rule now ignores PyQt6 outright, which GitHub's documentation gives as "ignore all updates", and no rule
+    may rest on `update-types` for a requirement that is not an exact pin.
     """
 
     # What GitHub's validator accepts for a pip entry, as it printed them on 2026-11-25.
@@ -420,6 +428,18 @@ class DependabotKeepsToThePins(unittest.TestCase):
         text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
         entries = re.split(r"(?m)^  - package-ecosystem:", text)[1:]
         cls.pip = next((e for e in entries if e.splitlines()[0].strip() == '"pip"'), "")
+
+    @classmethod
+    def ignore_rules(cls) -> dict[str, str]:
+        """The pip entry's `ignore:` list as {dependency name: the lines written under its `dependency-name`}."""
+        block = re.search(r"(?ms)^    ignore:[ \t]*\n(.*?)(?=^    \S|\Z)", cls.pip)
+        rules: dict[str, str] = {}
+        for item in re.split(r"(?m)^      - ", block.group(1) if block else "")[1:]:
+            head, _, written = item.partition("\n")
+            named = re.match(r'dependency-name:\s*"?([^"\s]+)"?\s*$', head)
+            if named:
+                rules[named.group(1)] = written
+        return rules
 
     def test_a_requirement_is_edited_only_when_its_range_is_too_narrow(self):
         self.assertRegex(self.pip, r"(?m)^    versioning-strategy:\s*increase-if-necessary\s*$")
@@ -435,9 +455,23 @@ class DependabotKeepsToThePins(unittest.TestCase):
         ceiling = re.search(r"(?m)^PyQt6[^\n#]*<\s*([\d.]+)", requirements)
         self.assertTrue(ceiling and ceiling.group(1) == "6.12", "the PyQt6 ceiling moved")
         self.assertIn("6.12.0", requirements, "requirements.txt no longer says why the ceiling is there")
-        self.assertRegex(self.pip, r'(?s)ignore:.*?dependency-name:\s*"PyQt6".*?version-update:semver-minor'
-                                   r'.*?version-update:semver-major')
+        rule = self.ignore_rules().get("PyQt6")
+        self.assertIsNotNone(rule, "no ignore rule names PyQt6")
+        self.assertNotIn("update-types", rule,
+                         "Dependabot raised this ceiling to <6.13 although minor and major were ignored (#39)")
         self.assertIn("QAudioOutput", self.pip, "the ignore rule must carry its reason")
+
+    def test_no_ignore_rule_rests_on_update_types_for_a_requirement_written_as_a_range(self):
+        exact = {package_name(line) for name in ("requirements.txt", "requirements-dev.txt")
+                 for _, line in requirement_lines(name) if "==" in line}
+        rules = self.ignore_rules()
+        self.assertTrue(rules, "the pip entry has no ignore rules to check")
+        for name, written in rules.items():
+            with self.subTest(dependency=name):
+                if "update-types" in written:
+                    self.assertIn(name.lower(), exact,
+                                  "this requirement is a range, and Dependabot did not apply a rule on update types "
+                                  "to one (#39): ignore the dependency, or its `versions`, instead")
 
 
 if __name__ == "__main__":
