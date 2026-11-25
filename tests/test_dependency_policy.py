@@ -403,9 +403,17 @@ class DependabotKeepsToThePins(unittest.TestCase):
     """Dependabot's default for an app raises every minimum to the newest release.
 
     That made #34: `numpy>=2.5.5` (numpy 2.5 needs Python 3.12, so Python 3.11 could not install the file), a PyQt6
-    ceiling moved past the Qt release that crashes at launch, and nothing in CI installed any of it. `widen` leaves a
-    requirement alone when its range already allows the new release and only raises a ceiling when it must.
+    ceiling moved past the Qt release that crashes at launch, and nothing in CI installed any of it.
+    `increase-if-necessary` leaves a requirement alone when its range already allows the new release.
+
+    The first version of this file used `widen`, which suits ranges better and appears in GitHub's documentation.
+    GitHub's own check of `dependabot.yml` refused it on the pull request ("did not match one of the following values:
+    lockfile-only, auto, increase, increase-if-necessary"), and the test that asserted `widen` had passed, because a
+    test that repeats its author's belief is not evidence. So the value is also held to the list GitHub gave.
     """
+
+    # What GitHub's validator accepts for a pip entry, as it printed them on 2026-11-25.
+    ACCEPTED_FOR_PIP = ("lockfile-only", "auto", "increase", "increase-if-necessary")
 
     @classmethod
     def setUpClass(cls):
@@ -414,7 +422,13 @@ class DependabotKeepsToThePins(unittest.TestCase):
         cls.pip = next((e for e in entries if e.splitlines()[0].strip() == '"pip"'), "")
 
     def test_a_requirement_is_edited_only_when_its_range_is_too_narrow(self):
-        self.assertRegex(self.pip, r"(?m)^    versioning-strategy:\s*widen\s*$")
+        self.assertRegex(self.pip, r"(?m)^    versioning-strategy:\s*increase-if-necessary\s*$")
+
+    def test_the_strategy_is_one_github_accepts_for_pip(self):
+        found = re.search(r"(?m)^    versioning-strategy:\s*(\S+)\s*$", self.pip)
+        self.assertTrue(found, "the pip entry has no versioning-strategy")
+        self.assertIn(found.group(1), self.ACCEPTED_FOR_PIP,
+                      "GitHub's own check of dependabot.yml refuses any other value for pip")
 
     def test_the_qt_ceiling_stays_below_the_release_that_crashes_and_dependabot_is_told(self):
         requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")

@@ -100,7 +100,7 @@ edit the module docstring instead and run it again.
 | `brain.py` | 1,359 | Jarvis Brain - LLM reasoning, intent classification, and skill routing. | test_autonomy_upgrades, test_plan_state |
 | `compat.py` | 166 | Optional-dependency adapters; importing this module needs only Python. | test_autonomy_upgrades |
 | `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_decision_layers, test_display_text, test_gate_holds_input, test_launch_guard, test_local_detector, test_local_model, test_mcp_client, test_policy, test_repair_judgment, test_self_modify_gate, test_suite_algorithms, test_suite_assistant, test_suite_safety, test_tool_contract, test_upstream_sync |
-| `evidence.py` | 172 | Bounded file verification and conflict-aware write backups. | test_autonomy_upgrades, test_bandit_weighted, test_crash, test_doc_references, test_evolve_script, test_plan_state, test_proof_gate, test_provider_schema, test_repair_judgment, test_suite_algorithms, test_suite_assistant |
+| `evidence.py` | 172 | Bounded file verification and conflict-aware write backups. | test_autonomy_upgrades, test_bandit_weighted, test_crash, test_dependency_policy, test_doc_references, test_evolve_script, test_plan_state, test_proof_gate, test_provider_schema, test_repair_judgment, test_suite_algorithms, test_suite_assistant |
 | `failure_memory.py` | 146 | Bounded local incident signatures and cooldowns, not an authorization policy. | test_autonomy_upgrades |
 | `goal_verifier.py` | 132 | Deterministic, workspace-confined assertions; never executes project code. | test_autonomy_upgrades |
 | `health_center.py` | 390 | Persistent notices for detected failures, with safe background repair proposals. | test_health_center |
@@ -258,7 +258,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 129 modules, 35,252 lines
+## `tests/` — 129 modules, 35,266 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -293,7 +293,7 @@ edit the module docstring instead and run it again.
 | `test_dashboard_throttle.py` | 271 | The dashboard's failed-login counter forgets, and cannot be made to forget the wrong thing. | — |
 | `test_dashboard_ui_variants.py` | 85 | Static checks for the remote dashboard's selectable interface variants. | — |
 | `test_decision_layers.py` | 263 | tests/test_decision_layers.py — the four algorithms that decide something. | test_decision_layers |
-| `test_dependency_policy.py` | 430 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
+| `test_dependency_policy.py` | 444 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
 | `test_dispatch_smoke.py` | 167 | Smoke tests for the two seams every tool call and every module passes through. | test_fast_gate_groups |
 | `test_display_text.py` | 116 | core/display_text.py: what the owner is shown for a decision is what was sent, or says it is not. | — |
 | `test_doc_references.py` | 89 | A document that tells you where something is must be right about where it is. | — |
