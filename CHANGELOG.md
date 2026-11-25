@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it, 2026-11-25
+
+**Asked for.** "Merge" (#38). Right after the merge Dependabot read the new file and opened its first pull request under it, #39. That showed a fault in what had just been merged.
+
+**What was wrong.**
+- #38 told Dependabot to leave PyQt6 minor and major releases alone (`update-types`), because Qt 6.12.0 crashes at launch and `requirements.txt` keeps its ceiling below 6.12 on purpose. #39 ("bump the python-all group with 6 updates", opened at 16:48 UTC, three minutes after the merge) raised that ceiling to `<6.13` anyway, together with the ceilings of `google-genai` (`<4`), Pillow (`<14`), OpenCV (`<6`) and cryptography (`<51`), and the ruff pin (0.17.6). Why the rule did nothing is not known: Dependabot's own log could not be read. Every requirement in the file is a range, and a rule on update types did not hold for one.
+- The test that fails a pull request which moves the Qt ceiling held. #39 is red on that one test and no other: the Linux job with every package, Linux `verify` and Windows `verify` each ran 2,967 tests with one failure, and the three Windows installs passed. So nothing reached `main`, and #39 is blocked by the required checks.
+- The rule's own test had asserted that the words `version-update:semver-minor` and `-major` were in the file, so it was green. That is the mistake `widen` was in #38: a test that repeats its author's belief is not evidence that Dependabot does what the file says.
+
+**What changed.**
+- `.github/dependabot.yml`: the PyQt6 rule ignores the dependency outright (GitHub's documentation: a bare `dependency-name` is "ignore all updates"), with its reason and the story of the first form beside it.
+- `tests/test_dependency_policy.py`: the Qt test now fails on a rule that rests on `update-types` (its old last assertion required exactly those words: **replaced**, flagged); a new test refuses an `update-types` rule for any requirement that is not an exact pin; a small reader of the `ignore:` list fails closed.
+- `DECISIONS.md` row 136 (the owner's decision row), the handoff and this file say so. #38's entries stay as they were written.
+
+**Evidence.** The two tests are red on the old file and green on the new. Nine planted cases behave as required: seven mistakes are caught (the old form, the rule removed, the wrong Qt, the reason deleted, the ceiling raised, the same mistake for another package, a list the checker cannot read) and two valid alternatives stay green (a `versions` rule; update types for `ruff`, which is an exact pin).
+
+**Not verified.** That Dependabot now leaves PyQt6 out: it reads the file when it reaches `main`, so that is seen only after the merge. Whether to accept the other four ceiling raises is the owner's decision. On #39 the suite did not fail with all five newer libraries installed, apart from the Qt test; that says nothing about the live Gemini call or the camera on his machine.
+
 ### A fresh install is checked, and Dependabot keeps to the pins, 2026-11-25
 
 **Asked for.** "Please merge the pull request" (#37). My question had said that merging it also meant starting this piece, the next step of "make this repository ready to use". Nothing new to use: no setting, no dependency, no change to the app, no referee file.

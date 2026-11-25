@@ -1,3 +1,23 @@
+=== 2026-11-25 · build 1.2.38 · Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it ===
+
+Asked for: "Merge" (#38, merged as 8d92278, same tree as the tested tip; every check on main passed). Nothing else was asked of this piece.
+
+FOUND, three minutes after the merge
+  - Dependabot read the new file and opened #39, "bump the python-all group with 6 updates". It raises the PyQt6 ceiling to <6.13, four more ceilings
+    (google-genai <4, Pillow <14, OpenCV <6, cryptography <51) and the ruff pin to 0.17.6. #38 had told it to ignore PyQt6 minor and major releases because
+    Qt 6.12.0 crashes at launch. The rule did nothing; why is not known (Dependabot's own log could not be read; every requirement is a range).
+  - The test that fails a pull request which moves the Qt ceiling held. #39 is red on that one test: the Linux job with every package, Linux verify and
+    Windows verify each ran 2,967 tests with one failure; the three Windows installs passed. Nothing reached main; #39 is blocked by the required checks.
+MISTAKE, MINE: the rule's test asserted that the words version-update:semver-minor and -major were in the file. The second time in two days that a test
+  repeated my belief (widen was the first). Only a Dependabot run says what Dependabot does.
+DONE (no change to the app; no setting, dependency or referee file)
+  - .github/dependabot.yml: PyQt6 is ignored outright (GitHub's documentation: a bare dependency-name is "ignore all updates").
+  - tests/test_dependency_policy.py: the Qt test fails on a rule that rests on update-types (its old last assertion required those words: REPLACED); a new
+    test refuses an update-types rule for any requirement that is not an exact pin. DECISIONS.md row 136 says so.
+TESTS: both red on the old file, green on the new; 9 planted cases behave as required (7 mistakes caught, 2 valid alternatives stay green).
+NOT VERIFIED: that Dependabot now leaves Qt out (it reads the file only when it reaches main). Whether to accept the other four ceiling raises is the
+  owner's decision (DECISIONS row 136); the suite did not fail with them installed, which says nothing about the live Gemini call or the camera.
+
 === 2026-11-25 · build 1.2.38 · a fresh install is checked, and Dependabot keeps to the pins ===
 
 Asked for: "Please merge the pull request" (#37, merged as 2f16a98, same tree as the tested tip). My last message had said that merging also starts this piece.
