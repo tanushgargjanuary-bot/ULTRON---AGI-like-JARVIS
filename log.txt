@@ -1,3 +1,20 @@
+=== 2026-11-24 · build 1.2.38 · fourth piece of Mark LVII: mute means muted, written test first ===
+
+Asked for: "Do the next piece" (the mute fix proposed after the last piece) and a pasted brief for a different project (W0 to W12, a Linux laptop,
+bin/ultronctl). That project is not in this repository nor in any of the account's 25 public repositories, so no audit was written (SESSION_LOG.md).
+
+DONE (no new feature, setting, dependency or network call; no referee file)
+  - actions/computer_settings.py: "mute", "unmute" and "toggle mute" were one function, a flip (macOS: always mute), so "unmute" on a machine that was
+    not muted muted it. They now set the state asked for (mute_get, mute_set); the answer is read back from the mute flag, not from the volume level;
+    undo puts the flag back, not the level; the model is told the word unmute. pactl is asked in plain English because it translates its yes/no.
+  - docs/upstream/LEDGER.json, docs/UPSTREAM_RESEARCH.md section 10: what was taken, what is deferred.
+TESTS: 18 new (tests/test_mute_state.py), 13 fail on the original code, 5 guards; 29 of 29 planted faults refused.
+CORRECTION: last piece's planted-fault program could run a cached copy of the previous fault. Repaired (cache deleted before each run, unmutated code must
+  pass first); a fresh set of 34 faults against the merged scroll, wake-word and Piper code: all caught.
+FOUND, NOT CHANGED: core/policy.py (a referee file) lists volume, set_volume, brightness; the actions are volume_up, volume_set, brightness_up. By the
+  code and the policy function, "volume up" asks for a confirmation click. Not seen in the running app. The owner decides.
+NOT VERIFIED: a real Windows audio device, a real PulseAudio or PipeWire server, a real Mac, the banner in the running app.
+
 === 2026-11-24 · build 1.2.38 · first pieces of Mark LVII: three small fixes, each written test first ===
 
 Asked for: "go", and "also use the 3 github repos for code review and skills" (agent-skills, anthropics/skills, open-code-review: the method,

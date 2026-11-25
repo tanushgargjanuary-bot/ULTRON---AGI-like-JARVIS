@@ -1,5 +1,6 @@
 #computer_settings.py
 import json
+import os
 import re
 import sys
 import time
@@ -82,11 +83,71 @@ def volume_down():
         subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", "-10%"],
             capture_output=True)
 
-def volume_mute():
+def mute_get() -> bool | None:
+    """Whether the sound is muted, or None where this system will not say.
+
+    Mute is its own switch: muting leaves the volume level where it was, so reading the level before and
+    after a mute says nothing about whether the mute worked. The answer and undo both need this reading."""
+    try:
+        if _OS == "Windows":
+            return bool(_win_endpoint_volume().GetMute())
+        if _OS == "Darwin":
+            r = subprocess.run(["osascript", "-e", "output muted of (get volume settings)"],
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
+            out = r.stdout.strip().lower()
+            return True if out == "true" else False if out == "false" else None
+        # pactl prints "Mute: yes" or "Mute: no" with the yes or no in the user's language
+        # (pa_yes_no_localised), so it is asked in plain English; read in another language, the answer
+        # would come back as None and nothing could ever be confirmed.
+        r = subprocess.run(["pactl", "get-sink-mute", "@DEFAULT_SINK@"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5,
+                           env={**os.environ, "LC_ALL": "C"})
+        found = re.search(r"Mute:\s*(yes|no)\b", r.stdout, re.IGNORECASE)
+        return found.group(1).lower() == "yes" if found else None
+    except Exception:
+        return None
+
+
+def mute_set(muted: bool) -> None:
+    """Muted, or not, as asked. Never a flip.
+
+    'unmute' used to press the mute KEY, which is a toggle: on a machine that was not muted, asking to
+    unmute muted it, and "mute" said twice unmuted it again. On macOS both words ran "set volume with
+    output muted", which only ever mutes. The key stays as the last resort on Windows, for a machine whose
+    audio interface cannot be reached; there the answer says that nothing could be confirmed."""
+    muted = bool(muted)
     if _OS == "Windows":
+        try:
+            _win_endpoint_volume().SetMute(1 if muted else 0, None)
+            return
+        except Exception as e:
+            print(f"[Settings] pycaw mute failed, using the mute key: {e}")
+            pyautogui.press("volumemute")
+    elif _OS == "Darwin":
+        subprocess.run(["osascript", "-e", f"set volume output muted {'true' if muted else 'false'}"],
+            capture_output=True)
+    else:
+        subprocess.run(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "1" if muted else "0"],
+            capture_output=True)
+
+
+def volume_mute():
+    mute_set(True)
+
+
+def volume_unmute():
+    mute_set(False)
+
+
+def volume_toggle_mute():
+    state = mute_get()
+    if state is not None:
+        mute_set(not state)
+    elif _OS == "Windows":
         pyautogui.press("volumemute")
     elif _OS == "Darwin":
-        subprocess.run(["osascript", "-e", "set volume with output muted"],
+        subprocess.run(["osascript", "-e",
+            "set volume output muted not (output muted of (get volume settings))"],
             capture_output=True)
     else:
         subprocess.run(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"],
@@ -647,8 +708,8 @@ ACTION_MAP: dict[str, callable] = {
     "volume_up":           volume_up,
     "volume_down":         volume_down,
     "mute":                volume_mute,
-    "unmute":              volume_mute,
-    "toggle_mute":         volume_mute,
+    "unmute":              volume_unmute,
+    "toggle_mute":         volume_toggle_mute,
     "brightness_up":       brightness_up,
     "brightness_down":     brightness_down,
     "sleep_display":       sleep_display,
@@ -955,8 +1016,10 @@ def computer_settings(
     # tell us the current value, nothing is registered — an undo that restores
     # a guess is worse than no undo at all.
     _before = None
-    if action in ("volume_up", "volume_down", "mute", "unmute", "toggle_mute"):
+    if action in ("volume_up", "volume_down"):
         _before = ("volume", volume_get())
+    elif action in ("mute", "unmute", "toggle_mute"):
+        _before = ("mute", mute_get())
     elif action in ("brightness_up", "brightness_down"):
         _before = ("brightness", brightness_get())
 
@@ -970,7 +1033,10 @@ def computer_settings(
     if _before:
         kind, old = _before
         if old is not None:
-            if kind == "volume":
+            if kind == "mute":
+                push_undo(f"sound ({action})",
+                          lambda b=old: (mute_set(b), "Sound back as it was.")[1])
+            elif kind == "volume":
                 push_undo(f"volume ({action})",
                           lambda b=old: (volume_set(b), f"Volume back to {b}%.")[1])
             elif kind == "brightness":
@@ -1003,6 +1069,30 @@ def computer_settings(
     #     actually done. `open_app` lied because it reported an application
     #     opening from a shell starting — two different events. Reporting a
     #     keystroke as a keystroke is not that.
+    if _before and _before[0] == "mute":
+        old_state = _before[1]
+        now_muted = mute_get()
+        if now_muted is None:
+            return outcome.unverified(
+                "computer_settings",
+                "this system does not report whether its sound is muted, so the "
+                "change could not be read back",
+                wanted=action)
+        reads = "muted" if now_muted else "not muted"
+        if action == "toggle_mute" and old_state is None:
+            return outcome.unverified(
+                "computer_settings",
+                f"the sound now reads {reads}, but it was not known beforehand, "
+                "so a flip could not be confirmed",
+                wanted=action, muted=now_muted)
+        wanted_state = {"mute": True, "unmute": False}.get(action, not old_state)
+        if now_muted != wanted_state:
+            return outcome.unverified(
+                "computer_settings", f"the sound still reads {reads}",
+                wanted=action, muted=now_muted)
+        return outcome.done("computer_settings", wanted=action, muted=now_muted,
+                            verified=True)
+
     if _before:
         kind, old_value = _before
         now = volume_get() if kind == "volume" else brightness_get()
@@ -1050,7 +1140,7 @@ TOOL = {
                 "type": "STRING",
                 "description": (
                     "The exact action. Prefer this over `description` — pick one of: "
-                    "volume_up | volume_down | volume_set | mute | "
+                    "volume_up | volume_down | volume_set | mute | unmute | "
                     "brightness_up | brightness_down | sleep_display | "
                     "pause_video | close_window | full_screen | "
                     "minimize | maximize | snap_left | snap_right | "

@@ -84,7 +84,7 @@ edit the module docstring instead and run it again.
 | `ui_ladder.py` | 291 | core/ui_ladder.py — what to do when the button tree is not there. | test_ui_ladder |
 | `ui_tree.py` | 519 | core/ui_tree.py — the screen as structure, not as pixels. | test_suite_providers, test_ui_action, test_ui_control_action, test_ui_tree |
 | `ui_windows.py` | 434 | core/ui_windows.py — the Windows side: UI Automation, without moving the mouse. | test_ui_bridge, test_ui_control_action |
-| `undo.py` | 125 | core/undo.py — one shared undo stack for every action that changes state. | test_bugfix_pass, test_file_controller_hardening, test_file_processor_undo, test_suite_providers, test_suite_safety, test_tool_contract |
+| `undo.py` | 125 | core/undo.py — one shared undo stack for every action that changes state. | test_bugfix_pass, test_file_controller_hardening, test_file_processor_undo, test_mute_state, test_suite_providers, test_suite_safety, test_tool_contract |
 | `viseme.py` | 275 | Text → mouth shape, fused with the audio the avatar is actually speaking. | — |
 | `voice_style.py` | 134 | core/voice_style.py — make written text survive being spoken. | test_suite_assistant |
 | `wake_word.py` | 236 | Local wake-word detection for JARVIS ("Hey Jarvis"). | test_wake_word |
@@ -121,14 +121,14 @@ edit the module docstring instead and run it again.
 | `self_healing.py` | 470 | Bounded, evidence-driven repair orchestration and explicit provider escalation. | test_autonomy_upgrades, test_repair_judgment, test_self_healing |
 | `selfupdate.py` | 242 | custom_jarvis/selfupdate.py — update from GitHub without losing the session. | test_shipping |
 | `service.py` | 662 | MARK-hosted service: deterministic skills and evidence-scoped repair. | test_autonomy_upgrades, test_decision_layers, test_hud_fixes, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping, test_suite_assistant |
-| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_file_controller_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_persona_switch_settings, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_upstream_sync, test_verify_script |
+| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_file_controller_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_mute_state, test_persona_switch_settings, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_upstream_sync, test_verify_script |
 | `ship.py` | 427 | custom_jarvis/ship.py — sending the work to GitHub without sending a secret. | test_installer, test_readme, test_runtime_files_ignored, test_shipping |
 | `ship_tools.py` | 142 | custom_jarvis/ship_tools.py — the four handles for shipping and updating. | test_shipping |
 | `shortlist.py` | 132 | BM25 ranking: pick the few stored rules that match what was just said. | test_decision_layers |
 | `skillpacks.py` | 226 | custom_jarvis/skillpacks.py — Ultron writes new skills itself, as data. | test_schedule_packs |
 | `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_autonomy_upgrades, test_capability_guide, test_curriculum, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
 | `telemetry.py` | 98 | Notice when Ultron itself gets slower, without a threshold that goes stale. | test_decision_layers |
-| `tools.py` | 1,741 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_mcp_client, test_metacog_service, test_personas, test_provider_schema, test_repair_judgment, test_routing_runtime, test_schedule_packs, test_self_modify_gate, test_shipping, test_suite_assistant, test_suite_safety, test_tool_contract, test_tool_usage_loop, test_triggers, test_upstream_sync, test_web_platforms |
+| `tools.py` | 1,741 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_mcp_client, test_metacog_service, test_mute_state, test_personas, test_provider_schema, test_repair_judgment, test_routing_runtime, test_schedule_packs, test_self_modify_gate, test_shipping, test_suite_assistant, test_suite_safety, test_tool_contract, test_tool_usage_loop, test_triggers, test_upstream_sync, test_web_platforms |
 | `update_releases.py` | 243 | Validate signed release metadata before a future staged updater uses it. | test_update_releases |
 | `vision.py` | 121 | Optional OpenAI-compatible vision transport; disabled until explicitly configured. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_local_detector, test_native_claims, test_routing_runtime, test_ui_bridge, test_ui_ladder |
 
@@ -152,7 +152,7 @@ edit the module docstring instead and run it again.
 | `tech_platforms.py` | 87 | tech_platforms — the technical world outside GitHub, in one tool. | test_web_platforms |
 | `voicestudio_bridge.py` | 54 | voicestudio.py — bridge to VoiceStudio. | test_plugins_bundle, test_provider_schema, test_suite_safety |
 
-## `actions/` — 31 modules, 15,716 lines
+## `actions/` — 31 modules, 15,806 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -161,7 +161,7 @@ edit the module docstring instead and run it again.
 | `capability_guide.py` | 179 | Map a user's goal to existing tools and skills, including common synonyms. | test_capability_guide |
 | `code_helper.py` | 636 | **no docstring** | test_tool_contract |
 | `computer_control.py` | 819 | **no docstring** | test_applescript_quoting, test_capability_guide, test_computer_capability, test_gate_holds_input, test_policy, test_scroll_units, test_tool_contract, test_ui_control_action |
-| `computer_settings.py` | 1,098 | **no docstring** | test_policy, test_tool_contract |
+| `computer_settings.py` | 1,188 | **no docstring** | test_mute_state, test_policy, test_tool_contract |
 | `curriculum.py` | 280 | core/curriculum.py — the syllabus Ultron holds, reachable by voice. | test_curriculum, test_mental |
 | `desktop.py` | 582 | **no docstring** | test_applescript_quoting, test_autonomy_upgrades, test_capability_guide, test_computer_capability, test_edge_cases, test_scroll_units, test_source_hygiene, test_wallpaper_url |
 | `dev_agent.py` | 1,683 | **no docstring** | test_policy, test_runtime_files_ignored |
@@ -192,7 +192,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_dashboard_hardening, test_evolution_rubrics, test_health_center, test_live_config, test_native_claims, test_piper_download, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
+| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_dashboard_hardening, test_evolution_rubrics, test_health_center, test_live_config, test_mute_state, test_native_claims, test_piper_download, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
 | `base.py` | 341 | The contract every provider signs — and the only thing the rest of the app is | test_autonomy_upgrades, test_collect_install, test_crash, test_dashboard_hardening, test_decision_layers, test_lint_ratchet, test_live_config, test_live_transport, test_local_detector, test_mark_integration, test_metacog_service, test_migrate_legacy, test_repair_judgment, test_routing_runtime, test_shipping, test_suite_algorithms, test_suite_assistant, test_upstream_sync |
 | `connections.py` | 197 | providers/connections.py — one connection, reused, instead of one per call. | test_suite_providers, test_upstream_sync |
 | `engine_pipeline.py` | 1,311 | The second way to hold the conversation: speech in, a model, speech out. | test_audio_features, test_live_config, test_live_transport, test_routing_runtime, test_suite_assistant |
@@ -208,7 +208,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `server.py` | 1,650 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_child_output, test_dashboard_hardening, test_dashboard_network_policy, test_dashboard_throttle, test_edge_cases, test_find_files_sensitive, test_gemini_resilience, test_health_center, test_hybrid_ipc, test_live_config, test_live_transport, test_local_detector, test_local_fallback, test_local_model, test_mcp_client, test_native_claims, test_schedule_packs, test_session_memory_search, test_suite_algorithms, test_suite_providers, test_suite_safety, test_wallpaper_url |
+| `server.py` | 1,650 | dashboard/server.py — JARVIS Local HTTP Dashboard | test_bugfix_pass, test_child_output, test_dashboard_hardening, test_dashboard_network_policy, test_dashboard_throttle, test_edge_cases, test_find_files_sensitive, test_gemini_resilience, test_health_center, test_hybrid_ipc, test_live_config, test_live_transport, test_local_detector, test_local_fallback, test_local_model, test_mcp_client, test_mute_state, test_native_claims, test_schedule_packs, test_session_memory_search, test_suite_algorithms, test_suite_providers, test_suite_safety, test_wallpaper_url |
 
 ## `memory/` — 2 modules, 1,749 lines
 
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 126 modules, 34,490 lines
+## `tests/` — 127 modules, 34,814 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -334,6 +334,7 @@ edit the module docstring instead and run it again.
 | `test_metacog.py` | 231 | tests/test_metacog.py — knowing what it knows, and learning how it learns. | test_metacog, test_metacog_service |
 | `test_metacog_service.py` | 252 | tests/test_metacog_service.py — the metacognitive tools and skills, in the app. | test_metacog_service |
 | `test_migrate_legacy.py` | 178 | Offline tests for scripts/migrate_legacy.py. | — |
+| `test_mute_state.py` | 324 | `actions/computer_settings.py`: "mute" means muted, "unmute" means not muted, and the answer says what was read back. | — |
 | `test_native_claims.py` | 131 | What the documents say about the native core must match what the native core does. | — |
 | `test_persona_switch_settings.py` | 186 | Switching persona or theme: what is saved, what is kept, and what the window says. | test_persona_switch_settings |
 | `test_personas.py` | 43 | Tests for persona names, labels, and prompts. | — |

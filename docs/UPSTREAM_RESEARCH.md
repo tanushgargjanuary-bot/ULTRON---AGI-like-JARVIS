@@ -363,17 +363,18 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 
 **Not reviewed.** Mark-LVII's issues and pull requests (only the code drop was compared); `gui/` line by line (it was measured and sorted, not read); community forks. The scheduled report (`docs/UPSTREAM_SYNC.md`) will say when upstream moves again.
 
-**Taken since the review.** The owner said "go" on 2026-11-24 for the small fixes. They are taken a piece at a time, each with its tests written first (every behaviour test was red on the old code), and every decision is in `docs/upstream/LEDGER.json`. The pull request that carries the first three is the record of the commits.
+**Taken since the review.** The owner said "go" on 2026-11-24 for the small fixes. They are taken a piece at a time, each with its tests written first (every behaviour test was red on the old code), and every decision is in `docs/upstream/LEDGER.json`. Pull request #35 carried the first three and was merged on 2026-11-24; the mute words are the next pull request.
 
 | Piece | Decision | What |
 |---|---|---|
 | Windows scroll units, `actions/computer_control.py` | Adopted | `_scroll` counts wheel notches (120 units each on Windows), never turns round for a negative amount, and holds the amount between 1 and 60. Upstream's only hunk in this file. `tests/test_scroll_units.py`. |
 | Wake-word reset, `core/wake_word.py` and `JarvisLive.sleep` in `main.py` | Adopted | The detector clears the model after a detection, and `sleep()` asks it to forget what it heard. Upstream's silent `except Exception: pass` became `failures.note`. `tests/test_wake_word.py`. |
 | Piper voice download, `providers/tts_piper.py` | Reimplemented | A voice downloads into a scratch folder and moves in only when both files are whole, the model last. Unlike upstream's: one scratch folder and one lock per voice, so a second voice is not held up and no voice name can point the folder elsewhere. `tests/test_piper_download.py`. |
+| Mute, unmute and toggle (`actions/computer_settings.py`: `mute_get`, `mute_set`, the three actions, undo, the answer, and the word `unmute` shown to the model) | Reimplemented | Mark's idea (set the state asked for, never flip, read it back), written test first (`tests/test_mute_state.py`). Different: `pactl` is asked in plain English; a toggle from an unknown start is not called confirmed; `toggle_mute` is not added to the model's word list. |
 | Piper `certifi` retry (macOS) | Deferred | Waits for the owner's consent about `certifi`. |
 | `focuses` in `actions/proactive.py` | Deferred | A hook for routines; it goes with the routines slice. |
 | Not going to sleep when no detector can wake it (`_run_sleep_watch`, `_ui_wake_toggle` in `main.py`) | Deferred | The next small piece; not yet read against Ultron's tests. |
 | ElevenLabs voice name to voice ID (`providers/tts_elevenlabs.py`) | Deferred | Not yet read against how Ultron's settings panel saves the voice. |
-| Volume, brightness and seek (`actions/computer_settings.py`, 483 changed lines), video seek (`actions/video_player.py`, 286), the Gemini ladder (`core/gemini.py`, 127), shutdown (`main.py`), `actions/reminder.py` (55), `core/appidentity.py` (117) | Deferred | The next pieces. Each is larger than these three, so each is read and split before it is taken. |
+| The rest of `actions/computer_settings.py` after the mute words (483 changed lines in all: `volume_set` switching the sound on, the volume-key fallback, step sizes, brightness on macOS and Linux), video seek (`actions/video_player.py`, 286), the Gemini ladder (`core/gemini.py`, 127), shutdown (`main.py`), `actions/reminder.py` (55), `core/appidentity.py` (117) | Deferred | The next pieces. Each is larger than these three, so each is read and split before it is taken. |
 
 **Found while reading, not changed.** On Windows pyautogui's `hscroll` is the vertical scroll (its docstring: horizontal scrolling is "currently just Linux"), so "scroll left" and "scroll right" move the page down and up there. `WakeWordDetector._drain` records the `queue.Empty` that ends every drain as a failure, so the failure trail gets one false entry per wake.
