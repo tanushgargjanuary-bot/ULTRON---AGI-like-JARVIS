@@ -8,7 +8,7 @@ FOUND, three minutes after the merge
     Qt 6.12.0 crashes at launch. The rule did nothing; why is not known (Dependabot's own log could not be read; every requirement is a range).
   - The test that fails a pull request which moves the Qt ceiling held. #39 is red on that one test: the Linux job with every package, Linux verify and
     Windows verify each ran 2,967 tests with one failure; the three Windows installs passed. Nothing reached main; #39 is blocked by the required checks.
-MISTAKE, MINE: the rule's test asserted that the words version-update:semver-minor and -major were in the file. The second time in two days that a test
+MISTAKE, MINE: the rule's test asserted that the words version-update:semver-minor and -major were in the file. The second time today that a test
   repeated my belief (widen was the first). Only a Dependabot run says what Dependabot does.
 DONE (no change to the app; no setting, dependency or referee file)
   - .github/dependabot.yml: the PyQt6 rule names the versions to ignore, versions: [">=6.12"] (the ceiling). A bare rule was the first idea; GitHub's
