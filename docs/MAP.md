@@ -28,7 +28,7 @@ edit the module docstring instead and run it again.
 | `code_checks.py` | 728 | What the coding agent knows about ANY project before it writes, and how it | — |
 | `confirm.py` | 162 | core/confirm.py — a confirmation the model cannot forge. | test_ast_guardian_bypasses, test_boot_guard, test_gate_holds_input, test_mark_integration, test_memory_safety, test_mental, test_policy, test_prompt_editor, test_prompt_gate, test_runtime_files_ignored, test_self_change, test_self_modify_gate, test_suite_safety, test_ui_action |
 | `conversation_context.py` | 39 | Bounded transcript carry-over for session changes that cannot resume server state. | test_conversation_context |
-| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_piper_download, test_provider_schema, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_verify_script, test_video_player, test_wake_word, test_web_platforms |
+| `crash.py` | 466 | core/crash.py — a crash that leaves a record, instead of a window that vanishes. | test_bugfix_pass, test_child_output, test_crash, test_dispatch_smoke, test_edge_cases, test_launch_guard, test_memory_safety, test_piper_download, test_provider_schema, test_providers_panel_threads, test_runtime_files_ignored, test_selfimprove, test_tool_contract, test_verify_script, test_video_player, test_wake_word, test_web_platforms |
 | `curriculum.py` | 246 | core/curriculum.py — the eight subjects Ultron holds, from basics to advanced. | test_curriculum, test_mental |
 | `custom_gate.py` | 119 | Human-only, fail-closed action gate for both MARK voice engines. | test_display_text, test_gate_holds_input, test_mark_integration, test_policy |
 | `digest.py` | 215 | core/digest.py — the daily digest: it tells you, and it does nothing else. | test_background_loops, test_crash, test_plugins_bundle, test_proof_gate, test_self_change, test_suite_assistant |
@@ -121,7 +121,7 @@ edit the module docstring instead and run it again.
 | `self_healing.py` | 470 | Bounded, evidence-driven repair orchestration and explicit provider escalation. | test_autonomy_upgrades, test_repair_judgment, test_self_healing |
 | `selfupdate.py` | 242 | custom_jarvis/selfupdate.py — update from GitHub without losing the session. | test_shipping |
 | `service.py` | 662 | MARK-hosted service: deterministic skills and evidence-scoped repair. | test_autonomy_upgrades, test_decision_layers, test_hud_fixes, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping, test_suite_assistant |
-| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_file_controller_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_mute_state, test_persona_switch_settings, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_upstream_sync, test_verify_script |
+| `settings.py` | 17 | Isolated deterministic-engine defaults; MARK owns all provider configuration. | test_collect_install, test_config_safety, test_curriculum, test_dashboard_hardening, test_file_controller_hardening, test_fuzzy, test_local_fallback, test_migrate_legacy, test_mute_state, test_persona_switch_settings, test_providers_panel_threads, test_repair_judgment, test_routing_runtime, test_runtime_files_ignored, test_tool_usage_loop, test_triggers, test_ui_settings_writes, test_upstream_sync, test_verify_script |
 | `ship.py` | 427 | custom_jarvis/ship.py — sending the work to GitHub without sending a secret. | test_installer, test_readme, test_runtime_files_ignored, test_shipping |
 | `ship_tools.py` | 142 | custom_jarvis/ship_tools.py — the four handles for shipping and updating. | test_shipping |
 | `shortlist.py` | 132 | BM25 ranking: pick the few stored rules that match what was just said. | test_decision_layers |
@@ -201,8 +201,8 @@ edit the module docstring instead and run it again.
 | `schema.py` | 458 | Tool declarations, translated — and trimmed to what a small model can hold. | test_edge_cases, test_hybrid_ipc, test_live_config, test_mcp_client, test_prompt_gate, test_provider_schema, test_repair_judgment, test_self_modify_gate, test_tool_contract |
 | `stt_whisper.py` | 369 | Speech recognition — on this machine, or through a transcription API. | test_local_fallback, test_suite_providers |
 | `tts_elevenlabs.py` | 274 | ElevenLabs speech synthesis — the multilingual voice. | test_suite_providers |
-| `tts_piper.py` | 518 | Piper — a neural voice that runs on this machine, in about fifty languages. | test_piper_download, test_suite_providers |
-| `tts_system.py` | 434 | Speech synthesis through the operating system's own voices. | test_tts_fallback |
+| `tts_piper.py` | 518 | Piper — a neural voice that runs on this machine, in about fifty languages. | test_piper_download, test_providers_panel_threads, test_suite_providers |
+| `tts_system.py` | 434 | Speech synthesis through the operating system's own voices. | test_providers_panel_threads, test_tts_fallback |
 
 ## `dashboard/` — 1 modules, 1,650 lines
 
@@ -214,7 +214,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
+| `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_providers_panel_threads, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
 | `memory_manager.py` | 739 | The long-term memory: what the user has asked Ultron to remember. | test_atomic_file, test_edge_cases, test_memory_changes, test_memory_safety, test_proof_gate, test_runtime_files_ignored, test_session_memory_search, test_suite_assistant, test_suite_safety, test_verify_script |
 
 ## `scripts/` — 35 modules, 10,762 lines
@@ -257,7 +257,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 127 modules, 34,814 lines
+## `tests/` — 128 modules, 34,971 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -348,6 +348,7 @@ edit the module docstring instead and run it again.
 | `test_prompt_gate.py` | 379 | The system prompt's gate, and the file names it builds. | test_prompt_editor, test_prompt_gate, test_self_modify_gate |
 | `test_proof_gate.py` | 202 | The proof gate's verdicts must not be able to round up. | — |
 | `test_provider_schema.py` | 239 | tests/test_provider_schema.py — the exact list the provider is handed. | test_provider_schema |
+| `test_providers_panel_threads.py` | 157 | tests/test_providers_panel_threads.py — a settings panel that is gone must not be called by a thread that outlives it. | test_providers_panel_threads |
 | `test_readme.py` | 152 | tests/test_readme.py — the front page must not claim anything the tree lacks. | test_readme, test_verify_script |
 | `test_repair_judgment.py` | 717 | Judgment gates, real file outcomes, fault injection and generated lifecycle tests. | — |
 | `test_routing.py` | 286 | Offline tests for provider routing and voice switching (core/routing.py). | — |

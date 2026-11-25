@@ -3391,6 +3391,34 @@ class _ScrollSafeCombo(QComboBox):
             e.ignore()
 
 
+class _LiveRelay(QObject):
+    """The one signal a worker thread may emit on behalf of the settings panel.
+
+    A panel starts reads in the background: the installed voices, and Piper's list of published voices, which is an
+    HTTPS call that can run for twenty seconds. It used to hand each one `self._live_ready.emit`, a signal of the
+    PANEL. A read that finished after the panel was destroyed (the window closing, a test dropping it) emitted on
+    freed memory, and the process died with a segmentation fault: CI exit code 245, twice, at
+    providers/tts_piper.py line 170.
+
+    Threads emit on this object instead. It is made once and not deleted while the program runs. Every panel
+    connects to it, and Qt removes that connection by itself when the panel is destroyed, so a late read finds
+    nobody to tell instead of a panel that no longer exists. tests/test_providers_panel_threads.py holds this."""
+
+    ready = pyqtSignal()
+
+
+_LIVE_RELAY: _LiveRelay | None = None
+
+
+def _live_relay() -> _LiveRelay:
+    """The shared relay, made on first use. First use is a panel being built, which happens on the interface thread,
+    so the relay belongs to that thread and a signal from a worker reaches each panel as a queued call."""
+    global _LIVE_RELAY
+    if _LIVE_RELAY is None:
+        _LIVE_RELAY = _LiveRelay()
+    return _LIVE_RELAY
+
+
 class ProvidersOverlay(_HudOverlay):
     """Choose what runs the assistant: Gemini Live, or your own stack.
 
@@ -3430,10 +3458,10 @@ class ProvidersOverlay(_HudOverlay):
     """
 
     changed = pyqtSignal()          # emitted on APPLY when the engine moved
-    # Emitted from a worker thread when something the machine had to be asked
-    # for — the installed voices — has arrived. A signal rather than a direct
-    # call because the worker must not touch a widget.
-    _live_ready = pyqtSignal()
+    # When something the machine had to be asked for — the installed voices —
+    # arrives from a worker thread, it is announced on the shared `_LiveRelay`
+    # (see `_live_relay`), not on a signal of this panel: the panel can be gone
+    # by the time the worker finishes.
     # (provider id, [(value, label), ...]) from a worker that went and asked an
     # endpoint what it offers.
     _models_ready = pyqtSignal(str, list)
@@ -3467,7 +3495,8 @@ class ProvidersOverlay(_HudOverlay):
         # so without this the panel freezes for most of two seconds every time
         # a dropdown is touched. Started here rather than at startup, because
         # nothing in this folder may run before somebody opens it.
-        self._live_ready.connect(self._on_live_ready)
+        relay = _live_relay()
+        relay.ready.connect(self._on_live_ready)
         self._models_ready.connect(self._on_models_ready)
         self._model_cache: dict[str, list] = {}
         self._fetching: set = set()
@@ -3478,7 +3507,7 @@ class ProvidersOverlay(_HudOverlay):
                                       fromlist=["prefetch"])
                     _pf = getattr(_mod, "prefetch", None)
                     if _pf:
-                        _pf(self._live_ready.emit)
+                        _pf(relay.ready.emit)
                 except Exception:
                     pass
         self._edits: dict[str, dict] = {}       # provider id -> {key: (widget, Field)}
