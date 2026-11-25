@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The Linux crash, found and fixed, 2026-11-25 — a closed settings panel was still being called
+
+**Asked for.** "Make this repository 100% ready to use." This is the one thing found so far that made the automatic checks untrustworthy and not merely incomplete: the Linux job died twice with exit code 245 (a segmentation fault) on its first attempt and passed when run again. Nothing new to use: no setting, no dependency, no network call, no referee file.
+
+**What was wrong** (`ui.py`, `ProvidersOverlay`; reproduced, not guessed):
+- Opening the engine panel starts reads in the background. Piper's list of published voices is an HTTPS call that can run for twenty seconds. Each read was handed `self._live_ready.emit`, a signal of the panel itself, to call when it finished.
+- A read that finishes after its panel has been destroyed emits on freed memory, and the process dies with a segmentation fault at `providers/tts_piper.py` line 170. In CI the self-test (`providers/_tests.py`) builds two panels and drops them, so whether it crashed depended on whether the download was still running: 2 first attempts out of 29 Linux runs from 2026-11-21 to 2026-11-25 (runs 45007979707 and 45459189900). Locally it never showed, because this sandbox could not run those sections at all (no graphics libraries).
+- It was not only a test problem. The window destroys its panels when it closes, so closing the program while the voice list was still downloading did the same. With the panel inside a window, as `ui.py` builds it, 5 runs out of 5 crashed.
+
+**What changed.** Worker threads emit on `_LiveRelay`, one small object made on first use and not deleted while the program runs. Each panel connects to it, and Qt removes the connection when the panel is destroyed, so a late read finds nobody to tell. The panel's own `_live_ready` signal is gone.
+
+**Evidence.** `tests/test_providers_panel_threads.py`: 3 tests, run in a child interpreter so a crash is a failed assertion with the exit code and the child's last lines. The download is held at a gate, the panel is destroyed inside its window, and only then does the download finish. On the original code the survival test fails with exit code -11 and the other two pass (the scenario is sound, and an open panel is still told when its read finishes). On the new code all 3 pass, and 20 more runs of them were clean. The same scenario outside the test crashed the original code 20 runs out of 20 and the new code 0 out of 20. Four planted mistakes (a relay that dies with its panel, a panel never connected to it, a callback that tells nobody, a relay made afresh on every call) were each caught. Whole suite on the finished tree: 2,939 tests, OK, in a real clone.
+
+**A correction.** Every earlier report of "3 failures that only happen here" described this sandbox and not the repository. It had no graphics libraries (one error) and the copies had no `.git` folder (two failures). With the four missing system libraries stood in and a real clone, the whole suite on `main` is 2,936 tests, OK, 39 skipped. Earlier runs here counted 2,775 because the graphics-dependent tests could not run.
+
+**Not verified.** That the crash on a hosted runner is this one and not another with the same exit code. It matches the hosted log (a Piper thread at line 170, the main thread building a widget) and no other mechanism was found, so the next Linux runs are the test. This scenario on Windows: the job runs it, but the original code may not crash there. Closing the program in the middle of the download on a real machine.
+
+**Found while checking, not changed.** `providers/_tests.py` says it needs no network, and its settings-panel section starts the Piper download. `ProvidersOverlay._fetch_models` hands a signal of the panel to a thread in the same way (`_models_ready`); it was not seen to crash, and the panel is not dropped while it runs. Closing the engine panel only hides it and every opening builds a new one, so hidden panels pile up for as long as the window lives.
+
 ### Mute means muted, 2026-11-24 — the fourth piece of Mark LVII, written test first
 
 **Asked for.** "Do the next piece": the mute half of the volume and mute piece, proposed at the end of the last one with a guess of "yes". Nothing new to use: no setting, no dependency, no network call, no referee file.
