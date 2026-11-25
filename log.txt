@@ -1,3 +1,19 @@
+=== 2026-11-25 · build 1.2.38 · advice from other developers, a glossary, and how we ask the owner ===
+
+Asked for: "Use Matt's repo skills ... try to research more people who have good advice lying in their github repos." And: "are you even working because you keep giving merges". The reply to it asked for no merge.
+
+READ (docs/UPSTREAM_RESEARCH.md, section 11): Matt Pocock's skills (39), Jesse Vincent's superpowers (15 skills), the Karpathy-derived guidelines, ayghri's output rules, OpenClaw's
+  agent rules, HumanLayer's twelve factors, Armin Ronacher's agent-stuff, and the names in three more. Nothing installed or copied. Two have no licence file and one is share-alike: ideas only.
+FOUND: most of it was already in the owner's WORKING-PHILOSOPHY.md and docs/MAINTAINERS.md. The complaint was fair: those say he does not want to be asked about trivial actions.
+DONE (no change to the app; no setting, dependency or referee file)
+  - GLOSSARY.md: 41 words in plain words. tests/test_glossary.py ties it to the proof gate's five verdicts, the follow-up watch's decision words and the excluded features.
+  - WORKING-PHILOSOPHY.md: five habits (no approvals for small steps; ask in one round; keep working while a question is open; use the glossary and "wait what"; end with one next
+    action), the tautological-test rule, a retro step. DECISIONS.md: one row (the owner's file).
+TESTS: 11 new, red before the file existed; 17 planted cases behave as required (15 caught, 2 valid edits green).
+RETRO: the merge requests came from working notes that did not carry the owner's line about trivial actions, and from not re-reading WORKING-PHILOSOPHY.md; fix = a rule that names the
+  incident, and one question to the owner about a standing permission. The two tests that held a belief: a rule, not a check. Three records that copy facts drifted: a pointer (deferred).
+NOT VERIFIED: that the habits improve the work; whether the owner wants the standing permission (he has not answered).
+
 === 2026-11-25 · build 1.2.38 · Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it ===
 
 Asked for: "Merge" (#38, merged as 8d92278, same tree as the tested tip; every check on main passed). Nothing else was asked of this piece.

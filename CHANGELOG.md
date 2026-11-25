@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Advice from other developers, a glossary, and how we ask the owner, 2026-11-25
+
+**Asked for.** "Use Matt's repo skills and he is very experienced developer, and try to research more people who have good advice lying in their github repos." And: "BTW are you even working because you keep giving merges."
+
+**What I found.**
+- I read Matt Pocock's skills (39) and nine other repositories, among them Jesse Vincent's `superpowers`, OpenClaw's agent rules and the Karpathy-derived guidelines. `docs/UPSTREAM_RESEARCH.md`, section 11, lists each with its commit, its licence and what was read. Nothing was installed or copied.
+- Most of their advice was already in the owner's own `WORKING-PHILOSOPHY.md` and `docs/MAINTAINERS.md`: answer first, plain words, test first, evidence before a claim, no questions about trivial actions.
+- The complaint about merges was fair. His notes say he never wants to be asked about trivial actions, and many messages in a row ended in a request to merge.
+- Two tests of ours on 2026-11-25 held a belief and not a fact (`widen` in #38 and the Qt rule in #40). Matt Pocock's `tdd` skill names it: a tautological test.
+
+**What changed.** Documents and one test file. No change to the app.
+- `GLOSSARY.md` (new): 41 words in plain words. `tests/test_glossary.py` (new) ties it to the words the program prints: the proof gate's five verdicts, the follow-up watch's decision words, the excluded features. A word added there and not here fails.
+- `WORKING-PHILOSOPHY.md`: five habits in section 2 (do not ask to approve small steps; ask in one round; keep working while a question is open; use the glossary and "wait what"; end with one next action), the tautological-test rule in section 3 step 4, a retro step (step 9), and two rows in section 10. `AGENTS.md`, `docs/INDEX.md` and `tests/test_doc_references.py` point to the glossary.
+- `docs/UPSTREAM_RESEARCH.md`: section 11. Twenty ideas, each with a disposition: 6 adopted, 3 reimplemented, 3 already present, 6 deferred, 2 rejected.
+- `DECISIONS.md`: one new row (the owner's file: flagged).
+
+**Evidence.** The glossary tests were red before the file existed. 17 planted cases behave as required: 15 caught (four of them where the program's words change and the glossary does not) and 2 valid edits stay green.
+
+**Not verified.** That the new habits improve the work: nothing is measured. Whether the owner wants a standing permission to merge small green changes: he has not answered, so a merge still waits for his word.
+
 ### Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it, 2026-11-25
 
 **Asked for.** "Merge" (#38). Right after the merge Dependabot read the new file and opened its first pull request under it, #39. That showed a fault in what had just been merged.

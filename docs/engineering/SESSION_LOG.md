@@ -1245,3 +1245,26 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Not checked.** That Dependabot now leaves Qt out: it reads the file only when it reaches `main`, so it can be seen only after the merge, in its next run or in the update of #39.
 
 **Left for the owner.** His OK to merge this pull request; and, after it, what to do with #39 and the other four ceiling raises.
+
+## 2026-11-25 (night) — advice from other developers, a glossary, and how we ask the owner
+
+**Asked for.** "Use Matt's repo skills and he is very experienced developer, and try to research more people who have good advice lying in their github repos. BTW are you even working because you keep giving merges." The reply to it asked for no merge. #40 stays open and not merged.
+
+**What I read.** Matt Pocock's `mattpocock/skills` and nine more repositories. The list, with commits, licences and what was read, is `docs/UPSTREAM_RESEARCH.md`, section 11. No installer, plugin command or script from any of them was run, and no file was copied. Two have no licence file and one is share-alike, so those were read for ideas only.
+
+**What I found.** The advice converges on nine points (section 11.2). Most of it the owner had already written in `WORKING-PHILOSOPHY.md` and `docs/MAINTAINERS.md`. Two lines there bear on his complaint: "Fast. Do the work, then explain it", and, among the things he never wants, "ask me about trivial actions". My working notes did not carry them.
+
+**What changed.** `GLOSSARY.md` and `tests/test_glossary.py` (new); five habits, the tautological-test rule and a retro step in `WORKING-PHILOSOPHY.md`; pointers in `AGENTS.md`, `docs/INDEX.md` and `tests/test_doc_references.py`; section 11 of `docs/UPSTREAM_RESEARCH.md`; one row in `DECISIONS.md` (the owner's file). No change to the app.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *Many messages ended with a request to merge.* Cause: my working notes did not carry the owner's line about trivial actions, and I did not re-read `WORKING-PHILOSOPHY.md`, which `AGENTS.md` says to read first. Kind of fix: a rule at the point of use (section 2 now names this incident) and one question to the owner about a standing permission. No program can tell a trivial question from a consequential one, so this is not a check.
+- *Two tests held a belief and not a fact* (`widen`, then the Qt rule). Kind of fix: a rule (section 3, step 4). A program cannot tell a belief from a fact; the independent source is the other system's own answer.
+- *Three records that copy facts held elsewhere drifted* (a commit count, a "two days", an undated count). Kind of fix: a pointer. The handoff should point to the records and not copy them (item 13 of section 11.3, deferred).
+
+**Assumptions.** (1) "Use Matt's repo skills" means: apply what fits, in our words, and say what does not. It does not mean install them. (2) The work went onto the branch that carries #40, because only one pull request can be open from it. That pull request now holds two unrelated pieces, each in its own commits. (3) A glossary comes first, because he asked for plain words three times.
+
+**Evidence.** The 11 glossary tests were red before the file existed. 17 planted cases behave as required: 15 caught (four of them where the program's words change and the glossary does not) and 2 valid edits green.
+
+**Not checked.** Whether the new habits improve the work. The one-round question format has been used on the owner once, in the reply to this request.
+
+**Left for the owner.** One question: may small green changes (documents, tests, checks) be merged without asking him? My guess is yes. I would still ask before anything that changes how Ultron behaves.
