@@ -416,8 +416,11 @@ class DependabotKeepsToThePins(unittest.TestCase):
     ceiling to `<6.13` anyway. Why is not known (its own log could not be read), but every requirement here is a range,
     and a rule on update types did not hold for one. The test that fails a pull request which moves the ceiling did
     hold, and #39 went red on that single test (none of the 2,966 others failed); it was the rule that did nothing.
-    So the rule now ignores PyQt6 outright, which GitHub's documentation gives as "ignore all updates", and no rule
-    may rest on `update-types` for a requirement that is not an exact pin.
+    So the rule now names the versions to ignore, `>=6.12`, which is the ceiling. It does not need a current version.
+    A bare rule ("ignore all updates") would ignore every version, security fixes included, and GitHub's documentation
+    says `versions` applies to both kinds of update where `update-types` applies only to version updates: this one
+    stops only what the ceiling forbids. The number is held to the ceiling, so lifting one means lifting the other,
+    and no rule may rest on `update-types` for a requirement that is not an exact pin.
     """
 
     # What GitHub's validator accepts for a pip entry, as it printed them on 2026-11-25.
@@ -459,6 +462,10 @@ class DependabotKeepsToThePins(unittest.TestCase):
         self.assertIsNotNone(rule, "no ignore rule names PyQt6")
         self.assertNotIn("update-types", rule,
                          "Dependabot raised this ceiling to <6.13 although minor and major were ignored (#39)")
+        held = re.search(r'(?m)^\s*versions:\s*\[\s*"?>=\s*([\d.]+)"?\s*\]\s*$', rule)
+        self.assertTrue(held, 'the rule must say `versions: [">=<the ceiling>"]`: a bare rule ignores every version, '
+                              "and with it the security updates below the ceiling")
+        self.assertEqual(held.group(1), ceiling.group(1), "the ignored versions and the ceiling must move together")
         self.assertIn("QAudioOutput", self.pip, "the ignore rule must carry its reason")
 
     def test_no_ignore_rule_rests_on_update_types_for_a_requirement_written_as_a_range(self):

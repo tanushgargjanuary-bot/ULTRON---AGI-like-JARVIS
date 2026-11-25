@@ -11,11 +11,13 @@ FOUND, three minutes after the merge
 MISTAKE, MINE: the rule's test asserted that the words version-update:semver-minor and -major were in the file. The second time in two days that a test
   repeated my belief (widen was the first). Only a Dependabot run says what Dependabot does.
 DONE (no change to the app; no setting, dependency or referee file)
-  - .github/dependabot.yml: PyQt6 is ignored outright (GitHub's documentation: a bare dependency-name is "ignore all updates").
-  - tests/test_dependency_policy.py: the Qt test fails on a rule that rests on update-types (its old last assertion required those words: REPLACED); a new
-    test refuses an update-types rule for any requirement that is not an exact pin. DECISIONS.md row 136 says so.
-TESTS: both red on the old file, green on the new; 9 planted cases behave as required (7 mistakes caught, 2 valid alternatives stay green).
-NOT VERIFIED: that Dependabot now leaves Qt out (it reads the file only when it reaches main). Whether to accept the other four ceiling raises is the
+  - .github/dependabot.yml: the PyQt6 rule names the versions to ignore, versions: [">=6.12"] (the ceiling). A bare rule was the first idea; GitHub's
+    documentation says a rule on versions reaches security updates too, so a bare one would also silence a Qt security release below the ceiling.
+  - tests/test_dependency_policy.py: the Qt test fails on a rule that rests on update-types (its old last assertion required those words: REPLACED) and requires the
+    versions rule to carry the ceiling's number; a new test refuses an update-types rule for any requirement that is not an exact pin. DECISIONS.md row 136 says so.
+TESTS: both red on the old file, green on the new; 11 planted cases behave as required (9 mistakes caught, 2 valid variants stay green).
+NOT VERIFIED: that Dependabot now leaves Qt out (it reads the file only when it reaches main); a Qt security release that needs 6.12 or later gets no
+  pull request, by design, and has to be noticed by hand. Whether to accept the other four ceiling raises is the
   owner's decision (DECISIONS row 136); the suite did not fail with them installed, which says nothing about the live Gemini call or the camera.
 
 === 2026-11-25 · build 1.2.38 · a fresh install is checked, and Dependabot keeps to the pins ===

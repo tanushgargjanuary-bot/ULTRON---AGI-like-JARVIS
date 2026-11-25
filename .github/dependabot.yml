@@ -40,12 +40,16 @@ updates:
     ignore:
       # Qt 6.12.0 segfaults while constructing QAudioOutput on a machine with no audio backend (measured here, and written
       # beside the ceiling in requirements.txt). The ceiling stays below 6.12 until that is re-tested, by hand, so
-      # Dependabot is told to leave PyQt6 alone altogether. The first version of this rule named only minor and major
-      # releases (`update-types`) and did nothing: Dependabot's first pull request under it (#39, 2026-11-25) raised the
-      # ceiling to <6.13 all the same. Every requirement here is a range, and a rule on update types did not hold for
-      # one; why is not known. tests/test_dependency_policy.py holds the ceiling, and refuses a rule on update types for
-      # any requirement that is not an exact pin.
+      # Dependabot is told to ignore PyQt6 6.12 and up. Lift the two together: a test holds the numbers to each other.
+      # The first version of this rule named only minor and major releases (`update-types`) and did nothing:
+      # Dependabot's first pull request under it (#39, 2026-11-25) raised the ceiling to <6.13 all the same. Every
+      # requirement here is a range, and a rule on update types did not hold for one; why is not known. The versions are
+      # named instead. A bare rule would ignore every version, and GitHub's documentation says a rule on versions
+      # reaches security updates too, so this one stops only what the ceiling forbids: a Qt security release that
+      # needs 6.12 or later gets no pull request and has to be noticed by hand. tests/test_dependency_policy.py also
+      # refuses a rule on update types for any requirement that is not an exact pin.
       - dependency-name: "PyQt6"
+        versions: [">=6.12"]
     groups:
       python-all:
         patterns: ["*"]
