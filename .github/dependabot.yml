@@ -28,6 +28,20 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 1
+    # requirements.txt is written as ranges: a minimum the app is developed against and a ceiling at the next major
+    # release. Dependabot's default for an app raises every minimum to the newest release, which is how #34 came to ask
+    # for numpy>=2.5.5, a release that needs Python 3.12 when the readme supports 3.11. `increase-if-necessary` leaves a
+    # requirement alone when its range already allows the new release and changes it only when it does not, the one case
+    # that needs a person to decide. (`widen` would suit ranges better, but GitHub's own check of this file refuses it
+    # for pip: only lockfile-only, auto, increase and increase-if-necessary are accepted, and tests/test_dependency_policy.py
+    # holds the value to that list.) What it proposes is then installed on every Python the launcher accepts and the whole
+    # suite is run on it (.github/workflows/install-check.yml).
+    versioning-strategy: increase-if-necessary
+    ignore:
+      # Qt 6.12.0 segfaults while constructing QAudioOutput on a machine with no audio backend (measured here, and written
+      # beside the ceiling in requirements.txt). The ceiling stays below 6.12 until that is re-tested, by hand.
+      - dependency-name: "PyQt6"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
     groups:
       python-all:
         patterns: ["*"]

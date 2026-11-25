@@ -1,0 +1,139 @@
+name: fresh install
+
+# CI never installed requirements.txt. verify.yml installs a short list written into the workflow, so a change to
+# requirements.txt, or to the way the launcher installs it, was never installed by anything, and a green run said nothing
+# about whether a fresh clone installs. Found 2026-11-25 on Dependabot's #34: on Python 3.11, which the readme supports,
+# its requirements.txt could not be installed at all (numpy>=2.5.5 needs Python 3.12) and every check was green.
+#
+# Two jobs. Neither is a required check, so a slow or failing install never blocks an unrelated merge. They run when a
+# requirements or launcher file changes, once a month (a dependency can ship a bad release inside its allowed range),
+# and by hand.
+#
+#   install  A clean Windows machine and each Python the launcher accepts. It runs scripts/bootstrap.py exactly as
+#            run.bat does, then scripts/check_install.py, because the launcher lets an optional package fail to install
+#            and still exits 0.
+#   suite    Linux with every package installed, running the whole suite. verify.yml's short list has no fastapi, so the
+#            phone dashboard's tests are skipped in every other job; here they run.
+#
+# tests/test_dependency_policy.py holds this file to what it says.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - requirements.txt
+      - requirements-dev.txt
+      - setup.py
+      - scripts/bootstrap.py
+      - scripts/check_install.py
+      - run.bat
+      - run.ps1
+      - .github/workflows/install-check.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - requirements.txt
+      - requirements-dev.txt
+      - setup.py
+      - scripts/bootstrap.py
+      - scripts/check_install.py
+      - run.bat
+      - run.ps1
+      - .github/workflows/install-check.yml
+  schedule:
+    # The 15th at 05:23 UTC: away from Dependabot's run at the start of the month and from the upstream watch.
+    - cron: "23 5 15 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A branch or a pull request: a newer push replaces the run in progress. `main`: every commit keeps its own run.
+  group: install-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  install:
+    name: fresh install — Windows, Python ${{ matrix.python }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    env:
+      # No pip cache anywhere in this file, on purpose: the point is what a fresh machine downloads today.
+      # The launcher's own switch: the browser engines are a separate, large download that this check does not need.
+      ULTRON_SKIP_BROWSERS: "1"
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      # `shell: bash` on every step, as in verify.yml: GitHub runs a step in PowerShell otherwise. The paths are the ones
+      # run.bat uses, written with forward slashes.
+      - name: Make the folder's own environment, as run.bat does
+        shell: bash
+        run: python -m venv .venv
+
+      - name: Run the launcher's setup, as run.bat does
+        shell: bash
+        run: .venv/Scripts/python.exe scripts/bootstrap.py
+
+      - name: Check that every line of requirements.txt installed
+        shell: bash
+        run: .venv/Scripts/python.exe scripts/check_install.py
+
+      - name: What a fresh install gets today
+        if: ${{ always() && hashFiles('.venv/Scripts/python.exe') != '' }}
+        shell: bash
+        run: |
+          {
+            echo "### Python ${{ matrix.python }}, Windows"
+            echo '```'
+            .venv/Scripts/python.exe -m pip freeze
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the setup log
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: setup-log-python-${{ matrix.python }}
+          path: setup-log.txt
+          if-no-files-found: ignore
+
+  suite:
+    name: full install — whole suite (Linux, Python 3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Qt runtime libraries and PortAudio (the same as verify.yml)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon-x11-0 libdbus-1-3 libpulse0 libfontconfig1 libportaudio2
+
+      - name: Install requirements.txt and the development pins
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Check that every line of requirements.txt installed
+        run: python scripts/check_install.py
+
+      - name: The whole suite, with every package present
+        run: python -m unittest discover -s tests

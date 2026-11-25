@@ -10,6 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### A fresh install is checked, and Dependabot keeps to the pins, 2026-11-25
+
+**Asked for.** "Please merge the pull request" (#37). My question had said that merging it also meant starting this piece, the next step of "make this repository ready to use". Nothing new to use: no setting, no dependency, no change to the app, no referee file.
+
+**What was wrong.**
+- CI never installed `requirements.txt`. `verify.yml` installs a short list written into the workflow, so a change to that file, or a dependency that shipped a bad release inside its allowed range, was installed by nothing, and a green run said nothing about whether a fresh clone installs. Dependabot's #34 showed it: on Python 3.11, which the readme supports, its file could not be installed (`numpy>=2.5.5` needs Python 3.12), and every check was green.
+- 29 tests of the phone dashboard were skipped in CI, because the short list has no `fastapi`.
+- Dependabot's default for an app raises every minimum to the newest release, which is how #34 came to ask for that numpy. It also moved the PyQt6 ceiling that `requirements.txt` keeps below Qt 6.12 on purpose.
+- `scripts/bootstrap.py` ignores which optional packages failed to install (by design: one optional package must never stop the app) and exits 0, so on its own it cannot say that a line of the file did not install.
+
+**What changed.**
+- `.github/workflows/install-check.yml` (new, not a required check). `install` runs the launcher's own setup as `run.bat` does, on a clean Windows machine, for each Python the launcher accepts (3.11, 3.12 and 3.13, read from its `MIN_PY` and `MAX_PY`), then `scripts/check_install.py`. `suite` runs the whole suite on Linux with every package installed. It runs when a requirements or launcher file changes, on the 15th of each month, and by hand.
+- `scripts/check_install.py` (new): asks pip what it would still install (`--dry-run --report`), then runs `pip check`. It installs nothing; exit 1 names what is missing or inconsistent.
+- `.github/dependabot.yml`: the pip entry uses `versioning-strategy: increase-if-necessary` (it leaves a requirement alone when its range already allows the new release) and ignores PyQt6 minor and major releases, with the reason written beside the rule. The grouped, one-at-a-time form is unchanged.
+- `DECISIONS.md` row 136, `docs/TEST_AUTOMATION.md` (lane 3) and the handoff say so.
+
+**Evidence.** `tests/test_check_install.py` (13 tests, red until the script existed) and 15 new tests in `tests/test_dependency_policy.py` (red on the old tree: no workflow, no strategy). 28 planted mistakes, all caught: a matrix that loses 3.13 or gains a version the launcher refuses, the strict step removed or run first, a lost trigger path, the schedule or manual runs removed, no time limit, no permissions, an unpinned action, a job named like a required check, a strategy that raises every minimum, `widen` (see below), the Qt rule or ceiling changed, and seven faults in the script. The script, run for real in a brand-new environment built by the launcher: "Every line of requirements.txt that applies here is installed", exit 0. With one package removed it names the package and exits 1. On #34's file with Python 3.11 it prints pip's own "No matching distribution found for numpy<3,>=2.5.5" and exits 1. The documentation of `versioning-strategy` and `ignore` was read on 2026-11-25, and it was not enough: see the next paragraph.
+
+**A mistake caught before the merge.** The first version of this piece used `versioning-strategy: widen`. GitHub's documentation lists it and says pip supports `versioning-strategy`, and I took that to cover every value. GitHub's own check of `dependabot.yml` on the pull request refused it: `The property '#/updates/1/versioning-strategy' value "widen" did not match one of the following values: lockfile-only, auto, increase, increase-if-necessary`. My test had asserted `widen`, so it was green: a test that repeats its author's belief is not evidence. The test now also holds the value to the list GitHub printed, and the value is `increase-if-necessary`.
+
+**First run on GitHub** (run 45648162971, on the pull request that adds the workflow): Windows with Python 3.11, 3.12 and 3.13 and the Linux suite all passed. On Python 3.13 the launcher installed the whole file (PyQt6 6.11.0, numpy 2.5.5, opencv-python 4.14.0.94, fastapi 0.165.0, pywin32 312 and the rest; `pyautogui`, `pygetwindow` and their helpers built from source with no compiler), its start-up check imported its 3 modules, and `check_install.py` printed "Every line of requirements.txt that applies here is installed. No broken requirements found." The Linux job ran the whole suite with every package present in 95 seconds.
+
+**Not verified.** The monthly schedule and the manual trigger (the pull-request trigger has run; GitHub dropped the upstream watch's first scheduled tick). That the window opens and the voice works on that machine: the check installs and imports three modules, it does not start the app. What Dependabot proposes under `increase-if-necessary` (for a release outside a range its documentation says both "widen" and "increase"): its next monthly run, or a change to `dependabot.yml`, will show it. Python 3.12 and 3.13 on a real Windows machine: from PyPI, 40 of the 42 Windows lines have a ready-made wheel, and `pyautogui` and `pygetwindow` build from source.
+
 ### The Linux crash, found and fixed, 2026-11-25 — a closed settings panel was still being called
 
 **Asked for.** "Make this repository 100% ready to use." This is the one thing found so far that made the automatic checks untrustworthy and not merely incomplete: the Linux job died twice with exit code 245 (a segmentation fault) on its first attempt and passed when run again. Nothing new to use: no setting, no dependency, no network call, no referee file.

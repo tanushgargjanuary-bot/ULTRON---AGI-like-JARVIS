@@ -11,6 +11,12 @@ at all. The same pass fixed the neighbours of that fault:
   one day and red the next;
 * CI linted with `ruff>=0.14,<1` while the development pin is `ruff==0.17.3`;
 * every action was referenced by a movable tag, and the reviewdog binary by `latest`.
+
+Found 2026-11-25, on Dependabot's #34: CI installs a short list written into `verify.yml` and never reads
+`requirements.txt`, so a change to that file was never installed by anything and every check stayed green. On
+Python 3.11, which the readme supports, #34's file could not be installed at all (`numpy>=2.5.5` needs Python
+3.12), and it moved the PyQt6 ceiling that is below Qt 6.12 on purpose. `install-check.yml` installs the real
+file; Dependabot is told to edit a requirement only when its range is too narrow, and to leave Qt alone.
 """
 
 from __future__ import annotations
@@ -284,6 +290,154 @@ class WorkflowsAreNotMovable(unittest.TestCase):
                     r'(?m)^    groups:\s*\n      [\w-]+:\s*\n        patterns:\s*\["\*"\]\s*$',
                     f"{ecosystem}: one group that takes every package",
                 )
+
+
+def bootstrap_pythons() -> list[str]:
+    """The Python versions the launcher accepts, read from scripts/bootstrap.py's own MIN_PY and MAX_PY."""
+    text = (ROOT / "scripts" / "bootstrap.py").read_text(encoding="utf-8")
+    low = re.search(r"(?m)^MIN_PY\s*=\s*\((\d+),\s*(\d+)\)", text)
+    high = re.search(r"(?m)^MAX_PY\s*=\s*\((\d+),\s*(\d+)\)", text)
+    if not (low and high):
+        raise AssertionError("scripts/bootstrap.py no longer states MIN_PY and MAX_PY")
+    return [f"{low.group(1)}.{minor}" for minor in range(int(low.group(2)), int(high.group(2)) + 1)]
+
+
+def job_text(workflow: str, job: str) -> str:
+    """The text of one job: from its `  name:` line to the next job or the end of the file."""
+    found = re.search(rf"(?ms)^  {job}:\n(.*?)(?=^  [\w-]+:\n|\Z)", workflow)
+    return found.group(1) if found else ""
+
+
+class TheFreshInstallCheck(unittest.TestCase):
+    """The workflow that installs requirements.txt, which nothing in CI did before.
+
+    Two jobs. `install`: a clean Windows machine and each Python the launcher accepts, running the launcher's own
+    scripts/bootstrap.py as run.bat does, then scripts/check_install.py, because the launcher lets an optional
+    package fail and still exits 0. `suite`: Linux with every package installed, running the whole suite; the short
+    list in verify.yml leaves out fastapi, so the phone dashboard's tests skip everywhere else.
+    """
+
+    WATCHED = ("requirements.txt", "requirements-dev.txt", "setup.py", "scripts/bootstrap.py",
+               "scripts/check_install.py", "run.bat", "run.ps1", ".github/workflows/install-check.yml")
+    REQUIRED_CHECKS = ("fast offline gate", "linux \u2014 suite and instruments",
+                       "windows \u2014 the machine the claims are about")
+
+    @classmethod
+    def setUpClass(cls):
+        path = WORKFLOWS / "install-check.yml"
+        cls.text = path.read_text(encoding="utf-8") if path.is_file() else ""
+        cls.install = job_text(cls.text, "install")
+        cls.suite = job_text(cls.text, "suite")
+        cls.triggers = cls.text.split("\npermissions:")[0]
+
+    def event_block(self, event: str) -> str:
+        found = re.search(rf"(?ms)^  {event}:\n(.*?)(?=^  \S|\Z)", self.triggers)
+        return found.group(1) if found else ""
+
+    def test_the_workflow_exists_with_both_jobs(self):
+        self.assertTrue(self.text, ".github/workflows/install-check.yml is missing")
+        self.assertTrue(self.install, "no `install` job")
+        self.assertTrue(self.suite, "no `suite` job")
+
+    def test_it_installs_the_real_file_the_way_run_bat_does(self):
+        self.assertIn("python -m venv .venv", self.install)
+        self.assertIn("scripts/bootstrap.py", self.install)
+        self.assertNotRegex(self.install, r'pip install[^\n]*"[A-Za-z]',
+                            "a hand-written package list is what verify.yml has, and what this must not")
+
+    def test_it_runs_on_windows_for_every_python_the_launcher_accepts(self):
+        self.assertIn("runs-on: windows-latest", self.install)
+        listed = re.search(r"(?m)^\s+python:\s*\[(.*?)\]\s*$", self.install)
+        self.assertTrue(listed, "no `python: [...]` matrix in the install job")
+        self.assertEqual(re.findall(r'"([\d.]+)"', listed.group(1)), bootstrap_pythons(),
+                         "the launcher accepts a different range now, or the matrix lost a version")
+
+    def test_it_checks_that_everything_installed_and_not_only_that_the_app_starts(self):
+        launcher = re.search(r"(?m)^\s+run:.*scripts/bootstrap\.py", self.install)
+        checker = re.search(r"(?m)^\s+run:.*scripts/check_install\.py", self.install)
+        self.assertTrue(launcher, "no step runs the launcher's setup")
+        self.assertTrue(checker, "no step runs scripts/check_install.py")
+        self.assertGreater(checker.start(), launcher.start(), "the check must come after the launcher's own setup")
+
+    def test_it_runs_when_a_requirements_or_launcher_file_changes(self):
+        for event in ("pull_request", "push"):
+            block = self.event_block(event)
+            for path in self.WATCHED:
+                with self.subTest(event=event, path=path):
+                    self.assertRegex(block, rf'(?m)^\s+-\s+"?{re.escape(path)}"?\s*$')
+
+    def test_it_also_runs_every_month_and_by_hand(self):
+        self.assertRegex(self.triggers, r'(?m)^\s+-\s+cron:\s+"\d+ \d+ \d+ \* \*"')
+        self.assertRegex(self.triggers, r"(?m)^  workflow_dispatch:")
+
+    def test_a_failed_install_keeps_its_log(self):
+        self.assertRegex(self.install, r"(?s)if:\s*failure\(\).*?upload-artifact@[0-9a-f]{40}.*?setup-log\.txt")
+
+    def test_every_job_has_a_time_limit(self):
+        for name, job in (("install", self.install), ("suite", self.suite)):
+            with self.subTest(job=name):
+                self.assertRegex(job, r"(?m)^    timeout-minutes:\s*\d+\s*$")
+
+    def test_it_only_reads_the_repository(self):
+        self.assertRegex(self.text, r"(?m)^permissions:\n  contents: read\s*$")
+
+    def test_a_commit_on_main_is_never_cancelled_by_the_next(self):
+        self.assertIn("cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}", self.text)
+        self.assertIn("github.ref == 'refs/heads/main' && github.sha || github.ref", self.text)
+
+    def test_no_job_takes_the_name_of_a_required_check(self):
+        for required in self.REQUIRED_CHECKS:
+            with self.subTest(required=required):
+                self.assertNotIn(required, self.text,
+                                 "a job named like a required check could stand in for it, or block a merge")
+
+    def test_the_suite_runs_with_every_package_installed(self):
+        self.assertIn("runs-on: ubuntu-latest", self.suite)
+        for needle in ("-r requirements.txt", "-r requirements-dev.txt", "unittest discover -s tests",
+                       "libportaudio2", "libegl1"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.suite)
+
+
+class DependabotKeepsToThePins(unittest.TestCase):
+    """Dependabot's default for an app raises every minimum to the newest release.
+
+    That made #34: `numpy>=2.5.5` (numpy 2.5 needs Python 3.12, so Python 3.11 could not install the file), a PyQt6
+    ceiling moved past the Qt release that crashes at launch, and nothing in CI installed any of it.
+    `increase-if-necessary` leaves a requirement alone when its range already allows the new release.
+
+    The first version of this file used `widen`, which suits ranges better and appears in GitHub's documentation.
+    GitHub's own check of `dependabot.yml` refused it on the pull request ("did not match one of the following values:
+    lockfile-only, auto, increase, increase-if-necessary"), and the test that asserted `widen` had passed, because a
+    test that repeats its author's belief is not evidence. So the value is also held to the list GitHub gave.
+    """
+
+    # What GitHub's validator accepts for a pip entry, as it printed them on 2026-11-25.
+    ACCEPTED_FOR_PIP = ("lockfile-only", "auto", "increase", "increase-if-necessary")
+
+    @classmethod
+    def setUpClass(cls):
+        text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        entries = re.split(r"(?m)^  - package-ecosystem:", text)[1:]
+        cls.pip = next((e for e in entries if e.splitlines()[0].strip() == '"pip"'), "")
+
+    def test_a_requirement_is_edited_only_when_its_range_is_too_narrow(self):
+        self.assertRegex(self.pip, r"(?m)^    versioning-strategy:\s*increase-if-necessary\s*$")
+
+    def test_the_strategy_is_one_github_accepts_for_pip(self):
+        found = re.search(r"(?m)^    versioning-strategy:\s*(\S+)\s*$", self.pip)
+        self.assertTrue(found, "the pip entry has no versioning-strategy")
+        self.assertIn(found.group(1), self.ACCEPTED_FOR_PIP,
+                      "GitHub's own check of dependabot.yml refuses any other value for pip")
+
+    def test_the_qt_ceiling_stays_below_the_release_that_crashes_and_dependabot_is_told(self):
+        requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+        ceiling = re.search(r"(?m)^PyQt6[^\n#]*<\s*([\d.]+)", requirements)
+        self.assertTrue(ceiling and ceiling.group(1) == "6.12", "the PyQt6 ceiling moved")
+        self.assertIn("6.12.0", requirements, "requirements.txt no longer says why the ceiling is there")
+        self.assertRegex(self.pip, r'(?s)ignore:.*?dependency-name:\s*"PyQt6".*?version-update:semver-minor'
+                                   r'.*?version-update:semver-major')
+        self.assertIn("QAudioOutput", self.pip, "the ignore rule must carry its reason")
 
 
 if __name__ == "__main__":
