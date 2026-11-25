@@ -1,3 +1,21 @@
+=== 2026-11-25 · build 1.2.38 · a fresh install is checked, and Dependabot keeps to the pins ===
+
+Asked for: "Please merge the pull request" (#37, merged as 2f16a98, same tree as the tested tip). My last message had said that merging also starts this piece.
+
+DONE (no change to the app; no setting, dependency or referee file)
+  - .github/workflows/install-check.yml (not a required check): the launcher's own setup as run.bat does it on a clean Windows machine for Python 3.11, 3.12 and
+    3.13, then scripts/check_install.py; and the whole suite on Linux with every package installed. Runs when a requirements or launcher file changes, on the
+    15th of each month, and by hand. CI had never installed requirements.txt: verify.yml installs a short list of its own.
+  - scripts/check_install.py: pip install --dry-run --report, then pip check. The launcher exits 0 when an optional package fails to install (by design), so it
+    cannot say that a line of the file did not.
+  - .github/dependabot.yml: the pip entry uses widen (the default raises every minimum to the newest release: #34) and ignores PyQt6 minor and major releases (Qt
+    6.12.0 crashes at launch). DECISIONS.md row 136, docs/TEST_AUTOMATION.md and the handoff say so.
+TESTS: 13 new (tests/test_check_install.py), 14 new in tests/test_dependency_policy.py; red on the old tree. 27 planted mistakes, all caught.
+FOUND: in a brand-new environment the launcher installed the whole requirements.txt in about two minutes; the suite there is 2,939 tests OK and the 29 dashboard
+  tests that CI skips (no fastapi in its list) ran and passed; pip check is clean. On #34's file with Python 3.11 the new script fails with pip's own
+  "No matching distribution found for numpy<3,>=2.5.5".
+NOT VERIFIED: the workflow on GitHub (first run is this pull request); what Dependabot proposes under widen; Python 3.12 and 3.13 on a real Windows machine.
+
 === 2026-11-25 · build 1.2.38 · the Linux crash: found, reproduced, fixed ===
 
 Asked for: "Is this done? then what now? Merge this PR, and now make it so that this REPO is considered 100% ready to use." PR #36 merged (9f2e803, same tree

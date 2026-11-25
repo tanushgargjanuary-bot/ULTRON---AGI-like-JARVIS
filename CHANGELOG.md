@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### A fresh install is checked, and Dependabot keeps to the pins, 2026-11-25
+
+**Asked for.** "Please merge the pull request" (#37). My question had said that merging it also meant starting this piece, the next step of "make this repository ready to use". Nothing new to use: no setting, no dependency, no change to the app, no referee file.
+
+**What was wrong.**
+- CI never installed `requirements.txt`. `verify.yml` installs a short list written into the workflow, so a change to that file, or a dependency that shipped a bad release inside its allowed range, was installed by nothing, and a green run said nothing about whether a fresh clone installs. Dependabot's #34 showed it: on Python 3.11, which the readme supports, its file could not be installed (`numpy>=2.5.5` needs Python 3.12), and every check was green.
+- 29 tests of the phone dashboard were skipped in CI, because the short list has no `fastapi`.
+- Dependabot's default for an app raises every minimum to the newest release, which is how #34 came to ask for that numpy. It also moved the PyQt6 ceiling that `requirements.txt` keeps below Qt 6.12 on purpose.
+- `scripts/bootstrap.py` ignores which optional packages failed to install (by design: one optional package must never stop the app) and exits 0, so on its own it cannot say that a line of the file did not install.
+
+**What changed.**
+- `.github/workflows/install-check.yml` (new, not a required check). `install` runs the launcher's own setup as `run.bat` does, on a clean Windows machine, for each Python the launcher accepts (3.11, 3.12 and 3.13, read from its `MIN_PY` and `MAX_PY`), then `scripts/check_install.py`. `suite` runs the whole suite on Linux with every package installed. It runs when a requirements or launcher file changes, on the 15th of each month, and by hand.
+- `scripts/check_install.py` (new): asks pip what it would still install (`--dry-run --report`), then runs `pip check`. It installs nothing; exit 1 names what is missing or inconsistent.
+- `.github/dependabot.yml`: the pip entry uses `versioning-strategy: widen` and ignores PyQt6 minor and major releases, with the reason written beside the rule. The grouped, one-at-a-time form is unchanged.
+- `DECISIONS.md` row 136, `docs/TEST_AUTOMATION.md` (lane 3) and the handoff say so.
+
+**Evidence.** `tests/test_check_install.py` (13 tests, red until the script existed) and 14 new tests in `tests/test_dependency_policy.py` (red on the old tree: no workflow, no strategy). 27 planted mistakes, all caught: a matrix that loses 3.13 or gains a version the launcher refuses, the strict step removed or run first, a lost trigger path, the schedule or manual runs removed, no time limit, no permissions, an unpinned action, a job named like a required check, `increase` instead of `widen`, the Qt rule or ceiling changed, and seven faults in the script. The script, run for real in a brand-new environment built by the launcher: "Every line of requirements.txt that applies here is installed", exit 0. With one package removed it names the package and exits 1. On #34's file with Python 3.11 it prints pip's own "No matching distribution found for numpy<3,>=2.5.5" and exits 1. The documentation of `versioning-strategy` (supported for pip) and `ignore` was read on 2026-11-25.
+
+**Not verified.** The workflow on GitHub: it runs for the first time on the pull request that adds it (a change to the workflow file triggers it). What Dependabot proposes under `widen`: its next monthly run, or a change to `dependabot.yml`, will show it. Python 3.12 and 3.13 on a real Windows machine: from PyPI, 40 of the 42 Windows lines have a ready-made wheel, and `pyautogui` and `pygetwindow` build from source.
+
 ### The Linux crash, found and fixed, 2026-11-25 — a closed settings panel was still being called
 
 **Asked for.** "Make this repository 100% ready to use." This is the one thing found so far that made the automatic checks untrustworthy and not merely incomplete: the Linux job died twice with exit code 245 (a segmentation fault) on its first attempt and passed when run again. Nothing new to use: no setting, no dependency, no network call, no referee file.

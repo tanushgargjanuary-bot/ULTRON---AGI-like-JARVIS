@@ -4,7 +4,7 @@
 
 Every branch update needs quick feedback. A complete ULTRON verification run is more expensive because it installs UI and platform dependencies, exercises the full unit suite, performs seeded stress and mutation checks, and evaluates platform-specific proof claims.
 
-The repository now uses two lanes. The fast lane runs on every branch push. The full lane runs on pushes to **main** and pull requests that target **main**.
+The repository uses three lanes. The fast lane runs on every branch push. The full lane runs on pushes to **main** and pull requests that target **main**. The third, the fresh-install lane, is not a required check: it runs when a requirements or launcher file changes, once a month, and by hand.
 
 Latest verified main commit: `e1237d2e82ad7b981362f009baf568f7873415ea` (2026-11-10; documentation-only commits after the application/test baseline).
 
@@ -66,6 +66,18 @@ It retains the existing deeper checks:
 
 The full suite has not been removed or weakened. It now runs on the integration path, not on every exploratory feature-branch push.
 
+## Lane 3 — fresh install (not a required check)
+
+Workflow: **.github/workflows/install-check.yml**
+Triggers: a push to **main** or a pull request that changes `requirements.txt`, `requirements-dev.txt`, `setup.py`, `scripts/bootstrap.py`, `scripts/check_install.py`, `run.bat`, `run.ps1` or the workflow itself; the 15th of every month; manual dispatch.
+
+Why it exists: lanes 1 and 2 install a short list written into the workflow, never `requirements.txt`. A change to that file, or a dependency that shipped a bad release inside its allowed range, was never installed by anything, so a green run said nothing about whether a fresh clone installs. Dependabot's #34 showed it: on Python 3.11 its file could not be installed at all, and every check was green.
+
+- `install`: a clean Windows machine for each Python the launcher accepts (read from `MIN_PY` and `MAX_PY` in `scripts/bootstrap.py`, which a test keeps in step). It runs `scripts/bootstrap.py` exactly as `run.bat` does, then `scripts/check_install.py`, because the launcher lets an optional package fail to install and still exits 0. The job summary lists what a fresh install gets today.
+- `suite`: Linux with every package installed (`requirements.txt` and `requirements-dev.txt`), running the whole suite. The short list has no `fastapi`, so the phone dashboard's tests skip in lanes 1 and 2; here they run.
+
+Neither job is a required check, on purpose: a slow or failing install must not block an unrelated merge. Read them on any pull request that touches a requirements file, and before merging one.
+
 ## Local use
 
 Run the quick preflight before committing or pushing:
@@ -80,6 +92,10 @@ Run the complete offline and regression suite before proposing an integration:
 Run the machine verifier on the actual target computer when the change depends on Windows, display, audio, camera, browser, GPU, or installed applications:
 
     python scripts/verify_all.py
+
+To see whether `requirements.txt` really installed in the environment you are in (it installs nothing):
+
+    python scripts/check_install.py
 
 A fast pass is not a full pass. A skipped hardware check is not a pass. A green CI result proves only the checks that actually ran on that commit and runner.
 
