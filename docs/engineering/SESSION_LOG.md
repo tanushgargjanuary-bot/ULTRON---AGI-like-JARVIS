@@ -1268,3 +1268,24 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Not checked.** Whether the new habits improve the work. The one-round question format has been used on the owner once, in the reply to this request.
 
 **Left for the owner.** One question: may small green changes (documents, tests, checks) be merged without asking him? My guess is yes. I would still ask before anything that changes how Ultron behaves.
+
+## 2026-11-25 (late night) — the Linux crash came back; the first fix was not enough
+
+**Found.** The Linux check of this pull request failed on `855f6c6` (run 45679604007, 18:54 UTC). I read the log before any re-run. The 2,979 unit tests passed. Then the provider self-test died with `Fatal Python error: Segmentation fault`: the main thread was building a widget in the confirmation-banner test, and a worker thread was at `providers/tts_piper.py` line 170, the call that reports a finished read. Windows passed on the same commit.
+
+**How it was found** (Matt Pocock's `diagnosing-bugs`: first a loop that can go red on this very bug). I ran the real self-test functions in a scratch copy with a random delay on the voice-list read. 2 of 20 runs, then 9 of 60, crashed. Bisecting the real sequence: the panel test alone 1 of 60, the banner test alone 0 of 60, the panel then the banner 9 of 60. A control, with the worker calling a plain no-op, gave 0 of 80: the crash needs the Qt call. Four invented shapes did NOT reproduce it (a storm of emits from long-lived threads, from fresh threads, and with the real banner work): every one kept the application alive. The cause showed in a traceback from a second pass of the sequence: "wrapped C/C++ object of type _LiveRelay has been deleted". A direct test then: keep the application alive and the relay survives; let the test drop it and the relay is deleted. A deterministic replay (the application destroyed, a late read reports in) crashed 20 of 20.
+
+**Why #37 missed it.** It put the relay in a module variable and wrote "not deleted while the program runs". The relay is a Qt object, and Qt objects go when the application goes. The self-test holds its application in a local variable, so the application, and the relay with it, are destroyed when the test returns. #37's tests destroyed the panel and the window and kept the application. Closing the program does the same as the self-test.
+
+**What changed.** `ui.py`: no worker thread touches Qt. A finished read calls `_LiveMailbox.announce()`, which adds one to a plain counter; each panel looks at the counter on a timer of its own, and the timer is destroyed with the panel. `tests/test_providers_panel_threads.py`: the first scenario waits for the timer (the same checks); 4 new tests replay the crash. `AGENTS.md` (threading) and `WORKING-PHILOSOPHY.md` (section 6, step 4) carry the lesson.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *The first fix was not enough.* Cause: #37 asserted a lifetime that no test tried to break, and I wrote "fixed" on the strength of six green runs that I had myself called weak. Kind of fix: a test (done: the application is destroyed too) and a rule (section 6, step 4: try the larger lifetime). The rule is not a check, because no program knows which object is the outermost.
+- *Four reproductions did not crash.* Each shared one unexamined assumption, that the application stays alive. Bisecting the real sequence and a no-op control found the missing ingredient faster than more invented shapes. Kind of fix: none; it is recorded here.
+- *A thread called Qt.* Kind of fix: a rule in `AGENTS.md` (threading), with this incident.
+
+**Assumptions.** (1) The fix goes into the same pull request (#40): only one can be open from this branch, and the crash blocks its required check. (2) Looking every 250 ms is acceptable for a settings panel, and the change cannot be seen by the owner. (3) `ProvidersOverlay._fetch_models` is not changed here: it has the same shape (a signal of the panel handed to a thread) and has not been seen to crash.
+
+**Evidence.** The 4 new tests are red on the old code and green on the new. The real sequence: 100 runs, no crash (old: 5 to 15 in 100). The late report: 20 of 20 survive, nothing raised (old: 20 of 20 crashed). 5 planted regressions caught, 2 valid changes green.
+
+**Not checked.** That the Linux check no longer crashes: only many GitHub runs can show it. A real Windows machine closing the program mid-download.

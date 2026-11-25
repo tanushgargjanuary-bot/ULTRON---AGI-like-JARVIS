@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The Linux crash came back: the first fix was not enough, 2026-11-25
+
+**What happened.** The Linux check of this pull request died with a segmentation fault in the provider self-test (run 45679604007, on `855f6c6`, 18:54 UTC), at the same line as the crash that #37 had fixed: `providers/tts_piper.py` line 170. Windows passed on the same commit. #37 had been merged about three and a half hours earlier.
+
+**Why #37 was not enough.** #37 handed background reads a signal of a shared relay object, and wrote that it was "not deleted while the program runs". That was a belief, not a fact. The relay is destroyed with the `QApplication`. The self-test keeps its application in a local variable, so the application and the relay go when one test returns, and a read that reports in afterwards emits on freed memory. Closing the program does the same. Both were reproduced on purpose: 20 runs out of 20 crashed. #37's tests destroyed the panel and the window but kept the application, so they could not see it. A second fault came with it: a panel built after the application was made again could not be constructed at all.
+
+**What changed.** No worker thread touches Qt now.
+- `ui.py`: the relay is gone. A read that finishes calls `_LiveMailbox.announce()`, which adds one to a plain counter. Each panel looks at the counter on a timer of its own (250 ms), and the timer is destroyed with the panel.
+- `tests/test_providers_panel_threads.py`: the first scenario waits for that timer instead of a queued call (the same three checks), and a second scenario replays the crash (4 new tests).
+- `AGENTS.md` (threading) and `WORKING-PHILOSOPHY.md` (section 6) carry the lesson.
+
+**Evidence.** The 4 new tests are red on the old code (a crash, exit 139) and green on the new. The real sequence from the self-test ran 100 times with no crash (old code: 5 to 15 in 100). The late report ran 20 times: all survive and raise nothing (old: 20 of 20 crashed). Five planted regressions are caught and two valid changes stay green. A control that gives the worker a plain no-op also removes the crash (80 runs, none), which shows the crash needs the Qt call.
+
+**Not verified.** That the Linux check no longer crashes: that can only be seen over many GitHub runs. The sibling path is not changed: `ProvidersOverlay._fetch_models` still hands a signal of the panel to a thread. It has the same shape and has not been seen to crash.
+
 ### Advice from other developers, a glossary, and how we ask the owner, 2026-11-25
 
 **Asked for.** "Use Matt's repo skills and he is very experienced developer, and try to research more people who have good advice lying in their github repos." And: "BTW are you even working because you keep giving merges."

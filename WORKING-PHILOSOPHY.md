@@ -160,7 +160,10 @@ So the method is:
    bad plugin field must not cost the session; one bad plugin field must not pass silently
    either. Repair it and say you repaired it.
 4. **Reproduce it as a test, using the real message.** The owner's own log line is a test
-   fixture in `tests/test_provider_schema.py`.
+   fixture in `tests/test_provider_schema.py`. Then try the larger lifetime: a crash from an
+   object that outlived its owner is not fixed until the test also outlives the owner's owner,
+   the window and then the application. The first fix for the Qt segmentation fault (#37) stopped
+   at the window, and the crash came back (run 45679604007).
 5. **Write it down even when it is not fixed.** An unreproduced Qt segfault and a benchmark
    that was wrong in the other direction are both in the record. A defect that is only in
    someone's memory is rediscovered as a surprise.

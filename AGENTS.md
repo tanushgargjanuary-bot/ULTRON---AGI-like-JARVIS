@@ -79,6 +79,12 @@ Do **not** start a separate GUI program (`subprocess` running a PyQt script)
 to work around this rule. It hides every error from the user, and the app
 already has a screen for it.
 
+A callback handed to a thread that can outlive the window must not touch Qt at all: not a widget, and not a signal
+either, not even a signal of an object that seems to live for ever. The `QApplication` is destroyed with the program (and
+with a test), and a bound signal keeps a raw pointer, so a late call lands on freed memory and ends the process. Hand the
+thread a plain Python object and let the interface thread look at it (`_LIVE_MAILBOX` in `ui.py`). Incident: the Linux
+segmentation fault of 2026-11-25, run 45679604007.
+
 ## Plugins
 
 A plugin is one file `plugins/<name>.py` (no leading underscore) with:

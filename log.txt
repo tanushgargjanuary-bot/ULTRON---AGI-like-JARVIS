@@ -1,3 +1,18 @@
+=== 2026-11-25 · build 1.2.38 · the Linux crash came back: the first fix was not enough ===
+
+FOUND: the Linux check of PR #40 died with a segmentation fault in the provider self-test (run 45679604007, on 855f6c6, 18:54 UTC), at providers/tts_piper.py line 170, the line #37 had
+  fixed. Windows passed on the same commit. I read the log first: 2,979 tests passed, then the self-test died.
+CAUSE: #37 handed reads a signal of a shared relay and wrote that it was "not deleted while the program runs". It is destroyed with the QApplication, which the self-test drops when one
+  test returns (and the program drops when it closes). A late read emitted on freed memory. Reproduced: 20 runs of 20 crashed. #37's tests kept the application alive.
+MISTAKE, MINE: I called #37 "fixed". The evidence was six green Linux runs, which I had called weak, and tests that never tried to destroy the application.
+DONE (no setting, dependency or referee file)
+  - ui.py: the relay is gone; a read bumps a plain counter (_LiveMailbox.announce) and each panel looks at it on its own timer. No worker thread touches Qt.
+  - tests/test_providers_panel_threads.py: 4 new tests that replay the crash (red on the old code), and the first scenario waits for the timer. AGENTS.md (threading) and
+    WORKING-PHILOSOPHY.md (section 6) carry the lesson.
+TESTS: the real self-test sequence, 100 runs, no crash (old code 5 to 15 in 100); late report, 20 of 20 survive; 5 planted regressions caught, 2 valid changes green; a no-op control, 80 runs, no crash.
+RETRO: see docs/engineering/SESSION_LOG.md.
+NOT VERIFIED: that the Linux check no longer crashes (only many GitHub runs can show it). ProvidersOverlay._fetch_models has the same shape and is not changed.
+
 === 2026-11-25 · build 1.2.38 · advice from other developers, a glossary, and how we ask the owner ===
 
 Asked for: "Use Matt's repo skills ... try to research more people who have good advice lying in their github repos." And: "are you even working because you keep giving merges". The reply to it asked for no merge.
