@@ -76,7 +76,7 @@ Why it exists: lanes 1 and 2 install a short list written into the workflow, nev
 - `install`: a clean Windows machine for each Python the launcher accepts (read from `MIN_PY` and `MAX_PY` in `scripts/bootstrap.py`, which a test keeps in step). It runs `scripts/bootstrap.py` exactly as `run.bat` does, then `scripts/check_install.py`, because the launcher lets an optional package fail to install and still exits 0. The job summary lists what a fresh install gets today.
 - `suite`: Linux with every package installed (`requirements.txt` and `requirements-dev.txt`), running the whole suite. The short list has no `fastapi`, so the phone dashboard's tests skip in lanes 1 and 2; here they run.
 
-Neither job is a required check, on purpose: a slow or failing install must not block an unrelated merge. Read them on any pull request that touches a requirements file, and before merging one.
+First run on GitHub, 2026-11-25 (run 45648162971): all four jobs passed. Neither job is a required check, on purpose: a slow or failing install must not block an unrelated merge. Read them on any pull request that touches a requirements file, and before merging one.
 
 ## Local use
 
