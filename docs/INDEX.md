@@ -10,6 +10,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`STRUCTURE.md`](STRUCTURE.md) | Contributors | Repository map, package responsibilities, and paths that must stay stable |
 | [`specifications/SYSTEM_OVERVIEW.md`](specifications/SYSTEM_OVERVIEW.md) | New agents | Canonical current handoff: product scope, repository state, evidence, known limits, and next actions |
 | [`../WORKING-PHILOSOPHY.md`](../WORKING-PHILOSOPHY.md) | Contributors | Evidence-first work, debugging, and contribution process |
+| [`../GLOSSARY.md`](../GLOSSARY.md) | Everyone | The words we use, each defined once, in plain words |
 | [`../AGENTS.md`](../AGENTS.md) | Coding agents | Hard coding, threading, plugin, and safety rules |
 | [`AGENT_WORKSPACE.md`](AGENT_WORKSPACE.md) | Agents resuming work | How to inspect commits, branch differences, and local edits |
 | [`AGENT_PLAYBOOK.md`](AGENT_PLAYBOOK.md) | Coding agents | Safe task planning, implementation, testing, and reporting |

@@ -8,6 +8,8 @@
 
 **Later review:** [section 10](#10-mark-lvii-reviewed-2026-11-22), Mark LVII (head `752ff618a4e6a4bf2e675866b993071d739cfce2`, 2026-11-11), reviewed 2026-11-22. Nothing from it has been adopted.
 
+**Other sources:** [section 11](#11-advice-from-other-developers-repositories-read-2026-11-25), advice from other developers' repositories (Matt Pocock's skills and others), read 2026-11-25.
+
 ## 1. What this audit covers
 
 The user asked ULTRON to make use of the work published by FatihMakes around the MARK/JARVIS assistant.
@@ -378,3 +380,81 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 | The rest of `actions/computer_settings.py` after the mute words (483 changed lines in all: `volume_set` switching the sound on, the volume-key fallback, step sizes, brightness on macOS and Linux), video seek (`actions/video_player.py`, 286), the Gemini ladder (`core/gemini.py`, 127), shutdown (`main.py`), `actions/reminder.py` (55), `core/appidentity.py` (117) | Deferred | The next pieces. Each is larger than these three, so each is read and split before it is taken. |
 
 **Found while reading, not changed.** On Windows pyautogui's `hscroll` is the vertical scroll (its docstring: horizontal scrolling is "currently just Linux"), so "scroll left" and "scroll right" move the page down and up there. `WakeWordDetector._drain` records the `queue.Empty` that ends every drain as a failure, so the failure trail gets one false entry per wake.
+
+## 11. Advice from other developers' repositories, read 2026-11-25
+
+**Asked for.** The owner wrote: "Use Matt's repo skills and he is very experienced developer, and try to research more people who have good advice lying in their github repos." This is the intake record that section 7 asks for, for sources that are not FatihMakes. Section 6 (licence) applies, and the dispositions are the same five words.
+
+**Method.** I read the files named below through the GitHub API, and found the best-known repositories with a web search, on 2026-11-25. I ran no installer, no plugin command and no script from any of them, copied no file, and added no dependency. Matt Pocock's `SCOPE.md` sets a bar, and I used it too: an idea is taken only if it answers a failure that really happened to us. Each adopted item below names ours.
+
+### 11.1 What was read
+
+| Repository | Whose | Stars | Licence, as GitHub shows it | Head read | What I read |
+|---|---|---:|---|---|---|
+| `mattpocock/skills` | Matt Pocock | 332,758 | MIT | `6f7f7831a6` | 39 skills in four folders (20 engineering, 7 productivity, 4 misc, 8 in progress). Most of: `grilling`, `grill-me`, `tdd`, `diagnosing-bugs`, `codebase-design`, `domain-modeling`, `grill-with-docs`, `retro`, `handoff`, `wait-what`. The first lines of: `writing-for-agents`, `improve-codebase-architecture`, `triage`, `code-review`, `to-questionnaire`, `wizard`. Also its `AGENTS.md`, `CONTRIBUTING.md`, `GLOSSARY.md` and `SCOPE.md`. The other skills by their one-line descriptions only. |
+| `obra/superpowers` | Jesse Vincent | 326,453 | MIT | `22f0b463e7` (2026-11-03) | 15 skills. The first 34 lines of `brainstorming`, `test-driven-development`, `verification-before-completion` and `systematic-debugging`; the others by name only. |
+| `multica-ai/andrej-karpathy-skills` | Named for Andrej Karpathy's observations; written by others | 235,668 | none shown | `2c60614193` (2026-04-20) | `CLAUDE.md`, whole: four principles. Ideas only, because there is no licence file. |
+| `ayghri/i-have-adhd` | ayghri | 62,291 | MIT | `f3e783bae5` | The first 60 lines of its skill. |
+| `openclaw/openclaw` | The OpenClaw project | 395,193 | MIT | `3ee8fc5376` | The first 40 lines of `AGENTS.md`, and the headings of `SECURITY.md`. |
+| `humanlayer/12-factor-agents` | HumanLayer | 27,420 | not one licence (GitHub says NOASSERTION) | `d20c728368` (2025-09-21) | The list of twelve factors in the README. Nothing copied. |
+| `mitsuhiko/agent-stuff` | Armin Ronacher | 3,227 | Apache-2.0 | `0865c849be` | The README, which describes a `/discuss` command. |
+| `steipete/agent-scripts` | Peter (steipete) | 7,564 | MIT | `deb19f5896` | The README's first lines. Nothing used. |
+| `trailofbits/skills` | Trail of Bits | 8,427 | CC-BY-SA-4.0 | `149d7b21f4` | Directory names only. Share-alike, so nothing copied. Worth a later look: `mutation-testing`, `property-based-testing`, `differential-review`, `insecure-defaults`, `sharp-edges`. |
+| `garrytan/gstack` | Garry Tan | 142,641 | MIT | `8aafd408e2` | The README's first lines. Not relevant to this project. |
+
+Already our method since 2026-11-24: `addyosmani/agent-skills` (MIT) and `anthropics/skills`.
+
+Listed from GitHub's data only, **not read**: `affaan-m/ECC`, `github/spec-kit`, `bmad-code-org/BMAD-METHOD`, `eyaltoledano/claude-task-master`, `hesreallyhim/awesome-claude-code`, `VoltAgent/awesome-agent-skills`, `vercel-labs/agent-skills`, `NousResearch/hermes-agent`, `earendil-works/pi`, `ghuntley/how-to-ralph-wiggum`, `ykdojo/claude-code-tips`. For the product itself, and not for the way of working, `pipecat-ai/pipecat` and `livekit/agents` are voice-agent frameworks worth reading on a later day.
+
+### 11.2 Where independent developers agree
+
+1. **Ask before building.** Matt's `grilling`, Jesse Vincent's `brainstorming`, Armin Ronacher's `/discuss`, and "Think Before Coding" in the Karpathy-derived file.
+2. **Test first, and watch the test fail.** Matt's `tdd`, Jesse Vincent's `test-driven-development`, and "Goal-Driven Execution".
+3. **No claim without fresh evidence.** Jesse Vincent's `verification-before-completion`: "If you haven't run the verification command in this message, you cannot claim it passes."
+4. **Find the cause before the fix.** Matt's `diagnosing-bugs` (a loop that can go red on this very bug) and Jesse Vincent's `systematic-debugging`.
+5. **Small, surgical changes.** "Surgical Changes" and "Simplicity First" in the Karpathy-derived file; "Choose good compromises" in OpenClaw's agent rules.
+6. **Keep the agent rules short, point to documents, and let a new rule cite an incident.** OpenClaw's `AGENTS.md` (a 20,000-character cap) and Matt's `retro` and `writing-for-agents`.
+7. **One shared vocabulary.** Matt's `domain-modeling`.
+8. **Shape the answer for the reader.** ayghri's rules, and Matt's `wait-what` (Simplified Technical English).
+9. **Do not ask what you can decide, and keep working.** OpenClaw's working agreement: "Resolve routine, reversible choices with reasonable assumptions; ask only about consequential decisions context cannot resolve. Continue independent authorized work meanwhile. Silence never authorizes gated action."
+
+Most of this the owner already wrote in `WORKING-PHILOSOPHY.md` and `docs/MAINTAINERS.md` before these repositories were read. The table shows what was new.
+
+### 11.3 What we did with each idea
+
+| # | Idea | From | Where we stood | Disposition |
+|---|---|---|---|---|
+| 1 | Ask all independent questions in one round, each with a recommended answer worded so that "yes" accepts it; look up facts yourself | Matt `grilling`; Armin `/discuss`; Jesse `brainstorming` | `WORKING-PHILOSOPHY.md` said "Ask when the answer changes what you build", with no form | **Reimplemented**: section 2, "Ask in one round" |
+| 2 | Do not end a message with a request to approve a small step; ask once for a standing permission | The owner's notes (`docs/MAINTAINERS.md`: "ask me about trivial actions"); OpenClaw | The rule existed. It was broken: many messages ended in a request to merge, and on 2026-11-25 the owner wrote "you keep giving merges" | **Reimplemented** as a rule that names the incident |
+| 3 | Keep working while a question is open; silence is never a yes to a gated action | OpenClaw | Not written | **Reimplemented**: section 2 |
+| 4 | A test must be able to fail for the reason its claim could be false; the expected value comes from something independent | Matt `tdd` (the "tautological" anti-pattern) | Two incidents on 2026-11-25: `widen` (#38) and the Qt `update-types` rule (#40) | **Adopted**: section 3, step 4 |
+| 5 | Evidence before a claim | Jesse `verification-before-completion` | `WORKING-PHILOSOPHY.md` section 1 | **Already present** |
+| 6 | Root cause first | Matt `diagnosing-bugs`; Jesse `systematic-debugging` | Section 6, "How we debug". Two details are not in it: rank three to five falsifiable hypotheses before testing any; tag temporary debug output with a unique prefix | **Already present**; the two details **deferred** |
+| 7 | A glossary in plain words, tied to the program's own words | Matt `domain-modeling` | None, and the owner asked for plain words three times | **Adopted**: `GLOSSARY.md` and `tests/test_glossary.py` |
+| 8 | "Wait what": stop, give one line of context, say it again in the glossary's words | Matt `wait-what` | Simplified Technical English was already required | **Adopted** the trigger phrase; the language rule is **already present** |
+| 9 | Lead with the answer, number the steps, end with one next action | ayghri | "Yes" or "No" first, and the conclusion in the first line | **Adopted** the last two parts; the first is **already present** |
+| 10 | Short agent rules; a new rule names its incident | OpenClaw; Matt `retro`, `writing-for-agents` | `AGENTS.md` is about 200 lines | **Adopted** the incident rule; pruning **deferred** |
+| 11 | A retro after each piece: what went wrong, and which fix goes in the environment | Matt `retro` | "Mistake" notes in the session log, with no form | **Adopted**: section 3, step 9 |
+| 12 | Surgical changes; simplicity first | The Karpathy-derived file | "The smallest change that can be proved", section 3 | **Already present** |
+| 13 | A handoff points to other records and does not copy them | Matt `handoff` | Records that copy facts held elsewhere drifted three times on 2026-11-25: a commit count, a "two days" and an undated count | **Deferred**: its own piece |
+| 14 | Deep modules, the deletion test, a scan of the places that change most | Matt `codebase-design`, `improve-codebase-architecture` | Not done | **Deferred**: proposed below |
+| 15 | Issue triage with durable briefs for an agent; a record of rejected ideas | Matt `triage` | Issues #2 to #7 are loose notes | **Deferred**: proposed below |
+| 16 | A wizard for steps only a human can do | Matt `wizard` | The owner's Windows run (issue #6) is still open. The rule "do not add launcher files" means a script run from PowerShell, not a file to double-click | **Deferred**: proposed below |
+| 17 | A written trust model | OpenClaw's `SECURITY.md` | No single document found | **Deferred**: proposed below |
+| 18 | Twelve factors for LLM applications | HumanLayer | Partly present: tool declarations are checked against the provider's rules, and risky actions need a click on the HUD | **Deferred**, as a lens for item 14 |
+| 19 | Specs, plans, subagents and worktrees as a pipeline | Jesse, Addy, Matt | One agent session at a time; Addy's lifecycle is already our method | **Rejected for now** |
+| 20 | TypeScript, Husky and Claude-Code-only hooks; writing and course skills | Matt's `misc` and `in-progress` folders | Not our stack | **Rejected** |
+
+### 11.4 What this research cannot show
+
+- **Stars measure attention, not quality.** I read only the parts named in 11.1. The skills I did not read were judged by one line each.
+- **Nothing here is measured.** I did not test whether the added rules improve the work. The first test is whether the next pieces show fewer mistakes of these two kinds: a test that holds a belief, and a request to approve a small step.
+- **Most of these skills are written for AI coding tools and for TypeScript.** What applies to a Windows voice assistant written in Python is a judgement, and it is mine.
+
+### 11.5 Proposed next pieces, not started
+
+1. A scan of the code for the places where one change needs many files (items 14 and 18).
+2. Briefs for issues #3, #4 and #5, so an agent can start each without a new conversation (item 15).
+3. A script for the owner's Windows computer that runs the proof gate and says in plain words what to send back (item 16).
+4. A written trust model for Ultron: who is trusted, and where plugins, memory and models stop being trusted (item 17).
+5. A handoff header that points to the records and does not copy them (item 13).

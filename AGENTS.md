@@ -182,6 +182,7 @@ a small built-in fallback — instead of crashing.
 4. `ARCHITECTURE.md` and `DECISIONS.md` — system boundaries and owner decisions.
 5. `GATEKEEPERS.md` — current proof status and hardware-dependent gaps.
 6. `docs/INDEX.md` and `docs/MAP.md` — documentation navigation and the generated module/test map.
+7. `GLOSSARY.md` — the words we use with the owner, each defined once. Use them in chat.
 
 ## The one question to ask of any change
 
