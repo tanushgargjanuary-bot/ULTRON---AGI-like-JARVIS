@@ -258,7 +258,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 130 modules, 35,457 lines
+## `tests/` — 130 modules, 35,593 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -351,7 +351,7 @@ edit the module docstring instead and run it again.
 | `test_prompt_gate.py` | 379 | The system prompt's gate, and the file names it builds. | test_prompt_editor, test_prompt_gate, test_self_modify_gate |
 | `test_proof_gate.py` | 202 | The proof gate's verdicts must not be able to round up. | — |
 | `test_provider_schema.py` | 239 | tests/test_provider_schema.py — the exact list the provider is handed. | test_provider_schema |
-| `test_providers_panel_threads.py` | 157 | tests/test_providers_panel_threads.py — a settings panel that is gone must not be called by a thread that outlives it. | test_providers_panel_threads |
+| `test_providers_panel_threads.py` | 293 | tests/test_providers_panel_threads.py — a settings panel that is gone must not be called by a thread that outlives it. | test_providers_panel_threads |
 | `test_readme.py` | 152 | tests/test_readme.py — the front page must not claim anything the tree lacks. | test_readme, test_verify_script |
 | `test_repair_judgment.py` | 717 | Judgment gates, real file outcomes, fault injection and generated lifecycle tests. | — |
 | `test_routing.py` | 286 | Offline tests for provider routing and voice switching (core/routing.py). | — |

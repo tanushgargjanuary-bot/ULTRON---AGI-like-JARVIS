@@ -27,7 +27,7 @@ else:
 os.environ.setdefault("QT_LOGGING_RULES", "qt.multimedia.*=false")
 
 from PyQt6.QtCore import (
-    QEasingCurve, QLineF, QMimeData, QObject, QParallelAnimationGroup, QPointF,
+    QEasingCurve, QLineF, QMimeData, QParallelAnimationGroup, QPointF,
     QPoint, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, Qt, QTimer,
     QUrl, pyqtSignal,
 )
@@ -3391,32 +3391,36 @@ class _ScrollSafeCombo(QComboBox):
             e.ignore()
 
 
-class _LiveRelay(QObject):
-    """The one signal a worker thread may emit on behalf of the settings panel.
+class _LiveMailbox:
+    """What a background read may touch when it finishes, and the only thing it may touch: a counter.
 
     A panel starts reads in the background: the installed voices, and Piper's list of published voices, which is an
-    HTTPS call that can run for twenty seconds. It used to hand each one `self._live_ready.emit`, a signal of the
-    PANEL. A read that finished after the panel was destroyed (the window closing, a test dropping it) emitted on
-    freed memory, and the process died with a segmentation fault: CI exit code 245, twice, at
-    providers/tts_piper.py line 170.
+    HTTPS call that can run for twenty seconds. A read that finishes late must not call into Qt. Twice it did, and twice
+    the process died with a segmentation fault (CI exit code 245, at providers/tts_piper.py line 170). First the read was
+    handed a signal of the PANEL, which was gone. Then it was handed a signal of a shared relay object, which was not
+    immortal after all: it is destroyed with the QApplication, and the self-test destroys its application when one test
+    returns, as closing the program does. A bound signal keeps a raw pointer, so the late call landed on freed memory.
 
-    Threads emit on this object instead. It is made once and not deleted while the program runs. Every panel
-    connects to it, and Qt removes that connection by itself when the panel is destroyed, so a late read finds
-    nobody to tell instead of a panel that no longer exists. tests/test_providers_panel_threads.py holds this."""
+    A plain counter has no Qt in it. It cannot be freed, and `announce` works from any thread at any time, with the
+    application there or not. Each panel looks at the count on a timer of its own (`ProvidersOverlay._poll_live`), and
+    that timer belongs to the panel and is destroyed with it. tests/test_providers_panel_threads.py holds this."""
 
-    ready = pyqtSignal()
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._count = 0
+
+    def announce(self) -> None:
+        """A read has finished. Called from a worker thread, possibly long after every window is gone."""
+        with self._lock:
+            self._count += 1
+
+    def count(self) -> int:
+        with self._lock:
+            return self._count
 
 
-_LIVE_RELAY: _LiveRelay | None = None
-
-
-def _live_relay() -> _LiveRelay:
-    """The shared relay, made on first use. First use is a panel being built, which happens on the interface thread,
-    so the relay belongs to that thread and a signal from a worker reaches each panel as a queued call."""
-    global _LIVE_RELAY
-    if _LIVE_RELAY is None:
-        _LIVE_RELAY = _LiveRelay()
-    return _LIVE_RELAY
+_LIVE_MAILBOX = _LiveMailbox()
+_LIVE_POLL_MS = 250       # how often an open panel looks for news from its background reads
 
 
 class ProvidersOverlay(_HudOverlay):
@@ -3459,9 +3463,10 @@ class ProvidersOverlay(_HudOverlay):
 
     changed = pyqtSignal()          # emitted on APPLY when the engine moved
     # When something the machine had to be asked for — the installed voices —
-    # arrives from a worker thread, it is announced on the shared `_LiveRelay`
-    # (see `_live_relay`), not on a signal of this panel: the panel can be gone
-    # by the time the worker finishes.
+    # arrives from a worker thread, the worker only bumps the count in
+    # `_LIVE_MAILBOX` (a plain counter: no Qt) and this panel notices on its own
+    # timer (`_poll_live`). A worker must never call into Qt: the panel, and the
+    # application, can be gone by the time it finishes.
     # (provider id, [(value, label), ...]) from a worker that went and asked an
     # endpoint what it offers.
     _models_ready = pyqtSignal(str, list)
@@ -3495,8 +3500,11 @@ class ProvidersOverlay(_HudOverlay):
         # so without this the panel freezes for most of two seconds every time
         # a dropdown is touched. Started here rather than at startup, because
         # nothing in this folder may run before somebody opens it.
-        relay = _live_relay()
-        relay.ready.connect(self._on_live_ready)
+        self._live_seen = _LIVE_MAILBOX.count()      # taken before any read starts, so none is missed
+        self._live_timer = QTimer(self)              # the panel's own: it is destroyed with the panel
+        self._live_timer.setInterval(_LIVE_POLL_MS)
+        self._live_timer.timeout.connect(self._poll_live)
+        self._live_timer.start()
         self._models_ready.connect(self._on_models_ready)
         self._model_cache: dict[str, list] = {}
         self._fetching: set = set()
@@ -3507,7 +3515,7 @@ class ProvidersOverlay(_HudOverlay):
                                       fromlist=["prefetch"])
                     _pf = getattr(_mod, "prefetch", None)
                     if _pf:
-                        _pf(relay.ready.emit)
+                        _pf(_LIVE_MAILBOX.announce)
                 except Exception:
                     pass
         self._edits: dict[str, dict] = {}       # provider id -> {key: (widget, Field)}
@@ -3659,6 +3667,13 @@ class ProvidersOverlay(_HudOverlay):
                 }}
                 QPushButton:hover {{ border-color: {C.BORDER_B}; }}
             """)
+
+    def _poll_live(self) -> None:
+        """Look for news from the background reads. Runs on the interface thread, on this panel's own timer."""
+        now = _LIVE_MAILBOX.count()
+        if now != self._live_seen:
+            self._live_seen = now
+            self._on_live_ready()
 
     def _on_live_ready(self) -> None:
         """A machine-supplied list has arrived — redraw once so it appears."""
