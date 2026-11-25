@@ -16,6 +16,9 @@ MISTAKE, CAUGHT BEFORE THE MERGE: the first push used versioning-strategy widen;
 FOUND: in a brand-new environment the launcher installed the whole requirements.txt in about two minutes; the suite there is 2,939 tests OK and the 29 dashboard
   tests that CI skips (no fastapi in its list) ran and passed; pip check is clean. On #34's file with Python 3.11 the new script fails with pip's own
   "No matching distribution found for numpy<3,>=2.5.5".
+GITHUB FAULT: the push of the correction failed once (Internal Server Error); the retry landed but for 13 minutes GitHub did not update the pull request's head or start any
+  workflow on the next two pushes, while a manual dispatch started at once. Fixed by closing and reopening the pull request through the REST API (gh pr close got a 502); the
+  fast gate was dispatched by hand because its push copy never fired. An old head on a pull request after a push means a lost event, not a failed check.
 FIRST RUN ON GITHUB (run 45648162971): Windows with Python 3.11, 3.12 and 3.13, and the Linux suite with every package, all passed. On 3.13 the launcher installed the whole
   file, its start-up check imported its 3 modules, and check_install.py said every line is installed; pyautogui and pygetwindow built from source with no compiler.
 NOT VERIFIED: the monthly schedule and the manual trigger; that the window opens and the voice works on that machine (the check installs and imports, it does not start the app);
