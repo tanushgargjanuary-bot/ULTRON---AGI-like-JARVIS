@@ -1,3 +1,28 @@
+=== 2026-11-25 · build 1.2.38 · the Linux crash: found, reproduced, fixed ===
+
+Asked for: "Is this done? then what now? Merge this PR, and now make it so that this REPO is considered 100% ready to use." PR #36 merged (9f2e803, same tree
+as the tested tip; every check green on it). "Ready" is undefined, so it was split into what can be measured; the crash that made CI untrustworthy came first.
+
+DONE (no new feature, setting, dependency or network call; no referee file)
+  - ui.py: a worker thread was handed a signal of the settings panel; a download that finished after the panel was destroyed emitted on freed memory and
+    the process died (CI exit code 245 twice; also closing the program mid-download). Threads now emit on one object that outlives the panels (_LiveRelay).
+  - tests/test_providers_panel_threads.py: 3 tests, run in a child interpreter. Original code: the survival test fails with exit code -11. New code: all pass.
+FOUND: the crash needs the panel gone before the download ends. Original code, held at a gate: 20 of 20 died; panel kept alive 0 of 5; the panel inside a
+  window, window destroyed: 5 of 5. After the fix: 20 of 20 clean in each shape. Four planted mistakes: all caught.
+CORRECTION: the "3 failures that only happen here" in every earlier report were this sandbox's (no graphics libraries; copies without .git). In a real clone with
+  four stand-in libraries the whole suite on main is 2,936 tests, OK, 39 skipped (2,775 counted before).
+SEEN, NOT CHANGED: the scheduled upstream check did not fire at its first tick (0 scheduled runs of any workflow seven hours later); run once by hand it
+  passed (run 45629120807), so the job works and the skipped tick is GitHub's; providers/_tests.py says "no
+  network" but starts the Piper download; _models_ready has the same shape as the fixed signal; closing the engine panel only hides it and each
+  opening builds a new one.
+CLOSED: Dependabot's #34 without merging (on Python 3.11 its requirements.txt cannot be installed: numpy>=2.5.5 needs Python 3.12; it moves the PyQt6 ceiling
+  that is below Qt 6.12 on purpose; it jumps google-genai, opencv-python, cryptography and pillow by a major; its checks were green because CI never installs
+  requirements.txt). Issues #9, #10, #11 (done on main and still open), each with the test or proof-gate claim that meets it.
+MEASURED: requirements.txt resolves with no conflict (Python 3.11); the project's own bootstrap installed it all in a new environment (only sounddevice
+  flagged: Linux needs the PortAudio system library); 40 of 42 Windows lines have a wheel on 3.11 to 3.13, pyautogui and pygetwindow are source-only. No CI run has
+  installed requirements.txt on Windows: that is the next piece.
+NOT VERIFIED: that the hosted crash is this one (it matches; the next Linux runs are the test); this scenario on Windows; closing mid-download on a real machine.
+
 === 2026-11-24 · build 1.2.38 · fourth piece of Mark LVII: mute means muted, written test first ===
 
 Asked for: "Do the next piece" (the mute fix proposed after the last piece) and a pasted brief for a different project (W0 to W12, a Linux laptop,
