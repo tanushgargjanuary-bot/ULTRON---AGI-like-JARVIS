@@ -217,7 +217,7 @@ edit the module docstring instead and run it again.
 | `config_manager.py` | 1,010 | Settings and keys: the one module that reads and writes `config/api_keys.json`. | test_atomic_file, test_bugfix_pass, test_config_safety, test_curriculum, test_edge_cases, test_file_controller_hardening, test_gemini_resilience, test_hud_fixes, test_local_fallback, test_mark_integration, test_persona_switch_settings, test_philosophy, test_providers_panel_threads, test_runtime_files_ignored, test_shipping, test_suite_assistant, test_triggers, test_ui_settings_writes, test_verify_script |
 | `memory_manager.py` | 739 | The long-term memory: what the user has asked Ultron to remember. | test_atomic_file, test_edge_cases, test_memory_changes, test_memory_safety, test_proof_gate, test_runtime_files_ignored, test_session_memory_search, test_suite_assistant, test_suite_safety, test_verify_script |
 
-## `scripts/` — 35 modules, 10,762 lines
+## `scripts/` — 36 modules, 10,851 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -227,8 +227,9 @@ edit the module docstring instead and run it again.
 | `bench_hybrid.py` | 178 | scripts/bench_hybrid.py — what a faster language buys, measured, not argued. | — |
 | `bench_sidecar.py` | 154 | scripts/bench_sidecar.py — is the Go sidecar actually smaller and faster? | — |
 | `bench_startup.py` | 217 | scripts/bench_startup.py — what the launch actually costs, measured. | test_suite_providers |
-| `bootstrap.py` | 386 | Local setup for the Ultron launcher — everything lands inside .venv. | test_boot_guard, test_bootstrap, test_launchers |
+| `bootstrap.py` | 386 | Local setup for the Ultron launcher — everything lands inside .venv. | test_boot_guard, test_bootstrap, test_check_install, test_dependency_policy, test_launchers |
 | `branch_report.py` | 118 | Which branches exist, where each one points, and which names are the same commit. | test_branch_report |
+| `check_install.py` | 89 | Is everything in requirements.txt really installed in this environment? | test_check_install, test_dependency_policy |
 | `check_mutations.py` | 216 | Targeted seeded mutation checks; not a comprehensive mutation score. | — |
 | `collect_install.py` | 412 | scripts/collect_install.py — find the DATA in an install folder, and prove it. | test_collect_install, test_launchers |
 | `deep_scan.py` | 512 | Read the whole tree and report what a reviewer would complain about. | test_doc_references, test_suite_assistant |
@@ -257,7 +258,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 128 modules, 34,971 lines
+## `tests/` — 129 modules, 35,252 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -279,6 +280,7 @@ edit the module docstring instead and run it again.
 | `test_branch_report.py` | 53 | Tests for the branch report: parsing, grouping, and the shallow-clone note. | — |
 | `test_bugfix_pass.py` | 696 | tests/test_bugfix_pass.py — defects found by reading the code, not by looking. | test_bugfix_pass |
 | `test_capability_guide.py` | 97 | Routing checks for the capability guide. | — |
+| `test_check_install.py` | 141 | tests/test_check_install.py — the check that says whether requirements.txt really installed. | test_check_install |
 | `test_child_output.py` | 230 | A background program's output is logged, not thrown away. | — |
 | `test_collect_install.py` | 206 | Offline tests for scripts/collect_install.py. | — |
 | `test_computer_capability.py` | 22 | Computer-control failures are recorded without running real desktop actions. | — |
@@ -291,7 +293,7 @@ edit the module docstring instead and run it again.
 | `test_dashboard_throttle.py` | 271 | The dashboard's failed-login counter forgets, and cannot be made to forget the wrong thing. | — |
 | `test_dashboard_ui_variants.py` | 85 | Static checks for the remote dashboard's selectable interface variants. | — |
 | `test_decision_layers.py` | 263 | tests/test_decision_layers.py — the four algorithms that decide something. | test_decision_layers |
-| `test_dependency_policy.py` | 290 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
+| `test_dependency_policy.py` | 430 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
 | `test_dispatch_smoke.py` | 167 | Smoke tests for the two seams every tool call and every module passes through. | test_fast_gate_groups |
 | `test_display_text.py` | 116 | core/display_text.py: what the owner is shown for a decision is what was sent, or says it is not. | — |
 | `test_doc_references.py` | 89 | A document that tells you where something is must be right about where it is. | — |
