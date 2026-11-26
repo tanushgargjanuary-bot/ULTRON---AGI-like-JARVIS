@@ -1,3 +1,72 @@
+=== 2026-11-26 · build 1.2.38 · a coding-agent playbook, rewritten and held to its own rules ===
+
+Asked for: "Improve this Playbook." (a pasted "Vibe Coding Agent Master Playbook").
+
+FOUND IN v1: it broke its own rules (file limit 300 and 400; a "3-strike" rule that rolled back after two; "never run destructive git commands" then `git checkout -- .`;
+  a ban on placeholders, full of them; LaTeX; a nested code fence). Risky advice (-y and -f always; kill after 30 s of silence). A statistic and several credits that nothing could be
+  found behind. No rule about outside text as instructions, about who may approve what, or about tests that restate the code. Its "skills" had no description line.
+DONE (documents and one test file; no change to the app or to Ultron's rules)
+  - docs/reference/CODING_AGENT_PLAYBOOK.md (505 lines): a short core of 13 rules, each with its reason; the loop by size; authority and safety; 11 skills in the SKILL.md shape;
+    five templates; sources marked verified or not; optional stack modules; what changed from v1. A proposal: Ultron's rules win.
+  - tests/test_agent_playbook.py: 24 tests. docs/UPSTREAM_RESEARCH.md 11.1 and 11.6 (three sources). docs/INDEX.md. WORKING-PHILOSOPHY.md (the owner's file): one sentence.
+TESTS: 22 red first (no file), one more red first for a stale claim; 22 planted cases behave as required (19 caught, 6 of them v1's own flaws; 3 valid edits green).
+RETRO: my test took `## ` lines inside a code fence for headings and silently skipped sections 6 to 8; only a planted mistake that was NOT caught showed it. Fix: the test, and a rule
+  (WORKING-PHILOSOPHY section 3, step 4: a new check is not trusted until it has failed). Two checks of mine were too literal and failed on the real file: fixed. Reading found two wrong claims in the playbook's own introduction (a line count, and "every number"): fixed, one now tested.
+NOT VERIFIED: that agents follow it better; the third-party reports on which tool reads which file; the core block in a real tool. OCR not run: no code file changed.
+
+=== 2026-11-25 · build 1.2.38 · the Linux crash came back: the first fix was not enough ===
+
+FOUND: the Linux check of PR #40 died with a segmentation fault in the provider self-test (run 45679604007, on 855f6c6, 18:54 UTC), at providers/tts_piper.py line 170, the line #37 had
+  fixed. Windows passed on the same commit. I read the log first: 2,979 tests passed, then the self-test died.
+CAUSE: #37 handed reads a signal of a shared relay and wrote that it was "not deleted while the program runs". It is destroyed with the QApplication, which the self-test drops when one
+  test returns (and the program drops when it closes). A late read emitted on freed memory. Reproduced: 20 runs of 20 crashed. #37's tests kept the application alive.
+MISTAKE, MINE: I called #37 "fixed". The evidence was six green Linux runs, which I had called weak, and tests that never tried to destroy the application.
+DONE (no setting, dependency or referee file)
+  - ui.py: the relay is gone; a read bumps a plain counter (_LiveMailbox.announce) and each panel looks at it on its own timer. No worker thread touches Qt.
+  - tests/test_providers_panel_threads.py: 4 new tests that replay the crash (red on the old code), and the first scenario waits for the timer. AGENTS.md (threading) and
+    WORKING-PHILOSOPHY.md (section 6) carry the lesson.
+TESTS: the real self-test sequence, 100 runs, no crash (old code 5 to 15 in 100); late report, 20 of 20 survive; 5 planted regressions caught, 2 valid changes green; a no-op control, 80 runs, no crash.
+RETRO: see docs/engineering/SESSION_LOG.md.
+NOT VERIFIED: that the Linux check no longer crashes (only many GitHub runs can show it). ProvidersOverlay._fetch_models has the same shape and is not changed.
+
+=== 2026-11-25 · build 1.2.38 · advice from other developers, a glossary, and how we ask the owner ===
+
+Asked for: "Use Matt's repo skills ... try to research more people who have good advice lying in their github repos." And: "are you even working because you keep giving merges". The reply to it asked for no merge.
+
+READ (docs/UPSTREAM_RESEARCH.md, section 11): Matt Pocock's skills (39), Jesse Vincent's superpowers (15 skills), the Karpathy-derived guidelines, ayghri's output rules, OpenClaw's
+  agent rules, HumanLayer's twelve factors, Armin Ronacher's agent-stuff, and the names in three more. Nothing installed or copied. Two have no licence file and one is share-alike: ideas only.
+FOUND: most of it was already in the owner's WORKING-PHILOSOPHY.md and docs/MAINTAINERS.md. The complaint was fair: those say he does not want to be asked about trivial actions.
+DONE (no change to the app; no setting, dependency or referee file)
+  - GLOSSARY.md: 41 words in plain words. tests/test_glossary.py ties it to the proof gate's five verdicts, the follow-up watch's decision words and the excluded features.
+  - WORKING-PHILOSOPHY.md: five habits (no approvals for small steps; ask in one round; keep working while a question is open; use the glossary and "wait what"; end with one next
+    action), the tautological-test rule, a retro step. DECISIONS.md: one row (the owner's file).
+TESTS: 11 new, red before the file existed; 17 planted cases behave as required (15 caught, 2 valid edits green).
+RETRO: the merge requests came from working notes that did not carry the owner's line about trivial actions, and from not re-reading WORKING-PHILOSOPHY.md; fix = a rule that names the
+  incident, and one question to the owner about a standing permission. The two tests that held a belief: a rule, not a check. Three records that copy facts drifted: a pointer (deferred).
+NOT VERIFIED: that the habits improve the work; whether the owner wants the standing permission (he has not answered).
+
+=== 2026-11-25 · build 1.2.38 · Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it ===
+
+Asked for: "Merge" (#38, merged as 8d92278, same tree as the tested tip; every check on main passed). Nothing else was asked of this piece.
+
+FOUND, three minutes after the merge
+  - Dependabot read the new file and opened #39, "bump the python-all group with 6 updates". It raises the PyQt6 ceiling to <6.13, four more ceilings
+    (google-genai <4, Pillow <14, OpenCV <6, cryptography <51) and the ruff pin to 0.17.6. #38 had told it to ignore PyQt6 minor and major releases because
+    Qt 6.12.0 crashes at launch. The rule did nothing; why is not known (Dependabot's own log could not be read; every requirement is a range).
+  - The test that fails a pull request which moves the Qt ceiling held. #39 is red on that one test: the Linux job with every package, Linux verify and
+    Windows verify each ran 2,967 tests with one failure; the three Windows installs passed. Nothing reached main; #39 is blocked by the required checks.
+MISTAKE, MINE: the rule's test asserted that the words version-update:semver-minor and -major were in the file. The second time today that a test
+  repeated my belief (widen was the first). Only a Dependabot run says what Dependabot does.
+DONE (no change to the app; no setting, dependency or referee file)
+  - .github/dependabot.yml: the PyQt6 rule names the versions to ignore, versions: [">=6.12"] (the ceiling). A bare rule was the first idea; GitHub's
+    documentation says a rule on versions reaches security updates too, so a bare one would also silence a Qt security release below the ceiling.
+  - tests/test_dependency_policy.py: the Qt test fails on a rule that rests on update-types (its old last assertion required those words: REPLACED) and requires the
+    versions rule to carry the ceiling's number; a new test refuses an update-types rule for any requirement that is not an exact pin. DECISIONS.md row 136 says so.
+TESTS: both red on the old file, green on the new; 11 planted cases behave as required (9 mistakes caught, 2 valid variants stay green).
+NOT VERIFIED: that Dependabot now leaves Qt out (it reads the file only when it reaches main); a Qt security release that needs 6.12 or later gets no
+  pull request, by design, and has to be noticed by hand. Whether to accept the other four ceiling raises is the
+  owner's decision (DECISIONS row 136); the suite did not fail with them installed, which says nothing about the live Gemini call or the camera.
+
 === 2026-11-25 · build 1.2.38 · a fresh install is checked, and Dependabot keeps to the pins ===
 
 Asked for: "Please merge the pull request" (#37, merged as 2f16a98, same tree as the tested tip). My last message had said that merging also starts this piece.

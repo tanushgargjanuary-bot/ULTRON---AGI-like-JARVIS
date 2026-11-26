@@ -51,6 +51,24 @@ technicality three separate times. So:
 
 He wants the answer fast and then the detail. Give the conclusion in the first line.
 
+Five more habits. They come from his own notes and from other developers' repositories read on
+2026-11-25 (`docs/UPSTREAM_RESEARCH.md`, section 11):
+
+- **Do not end a message with a request to approve a small step.** A merge of a green change is a
+  small step. On 2026-11-25 he wrote "you keep giving merges", after many messages that ended with
+  one. Ask once for a standing permission. Write his answer, with its limits, in `DECISIONS.md`.
+  Until then, finish the work and say what is waiting.
+- **Ask in one round.** When several questions are open and none depends on another, ask them
+  together. Number them. Give your recommended answer to each, worded so that "yes" accepts it. Look
+  up facts yourself: a fact is never his job. (The `grilling` skill in Matt Pocock's repository.)
+- **Keep working while a question is open.** Do everything that does not depend on the answer.
+  Silence is never a "yes" to a merge, a delete, a spend, a download or a change to a referee file.
+  (The working agreement in OpenClaw's own agent rules.)
+- **Use the words in `GLOSSARY.md`.** One word, one meaning. If he writes "wait what", stop. Give one
+  line of context. Say it again in the glossary's words. (The `wait-what` skill.)
+- **End with one next action, or with none.** Lead with the answer. Number any steps. (The
+  `i-have-adhd` output rules, which we use without assuming anything about the reader.)
+
 ---
 
 ## 3. How a change is made
@@ -65,14 +83,28 @@ The order is not negotiable, because each step has caught something the others m
    lives there, and re-proving those in a new language is the slowest work in the repository.
 4. **Write the test first or with it.** A change with no test is a claim with no evidence.
    Never weaken an assertion to make a build pass.
+   **A test must be able to fail for the reason its claim could be false.** Do not assert what you
+   have just written. A test that works out the expected value the way the code does passes by
+   construction. Take the expected value from something independent: a plain literal, a worked
+   example, the spec, or the other system's own answer (GitHub's validator, a Dependabot run, a
+   Windows machine). Until that system has answered, write "not verified". Twice on 2026-11-25 a
+   test of ours held a belief and not a fact: `widen` in #38, and the Qt `update-types` rule in #40.
+   Matt Pocock's `tdd` skill calls this a tautological test.
+   **A new check is not trusted until it has failed.** Plant the mistake it is for, in a fresh copy, and watch it turn
+   red. On 2026-11-26 a new test skipped most of the file it was written to check, because it took `## ` lines inside a
+   code fence for headings. Only a planted mistake that was not caught showed it.
 5. **Run the three instruments** (section 5). Red is a real defect, not noise.
 6. **Update the record**: `log.txt` (what changed and why), `CHANGELOG.md` (the release),
-   `docs/`, `AGENTS.md` if a rule appears, `docs/MAINTAINERS.md` if maintainer intent moved.
+   `docs/`, `AGENTS.md` if a rule appears (a new rule names the incident that made it),
+   `docs/MAINTAINERS.md` if maintainer intent moved.
 7. **One commit per isolated improvement.** A commit that mixes unrelated changes
    cannot be reviewed or reverted safely.
 8. **Use the correct CI lane.** Every branch push gets the fast offline gate. A pull
    request to `main` and every push to `main` get the full Linux/Windows regression
    gate. Read the results for the exact commit. See `docs/TEST_AUTOMATION.md`.
+9. **Look back.** Add a short retro to `docs/engineering/SESSION_LOG.md`: what went wrong, what in
+   the environment would have stopped it, and which kind of fix that is: a check, a pointer, a rule,
+   or nothing. A mistake that a program can detect gets a check, not a sentence. (The `retro` skill.)
 
 ---
 
@@ -131,7 +163,10 @@ So the method is:
    bad plugin field must not cost the session; one bad plugin field must not pass silently
    either. Repair it and say you repaired it.
 4. **Reproduce it as a test, using the real message.** The owner's own log line is a test
-   fixture in `tests/test_provider_schema.py`.
+   fixture in `tests/test_provider_schema.py`. Then try the larger lifetime: a crash from an
+   object that outlived its owner is not fixed until the test also outlives the owner's owner,
+   the window and then the application. The first fix for the Qt segmentation fault (#37) stopped
+   at the window, and the crash came back (run 45679604007).
 5. **Write it down even when it is not fixed.** An unreproduced Qt segfault and a benchmark
    that was wrong in the other direction are both in the record. A defect that is only in
    someone's memory is rediscovered as a surprise.
@@ -209,6 +244,8 @@ Three habits keep that shape:
 | `GATEKEEPERS.md` | which claims have proof, which need his machine, and why |
 | `ARCHITECTURE.md` | the six layers and one turn end to end |
 | `docs/INDEX.md` | every document, one line each |
+| `GLOSSARY.md` | the words we use, each defined once, in plain words |
+| `docs/UPSTREAM_RESEARCH.md`, section 11 | advice from other developers' repositories, and what we took from it |
 
 If you remember one thing from this page: **the program must not say something it has not
 checked, and neither should you.**

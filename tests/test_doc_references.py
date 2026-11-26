@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 LIVING_DOCS = (
-    "ARCHITECTURE.md", "DECISIONS.md", "AGENTS.md", "GATEKEEPERS.md", "WORKING-PHILOSOPHY.md",
+    "ARCHITECTURE.md", "DECISIONS.md", "AGENTS.md", "GATEKEEPERS.md", "WORKING-PHILOSOPHY.md", "GLOSSARY.md",
     "docs/AGENT_MAINTENANCE.md", "docs/DEEP-SCAN.md", "docs/HEALTH_CENTER.md", "docs/INDEX.md",
     "docs/INSTALL.md", "docs/NEXT_CHECKPOINTS.md", "docs/PERFORMANCE.md", "docs/PROMPT.md",
     "docs/SELF-CHANGE.md", "docs/TEST_AUTOMATION.md", "docs/TOOL_SUGGESTIONS.md",

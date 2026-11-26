@@ -10,6 +10,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### A coding-agent playbook, rewritten and held to its own rules, 2026-11-26
+
+**Asked for.** "Improve this Playbook." The owner pasted a "Vibe Coding Agent Master Playbook".
+
+**What I found in it.**
+- It broke its own rules. The file-length limit was 300 in two places and 400 in three. A "3-strike" rule rolled back after two. It said never to run destructive git commands, and then said to run `git checkout -- .`, which throws away the user's other uncommitted work. It banned placeholders and was full of them. It had LaTeX in a file that agents read as text, and one code fence nested in another, which broke the page.
+- Some advice was risky: always pass `-y` and `-f`; kill any process silent for 30 seconds; create a feature branch whatever the repository's policy says; put PLAN.md, TASKS.md and STATE.md in the repository for every task; an adversarial pass on every file, which invites code for failures nobody has seen.
+- A statistic and several credits could not be checked: "4x more debugging turns", five YouTube creators as sources of specific rules, "Antigravity Swarm Architecture", three skill names. I found nothing to read behind them, so they are removed and listed.
+- It had no rule about outside text that carries instructions, none about who may approve what, none about tests that restate the code. Its "skills" had no description line, which is the part that makes an agent choose a skill (Anthropic's skill guide).
+
+**What changed.** Documents and one test file. No change to the app, and none to Ultron's own rules.
+- `docs/reference/CODING_AGENT_PLAYBOOK.md` (new, 505 lines): a short core to paste (13 rules, each with its reason), the loop by size of task, authority and safety, 11 skills in the real SKILL.md shape, five templates, a list to run before saying done, a rule for when a fix fails, how to keep the playbook small, sources marked verified or not verified, optional stack modules, and what changed from v1. It is a proposal: it says in its first lines that Ultron's rules win.
+- `tests/test_agent_playbook.py` (new, 24 tests): every number is defined once, in a table; the core is short, free of one stack's words, and gives a reason for every rule; a destructive command appears only as something not to run; no placeholder, no LaTeX, no broken fence, no unsourced statistic; every skill has the same four parts; every source is marked, and its commit matches the research log.
+- `docs/UPSTREAM_RESEARCH.md`: three sources added to 11.1, and 11.6. `docs/INDEX.md`: one row. `WORKING-PHILOSOPHY.md` (the owner's file, flagged): one sentence in section 3, step 4: a new check is not trusted until it has failed.
+
+**Evidence.** The 22 tests I wrote first were red, because the file did not exist. 22 planted cases behave as required: 19 flaws caught (six are v1's own) and 3 valid edits stay green. The planted cases also found a bug in my own test: it took `## ` lines inside a code fence for headings, which hid three sections from every check. Fixed, and the real file passes. A careful read then found two wrong claims in the playbook's own introduction ("about thirty lines" for a core of 17 lines and 13 rules, and "every number" for a table that holds only the limits). Fixed, and a test now holds the count of rules.
+
+**Not verified.** That agents follow it better: nothing is measured. The reports on which tool reads which file: they are blog posts. The core block in a real tool. OCR was not run: no code file changed.
+
+### The Linux crash came back: the first fix was not enough, 2026-11-25
+
+**What happened.** The Linux check of this pull request died with a segmentation fault in the provider self-test (run 45679604007, on `855f6c6`, 18:54 UTC), at the same line as the crash that #37 had fixed: `providers/tts_piper.py` line 170. Windows passed on the same commit. #37 had been merged about three and a half hours earlier.
+
+**Why #37 was not enough.** #37 handed background reads a signal of a shared relay object, and wrote that it was "not deleted while the program runs". That was a belief, not a fact. The relay is destroyed with the `QApplication`. The self-test keeps its application in a local variable, so the application and the relay go when one test returns, and a read that reports in afterwards emits on freed memory. Closing the program does the same. Both were reproduced on purpose: 20 runs out of 20 crashed. #37's tests destroyed the panel and the window but kept the application, so they could not see it. A second fault came with it: a panel built after the application was made again could not be constructed at all.
+
+**What changed.** No worker thread touches Qt now.
+- `ui.py`: the relay is gone. A read that finishes calls `_LiveMailbox.announce()`, which adds one to a plain counter. Each panel looks at the counter on a timer of its own (250 ms), and the timer is destroyed with the panel.
+- `tests/test_providers_panel_threads.py`: the first scenario waits for that timer instead of a queued call (the same three checks), and a second scenario replays the crash (4 new tests).
+- `AGENTS.md` (threading) and `WORKING-PHILOSOPHY.md` (section 6) carry the lesson.
+
+**Evidence.** The 4 new tests are red on the old code (a crash, exit 139) and green on the new. The real sequence from the self-test ran 100 times with no crash (old code: 5 to 15 in 100). The late report ran 20 times: all survive and raise nothing (old: 20 of 20 crashed). Five planted regressions are caught and two valid changes stay green. A control that gives the worker a plain no-op also removes the crash (80 runs, none), which shows the crash needs the Qt call.
+
+**Not verified.** That the Linux check no longer crashes: that can only be seen over many GitHub runs. The sibling path is not changed: `ProvidersOverlay._fetch_models` still hands a signal of the panel to a thread. It has the same shape and has not been seen to crash.
+
+### Advice from other developers, a glossary, and how we ask the owner, 2026-11-25
+
+**Asked for.** "Use Matt's repo skills and he is very experienced developer, and try to research more people who have good advice lying in their github repos." And: "BTW are you even working because you keep giving merges."
+
+**What I found.**
+- I read Matt Pocock's skills (39) and nine other repositories, among them Jesse Vincent's `superpowers`, OpenClaw's agent rules and the Karpathy-derived guidelines. `docs/UPSTREAM_RESEARCH.md`, section 11, lists each with its commit, its licence and what was read. Nothing was installed or copied.
+- Most of their advice was already in the owner's own `WORKING-PHILOSOPHY.md` and `docs/MAINTAINERS.md`: answer first, plain words, test first, evidence before a claim, no questions about trivial actions.
+- The complaint about merges was fair. His notes say he never wants to be asked about trivial actions, and many messages in a row ended in a request to merge.
+- Two tests of ours on 2026-11-25 held a belief and not a fact (`widen` in #38 and the Qt rule in #40). Matt Pocock's `tdd` skill names it: a tautological test.
+
+**What changed.** Documents and one test file. No change to the app.
+- `GLOSSARY.md` (new): 41 words in plain words. `tests/test_glossary.py` (new) ties it to the words the program prints: the proof gate's five verdicts, the follow-up watch's decision words, the excluded features. A word added there and not here fails.
+- `WORKING-PHILOSOPHY.md`: five habits in section 2 (do not ask to approve small steps; ask in one round; keep working while a question is open; use the glossary and "wait what"; end with one next action), the tautological-test rule in section 3 step 4, a retro step (step 9), and two rows in section 10. `AGENTS.md`, `docs/INDEX.md` and `tests/test_doc_references.py` point to the glossary.
+- `docs/UPSTREAM_RESEARCH.md`: section 11. Twenty ideas, each with a disposition: 6 adopted, 3 reimplemented, 3 already present, 6 deferred, 2 rejected.
+- `DECISIONS.md`: one new row (the owner's file: flagged).
+
+**Evidence.** The glossary tests were red before the file existed. 17 planted cases behave as required: 15 caught (four of them where the program's words change and the glossary does not) and 2 valid edits stay green.
+
+**Not verified.** That the new habits improve the work: nothing is measured. Whether the owner wants a standing permission to merge small green changes: he has not answered, so a merge still waits for his word.
+
+### Dependabot's Qt rule did nothing, and the test that holds the ceiling caught it, 2026-11-25
+
+**Asked for.** "Merge" (#38). Right after the merge Dependabot read the new file and opened its first pull request under it, #39. That showed a fault in what had just been merged.
+
+**What was wrong.**
+- #38 told Dependabot to leave PyQt6 minor and major releases alone (`update-types`), because Qt 6.12.0 crashes at launch and `requirements.txt` keeps its ceiling below 6.12 on purpose. #39 ("bump the python-all group with 6 updates", opened at 16:48 UTC, three minutes after the merge) raised that ceiling to `<6.13` anyway, together with the ceilings of `google-genai` (`<4`), Pillow (`<14`), OpenCV (`<6`) and cryptography (`<51`), and the ruff pin (0.17.6). Why the rule did nothing is not known: Dependabot's own log could not be read. Every requirement in the file is a range, and a rule on update types did not hold for one.
+- The test that fails a pull request which moves the Qt ceiling held. #39 is red on that one test and no other: the Linux job with every package, Linux `verify` and Windows `verify` each ran 2,967 tests with one failure, and the three Windows installs passed. So nothing reached `main`, and #39 is blocked by the required checks.
+- The rule's own test had asserted that the words `version-update:semver-minor` and `-major` were in the file, so it was green. That is the mistake `widen` was in #38: a test that repeats its author's belief is not evidence that Dependabot does what the file says.
+
+**What changed.**
+- `.github/dependabot.yml`: the PyQt6 rule names the versions to ignore, `versions: [">=6.12"]` (the ceiling), with its reason and the story of the first form beside it. A bare rule (GitHub's documentation: "ignore all updates") was the first idea and is not used: the same documentation says a rule on versions reaches security updates too, so a bare one would also silence a Qt security release below the ceiling, and that `update-types` applies to version updates only.
+- `tests/test_dependency_policy.py`: the Qt test now fails on a rule that rests on `update-types` (its old last assertion required exactly those words: **replaced**, flagged); the same test requires the `versions` rule to carry the ceiling's number, so lifting one means lifting the other; a new test refuses an `update-types` rule for any requirement that is not an exact pin; a small reader of the `ignore:` list fails closed.
+- `DECISIONS.md` row 136 (the owner's decision row), the handoff and this file say so. #38's entries stay as they were written.
+
+**Evidence.** The two tests are red on the old file and green on the new. Eleven planted cases behave as required: nine mistakes are caught (the old form, the rule removed, the wrong Qt, the reason deleted, the ceiling raised, the ignored versions out of step with the ceiling, a bare rule, the same mistake for another package, a list the checker cannot read) and two valid variants stay green (a space in `>= 6.12`; update types for `ruff`, which is an exact pin).
+
+**Not verified.** That Dependabot now leaves PyQt6 out: it reads the file when it reaches `main`, so that is seen only after the merge. A Qt security release that needs 6.12 or later will get no pull request, by design, and has to be noticed by hand. Whether to accept the other four ceiling raises is the owner's decision. On #39 the suite did not fail with all five newer libraries installed, apart from the Qt test; that says nothing about the live Gemini call or the camera on his machine.
+
 ### A fresh install is checked, and Dependabot keeps to the pins, 2026-11-25
 
 **Asked for.** "Please merge the pull request" (#37). My question had said that merging it also meant starting this piece, the next step of "make this repository ready to use". Nothing new to use: no setting, no dependency, no change to the app, no referee file.
