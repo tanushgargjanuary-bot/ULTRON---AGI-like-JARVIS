@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Reversing an older merge: what to expect, measured, 2026-11-26
+
+**Asked for.** Nothing new. A correction of my own claim. The permission's row in `DECISIONS.md` and section 9 of `docs/AGENT_MAINTENANCE.md` said that one command, `git revert -m 1 <merge commit>`, undoes a merge. That is true for the newest merge only.
+
+**What I found.** In scratch clones of the real history (nothing pushed) I reverted two merges.
+- The newest, #44: one command, clean, and the tree is exactly the earlier one.
+- An older one, #43, with #44 on top: the code and the test revert cleanly (`core/gemini.py` is back, the new test file is gone), but four files conflict. Three are the shared notes, `CHANGELOG.md`, `log.txt` and `docs/engineering/SESSION_LOG.md`, because the other piece's entry sits beside this one. The fourth is the generated `docs/MAP.md`. I resolved them the way the new text says (keep the other pieces' lines, delete the entry of the piece being undone, regenerate the map). The fast gate then passed 6 of 6 and the related tests passed.
+
+**What changed.** Documents only. `DECISIONS.md`: the row says which case is one command. `docs/AGENT_MAINTENANCE.md`, section 9, item 4: the two cases and the steps.
+
+**Not verified.** A real reversal on the real repository, pushed: both were scratch clones. The whole suite after the older reversal: only the fast gate and 39 related tests ran. That the conflicts are always these four files: another piece may touch another shared file.
+
+**Rollback.** `git revert -m 1 <the merge commit of this pull request>`. It is documents only.
+
 ### The provider panel's workers report back without touching Qt, 2026-11-26
 
 **Asked for.** Nothing new. A fix, found by following up a note I had left open: "`ProvidersOverlay._fetch_models` hands a panel signal to a thread (same shape as the fixed crash, not seen to crash)". No test was replaced and no referee file was touched.
