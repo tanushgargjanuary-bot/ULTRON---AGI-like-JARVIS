@@ -81,6 +81,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 | [`reference/ALGORITHMS.md`](reference/ALGORITHMS.md) | Algorithms in use, syllabus links, and deferred algorithms |
 | [`reference/CUSTOM_ULTRON.md`](reference/CUSTOM_ULTRON.md) | Changes from upstream MARK and user guide |
 | [`reference/PUBLISH.md`](reference/PUBLISH.md) | Publishing steps, attribution, and license requirements |
+| [`reference/CODING_AGENT_PLAYBOOK.md`](reference/CODING_AGENT_PLAYBOOK.md) | Rules and procedures for coding agents, with sources (a proposal, not Ultron's own rules) |
 
 ## Project records
 

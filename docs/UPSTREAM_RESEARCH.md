@@ -392,7 +392,7 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 | Repository | Whose | Stars | Licence, as GitHub shows it | Head read | What I read |
 |---|---|---:|---|---|---|
 | `mattpocock/skills` | Matt Pocock | 332,758 | MIT | `6f7f7831a6` | 39 skills in four folders (20 engineering, 7 productivity, 4 misc, 8 in progress). Most of: `grilling`, `grill-me`, `tdd`, `diagnosing-bugs`, `codebase-design`, `domain-modeling`, `grill-with-docs`, `retro`, `handoff`, `wait-what`. The first lines of: `writing-for-agents`, `improve-codebase-architecture`, `triage`, `code-review`, `to-questionnaire`, `wizard`. Also its `AGENTS.md`, `CONTRIBUTING.md`, `GLOSSARY.md` and `SCOPE.md`. The other skills by their one-line descriptions only. |
-| `obra/superpowers` | Jesse Vincent | 326,453 | MIT | `22f0b463e7` (2026-11-03) | 15 skills. The first 34 lines of `brainstorming`, `test-driven-development`, `verification-before-completion` and `systematic-debugging`; the others by name only. |
+| `obra/superpowers` | Jesse Vincent | 326,453 | MIT | `22f0b463e7` (2026-11-03) | 15 skills. The first 34 lines of `brainstorming`, `test-driven-development`, `verification-before-completion` and `systematic-debugging`; the others by name only. On 2026-11-26 also the rationalization tables of `test-driven-development`, the claim, requires and not-sufficient table of `verification-before-completion`, "Size the Work" in `brainstorming`, the head of `using-superpowers` and the contributor guide in its `AGENTS.md`. |
 | `multica-ai/andrej-karpathy-skills` | Named for Andrej Karpathy's observations; written by others | 235,668 | none shown | `2c60614193` (2026-04-20) | `CLAUDE.md`, whole: four principles. Ideas only, because there is no licence file. |
 | `ayghri/i-have-adhd` | ayghri | 62,291 | MIT | `f3e783bae5` | The first 60 lines of its skill. |
 | `openclaw/openclaw` | The OpenClaw project | 395,193 | MIT | `3ee8fc5376` | The first 40 lines of `AGENTS.md`, and the headings of `SECURITY.md`. |
@@ -401,6 +401,9 @@ The rule is simple: **use the strongest relevant upstream work, but keep ULTRON'
 | `steipete/agent-scripts` | Peter (steipete) | 7,564 | MIT | `deb19f5896` | The README's first lines. Nothing used. |
 | `trailofbits/skills` | Trail of Bits | 8,427 | CC-BY-SA-4.0 | `149d7b21f4` | Directory names only. Share-alike, so nothing copied. Worth a later look: `mutation-testing`, `property-based-testing`, `differential-review`, `insecure-defaults`, `sharp-edges`. |
 | `garrytan/gstack` | Garry Tan | 142,641 | MIT | `8aafd408e2` | The README's first lines. Not relevant to this project. |
+| `anthropics/skills` | Anthropic | 200,401 | none shown for the repository (each skill has its own) | `e4bb5d960d` (2026-11-16) | `skills/skill-creator/SKILL.md`: the first 90 lines and the guidance on descriptions, size and writing style. Read 2026-11-26. |
+| `coleam00/context-engineering-intro` | Cole Medin | 13,927 | MIT | `a2d84b021c` (2026-03-16) | `PRPs/templates/prp_base.md`: the first 100 lines and the validation loop. Read 2026-11-26. |
+| `agentsmd/agents.md` | The AGENTS.md project | 25,715 | MIT | `d001185d79` (2026-09-10) | The README and its sample file. Read 2026-11-26. |
 
 Already our method since 2026-11-24: `addyosmani/agent-skills` (MIT) and `anthropics/skills`.
 
@@ -458,3 +461,16 @@ Most of this the owner already wrote in `WORKING-PHILOSOPHY.md` and `docs/MAINTA
 3. A script for the owner's Windows computer that runs the proof gate and says in plain words what to send back (item 16).
 4. A written trust model for Ultron: who is trusted, and where plugins, memory and models stop being trusted (item 17).
 5. A handoff header that points to the records and does not copy them (item 13).
+
+### 11.6 A pasted coding-agent playbook, reviewed 2026-11-26
+
+The owner pasted a "Vibe Coding Agent Master Playbook" and asked for it to be improved. The result is `docs/reference/CODING_AGENT_PLAYBOOK.md` (v2) and `tests/test_agent_playbook.py`. It is a proposal: it changes nothing in `AGENTS.md` or in any rule of Ultron. Three more repositories were read for it (the last three rows of 11.1), and more of `obra/superpowers`.
+
+| Idea | From | Disposition |
+|---|---|---|
+| The SKILL.md shape: a description that says what and when, a short body, the reason with the rule | `anthropics/skills` | **Adopted** into the playbook's skills. |
+| Three validation levels, references with a reason, known gotchas in a plan | the PRP template | **Reimplemented** as the playbook's plan template. |
+| The claim, requires, not-sufficient table; the rationalization tables; sizing the work; contributor rules for agents | `obra/superpowers` | **Adopted** into the playbook. |
+| Which tool reads which file | four third-party posts | **Recorded as not verified**: they are not the vendors' documentation. |
+| Credits and statistics in v1 that nothing could be found behind | the pasted text | **Rejected**, and listed in Appendix A of the playbook. |
+| Moving any of it into `AGENTS.md` | | **Deferred**: the owner decides. |

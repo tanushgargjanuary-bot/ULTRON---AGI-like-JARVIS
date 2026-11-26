@@ -126,7 +126,7 @@ edit the module docstring instead and run it again.
 | `ship_tools.py` | 142 | custom_jarvis/ship_tools.py — the four handles for shipping and updating. | test_shipping |
 | `shortlist.py` | 132 | BM25 ranking: pick the few stored rules that match what was just said. | test_decision_layers |
 | `skillpacks.py` | 226 | custom_jarvis/skillpacks.py — Ultron writes new skills itself, as data. | test_schedule_packs |
-| `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_autonomy_upgrades, test_capability_guide, test_curriculum, test_glossary, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
+| `skills.py` | 531 | Auditable skill recipes: deterministic tool plans, never generated Python code. | test_agent_playbook, test_autonomy_upgrades, test_capability_guide, test_curriculum, test_glossary, test_mark_integration, test_metacog_service, test_schedule_packs, test_shipping |
 | `telemetry.py` | 98 | Notice when Ultron itself gets slower, without a threshold that goes stale. | test_decision_layers |
 | `tools.py` | 1,741 | Core tools for Custom Jarvis Desktop Agent. | test_autonomy_upgrades, test_edge_cases, test_live_config, test_live_transport, test_mcp_client, test_metacog_service, test_mute_state, test_personas, test_provider_schema, test_repair_judgment, test_routing_runtime, test_schedule_packs, test_self_modify_gate, test_shipping, test_suite_assistant, test_suite_safety, test_tool_contract, test_tool_usage_loop, test_triggers, test_upstream_sync, test_web_platforms |
 | `update_releases.py` | 243 | Validate signed release metadata before a future staged updater uses it. | test_update_releases |
@@ -258,13 +258,14 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 130 modules, 35,593 lines
+## `tests/` — 131 modules, 35,875 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `tempconfig.py` | 49 | A throwaway settings file, shared by the tests that need one. | test_config_safety, test_curriculum, test_persona_switch_settings, test_philosophy, test_tool_usage_loop, test_triggers, test_ui_settings_writes |
 | `tempprompt.py` | 103 | A throwaway system prompt and a banner the test can press, shared by the prompt tests. | test_prompt_editor, test_prompt_gate, test_self_change |
 | `test_action_audit.py` | 35 | The HUD line reports a policy tier and a tool's own outcome, without guessing. | — |
+| `test_agent_playbook.py` | 282 | docs/reference/CODING_AGENT_PLAYBOOK.md: a playbook for coding agents that obeys its own rules. | — |
 | `test_agent_workspace.py` | 26 | Tests for the read-only agent workspace report helpers. | — |
 | `test_app_resolver.py` | 213 | Offline tests for capability-based application resolution (core/app_resolver.py) | — |
 | `test_applescript_quoting.py` | 164 | Model-supplied text must not be able to leave an AppleScript string (macOS paths). | — |

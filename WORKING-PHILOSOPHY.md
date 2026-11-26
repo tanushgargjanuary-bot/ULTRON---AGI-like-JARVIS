@@ -90,6 +90,9 @@ The order is not negotiable, because each step has caught something the others m
    Windows machine). Until that system has answered, write "not verified". Twice on 2026-11-25 a
    test of ours held a belief and not a fact: `widen` in #38, and the Qt `update-types` rule in #40.
    Matt Pocock's `tdd` skill calls this a tautological test.
+   **A new check is not trusted until it has failed.** Plant the mistake it is for, in a fresh copy, and watch it turn
+   red. On 2026-11-26 a new test skipped most of the file it was written to check, because it took `## ` lines inside a
+   code fence for headings. Only a planted mistake that was not caught showed it.
 5. **Run the three instruments** (section 5). Red is a real defect, not noise.
 6. **Update the record**: `log.txt` (what changed and why), `CHANGELOG.md` (the release),
    `docs/`, `AGENTS.md` if a rule appears (a new rule names the incident that made it),
