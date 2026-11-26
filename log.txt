@@ -1,3 +1,20 @@
+=== 2026-11-26 · build 1.2.38 · the provider panel's workers report back without touching Qt ===
+
+Found by following up an open note ("_fetch_models hands a panel signal to a thread"). No new request from the owner.
+
+DONE
+  - ui.py: each ProvidersOverlay has an _inbox (a plain deque). The install, the voice download and the models read put what they have to say
+    into it; the panel's own timer shows it in order (_drain_inbox). They were handed the panel before.
+  - The bug beside the note: _install and _prepare reported back with QTimer.singleShot(0, ...) from a worker thread. That thread has no event
+    loop, so the callback is dropped (measured, PyQt 6.11.0: never ran in 1.5 s). The panel said "installing..." for ever, and a voice download
+    showed no progress.
+  - tests/test_providers_panel_reports.py (11 tests, 6 red on the old ui.py). 16 planted mistakes: 12 caught, 4 valid edits green.
+  - AGENTS.md: one paragraph beside the threading rule.
+RETRO: a pattern that looks right (QTimer.singleShot(0, ...) to get back to the interface thread) works from that thread only. It was copied into two
+  workers, and nothing in the suite ran a worker to its end and read the screen. Fix: tests that run the worker and read the label, a scan for the
+  shape, and a sentence where agents will read it. Following up my own "not seen to crash" note found a worse bug beside it.
+NOT VERIFIED: the panel on Windows (the measurement is Linux, PyQt 6.11.0); the real pip and Piper download (stand-ins); the other threads of ui.py.
+
 === 2026-11-26 · build 1.2.38 · the text client names its Gemini API version ===
 
 Found while reading Dependabot's #41 (google-genai 2 -> 3). No new request from the owner.

@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The provider panel's workers report back without touching Qt, 2026-11-26
+
+**Asked for.** Nothing new. A fix, found by following up a note I had left open: "`ProvidersOverlay._fetch_models` hands a panel signal to a thread (same shape as the fixed crash, not seen to crash)". No test was replaced and no referee file was touched.
+
+**What I found.**
+- The install button (`_install`) and Piper's voice download (`_prepare`) reported back with `QTimer.singleShot(0, ...)`, called from a worker thread. That thread has no Qt event loop, so the callback is dropped. I measured it with PyQt 6.11.0: scheduled from a plain thread, the callback never ran in 1.5 seconds of event processing. So in the panel the line "installing some-package — this can take a minute…" never changed, however the install ended, and a voice download showed no progress and no "ready".
+- `_fetch_models` (the list of models on an endpoint) emitted a signal of the panel from its thread. A read that finishes after the panel was destroyed raised `RuntimeError` in that thread: the shape of the Linux crash that #37 and #40 fixed for the voice list.
+
+**What changed.**
+- `ui.py`: each `ProvidersOverlay` has an `_inbox`, a plain deque. The three workers are handed the inbox, never the panel, and put what they have to say into it. The panel's own timer, the one that already looks for the voice list, shows it in order (`_drain_inbox`). A line that cannot be shown is noted (`ui.providers_inbox`) and the lines behind it are still shown. The `_models_ready` signal had no emitter left and is gone. Lint findings in `ui.py`: 174 before and after.
+- `tests/test_providers_panel_reports.py` (new, 11 tests): a finished install and a failed one change the line; a voice download's progress arrives in order; a list of models reaches an open panel and a second read is not refused; a line that cannot be shown is noted and the next is shown; a read that finishes after its panel was destroyed raises nothing; and a scan of `ui.py` for `QTimer.singleShot` inside a function nested in a method that starts a thread.
+- `AGENTS.md`: one paragraph beside the threading rule.
+
+**Evidence.** On the old `ui.py` six of the eleven tests are red, each for its own reason: the install result, the failed install, the voice progress, a lost line, the late read (`RuntimeError`), and the scan, which names `ui.py:3749 in _prepare` and `ui.py:4494 in _install`. On the new code all eleven pass, and so do the seven earlier tests of the panel's threads. 16 planted mistakes in fresh copies: 12 caught, 4 valid edits stayed green.
+
+**Not verified.** That the panel on Windows shows the lines now: the measurement is Linux with PyQt 6.11.0, and Windows uses the same Qt library, but I did not see the panel there. The install and the voice download themselves were not run (a stand-in for pip, a stand-in for Piper). The scan is a heuristic: it does not follow a call into another method. The other threads of `ui.py` were not audited for the same shape.
+
+**Rollback.** `git revert -m 1 <the merge commit of this pull request>`. Nothing depends on it. There is no setting to switch off.
+
 ### The text client names its Gemini API version, 2026-11-26
 
 **Asked for.** Nothing new. A fix found while reading Dependabot's #41 (the owner's standing rule: fix without asking first). No test was replaced and no referee file was touched.

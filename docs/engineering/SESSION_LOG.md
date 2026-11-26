@@ -1343,3 +1343,20 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The measurement on three library versions; the checks red on the old code and green on the new; 62 Gemini tests; 15 planted mistakes (11 caught, 4 valid edits green).
 
 **Not checked.** That Google's live service answers on `v1beta` today, which needs his key. The other 3.x changes: the default HTTP client is now `httpx2` and `httpx` is no longer installed with the library; Ultron's requirements still ask for `httpx`.
+
+## 2026-11-26 (later still, 2) — the provider panel's workers report back without touching Qt
+
+**Asked for.** Nothing new. The open note from #40: `ProvidersOverlay._fetch_models` hands a panel signal to a thread. I looked at it while the previous pull request was being checked.
+
+**What I did.** I read the three workers of the panel (`_fetch_models`, `_prepare`, `_install`). Two of them reported back with `QTimer.singleShot(0, ...)` from their thread. I measured that in a small probe (PyQt 6.11.0, offscreen): the callback never ran in 1.5 seconds of event processing, because the thread has no event loop. So the install line and the voice download's progress never reached the panel. The third worker emitted a signal of the panel, the shape of the earlier crash. I wrote eleven tests first and watched six fail on the old code, each for its own reason. Then the fix: an inbox per panel, a plain deque, which the workers hold instead of the panel, shown by the timer the panel already had. Then 16 planted mistakes.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *A note I left as "not seen to crash" hid a bug that is seen.* Cause: I wrote the note from the shape of the code and did not run the worker to its end. The suite had no test that starts a worker and reads the label it should change. Kind of fix: tests that do exactly that, a scan for the shape, and a paragraph in `AGENTS.md` that says what was measured. The habit: when a note says "same shape as", run the thing before filing it.
+- *My first test needed the new code to run.* The scenario for a line that cannot be shown used `panel._inbox`, which the old code does not have, so it killed the child and turned two unrelated tests red for the wrong reason. Kind of fix: the scenario says "the panel has no inbox" and goes on, so each test is red for its own reason on the old code.
+- *The ordering test could pass by luck for a wrong drain.* The two reports were made 50 milliseconds apart, and the panel's timer looks every 250. Reversed order would have slipped through one time in five. Kind of fix: the reports are made back to back.
+
+**Assumptions.** (1) What holds for a plain thread on Linux holds on Windows: the same Qt library, which drops a timer callback for a thread with no event loop. (2) A `RuntimeError` in the late read is the same hazard as the crash; on this machine it raised, and the earlier crash needed the application destroyed as well. (3) The other threads of `ui.py` need their own look; I did not audit them.
+
+**Evidence.** The probe; the tests red on the old code and green on the new; the seven earlier tests of the panel's threads; the planted mistakes (12 caught, 4 valid edits green); lint findings in `ui.py` unchanged at 174.
+
+**Not checked.** The panel on Windows. The real pip and the real Piper download (stand-ins were used). The other threads in `ui.py`.
