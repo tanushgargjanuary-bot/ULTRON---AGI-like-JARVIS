@@ -61,7 +61,7 @@ deterministic replacement for sending a screenshot to a model.
 | Capability | What it is | What it buys | Cost | Risk |
 |---|---|---|---|---|
 | **Global hotkey registration** | Already present (`core/hotkey.py`) | Push-to-talk | Built | Low |
-| **Named pipes / local sockets** | A local IPC endpoint | The HUD, the phone dashboard and a coding agent all talk to one assistant instead of three copies | Protocol design | Local impersonation — must check the pipe's owner SID |
+| **Named pipes / local sockets** | A local IPC endpoint | The HUD and a coding agent both talk to one assistant instead of two copies | Protocol design | Local impersonation — must check the pipe's owner SID |
 | **Clipboard change events** | `AddClipboardFormatListener` | "Make this into a note" on whatever was just copied | Low | The clipboard is one of the most private surfaces on a machine |
 | **Shell drag-and-drop / drop target** | Files dropped onto the avatar | Natural intake: drop a PDF, get a summary | Qt side only | Low |
 

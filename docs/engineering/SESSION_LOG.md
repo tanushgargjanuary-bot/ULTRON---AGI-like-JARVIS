@@ -1392,3 +1392,21 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The red run on the old tree; the green run after; the planted mistakes (`mutate_webapp.py`: 7 caught, 2 valid edits green); the whole suite and the other checks on the committed tree (numbers in the pull request).
 
 **Not checked.** Anything outside the repository. Whether the Windows check gets shorter.
+
+## 2026-11-26 (later still, 5) — the phone and web remote is removed
+
+**Asked for.** "Remove the dashboard for phone and web remote." The second half of the owner's message; the first half, the web client, was the previous entry.
+
+**What I did.** Counted what depended on `dashboard/` before touching it: about forty lines of `main.py`, the window's Remote Control button and its QR-code window, nine test files, five packages, a workflow comment, a licence notice, the packaging list, the upstream ledger and about a dozen documents. Wrote the test class first and saw six of its seven tests red on the old tree. Asked the dependency resolver what leaves the install with the four packages (eleven: those four and `starlette`, `httptools`, `uvloop`, `watchfiles`, `python-dotenv`, `annotated-doc`, `pyyaml`) and searched the code for anything importing them: only `core/code_checks.py` used one, so PyYAML is declared by name. Removed the code with a script that asserts every piece of text it removes is there exactly once, so a changed file stops it instead of being half-edited. Ran the whole suite on a copy, planted 15 mistakes (all caught; two valid edits stayed green), and compared lint findings before and after.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *Removing a package can remove a package nobody asked for.* `uvicorn[standard]` brought PyYAML, and `core/code_checks.py` skips `.yml` files silently when it is missing: a fresh install would have stopped checking them, and nothing would have said so. Cause: I asked what the dashboard needed, not what the install would no longer contain. Kind of fix: I compared the resolved set before and after (98 packages, 87 after) and searched every name that vanished; a test now ties the requirement to the import.
+- *Two sentences in the handoff named a removed file, and the document test found them.* Same lesson as the previous piece: run the document test after a removal, and read the whole row, not the sentence.
+- *The glossary test found a fourth exclusion I had not counted.* `GLOSSARY.md` says how many exclusions there are, and a test makes it name every id. It went red once, in the whole suite, which is the place to find it; the narrow set I ran first had left it out.
+- *My first rewrite of a data file changed every line of it.* `json.dumps` spread the compact arrays of `LEDGER.json` over many lines, and the diff showed 77 changed lines for one new entry. I restored both files and inserted the new entries as text. Kind of fix: look at `git diff --stat` for a file I meant to change by ten lines.
+
+**Assumptions.** (1) By "dashboard for phone and web remote" the owner meant `dashboard/` and its Remote Control button, not the "Dashboard" panel of the window (nine tool tabs), which stays. (2) A removal is the right reading, not switching it off. (3) `docs/reference/CUSTOM_ULTRON.md` line 296 ("the original dashboard RAM meter") is about the old application: the web pages had no RAM meter. Left as written.
+
+**Evidence.** The red run on the old tree (6 of 7, and E4's tripwire); the whole suite on the copy: 2,949 tests, 10 skipped, all green; the planted mistakes (`mutate_dashboard.py`: 15 caught, 2 valid edits green); lint findings: `main.py` 78 to 73, `ui.py` 174 to 171, none new anywhere; the whole chain on the committed tree (numbers in the pull request).
+
+**Not checked.** The real window on Windows. That nothing listens on the two ports: I did not run the program. A fresh install by hand.

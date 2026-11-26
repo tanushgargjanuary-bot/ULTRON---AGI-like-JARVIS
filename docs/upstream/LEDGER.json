@@ -38,6 +38,12 @@
       "decided": "plan approved by the owner, 2026-11-22"
     },
     {
+      "paths": ["dashboard/*"],
+      "disposition": "rejected",
+      "reason": "The owner removed the phone and web remote dashboard on 2026-11-26. What a new Mark changes in it is named in the report and never applied.",
+      "decided": "owner, 2026-11-26; DECISIONS.md"
+    },
+    {
       "paths": ["core/tasks/*", "actions/background_tasks.py", "agents/*"],
       "disposition": "later",
       "reason": "Planned slice: background tasks and deep research. Ships switched off, and reuses Ultron's public-address guard instead of keeping upstream's second copy.",

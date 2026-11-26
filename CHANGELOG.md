@@ -10,6 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The phone and web remote is removed, 2026-11-26
+
+**Asked for.** The owner, in the same message as the web client: "Remove the dashboard for phone and web remote." This is its own pull request, after the web client's.
+
+**What I did.** Removed `dashboard/`: a web server inside the program, with pairing keys, a self-signed certificate maker, a Windows firewall opener, a page served to the phone, and a relay for the phone's microphone and typed commands. Removed with it: its guide (`docs/REMOTE_DASHBOARD.md`), the REMOTE CONTROL button and its QR-code window in `ui.py`, every hook in `main.py` (the start-up, five status and log broadcasts, the key maker, the microphone relay, the command relay), the vendored CryptoJS file and its licence text (no page loaded it), the line in `packaging/payload.txt`, and four packages in `requirements.txt` (`fastapi`, `uvicorn[standard]`, `python-multipart`, `qrcode[pil]`). `pyyaml` is now declared by name. It was only ever installed because `uvicorn[standard]` brought it, and `core/code_checks.py` uses it to check `.yml` files and skips them silently when it is missing, so without the line a fresh install would have stopped checking them. `cryptography` stays: the signed-release check uses it. No package is new on any machine.
+
+**Tests.** 75 deleted with the folder (four files; 29 of them were skipped in the required checks, because they need `fastapi`), 3 for the CryptoJS notice, 2 for the Linux firewall helper, and 1 loop test whose subject went. One was rewritten and is stricter: the digest and the watcher are not started inside any `try` (it used to say: not inside the dashboard's). Added: `ThePhoneAndWebRemoteIsGone` (7 tests, 6 of them red on the old tree; the seventh keeps the ignore line for old certificates), and E4 in `docs/upstream/EXCLUSIONS.json` (a tripwire on the dashboard's names, red on the old tree), with every `dashboard/` file from upstream decided `rejected` in the ledger and E4 named in `GLOSSARY.md`, `DECISIONS.md` and `docs/UPSTREAM_SYNC.md`.
+
+**Effect.** Ultron no longer creates a web server when it starts, and nothing of its own listens on ports 8000 and 8001. The REMOTE CONTROL button is gone from the Setup panel. Speaking and typing to Ultron on the PC are unchanged. A phone can no longer connect, and nothing replaces it.
+
+**Left alone on a machine where it was used.** `config/certs/` (a private key if HTTPS was ever on; still git-ignored), the settings `dashboard_https` and `dashboard_allow_lan` in `config/api_keys.json`, and Windows firewall rules named `JARVIS Dashboard Port 8000`, `JARVIS Dashboard Port 8001` and `JARVIS Dashboard Python`. Nothing here deletes them. To delete the rules, in an administrator prompt: `netsh advfirewall firewall delete rule name="JARVIS Dashboard Port 8000"`, and the same for the other two.
+
+**To get it back.** Revert the merge of #47. While it is the newest merge that is one command (`git revert -m 1 <that merge>`); after that, `docs/AGENT_MAINTENANCE.md` section 9.
+
+**Not verified.** The real window on Windows after the removal (the Setup panel without the button: the suite builds it with stand-ins). That nothing listens on 8000 or 8001: I removed the only code that did and searched for others (none in the program; test and benchmark scripts start local servers of their own, and the local fallback starts `ollama serve` as a separate program when the owner has chosen it); I did not run the whole program. A fresh install of the new `requirements.txt` by hand: `install-check.yml` runs on this pull request and was read before the merge.
+
 ### The web client is removed, 2026-11-26
 
 **Asked for.** The owner, after I named five things that look like overkill and said I took "browser Ultron" to mean the web client: "I did meant the webapp. Remove the dashboard for phone and web remote." This is the first of two removals. The second is its own pull request.

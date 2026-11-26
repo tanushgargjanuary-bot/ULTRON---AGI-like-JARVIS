@@ -32,7 +32,6 @@ actions/
 custom_jarvis/
 memory/
 config/
-dashboard/
 plugins/
 native/
 scripts/

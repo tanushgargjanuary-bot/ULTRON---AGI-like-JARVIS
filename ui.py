@@ -4909,269 +4909,6 @@ class PluginSettingsOverlay(QWidget):
         lbl.setStyleSheet(f"color: {color}; background: transparent;")
 
 
-class RemoteKeyOverlay(QWidget):
-    """Floating overlay — QR code for instant phone pairing + manual key fallback."""
-
-    closed = pyqtSignal()
-
-    _OW, _OH = 400, 465
-
-    def __init__(self, url: str, key: str, auto_login_url: str = "",
-                 manual_url: str = "", expiry_secs: int = 600, parent=None,
-                 bind_error: str = ""):
-        super().__init__(parent)
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet(f"""
-            RemoteKeyOverlay {{
-                background: rgba(0, 4, 12, 0.95);
-                border: 1px solid {C.BORDER_B};
-                border-radius: 14px;
-            }}
-        """)
-        self._expiry          = time.time() + expiry_secs
-        self._on_new_key      = None
-        self._auto_login_url  = auto_login_url
-        self._manual_url      = manual_url or url
-
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 16, 24, 16)
-        lay.setSpacing(5)
-
-        def _lbl(txt, fs=9, bold=False, color=C.PRI,
-                 align=Qt.AlignmentFlag.AlignCenter):
-            w = QLabel(txt)
-            w.setAlignment(align)
-            w.setFont(QFont("Courier New", fs,
-                            QFont.Weight.Bold if bold else QFont.Weight.Normal))
-            w.setStyleSheet(f"color: {color}; background: transparent;")
-            w.setWordWrap(True)
-            return w
-
-        lay.addWidget(_lbl("◈  REMOTE ACCESS", 12, True))
-        sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"color: {C.BORDER}; margin: 1px 0;")
-        lay.addWidget(sep)
-
-        # ── QR code ───────────────────────────────────────────────────────────
-        self._qr_label = QLabel()
-        self._qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._qr_label.setFixedSize(176, 176)
-        self._qr_label.setStyleSheet(
-            "background: white; border-radius: 10px; padding: 4px;"
-        )
-        qr_row = QHBoxLayout()
-        qr_row.addStretch()
-        qr_row.addWidget(self._qr_label)
-        qr_row.addStretch()
-        lay.addLayout(qr_row)
-
-        self._update_qr(auto_login_url)
-
-        lay.addWidget(_lbl("Scan with phone camera to connect instantly", 8, color=C.TEXT_DIM))
-
-        # THE ONE FAILURE THAT LOOKS LIKE THE SERVER BEING OFF.
-        #
-        # Windows writes a BLOCK rule for an executable when its "Allow access?"
-        # prompt is dismissed, and a block overrides every allow rule there is —
-        # including the port rule this app carefully creates. The phone then
-        # reports "refused to connect" while the server is running perfectly.
-        #
-        # It is invisible from the HUD, which is where the person scanning the
-        # QR code is looking, and it is per-EXECUTABLE: the shortcut runs
-        # pythonw.exe while an editor runs python.exe, so it can block one launch
-        # method and not the other on the same machine. That difference is
-        # unguessable without being told, so it is said here.
-        # Whatever is stopping this from working, say it HERE — beside the QR
-        # code, where the person about to scan it is looking. A dashboard that
-        # cannot be reached and does not explain why is the single most
-        # frustrating failure this app has.
-        if bind_error:
-            lay.addWidget(_lbl("⚠  " + bind_error, 8, color="#f4b942"))
-
-        try:
-            from dashboard.server import blocking_firewall_rules
-            _blocked = blocking_firewall_rules()
-        except Exception:
-            _blocked = []
-        if _blocked:
-            warn = _lbl(
-                "⚠  Windows is blocking incoming connections to this copy of "
-                "Python, so your phone cannot reach this page. Restart JARVIS "
-                "and accept the Windows prompt, or remove the rules named "
-                + ", ".join(sorted({n for n, _ in _blocked}))
-                + " under Windows Defender Firewall → Inbound Rules.",
-                8, color="#f4b942")
-            lay.addWidget(warn)
-
-        sep2 = QFrame(); sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet(f"color: {C.BORDER}; margin: 1px 0;")
-        lay.addWidget(sep2)
-
-        lay.addWidget(_lbl("Or enter manually:", 7, color=C.TEXT_DIM,
-                           align=Qt.AlignmentFlag.AlignLeft))
-
-        self._url_lbl = QLabel(self._manual_url)
-        self._url_lbl.setFont(QFont("Courier New", 8))
-        self._url_lbl.setStyleSheet(f"color: {C.PRI_DIM}; background: transparent;")
-        self._url_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._url_lbl.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse)
-        lay.addWidget(self._url_lbl)
-
-        self._key_lbl = QLabel(key)
-        self._key_lbl.setFont(QFont("Courier New", 28, QFont.Weight.Bold))
-        self._key_lbl.setStyleSheet(f"""
-            color: {C.ACC};
-            background: {C.PANEL2};
-            border: 1px solid {C.BORDER_B};
-            border-radius: 8px;
-            padding: 6px 4px;
-            letter-spacing: 10px;
-        """)
-        self._key_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self._key_lbl)
-
-        self._timer_lbl = QLabel()
-        self._timer_lbl.setFont(QFont("Courier New", 8))
-        self._timer_lbl.setStyleSheet(f"color: {C.TEXT_MED}; background: transparent;")
-        self._timer_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(self._timer_lbl)
-
-        btn_row = QHBoxLayout(); btn_row.setSpacing(8)
-        new_btn = QPushButton("NEW KEY")
-        new_btn.setFixedHeight(32)
-        new_btn.setFont(QFont("Courier New", 8, QFont.Weight.Bold))
-        new_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        new_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: {C.PANEL}; color: {C.PRI};
-                border: 1px solid {C.PRI_DIM}; border-radius: 5px;
-            }}
-            QPushButton:hover {{ background: {C.PRI_GHO}; border: 1px solid {C.PRI}; }}
-        """)
-        new_btn.clicked.connect(self._refresh_key)
-        btn_row.addWidget(new_btn)
-
-        close_btn = QPushButton("DISMISS")
-        close_btn.setFixedHeight(32)
-        close_btn.setFont(QFont("Courier New", 8, QFont.Weight.Bold))
-        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        close_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {C.TEXT_MED};
-                border: 1px solid {C.BORDER}; border-radius: 5px;
-            }}
-            QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER_B}; }}
-        """)
-        close_btn.clicked.connect(self._do_close)
-        btn_row.addWidget(close_btn)
-        lay.addLayout(btn_row)
-
-        self._ctimer = QTimer(self)
-        self._ctimer.timeout.connect(self._tick)
-        self._ctimer.start(1000)
-        self._tick()
-
-    def set_new_key_callback(self, fn) -> None:
-        self._on_new_key = fn
-
-    def _update_qr(self, url: str) -> None:
-        if not url:
-            self._qr_label.setText("—")
-            return
-        try:
-            import qrcode as _qrmod
-            from io import BytesIO
-            qr = _qrmod.QRCode(
-                box_size=5, border=2,
-                error_correction=_qrmod.constants.ERROR_CORRECT_M,
-            )
-            qr.add_data(url)
-            qr.make(fit=True)
-            img = qr.make_image(fill_color="black", back_color="white")
-            buf = BytesIO()
-            img.save(buf, format="PNG")
-            px = QPixmap()
-            px.loadFromData(buf.getvalue())
-            self._qr_label.setPixmap(
-                px.scaled(170, 170,
-                          Qt.AspectRatioMode.KeepAspectRatio,
-                          Qt.TransformationMode.SmoothTransformation)
-            )
-        except ImportError:
-            self._qr_label.setText("pip install\nqrcode[pil]")
-            self._qr_label.setFont(QFont("Courier New", 8))
-            self._qr_label.setStyleSheet(
-                "color: #888; background: white; border-radius: 10px; padding: 4px;"
-            )
-        except Exception:
-            self._qr_label.setText(url[:28])
-            self._qr_label.setFont(QFont("Courier New", 7))
-            self._qr_label.setStyleSheet(
-                f"color: {C.PRI}; background: white; border-radius: 10px; padding: 4px;"
-            )
-
-    def _tick(self):
-        remaining = max(0, int(self._expiry - time.time()))
-        m, s = divmod(remaining, 60)
-        self._timer_lbl.setText(f"Key expires in  {m:02d}:{s:02d}")
-        if remaining == 0:
-            self._do_close()
-
-    def mark_connected(self) -> None:
-        """Call from any thread when a phone successfully connects."""
-        self._ctimer.stop()
-        self._key_lbl.setText("CONNECTED")
-        self._key_lbl.setStyleSheet(f"""
-            color: {C.GREEN};
-            background: rgba(34,197,94,0.08);
-            border: 2px solid rgba(34,197,94,0.4);
-            border-radius: 8px;
-            padding: 6px 4px;
-            letter-spacing: 4px;
-        """)
-        self._qr_label.setText("✓")
-        self._qr_label.setFont(QFont("Courier New", 54, QFont.Weight.Bold))
-        self._qr_label.setStyleSheet(
-            "color: #00ff88; background: #001a0d; border-radius: 10px;"
-        )
-        self._timer_lbl.setText("Phone connected — JARVIS ready")
-        self._timer_lbl.setStyleSheet(f"color: {C.GREEN}; background: transparent;")
-
-    def _refresh_key(self):
-        if self._on_new_key:
-            result = self._on_new_key()
-            if result:
-                url    = result[0]
-                key    = result[1]
-                auto   = result[2] if len(result) >= 3 else ""
-                manual = result[3] if len(result) >= 4 else url
-                self._manual_url     = manual or url
-                self._url_lbl.setText(self._manual_url)
-                self._key_lbl.setText(key)
-                self._auto_login_url = auto
-                self._update_qr(auto or url)
-                self._expiry = time.time() + 600
-                self._key_lbl.setStyleSheet(f"""
-                    color: {C.ACC};
-                    background: {C.PANEL2};
-                    border: 1px solid {C.BORDER_B};
-                    border-radius: 8px;
-                    padding: 6px 4px;
-                    letter-spacing: 10px;
-                """)
-                self._timer_lbl.setStyleSheet(
-                    f"color: {C.TEXT_MED}; background: transparent;"
-                )
-                self._ctimer.start(1000)
-                self._tick()
-
-    def _do_close(self):
-        self._ctimer.stop()
-        self.hide()
-        self.closed.emit()
-
-
 class MainWindow(QMainWindow):
     _log_sig        = pyqtSignal(str)
     _state_sig      = pyqtSignal(str)
@@ -5238,7 +4975,6 @@ class MainWindow(QMainWindow):
         )
 
         self.on_text_command   = None
-        self.on_remote_clicked = None   # callable: () -> (url, key) | None
         self.on_interrupt      = None   # callable: () -> None — stop JARVIS mid-speech
         self.on_voice_change   = None   # callable: () -> None — rebuild session with new voice
         self.on_audio_device_change = None  # callable: () -> None — reopen audio streams
@@ -5252,7 +4988,6 @@ class MainWindow(QMainWindow):
         self.wake_get_state    = None   # callable: () -> dict {enabled, awake, ready}
         self._muted            = False
         self._current_file: str | None = None
-        self._remote_overlay: RemoteKeyOverlay | None = None
         self._customize_overlay: CustomizeOverlay | None = None
 
         central = QWidget()
@@ -6162,7 +5897,6 @@ class MainWindow(QMainWindow):
         # its contents in the wrong place, undoing the centring on the way.
         for panel, w, h in (
             (getattr(self, "_overlay", None), SetupOverlay._OW, SetupOverlay._OH),
-            (getattr(self, "_remote_overlay", None), RemoteKeyOverlay._OW, RemoteKeyOverlay._OH),
             (getattr(self, "_customize_overlay", None), CustomizeOverlay._OW, CustomizeOverlay._OH),
         ):
             if panel is not None and panel.isVisible():
@@ -6646,14 +6380,6 @@ class MainWindow(QMainWindow):
         hdr.setStyleSheet(f"color: {C.PRI_DIM}; background: transparent; "
                           f"border-bottom: 1px solid {C.BORDER}; padding-bottom: 4px;")
         lay.addWidget(hdr)
-
-        remote_btn = QPushButton("◉  REMOTE CONTROL")
-        remote_btn.setFixedHeight(30)
-        remote_btn.setFont(QFont("Courier New", 8, QFont.Weight.Bold))
-        remote_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        remote_btn.setStyleSheet(_BTN_STYLE_PRI)
-        remote_btn.clicked.connect(self._open_remote)
-        lay.addWidget(remote_btn)
 
         sc_btn = QPushButton("⊞  CREATE DESKTOP SHORTCUT")
         sc_btn.setFixedHeight(26)
@@ -7541,41 +7267,6 @@ class MainWindow(QMainWindow):
                 f"({size}) has been uploaded and ask what they'd like to do with it."
             )
             threading.Thread(target=self.on_text_command, args=(msg,), daemon=True).start()
-
-    def notify_phone_connected(self) -> None:
-        if self._remote_overlay and self._remote_overlay.isVisible():
-            self._remote_overlay.mark_connected()
-
-    def _open_remote(self):
-        if not self.on_remote_clicked:
-            self._log.append_log("SYS: Dashboard not running — remote unavailable.")
-            return
-        result = self.on_remote_clicked()
-        if not result:
-            self._log.append_log("SYS: Could not generate remote key.")
-            return
-        url    = result[0]
-        key    = result[1]
-        auto   = result[2] if len(result) >= 3 else ""
-        manual = result[3] if len(result) >= 4 else url
-        berr   = result[4] if len(result) >= 5 else ""
-        if self._remote_overlay:
-            self._remote_overlay._do_close()
-        cw  = self.centralWidget()
-        ow, oh = RemoteKeyOverlay._OW, RemoteKeyOverlay._OH
-        ov  = RemoteKeyOverlay(url, key, auto_login_url=auto, manual_url=manual,
-                               expiry_secs=600, parent=cw,
-                               bind_error=berr)
-        ov.set_new_key_callback(self.on_remote_clicked)
-        ov.setGeometry(
-            (cw.width()  - ow) // 2,
-            (cw.height() - oh) // 2,
-            ow, oh,
-        )
-        ov.closed.connect(lambda: setattr(self, '_remote_overlay', None))
-        ov.show()
-        self._remote_overlay = ov
-        self._log.append_log(f"SYS: Remote key generated — manual: {manual or url}")
 
     # ── Auto-start ──────────────────────────────────────────────────────────────
 
@@ -8488,14 +8179,6 @@ class JarvisUI:
         self._win.on_text_command = cb
 
     @property
-    def on_remote_clicked(self):
-        return self._win.on_remote_clicked
-
-    @on_remote_clicked.setter
-    def on_remote_clicked(self, cb):
-        self._win.on_remote_clicked = cb
-
-    @property
     def on_interrupt(self):
         return self._win.on_interrupt
 
@@ -8613,9 +8296,6 @@ class JarvisUI:
             self._win.hud.push_visemes(frames, hop, at)
         except Exception:
             pass
-
-    def notify_phone_connected(self) -> None:
-        self._win.notify_phone_connected()
 
     def set_state(self, state: str):
         self._win._state_sig.emit(state)

@@ -103,7 +103,7 @@ A plugin is one file `plugins/<name>.py` (no leading underscore) with:
 - **never raise** — catch errors and return a sentence saying what went wrong;
 - return **within a few seconds** — put slow work on a `threading.Thread`
   and show its result through `player` when it is done;
-- treat `player` as possibly `None` (tests and the phone dashboard).
+- treat `player` as possibly `None` (tests).
 
 Helper modules may live beside it with a leading underscore
 (`plugins/_helper.py`); the loader skips those. See `plugins/_template.py`.

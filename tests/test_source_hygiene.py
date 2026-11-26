@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OWNED = ("actions", "core", "custom_jarvis", "dashboard", "memory", "plugins", "providers",
+OWNED = ("actions", "core", "custom_jarvis", "memory", "plugins", "providers",
          "scripts")
 
 
@@ -41,37 +41,6 @@ class NoPredictableTempNames(unittest.TestCase):
                     if name == "mktemp":
                         offenders.append(f"{path.relative_to(ROOT)}:{node.lineno}")
         self.assertEqual(offenders, [], "use tempfile.mkstemp, which creates the file")
-
-
-class VendoredFilesAreAccountedFor(unittest.TestCase):
-    """A third-party file in the tree has its licence in the tree.
-
-    `dashboard/static/crypto-js.min.js` (CryptoJS, MIT) was in the repository with no
-    entry in `licenses/THIRD_PARTY_NOTICES.md`; MIT asks that the notice travel with
-    copies. The entry says the file is not loaded — this is the check that keeps that true.
-    """
-
-    def test_every_vendored_script_is_named_in_the_notices(self):
-        notices = (ROOT / "licenses" / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
-        vendored = sorted(path.name for path in (ROOT / "dashboard" / "static").glob("*.min.js"))
-        self.assertTrue(vendored, "the folder this test guards is empty; update the test")
-        for name in vendored:
-            with self.subTest(file=name):
-                self.assertIn(name, notices)
-
-    def test_the_licence_text_is_in_the_licenses_folder(self):
-        text = (ROOT / "licenses" / "CRYPTOJS-LICENSE.txt").read_text(encoding="utf-8")
-        self.assertIn("MIT License", text)
-        self.assertIn("Evan Vosberg", text)
-
-    def test_the_notice_says_unused_only_while_no_page_loads_it(self):
-        pages = [path.read_text(encoding="utf-8")
-                 for path in (ROOT / "dashboard" / "static").glob("*.html")]
-        self.assertTrue(pages)
-        loaded = [name for name in ("crypto-js.min.js", "crypto-js.js") if any(name in p for p in pages)]
-        notices = (ROOT / "licenses" / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
-        if "vendored, not loaded" in notices:
-            self.assertEqual(loaded, [], "a page loads CryptoJS now: fix the notice, which says it does not")
 
 
 class TheWallpaperTempFile(unittest.TestCase):

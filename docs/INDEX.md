@@ -109,7 +109,7 @@ Ultron's source is split by responsibility. This page groups guides by task; the
 
 ## Repository layout
 
-The package-level map and its path-stability rules live in [`STRUCTURE.md`](STRUCTURE.md). In brief: `actions/` and `plugins/` hold capabilities; `core/` holds shared runtime and safety; `providers/` and `custom_jarvis/` hold integrations and planning; `memory/` and `config/` hold managed state; `scripts/` and `tests/` hold verification; and `dashboard/`, `curriculum/`, `native/`, `sidecar/`, and `packaging/` hold focused assets. `docs/specifications/` and `docs/engineering/` contain system context and history. Do not move private state or keys into source control.
+The package-level map and its path-stability rules live in [`STRUCTURE.md`](STRUCTURE.md). In brief: `actions/` and `plugins/` hold capabilities; `core/` holds shared runtime and safety; `providers/` and `custom_jarvis/` hold integrations and planning; `memory/` and `config/` hold managed state; `scripts/` and `tests/` hold verification; and `curriculum/`, `native/`, `sidecar/`, and `packaging/` hold focused assets. `docs/specifications/` and `docs/engineering/` contain system context and history. Do not move private state or keys into source control.
 
 ## Organization rule
 

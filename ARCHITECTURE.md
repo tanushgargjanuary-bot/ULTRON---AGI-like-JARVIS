@@ -8,7 +8,7 @@ module-by-module version of this; `docs/INDEX.md` lists every document.
 
 | # | Layer | Folder | Answers | May not |
 |---|---|---|---|---|
-| 1 | **Host** | `main.py`, `ui.py`, `dashboard/` | what the user sees and says | contain logic the other layers own |
+| 1 | **Host** | `main.py`, `ui.py` | what the user sees and says | contain logic the other layers own |
 | 2 | **Providers** | `providers/` | how a model is spoken to | know about tools or memory |
 | 3 | **Safety** | `core/policy.py`, `core/custom_gate.py`, `core/outcome.py`, `core/action_audit.py` | whether an act is allowed, and what proves it happened | be bypassed by any other layer |
 | 4 | **Capability** | `actions/`, `plugins/`, `core/bridges.py`, `core/webapi.py` | one tool, one job | decide its own risk tier |

@@ -58,8 +58,8 @@ its source is not ours. **LATER** — worth adding, with a named trigger.
 | 26 | C# | **NO, with a trigger** | The one Windows-native language that could replace parts of the desktop automation (WinRT, UI Automation, WPF). Trigger: when the accessibility tree stops being enough. Until then it is a second runtime for one bridge. |
 | 27 | Elixir | **NO** | Built for millions of concurrent connections across a cluster. Ultron is one user, one machine, one conversation. |
 | 28 | Erlang | **NO** | The parent of Elixir, with the same mismatch and a syntax that would cost the owner's ability to read the code. |
-| 29 | TypeScript | **LATER** | The dashboard is a browser app served by `dashboard/server.py`. It is plain JavaScript today and that is sufficient. Trigger: when the dashboard passes roughly 2,000 lines, types start paying for the build step. |
-| 30 | JavaScript | **KEEP, existing** | It is what the dashboard already uses. No new JavaScript; TypeScript when the dashboard grows. |
+| 29 | TypeScript | **NO** | The browser app it was for, the dashboard, was removed on 2026-11-26, and so was the web client. Nothing in the tree is TypeScript. Decide again if a browser interface comes back. |
+| 30 | JavaScript | **NO** | The same: nothing in the tree has been JavaScript since 2026-11-26. |
 | 31 | OCaml | **NO** | Type inference and pattern matching are pleasures, not capabilities here; the team that must read this code is the owner. |
 | 32 | Haskell | **NO** | Same, with a steeper on-ramp. A laziness bug in a real-time audio path is a worst-case scenario. |
 | 33 | Kotlin | **NO** | Its strength is Android and the JVM. Neither is a target. |
@@ -77,9 +77,9 @@ its source is not ours. **LATER** — worth adding, with a named trigger.
 | 45 | SQL | **KEEP** | SQLite holds the state that must survive a crash: approvals, evidence, the queue, the schedule. |
 | 46 | WebAssembly | **LATER** | The right sandbox for a *generated* skill: a skill that can only touch what it is given. Trigger: the first skill pack that runs code I did not write. |
 
-Tally: **7 keep** (Python, C, Go, PowerShell, Bash, SQL, JavaScript), **2 consume**
-(C++, CUDA through llama.cpp), **4 later** (Rust, TypeScript, WebAssembly, and Mojo
-on watch), **33 no** — each with a reason, not a shrug.
+Tally: **6 keep** (Python, C, Go, PowerShell, Bash, SQL), **2 consume**
+(C++, CUDA through llama.cpp), **3 later** (Rust, WebAssembly, and Mojo
+on watch), **35 no** — each with a reason, not a shrug.
 
 ## Section by section: the best language for each part of Ultron
 
@@ -93,7 +93,6 @@ on watch), **33 no** — each with a reason, not a shrug.
 | The HUD, avatar, animation | Python + **Qt (C++)** | **Qt**, kept | 60 Hz drawing in a tested Python file. A Rust `wgpu` rewrite becomes right only if the window must hold 120 fps in 3D. |
 | Background supervision | Python + **psutil** | **Python**, with **Go** as the escape hatch | One pass over the whole process table every two seconds was measured at **3.4 ms** — 0.17 % of the interval — so the watcher costs less than the poll loop that drives it. Trigger for Go: a component that must survive the app crashing. |
 | Memory and state | **SQLite (SQL)** + JSON | **SQLite** | Already transactional, already on every machine, already atomic. |
-| Dashboard | Python server + **JavaScript** | **TypeScript** later | One page, served locally. Types start paying at around 2,000 lines. |
 | Installer and launchers | **PowerShell** + batch + Inno Setup | **PowerShell** + Inno Setup | The owner's platform is Windows; these are its native tools. |
 | CI, leak scan, release | **Bash** + Python | **Bash** | Already fixed a real bug: a Windows shell that reported success after failure. |
 | Generated skills | Python, in-process | **WebAssembly** later | A generated skill should not have the same reach as the program. A WASM boundary is a real fence; an in-process import is not. |

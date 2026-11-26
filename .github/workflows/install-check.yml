@@ -12,8 +12,8 @@ name: fresh install
 #   install  A clean Windows machine and each Python the launcher accepts. It runs scripts/bootstrap.py exactly as
 #            run.bat does, then scripts/check_install.py, because the launcher lets an optional package fail to install
 #            and still exits 0.
-#   suite    Linux with every package installed, running the whole suite. verify.yml's short list has no fastapi, so the
-#            phone dashboard's tests are skipped in every other job; here they run.
+#   suite    Linux with every package installed, running the whole suite. verify.yml's short list installs only what the
+#            suite imports, so a problem that needs the other packages to show itself is looked for here.
 #
 # tests/test_dependency_policy.py holds this file to what it says.
 

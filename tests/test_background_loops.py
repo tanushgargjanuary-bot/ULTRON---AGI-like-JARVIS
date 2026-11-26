@@ -1,11 +1,11 @@
-"""The daily digest and the process watcher must not depend on the dashboard starting.
+"""The daily digest and the process watcher must start on every machine.
 
-`JarvisLive.run` started four long-lived loops inside ONE `try:` whose `except` says
-"[Dashboard] Disabled". Two of the four (`_digest_loop`, `_process_watch_loop`) have nothing
-to do with the dashboard, so a machine where `DashboardServer()` could not be built (a
-missing package is enough; before this change a missing `python-multipart` was enough) lost
-the digest and the "your background job finished" announcement, and was told only that the
-dashboard was off.
+`JarvisLive.run` once started four long-lived loops inside ONE `try:` whose `except` said "[Dashboard] Disabled".
+Two of the four (`_digest_loop`, `_process_watch_loop`) had nothing to do with the dashboard, so a machine where
+`DashboardServer()` could not be built lost the digest and the "your background job finished" announcement, and was
+told only that the dashboard was off. The dashboard was removed on 2026-11-26 (DECISIONS.md) and the try block went
+with it. What is left of the rule is its general form: neither loop is started inside any `try`, so that something
+unrelated that fails can never take them with it.
 
 `main.py` imports `sounddevice` at module level, so these checks read the source instead of
 importing it; they run on a machine with no audio library.
@@ -42,39 +42,29 @@ def called_names(node: ast.AST):
                     yield getattr(target, "attr", getattr(target, "id", ""))
 
 
-def dashboard_try() -> ast.Try:
-    for node in ast.walk(method("run")):
-        if isinstance(node, ast.Try) and any(
-                isinstance(n, ast.Name) and n.id == "DashboardServer" for n in ast.walk(node)):
-            return node
-    raise AssertionError("the try block that builds the dashboard was not found")
-
-
-class LoopsAreIndependentOfTheDashboard(unittest.TestCase):
-    def test_the_digest_and_the_watcher_are_started_outside_the_dashboards_try(self):
-        inside = set(called_names(dashboard_try()))
-        self.assertNotIn("_digest_loop", inside)
-        self.assertNotIn("_process_watch_loop", inside)
+class TheDigestAndTheWatcherAlwaysStart(unittest.TestCase):
+    def test_neither_is_started_inside_a_try_block(self):
+        tries = [node for node in ast.walk(method("run")) if isinstance(node, ast.Try)]
+        self.assertTrue(tries, "run() has no try block left to check; the test reads the wrong thing")
+        for node in tries:
+            inside = set(called_names(node))
+            self.assertNotIn("_digest_loop", inside, f"started inside the try at line {node.lineno}")
+            self.assertNotIn("_process_watch_loop", inside, f"started inside the try at line {node.lineno}")
 
     def test_they_are_started_at_all(self):
         started = set(called_names(method("run")))
         self.assertIn("_digest_loop", started)
         self.assertIn("_process_watch_loop", started)
 
-    def test_the_dashboard_only_loops_stay_inside_it(self):
-        inside = set(called_names(dashboard_try()))
-        self.assertIn("serve", inside)
-        self.assertIn("_process_dashboard_commands", inside)
-
     def test_each_long_lived_loop_is_created_inside_a_hold_call(self):
         # `asyncio.create_task(x)` as a bare statement drops the only strong reference to the
-        # task. Each of the four must be the argument of `self._hold(...)`.
+        # task. Each of the two must be the argument of `self._hold(...)`.
         held = set()
         for node in ast.walk(method("run")):
             if (isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "_hold"
                     and node.args):
                 held.update(called_names(node.args[0]))
-        for loop in ("serve", "_process_dashboard_commands", "_digest_loop", "_process_watch_loop"):
+        for loop in ("_digest_loop", "_process_watch_loop"):
             with self.subTest(loop=loop):
                 self.assertIn(loop, held, f"{loop} is started without being held")
 

@@ -31,6 +31,20 @@
       "decided": "owner, 2026-11-22",
       "needles": ["[\"']type[\"']\\s*:\\s*[\"']startup[\"']"],
       "guard": {"kind": "tripwire"}
+    },
+    {
+      "id": "E4",
+      "name": "Phone and web remote dashboard",
+      "rule": "Nothing in Ultron serves a page, pairs a phone or takes commands from a phone or a browser: no dashboard server, no pairing key, no certificate, no firewall rule, no phone-microphone relay. A tripwire reads Ultron's own code for the dashboard's names; it cannot notice a new server under another name.",
+      "decided": "owner, 2026-11-26 (\"Remove the dashboard for phone and web remote.\"); DECISIONS.md, the row of that date",
+      "needles": [
+        "\\bdashboard\\.server\\b",
+        "\\bDashboardServer\\b",
+        "\\b(_make_remote_key|_relay_phone_audio|_process_dashboard_commands|_on_phone_connected|_phone_audio_queue)\\b",
+        "\\b(RemoteKeyOverlay|on_remote_clicked|notify_phone_connected)\\b",
+        "\\bfix_network_access\\b"
+      ],
+      "guard": {"kind": "tripwire"}
     }
   ]
 }

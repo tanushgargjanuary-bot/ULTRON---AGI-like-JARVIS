@@ -67,7 +67,6 @@ Ultron is not a toy wrapper around an API. It is an agentic personal intelligenc
 - 🛡️ **Guarded 5-Stage Self-Change:** Ultron can propose, rehearse, verify, and confirm modifications to its own non-referee codebase with strict rollback capabilities.
 - 🧠 **Dual-Tier Memory System:** Persistent session memory and structured long-term user facts isolated locally on your disk.
 - 🎨 **Futuristic Holographic HUD:** Live animated Qt HUD with customizable presets including **Holographic**, Classic Cyan, Violet Nebula, and Amber Arc.
-- 📱 **Remote Web & Phone Dashboard:** Local and mobile pairing with authenticated web and WebSocket interfaces.
 
 ---
 

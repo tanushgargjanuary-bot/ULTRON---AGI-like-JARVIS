@@ -45,8 +45,8 @@ Later means we want it, in a planned slice. Parked means we set it aside on purp
 A change from Mark that nobody has decided about yet. It is reported and never copied. It waits for a decision word.
 
 **Excluded feature**:
-A Mark feature the owner does not want. There are three.
-E1 is news when Ultron opens. E2 is a news watch every 30 minutes. E3 is a routine that runs tools by itself when Ultron opens.
+A Mark feature the owner does not want. There are four.
+E1 is news when Ultron opens. E2 is a news watch every 30 minutes. E3 is a routine that runs tools by itself when Ultron opens. E4 is the phone and web remote dashboard.
 The follow-up watch looks for them and says if one appears.
 
 ### GitHub and changes

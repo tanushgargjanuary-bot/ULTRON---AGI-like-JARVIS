@@ -1159,8 +1159,12 @@ class ExcludedFeatures(unittest.TestCase):
                    "enabled = cfg.get('morning_brief_enabled', True)", 'builtin = "briefing"', "builtin='briefing'"],
             "E2": ['{"id": "news_watch", "every": 1800}', "def news_watch(self):"],
             "E3": ['{"type": "startup", "prompt": "run tools"}', "{'type':'startup'}", '"type" : "startup"'],
+            "E4": ["from dashboard.server import DashboardServer", "self.ui.on_remote_clicked = self._make_remote_key",
+                   "class RemoteKeyOverlay(QWidget):", "tg.create_task(self._relay_phone_audio())",
+                   "threading.Thread(target=fix_network_access, args=(PORT, SECURE_PORT))", "q = self._dashboard._phone_audio_queue"],
         }
-        innocent = ['"type": "interval"', "the app's startup sequence", "news", 'builtin = "weather"', "def watch_news(self):"]
+        innocent = ['"type": "interval"', "the app's startup sequence", "news", 'builtin = "weather"', "def watch_news(self):",
+                    "the Dashboard has a tab for every tool", "dashboard_total = 3", "def serve(self):"]
         self.assertEqual(set(samples), {item["id"] for item in self.exclusions["exclusions"]})
         for item in self.exclusions["exclusions"]:
             for line in samples[item["id"]]:
@@ -1203,7 +1207,7 @@ class TheDataFiles(unittest.TestCase):
 
     def test_the_three_files_load_and_pass_every_check_the_script_makes(self):
         self.assertEqual(self.pin["upstream"]["repo_id"], 1170311800)
-        self.assertEqual({item["id"] for item in self.exclusions["exclusions"]}, {"E1", "E2", "E3"})
+        self.assertEqual({item["id"] for item in self.exclusions["exclusions"]}, {"E1", "E2", "E3", "E4"})
         self.assertGreaterEqual(len(self.ledger["entries"]), 6)
 
     def test_the_copy_commit_is_the_one_the_documents_record(self):
@@ -1250,7 +1254,7 @@ class TheDataFiles(unittest.TestCase):
 
     def test_the_guide_names_every_kind_decision_exit_status_and_exclusion(self):
         guide = self.doc("docs/UPSTREAM_SYNC.md")
-        for word in (*sync.KINDS, *sync.DISPOSITIONS, "held", "E1", "E2", "E3", "PIN.json", "LEDGER.json",
+        for word in (*sync.KINDS, *sync.DISPOSITIONS, "held", "E1", "E2", "E3", "E4", "PIN.json", "LEDGER.json",
                      "EXCLUSIONS.json", "reconciled", "`pin`", "--full"):
             self.assertIn(word, guide, f"docs/UPSTREAM_SYNC.md never mentions {word}")
         for code in (sync.EXIT_SAME, sync.EXIT_MOVED, sync.EXIT_STOP, sync.EXIT_ERROR):

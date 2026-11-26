@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGES = ("core", "custom_jarvis", "plugins", "actions", "providers", "dashboard",
+PACKAGES = ("core", "custom_jarvis", "plugins", "actions", "providers",
             "memory", "scripts", "tests")
 
 # The packages this project owns and can fix today. The others are the upstream

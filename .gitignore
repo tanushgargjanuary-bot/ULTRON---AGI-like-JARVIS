@@ -17,7 +17,8 @@ config/api_keys.json
 # keys — the temporary one because it is a copy of the whole file, the kept
 # one because damage is when a key is most likely to be lying in plain sight.
 config/api_keys.json.*
-# The dashboard's TLS private key and certificate.
+# A TLS private key and certificate that the removed phone dashboard may have made on an install. Nothing makes them
+# now; the line stays so that an old key can never be committed.
 config/certs/
 # A LINKED WhatsApp session. Committing it hands somebody your WhatsApp account.
 config/whatsapp_web/
