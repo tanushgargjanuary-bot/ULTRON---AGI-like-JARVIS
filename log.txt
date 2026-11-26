@@ -1,3 +1,17 @@
+=== 2026-11-26 · build 1.2.38 · pull requests are merged without asking, and each can be reversed ===
+
+Asked for: "Always merge PR's. But they should be flexible to reverse."
+
+DONE (documents only)
+  - Merged #40 as a merge commit (dc1f66e; parents 8d92278 and 48fb283; same tree as the tested head). Every required check was green on the head.
+  - Rehearsed the reversal first, in a scratch clone: the whole pull request reverts with one command and gives back main's tree exactly; one of its four pieces alone is clean for the
+    playbook and conflicts in the shared notes for the others (the crash fix's code commit: only the generated map).
+  - Dependabot closed #39 ten seconds after the merge and opened #41 with five updates and no PyQt6: the PyQt6 rule works. #41 is Dependabot's, not mine, and not merged.
+  - DECISIONS.md: the permission and its limits. docs/AGENT_MAINTENANCE.md section 9: how to merge and how to reverse. UPSTREAM_SYNC step 6 and the PR template no longer say a merge waits for his OK.
+RETRO: stacking four pieces on one pull request made undoing one of them costly (the shared notes conflict). Fix: a rule (one piece per pull request, in DECISIONS) and the procedure. The handoff
+  header copies facts and is the main place where reverts conflict: item 13 of UPSTREAM_RESEARCH 11.3, still deferred.
+NOT VERIFIED: that the Linux crash is gone (four Linux jobs passed since the fix); a real reversal on the real repository.
+
 === 2026-11-26 · build 1.2.38 · a coding-agent playbook, rewritten and held to its own rules ===
 
 Asked for: "Improve this Playbook." (a pasted "Vibe Coding Agent Master Playbook").

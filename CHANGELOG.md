@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Pull requests are merged without asking, and each can be reversed, 2026-11-26
+
+**Asked for.** "Always merge PR's. But they should be flexible to reverse."
+
+**What I did.**
+- Merged #40 with a merge commit (`dc1f66e`, 2026-11-26 11:05 UTC). Its parents are `8d92278` and the tested head `48fb283`, its tree is the head's tree, and it holds 12 commits and 19 files. Every required check was green on the head.
+- Before merging, I rehearsed the reversal in a scratch clone. Reverting the whole pull request is one command, and the tree is exactly the earlier one. Reverting one of #40's four pieces alone is clean for the playbook, and conflicts in the shared notes (`CHANGELOG.md`, `log.txt`, the session log, the handoff) for the others. The code commit of the crash fix conflicts only in the generated `docs/MAP.md`. So bundling four pieces made partial reversal costlier. From now on: one piece per pull request.
+- Dependabot reacted to the fixed rule. It closed #39 ten seconds after the merge, and at 11:08 opened #41 with five updates and no PyQt6. So the `versions` rule works. #41 is Dependabot's and is not merged: it raises four ceilings (google-genai, Pillow, OpenCV, cryptography) and the ruff pin, which is the owner's decision.
+
+**What changed.** Documents only.
+- `DECISIONS.md`: a new row for the permission, with its limits and the way to reverse a merge. The 2026-11-25 row no longer says that no permission has been given.
+- `WORKING-PHILOSOPHY.md` (section 2): the bullet points to the permission.
+- `docs/AGENT_MAINTENANCE.md`: a new section 9, merging and reversing a merge.
+- `docs/UPSTREAM_SYNC.md` step 6 and `.github/PULL_REQUEST_TEMPLATE.md`: they no longer say a merge waits for the owner's OK. Step 1 of a slice still waits for his "go".
+- The handoff header says where `main` stands after #40.
+
+**Not verified.** That the Linux crash is gone: four Linux jobs passed since the fix, which is weak evidence at the earlier rate. That a reversal works on the real repository: it was rehearsed in a scratch clone, not done.
+
 ### A coding-agent playbook, rewritten and held to its own rules, 2026-11-26
 
 **Asked for.** "Improve this Playbook." The owner pasted a "Vibe Coding Agent Master Playbook".

@@ -1311,3 +1311,19 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The 22 tests written first were red, and one more was written red first for a stale claim. Then 24 tests, green. 22 planted cases behave as required: 19 flaws caught (six of them v1's own) and 3 valid edits green.
 
 **Not checked.** That agents follow it better. The blog reports on which tool reads which file. The core block in a real tool. OCR was not run: no code file changed.
+
+## 2026-11-26 (later) — pull requests are merged without asking, and each can be reversed
+
+**Asked for.** "Always merge PR's. But they should be flexible to reverse." It answers the question I put to him at the end of 2026-11-25: may small green changes be merged without asking.
+
+**What I did.** I checked #40 (head `48fb283`, every required check green, nothing new said on it) and rehearsed its reversal in a scratch clone, then merged it with `gh pr merge 40 --merge` (`dc1f66e`, parents `8d92278` and `48fb283`, tree identical to the head's). The rehearsal: reverting the whole pull request is one command and gives back the earlier tree exactly; one piece alone is clean for the playbook, and conflicts in the shared notes for the others (the crash fix's code commit conflicts only in the generated map). Then I watched Dependabot: it closed #39 ten seconds after the merge and opened #41 with five updates and no PyQt6, so the `versions` rule works.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *Stacking four pieces on one pull request made undoing one of them costly.* Cause: only one pull request can be open from this branch, and while merges waited for his OK I stacked pieces on it. Kind of fix: a rule now that merges need no asking (one piece per pull request, in `DECISIONS.md`) and the procedure in `docs/AGENT_MAINTENANCE.md`, section 9. The conflicts were in notes that copy facts held elsewhere (the handoff header above all): item 13 of `docs/UPSTREAM_RESEARCH.md`, 11.3, stays deferred and is now the next thing that would make reversal easier.
+- *The question I asked was narrower than the answer.* I asked about documents, tests and checks. He said "Always". I recorded his words and did not narrow them, and I kept the limits that follow from what the permission is for (the merge of the agent's own pull requests; not another party's; not his "go" for porting from Mark).
+
+**Assumptions.** (1) "Always merge PR's" covers the pull requests I make. It does not cover Dependabot's #41 (it raises the Gemini library to a new major version, and the tests cannot show the live call) or the old #21: those still need his word. (2) "Flexible to reverse" means: a merge commit, one piece per pull request, the rollback path named in the pull request and repeated in the merge commit, new behavior switchable off, and the permission itself can be withdrawn. (3) His "go" before anything is ported from Mark is a different decision and stays.
+
+**Evidence.** The rehearsal (scratch clone, the commands in `docs/AGENT_MAINTENANCE.md`); the merge checks (merged, parents, tree); the checks on `main`; Dependabot's behavior after the merge, read from GitHub.
+
+**Not checked.** A real reversal on the real repository. That the Linux crash is gone: four Linux jobs on four heads passed since the fix, and the one on the merge, which at the earlier rate is weak evidence.

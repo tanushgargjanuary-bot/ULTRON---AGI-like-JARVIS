@@ -107,7 +107,8 @@ The owner's own data never comes from upstream: `config/api_keys.json`, `memory/
 4. Anything that adds behaviour ships switched off, with its setting added through `memory/config_manager.py` only.
 5. In the same pull request: the ledger entry (and `reconciled`), the pin when the whole drop is dealt with, and a row in
    `docs/UPSTREAM_RESEARCH.md` (adopted, already present, reimplemented, deferred or rejected).
-6. Linux and Windows green, your OK, then merge.
+6. Linux and Windows green, then merge. The merge no longer waits for your OK: you gave a standing permission on 2026-11-26
+   (`DECISIONS.md`). Step 1 still waits for you.
 
 **Rollback.** Revert the slice's commit, or switch its setting off. The ledger entry stays, so the file is reported again.
 

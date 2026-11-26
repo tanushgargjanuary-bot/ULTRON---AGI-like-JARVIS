@@ -34,5 +34,5 @@
 ## Risks and recovery
 
 - Known risks:
-- Rollback or recovery path:
-- Owner approval still required:
+- Rollback or recovery path (one piece per pull request; the merge commit repeats it):
+- Owner decisions still needed (a merge is not one: see `DECISIONS.md`):

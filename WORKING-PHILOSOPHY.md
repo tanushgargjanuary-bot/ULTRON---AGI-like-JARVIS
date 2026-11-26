@@ -56,8 +56,9 @@ Five more habits. They come from his own notes and from other developers' reposi
 
 - **Do not end a message with a request to approve a small step.** A merge of a green change is a
   small step. On 2026-11-25 he wrote "you keep giving merges", after many messages that ended with
-  one. Ask once for a standing permission. Write his answer, with its limits, in `DECISIONS.md`.
-  Until then, finish the work and say what is waiting.
+  one. On 2026-11-26 he gave a standing permission to merge, on one condition: every merge must be
+  easy to reverse. Its limits are in `DECISIONS.md`. For any other step, ask once for a standing
+  permission and write his answer there. Until then, finish the work and say what is waiting.
 - **Ask in one round.** When several questions are open and none depends on another, ask them
   together. Number them. Give your recommended answer to each, worded so that "yes" accepts it. Look
   up facts yourself: a fact is never his job. (The `grilling` skill in Matt Pocock's repository.)
