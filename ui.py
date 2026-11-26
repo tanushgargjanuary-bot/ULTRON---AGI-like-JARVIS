@@ -9,6 +9,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
 from pathlib import Path
 
 import psutil
@@ -3467,9 +3468,11 @@ class ProvidersOverlay(_HudOverlay):
     # `_LIVE_MAILBOX` (a plain counter: no Qt) and this panel notices on its own
     # timer (`_poll_live`). A worker must never call into Qt: the panel, and the
     # application, can be gone by the time it finishes.
-    # (provider id, [(value, label), ...]) from a worker that went and asked an
-    # endpoint what it offers.
-    _models_ready = pyqtSignal(str, list)
+    # What a worker has to SAY (an install finished, a voice was downloaded, an
+    # endpoint's list of models) goes into this panel's `_inbox`, a plain deque,
+    # and the same timer shows it (`_drain_inbox`). A worker holds the inbox and
+    # never the panel. And never `QTimer.singleShot` from a worker: its thread has
+    # no event loop, so the callback is dropped (measured: it never ran).
     _OW = 760                       # the window's own minimum is 820
 
     # Which provider fills each slot, and what the slot is FOR — in the words
@@ -3500,12 +3503,12 @@ class ProvidersOverlay(_HudOverlay):
         # so without this the panel freezes for most of two seconds every time
         # a dropdown is touched. Started here rather than at startup, because
         # nothing in this folder may run before somebody opens it.
+        self._inbox: deque = deque()                 # what this panel's workers report; see _drain_inbox
         self._live_seen = _LIVE_MAILBOX.count()      # taken before any read starts, so none is missed
         self._live_timer = QTimer(self)              # the panel's own: it is destroyed with the panel
         self._live_timer.setInterval(_LIVE_POLL_MS)
         self._live_timer.timeout.connect(self._poll_live)
         self._live_timer.start()
-        self._models_ready.connect(self._on_models_ready)
         self._model_cache: dict[str, list] = {}
         self._fetching: set = set()
         for _kind in ("tts", "stt", "llm"):
@@ -3674,6 +3677,20 @@ class ProvidersOverlay(_HudOverlay):
         if now != self._live_seen:
             self._live_seen = now
             self._on_live_ready()
+        self._drain_inbox()
+
+    def _drain_inbox(self) -> None:
+        """Show what this panel's workers reported, in the order they reported it. Runs on the interface thread, on
+        this panel's own timer. A line that cannot be shown (its label was rebuilt away) is noted and the rest still are."""
+        while self._inbox:
+            kind, pid, payload, colour = self._inbox.popleft()
+            try:
+                if kind == "say":
+                    self._say(pid, payload, colour)
+                elif kind == "models":
+                    self._on_models_ready(pid, payload)
+            except Exception as error:      # noqa: BLE001 - a timer slot that raises can end the program
+                failures.note("ui.providers_inbox", error)
 
     def _on_live_ready(self) -> None:
         """A machine-supplied list has arrived — redraw once so it appears."""
@@ -3707,11 +3724,14 @@ class ProvidersOverlay(_HudOverlay):
         if not values.get("base_url") and not values.get("api_key"):
             return
         self._fetching.add(pid)
+        # The worker holds these three and never the panel: the panel can be destroyed
+        # while the read is still out, and a Qt object is not to be touched then.
+        inbox, registry, fetching = self._inbox, self._registry, self._fetching
 
         def work():
             items = []
             try:
-                inst = self._registry.build(pid, values)
+                inst = registry.build(pid, values)
                 if hasattr(inst, "models"):
                     items = [(m, m) for m in inst.models(timeout=6.0)]
                 elif hasattr(inst, "voices"):
@@ -3719,9 +3739,9 @@ class ProvidersOverlay(_HudOverlay):
             except Exception:
                 items = []
             finally:
-                self._fetching.discard(pid)
+                fetching.discard(pid)
             if items:
-                self._models_ready.emit(pid, items)
+                inbox.append(("models", pid, items, ""))
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -3742,11 +3762,12 @@ class ProvidersOverlay(_HudOverlay):
         if fn is None:
             return
         values = self._values(pid) or dict(self._get_cfg(pid))
+        inbox = self._inbox          # the worker reports into this and never touches the panel
 
         def report(ok, msg):
             colour = C.TEXT_DIM if ok is None else (C.GREEN if ok else C.RED)
             mark = "" if ok is None else ("✓  " if ok else "✕  ")
-            QTimer.singleShot(0, lambda: self._say(pid, mark + msg, colour))
+            inbox.append(("say", pid, mark + msg, colour))
 
         threading.Thread(target=lambda: fn(values, report), daemon=True).start()
 
@@ -4479,6 +4500,7 @@ class ProvidersOverlay(_HudOverlay):
         if not pkg:
             return
         self._say(pid, f"installing {pkg} — this can take a minute…", C.ACC2)
+        inbox = self._inbox          # the worker reports into this and never touches the panel
 
         def work():
             try:
@@ -4491,8 +4513,7 @@ class ProvidersOverlay(_HudOverlay):
                        if good else (tail[-1][:150] if tail else "pip failed"))
             except Exception as e:
                 good, msg = False, f"{type(e).__name__}: {str(e)[:120]}"
-            QTimer.singleShot(0, lambda: self._say(pid, msg,
-                                                   C.GREEN if good else C.RED))
+            inbox.append(("say", pid, msg, C.GREEN if good else C.RED))
 
         threading.Thread(target=work, daemon=True).start()
 
