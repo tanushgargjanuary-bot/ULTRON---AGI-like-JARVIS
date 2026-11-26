@@ -18,7 +18,7 @@
 PyQt6>=6.6,<6.12
 sounddevice>=0.4,<1
 numpy>=1.24,<3
-google-genai>=2.8.0,<3
+google-genai>=2.8.0,<4
 # Declared even though google-genai already installs it. providers/ imports it
 # directly, and a package you import is a package you depend on — relying on
 # somebody else's transitive dependency works right up until they drop it.
@@ -47,8 +47,8 @@ pyautogui<1
 pyperclip<2
 
 # ── Vision & media ────────────────────────────────────────────────────────────
-pillow>=10,<13
-opencv-python>=4.8,<5
+pillow>=10,<14
+opencv-python>=4.8,<6
 mss>=9,<11
 
 # ── System, files & documents ─────────────────────────────────────────────────
@@ -57,7 +57,7 @@ send2trash<3                 # file_controller — recoverable deletes
 python-pptx<2                # file_processor — presentation reading
 
 # ── Signed releases, and the file checks a rehearsal runs ─────────────────────
-cryptography>=42,<50
+cryptography>=42,<51
 pyyaml>=6,<7
 
 # ── Plugin extras ─────────────────────────────────────────────────────────────
