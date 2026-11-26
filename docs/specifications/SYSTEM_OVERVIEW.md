@@ -92,8 +92,7 @@ It is **not** a replacement kernel or a new operating system. It is an applicati
 
 1. **Desktop assistant:** primary product, launched through `run.bat` or `run.ps1`; `main.py` runs the session and `ui.py` owns the Qt window.
 2. **Local dashboard:** separate local dashboard surface under `dashboard/`; network exposure is loopback-only by default. LAN exposure requires explicit owner configuration and HTTPS.
-3. **ULTRON Web:** separate Next.js application under `webapp/` with Supabase authentication scaffolding. It is currently an authentication/workspace shell. It does not execute the Python agent, persist chat messages, provide cross-device memory, or enable its composer.
-4. **Go sidecar:** optional watcher/supervisor component under `sidecar/`; Python fallback remains available. It is not a complete worker/supervisor architecture.
+3. **Go sidecar:** optional watcher/supervisor component under `sidecar/`; Python fallback remains available. It is not a complete worker/supervisor architecture.
 
 ## 3. Main capability areas
 
@@ -113,7 +112,7 @@ These are capability areas in the repository, not blanket claims that every hard
 - Meta-cognition, lesson recall, decision scoring, algorithmic helpers, and reminder scheduling.
 - Health/crash reporting, process monitoring, self-change proposals, leaf reload staging, shipping, and update checks.
 - Native/public platform readers and bounded MCP integration.
-- Separate web UI authentication shell and local dashboard.
+- Local dashboard.
 
 Detailed contracts live in `docs/CAPABILITIES.md`, `docs/SKILLS.md`, `docs/TRIGGERS.md`, `docs/MENTAL.md`, `docs/PHILOSOPHY.md`, `docs/HEALTH_CENTER.md`, `docs/SELF-CHANGE.md`, and `docs/ECOSYSTEM.md`. The generated module/test map is `docs/MAP.md`.
 
@@ -185,7 +184,6 @@ GitHub Actions:
 - `.github/workflows/verify.yml`: full Linux and Windows tests, proof gates, mutation checks, and non-blocking instrument reports on PRs to `main` and pushes to `main`.
 - `.github/workflows/install-check.yml`: not a required check. Installs the real `requirements.txt` on a clean Windows machine for each Python the launcher accepts (3.11 to 3.13), runs `scripts/check_install.py` after the launcher's own setup, and runs the whole suite on Linux with every package installed. Runs when a requirements or launcher file changes, on the 15th of each month, and by hand.
 - `.github/workflows/upstream-watch.yml`: read-only. Compares Mark LVII with the pin nine times a month and keeps one issue open when it moved (see the following-Mark paragraph below).
-- `.github/workflows/webapp.yml`: webapp checks.
 - `.github/workflows/reviewdog.yml`: static Reviewdog/Ruff reporting.
 - `.github/workflows/archive-reviewed-branches.yml`: guarded exact-SHA archive workflow. Pushes to `main` run archive-only mode; manual deletion mode checks the live tag ruleset, reviewed refs, tags, and open PRs, and never deletes `main`. After branch cleanup, archive-only runs resolve the curated candidate from its protected archive tag and verify its exact promotion SHA.
 
@@ -205,11 +203,9 @@ GitHub Actions:
 These limits matter. Do not advertise the product beyond them.
 
 1. **Provider failover (conversation path):** wired on 2026-11-12, pending merge, consent-first. `RoutedLLM.chat` walks the routing table's candidates: a rung that fails before it answers is rested (quota 5 min, gone-for-today, unavailable 30 min — the one-shot ladder's rests) and the next allowed rung answers; a rung that fails after words were spoken raises instead of switching. `main.py` registers every other configured LLM as a fallback rung (local first) and reads `paid_fallback_consent` / `data_fallback_consent` / `local_fallback_consent` from `config/api_keys.json`; a paid, data-sharing, or on-this-machine rung never answers without its flag, and an explicitly chosen local primary does not need one. Every cloud catalog row carries `shares_data: True` until the service's training policy is verified (fail-closed; `providers/llm_openai.py`). Provider failure text is URL/credential-scrubbed before it reaches the log (`core/routing_runtime.py` `_scrub`). Offline tests prove the logic; a live outage across real providers is still unproven (owner-machine evidence). One consent flag still covers all hosted accounts; there is no per-provider consent. PR #20.
-2. **ULTRON Web:** authentication/workspace shell only; no Python worker, chat persistence, cross-device memory, or enabled composer. Sign-in also depends on Supabase/Google OAuth configuration.
-3. **Deployment:** no confirmed Vercel project/preview deployment in this handoff. Team authorization is needed before discovery/configuration.
-4. **Self-change security:** temporary rehearsal is not OS-level isolation; hostile candidate code can use the current user's permissions.
-5. **MCP process security:** external MCP processes are not sandboxed and inherit the parent environment.
-6. **Release updates:** no complete signed publisher/downloader, production keyring, A/B updater, or supervisor/worker handoff.
+2. **Self-change security:** temporary rehearsal is not OS-level isolation; hostile candidate code can use the current user's permissions.
+3. **MCP process security:** external MCP processes are not sandboxed and inherit the parent environment.
+4. **Release updates:** no complete signed publisher/downloader, production keyring, A/B updater, or supervisor/worker handoff.
 7. **Hardware proof:** CI cannot verify every actual owner device, microphone, speaker, camera, GPU, DPI, browser installation, or real provider/account workflow.
 8. **Independent review:** Reviewdog/Ruff are static checks. They are not a full semantic security audit or independent human review.
 9. **Code review depth:** previous promotion review was risk-focused, not a line-by-line independent review of every changed line.

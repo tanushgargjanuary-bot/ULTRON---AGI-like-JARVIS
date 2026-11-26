@@ -1,7 +1,7 @@
-# Keeps three things that are pinned from going stale: the GitHub Actions (every one is
-# pinned to a commit, so nothing else will move them), the Python requirements, and the web
-# app's packages (package-lock.json). A pin that nothing updates is how a fixed vulnerability
-# stays in the build.
+# Keeps two things that are pinned from going stale: the GitHub Actions (every one is
+# pinned to a commit, so nothing else will move them) and the Python requirements. A pin that
+# nothing updates is how a fixed vulnerability stays in the build. (A third entry, for the web
+# client's npm packages, went with the web client on 2026-11-26: DECISIONS.md.)
 #
 # At most one pull request per ecosystem is open at a time, and it carries every update that
 # ecosystem has, once a month. The first version of this file said "one pull request per
@@ -52,13 +52,4 @@ updates:
         versions: [">=6.12"]
     groups:
       python-all:
-        patterns: ["*"]
-
-  - package-ecosystem: "npm"
-    directory: "/webapp"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      webapp-all:
         patterns: ["*"]

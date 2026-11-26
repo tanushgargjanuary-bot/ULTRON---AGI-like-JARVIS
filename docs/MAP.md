@@ -39,7 +39,7 @@ edit the module docstring instead and run it again.
 | `failures.py` | 130 | Where a failure goes when nothing can be done about it. | test_background_loops, test_child_output, test_computer_capability, test_config_safety, test_crash, test_dashboard_hardening, test_dashboard_throttle, test_dispatch_smoke, test_file_controller_hardening, test_gemini_resilience, test_health_center, test_hybrid_ipc, test_installer, test_leaf_generations, test_memory_safety, test_providers_panel_reports, test_self_change, test_suite_assistant, test_tool_contract, test_triggers, test_tts_fallback, test_video_player, test_wake_word |
 | `fuzzy.py` | 488 | core/fuzzy.py — matching what somebody said to what is actually installed. | test_fuzzy |
 | `gemini.py` | 989 | One place where the assistant's one-shot Gemini calls are made. | test_gemini_api_version, test_gemini_local_auto_fallback, test_gemini_resilience, test_local_fallback, test_suite_assistant, test_suite_providers |
-| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_lint_ratchet, test_readme, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
+| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_lint_ratchet, test_readme, test_removed_features, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
 | `heartbeat.py` | 93 | core/heartbeat.py — Client-side heartbeat emitter for ULTRON. | test_dispatch_smoke, test_hybrid_ipc |
 | `hotkey.py` | 174 | Push-to-talk — hold a key, speak, release. | test_ui_ladder |
 | `identity.py` | 74 | core/identity.py — who this assistant is. | test_app_resolver, test_autonomy_upgrades, test_capability_guide, test_collect_install, test_file_controller_hardening, test_launchers, test_mcp_client, test_memory_safety, test_metacog_service, test_migrate_legacy, test_persona_switch_settings, test_process_watch, test_runtime_files_ignored, test_schedule_packs, test_session_memory_search, test_shipping, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_ui_settings_writes, test_wallpaper_url |
@@ -99,7 +99,7 @@ edit the module docstring instead and run it again.
 | `autonomy_governor.py` | 99 | One shared, lock-protected session budget; never authorizes a tool. | test_autonomy_upgrades, test_decision_layers |
 | `brain.py` | 1,359 | Jarvis Brain - LLM reasoning, intent classification, and skill routing. | test_autonomy_upgrades, test_plan_state |
 | `compat.py` | 166 | Optional-dependency adapters; importing this module needs only Python. | test_autonomy_upgrades |
-| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_decision_layers, test_display_text, test_gate_holds_input, test_glossary, test_launch_guard, test_local_detector, test_local_model, test_mcp_client, test_policy, test_repair_judgment, test_self_modify_gate, test_suite_algorithms, test_suite_assistant, test_suite_safety, test_tool_contract, test_upstream_sync |
+| `decision.py` | 117 | Choose between candidate actions with arithmetic, not with a feeling. | test_decision_layers, test_display_text, test_gate_holds_input, test_glossary, test_launch_guard, test_local_detector, test_local_model, test_mcp_client, test_policy, test_removed_features, test_repair_judgment, test_self_modify_gate, test_suite_algorithms, test_suite_assistant, test_suite_safety, test_tool_contract, test_upstream_sync |
 | `evidence.py` | 172 | Bounded file verification and conflict-aware write backups. | test_autonomy_upgrades, test_bandit_weighted, test_crash, test_dependency_policy, test_doc_references, test_evolve_script, test_plan_state, test_proof_gate, test_provider_schema, test_repair_judgment, test_suite_algorithms, test_suite_assistant |
 | `failure_memory.py` | 146 | Bounded local incident signatures and cooldowns, not an authorization policy. | test_autonomy_upgrades |
 | `goal_verifier.py` | 132 | Deterministic, workspace-confined assertions; never executes project code. | test_autonomy_upgrades |
@@ -258,7 +258,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 133 modules, 36,329 lines
+## `tests/` — 134 modules, 36,360 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -294,7 +294,7 @@ edit the module docstring instead and run it again.
 | `test_dashboard_throttle.py` | 271 | The dashboard's failed-login counter forgets, and cannot be made to forget the wrong thing. | — |
 | `test_dashboard_ui_variants.py` | 85 | Static checks for the remote dashboard's selectable interface variants. | — |
 | `test_decision_layers.py` | 263 | tests/test_decision_layers.py — the four algorithms that decide something. | test_decision_layers |
-| `test_dependency_policy.py` | 485 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
+| `test_dependency_policy.py` | 469 | Dependencies and CI: the rules the requirements file states about itself, enforced. | — |
 | `test_dispatch_smoke.py` | 167 | Smoke tests for the two seams every tool call and every module passes through. | test_fast_gate_groups |
 | `test_display_text.py` | 116 | core/display_text.py: what the owner is shown for a decision is what was sent, or says it is not. | — |
 | `test_doc_references.py` | 89 | A document that tells you where something is must be right about where it is. | — |
@@ -356,6 +356,7 @@ edit the module docstring instead and run it again.
 | `test_providers_panel_reports.py` | 321 | tests/test_providers_panel_reports.py — what a worker thread of the provider panel reports must reach the panel, and must not touch Qt. | test_providers_panel_reports |
 | `test_providers_panel_threads.py` | 293 | tests/test_providers_panel_threads.py — a settings panel that is gone must not be called by a thread that outlives it. | test_providers_panel_reports, test_providers_panel_threads |
 | `test_readme.py` | 152 | tests/test_readme.py — the front page must not claim anything the tree lacks. | test_readme, test_verify_script |
+| `test_removed_features.py` | 47 | What the owner took out stays out. | — |
 | `test_repair_judgment.py` | 717 | Judgment gates, real file outcomes, fault injection and generated lifecycle tests. | — |
 | `test_routing.py` | 286 | Offline tests for provider routing and voice switching (core/routing.py). | — |
 | `test_routing_runtime.py` | 270 | Tests for provider routing at run time. | — |

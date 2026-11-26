@@ -1376,3 +1376,19 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The two reverts, the resolved result (the fast gate at 6 of 6, 39 related tests green), `core/gemini.py` back to the version before #43.
 
 **Not checked.** A real, pushed reversal. The whole suite after the older reversal. Other shared files that a piece may touch.
+
+## 2026-11-26 (later still, 4) — the web client is removed
+
+**Asked for.** "I did meant the webapp. Remove the dashboard for phone and web remote." I had named five things that look like overkill and said I took "browser Ultron" to mean `webapp/`. This entry is the first removal; the phone and web remote is the next pull request.
+
+**What I did.** Counted what depended on `webapp/` before touching it: no Python file, one workflow, one Dependabot entry, one attributes line, five tests, six documents. Wrote `tests/test_removed_features.py` first and saw all four of its tests red on the old tree. Then removed the folder and everything that pointed at it, and rewrote the two Dependabot tests to an exact list of ecosystems. Added a check that every directory Dependabot watches exists, because an entry left behind fails on every run and nothing in the suite would say so.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *My search for the folder's name missed a mention.* `DECISIONS.md` row 136 named `webapp/package-lock.json` in its last column, and I had read the row's prose only. `tests/test_doc_references.py` caught it. Cause: I searched for the word and read the sentence, not the whole row. Kind of fix: after a removal I run the document test, which reads every cell; the habit is the test, not my eyes.
+- *A removal needs a test that is red before it.* Deleting a folder passes every test that does not look for it. The four tests in the new file are red on the old tree and green on the new, and seven planted mistakes (the folder, the workflow, the Dependabot entry, the attributes line, a workflow that names the folder, a third ecosystem added without a word, an entry that points nowhere) all turned a test red while two valid edits stayed green.
+
+**Assumptions.** (1) `docs/NEXT_CHECKPOINTS.md` is right that nothing was deployed from the folder; I cannot see Vercel or Supabase. (2) The owner meant the whole web client, not only its chat page.
+
+**Evidence.** The red run on the old tree; the green run after; the planted mistakes (`mutate_webapp.py`: 7 caught, 2 valid edits green); the whole suite and the other checks on the committed tree (numbers in the pull request).
+
+**Not checked.** Anything outside the repository. Whether the Windows check gets shorter.
