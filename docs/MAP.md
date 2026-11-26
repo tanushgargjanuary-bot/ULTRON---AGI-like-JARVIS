@@ -258,14 +258,14 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 131 modules, 35,883 lines
+## `tests/` — 131 modules, 35,881 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
 | `tempconfig.py` | 49 | A throwaway settings file, shared by the tests that need one. | test_config_safety, test_curriculum, test_persona_switch_settings, test_philosophy, test_tool_usage_loop, test_triggers, test_ui_settings_writes |
 | `tempprompt.py` | 103 | A throwaway system prompt and a banner the test can press, shared by the prompt tests. | test_prompt_editor, test_prompt_gate, test_self_change |
 | `test_action_audit.py` | 35 | The HUD line reports a policy tier and a tool's own outcome, without guessing. | — |
-| `test_agent_playbook.py` | 290 | docs/reference/CODING_AGENT_PLAYBOOK.md: a playbook for coding agents that obeys its own rules. | — |
+| `test_agent_playbook.py` | 288 | docs/reference/CODING_AGENT_PLAYBOOK.md: a playbook for coding agents that obeys its own rules. | — |
 | `test_agent_workspace.py` | 26 | Tests for the read-only agent workspace report helpers. | — |
 | `test_app_resolver.py` | 213 | Offline tests for capability-based application resolution (core/app_resolver.py) | — |
 | `test_applescript_quoting.py` | 164 | Model-supplied text must not be able to leave an AppleScript string (macOS paths). | — |

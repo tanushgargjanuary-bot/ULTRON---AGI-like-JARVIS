@@ -28,6 +28,8 @@ DOC = ROOT / "docs" / "reference" / "CODING_AGENT_PLAYBOOK.md"
 RESEARCH = ROOT / "docs" / "UPSTREAM_RESEARCH.md"
 INDEX = ROOT / "docs" / "INDEX.md"
 
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+         11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen"}
 PARTS = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "A", "B", "C")
 NEEDED = ("core_block_max_lines", "core_block_max_chars", "skill_body_max_lines", "new_file_target_lines",
           "new_file_split_lines", "slice_max_files", "fix_attempts", "checkpoint_tool_calls",
@@ -162,17 +164,13 @@ class TheCoreIsShortAndGivesReasons(unittest.TestCase):
         """v1 and the first draft of v2 each described their own size wrongly in the text that introduces it."""
         said = re.search(r"\*\*Core\*\* \(section 1\)\. (\w+) rules", sections(read())["0"])
         self.assertTrue(said, "section 0 no longer says how many rules the core has")
-        names = {word: number for number, word in enumerate(
-            "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen".split())}
-        self.assertEqual(names.get(said.group(1).lower()), len(re.findall(r"(?m)^\d+\. ", core_block(read()))))
+        rules = len(re.findall(r"(?m)^\d+\. ", core_block(read())))
+        self.assertEqual(said.group(1).lower(), WORDS.get(rules), f"the core has {rules} rules")
 
     def test_the_numbers_in_it_are_the_tables(self):
         values = {int(v) for v in thresholds(read()).values()}
         for number in re.findall(r"\b(\d+)\s+(?:lines|files|seconds|percent|tool calls)\b", core_block(read())):
             self.assertIn(int(number), values)
-
-
-WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
 
 
 class TheAttemptBudgetIsTheSameEverywhere(unittest.TestCase):
