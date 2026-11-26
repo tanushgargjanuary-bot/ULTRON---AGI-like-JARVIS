@@ -165,3 +165,14 @@ Before saying the task is complete:
 - [ ] Commit/PR/CI state and unresolved risks are recorded.
 
 A task is not complete because code passes tests while the docs, runbook, handoff, or repository structure still describes an older system.
+
+## 9. Merging, and reversing a merge
+
+The owner's standing permission (`DECISIONS.md`, 2026-11-26): the agent merges the pull requests it makes, without asking, once every required check is green on the final head, and says so first. The condition he put on it: every merge must be easy to reverse.
+
+1. **One piece per pull request.** A pull request that bundles unrelated pieces can only be undone whole, or by hand. On 2026-11-26 a rehearsal in a scratch clone (merge #40, then revert) measured it. Reverting the whole pull request: one command, and the tree is exactly the earlier one. Reverting one of its four pieces alone: clean for the playbook, and conflicts in the shared notes (`CHANGELOG.md`, `log.txt`, the session log, the handoff) for the others. The code commit of the crash fix conflicted only in the generated `docs/MAP.md`.
+2. **Merge with a merge commit**: `gh pr merge <number> --merge`. Never squash or rebase: a merge commit is the one thing `git revert -m 1` can undo in one step. Put the rollback path in the merge commit's message with `--body`.
+3. **Check what was merged.** The pull request says `merged`, the merge commit's parents are the old `main` and the tested head, and its tree is the head's tree. Then watch the checks on `main`.
+4. **To reverse a merge**, run `git revert -m 1 <merge commit>`. It adds a commit that undoes the merge and keeps the history. Open it as a pull request like any other change.
+5. **To reverse one piece** of a merged pull request, run `git revert --no-commit <that piece's commits, newest first>`. When the shared notes conflict, keep the other pieces' lines. Regenerate the map with `python scripts/map.py --write`.
+6. **Never undo a merge** with `git reset --hard` or a force-push of `main`. That deletes history other people may already have.
