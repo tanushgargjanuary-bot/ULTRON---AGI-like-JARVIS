@@ -1360,3 +1360,19 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The probe; the tests red on the old code and green on the new; the seven earlier tests of the panel's threads; the planted mistakes (12 caught, 4 valid edits green); lint findings in `ui.py` unchanged at 174.
 
 **Not checked.** The panel on Windows. The real pip and the real Piper download (stand-ins were used). The other threads in `ui.py`.
+
+## 2026-11-26 (later still, 3) — reversing an older merge: what to expect, measured
+
+**Asked for.** Nothing new. Merging #43 and #44 under the permission raised a question about my own words: the row I wrote says one command undoes a merge, and I had rehearsed only the newest.
+
+**What I did.** In a scratch clone of the real history I reverted #44 (the newest) and then, from the same starting point, #43 with #44 on top. Then I followed my own steps for the second case and ran the fast gate and the related tests on the result.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *A claim stated for every case after one case was tried.* Cause: the rehearsal on #40 reverted the newest merge, and I wrote the sentence in the general form. Kind of fix: the second case is rehearsed now, and the row and section 9 name which case is one command. The habit: a rehearsal's wording names the case it covered, as a "Not verified" line names what it did not.
+- *The cost of an older revert is in the notes, not in the code.* The code and the test reverted cleanly. The four conflicts were three notes with adjacent entries and one generated file. That is the cost that "one piece per pull request" does not remove. A different layout of the records would (one file per piece, instead of entries side by side in three shared files). Those formats are the owner's (`log.txt`, newest at the top), so it is his decision. Item 13 of `docs/UPSTREAM_RESEARCH.md`, 11.3 (the handoff header that points instead of copying) is a different cause: it was the conflict in the earlier rehearsal of #40, and it did not appear here, because neither piece touched the header.
+
+**Assumptions.** (1) The rehearsal in a scratch clone predicts the real one: the same commits, the same files. (2) A few minutes of tidying in the notes is still "flexible to reverse" in the owner's sense. If he wants older merges to revert in one command too, the records need to change, and that is a decision for him.
+
+**Evidence.** The two reverts, the resolved result (the fast gate at 6 of 6, 39 related tests green), `core/gemini.py` back to the version before #43.
+
+**Not checked.** A real, pushed reversal. The whole suite after the older reversal. Other shared files that a piece may touch.

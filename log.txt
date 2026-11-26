@@ -1,3 +1,16 @@
+=== 2026-11-26 · build 1.2.38 · reversing an older merge: what to expect, measured ===
+
+A correction of my own claim. No new request from the owner.
+
+DONE (documents only)
+  - Reverted two merges in scratch clones of the real history (nothing pushed). The newest (#44): one command, clean, the tree is exactly the earlier one.
+    An older one (#43, under #44): the code and the test revert cleanly; CHANGELOG.md, log.txt, SESSION_LOG.md and the generated MAP.md conflict.
+    Resolved by hand (keep the other pieces' lines, delete the entry, regenerate the map): fast gate 6 of 6, related tests green.
+  - DECISIONS.md (the row) and AGENT_MAINTENANCE.md section 9, item 4: say which case is one command, and give the steps for the other.
+RETRO: I wrote "one command" after rehearsing the newest merge only, and stated it for every merge. Fix: the rehearsal now covers the second case and the text
+  names the case. A rehearsal's wording says which case it covered.
+NOT VERIFIED: a real reversal on the real repository; the whole suite after the older reversal; that the conflicts are always these four files.
+
 === 2026-11-26 · build 1.2.38 · the provider panel's workers report back without touching Qt ===
 
 Found by following up an open note ("_fetch_models hands a panel signal to a thread"). No new request from the owner.
