@@ -1303,10 +1303,11 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
 - *My new test skipped most of the file it was written to check.* Cause: I split the file into sections at every line that starts with `## `, and Template E, inside a code fence, has such lines. The split swallowed the template's closing fence, so everything after it counted as "inside a fence" and sections 6 to 8 were never scanned. It passed on the real file. Only the planted-mistake run showed it: a destructive command and a placeholder, planted in sections 6 and 7, were not caught. Kind of fix: the test (headings inside a fence are ignored) and a rule (a new check is not trusted until it has failed, step 4).
 - *Two of my first checks were too literal* (the words "use when" in every description, and a pattern that read "20,000 characters" as "000"). Both failed on the real file and were fixed there. Kind of fix: the test.
+- *Two claims in the playbook's own introduction were wrong*: "about thirty lines" for a core of 17 lines and 13 rules, and "every number" for a table that holds only the limits. A careful read found them, not a test. Kind of fix: a test for the one that can drift (the count of rules), and a wording fix for the other.
 - *The playbook gave numbers to quote that were not its own* (other tools' size limits). The test flagged them. They moved to the sources appendix, where they are marked as reported.
 
 **Assumptions.** (1) "Improve" means: find what is wrong, verify what can be verified, remove what cannot, and keep what was good (the loop, red then green, surgical edits, the templates, the pre-flight list). (2) The result goes in the repository as a reference document, because that is where this session's files persist, and it says at the top that it is not a rule file of this repository. (3) No part of it goes into `AGENTS.md` unasked: those are binding rules.
 
-**Evidence.** The 22 tests written first were red. Then 23 tests, green. 21 planted cases behave as required: 18 flaws caught (six of them v1's own) and 3 valid edits green.
+**Evidence.** The 22 tests written first were red, and one more was written red first for a stale claim. Then 24 tests, green. 22 planted cases behave as required: 19 flaws caught (six of them v1's own) and 3 valid edits green.
 
 **Not checked.** That agents follow it better. The blog reports on which tool reads which file. The core block in a real tool. OCR was not run: no code file changed.

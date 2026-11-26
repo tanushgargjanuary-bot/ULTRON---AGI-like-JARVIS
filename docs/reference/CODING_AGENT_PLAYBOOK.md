@@ -8,7 +8,7 @@
 
 ### 0.1 Three layers
 
-1. **Core** (section 1). About thirty lines. Paste it into the file your agent reads first (0.4). It is always loaded, so it is short.
+1. **Core** (section 1). Thirteen rules, each in one paragraph. Paste it into the file your agent reads first (0.4). It is always loaded, so it is short.
 2. **Skills** (section 4). Procedures the agent loads when a task needs them. Each is its own SKILL.md. The `description` line is what makes the agent pick it.
 3. **Reference** (sections 2, 3 and 5 to 8). Read when needed. Not loaded every turn.
 
@@ -49,7 +49,7 @@ Each tool has its own size advice (Appendix A). The rule of thumb here: keep the
 
 ### 0.5 Thresholds
 
-Every number in this playbook is in this table. Change a number here and nowhere else: `tests/test_agent_playbook.py` fails if the text disagrees with the table.
+Every limit in this playbook is in this table: a length, a number of files, a number of attempts, a timeout. Change one here and nowhere else: `tests/test_agent_playbook.py` fails if the text disagrees with the table.
 
 | Name | Value | Meaning |
 |---|---|---|
@@ -100,7 +100,7 @@ Order of authority: the user's current request, then this repository's own rules
 | Tiny | One obvious change in one file: a typo, a constant, a rename inside the file. | Do it. Run the check for that file. Say what you did. |
 | Small | One behavior change, up to 3 files, no new dependency, no interface change. | Write three lines first: assumptions, the change, the check that proves it. Test first if behavior changes. Run the affected tests and lint. |
 | Medium | More than 3 files, a new feature, a changed interface, a new dependency, or a build or CI change. | One intake round, only if the repository cannot answer (template A in section 5). A written plan (template B). Vertical slices. The full relevant suite. A fresh-context review. The docs the repository says to update. |
-| Large | A data or schema change, authentication, payments or security, a public contract, deleting anything, production, or work longer than one session. | Everything in Medium, and: wait for a yes on the plan before changing anything. Write the rollback first. Stage the change (dry run, flag or backup). Get an independent review. |
+| Large | A data or schema change, authentication, payments or security, a public contract, deleting data or files that are not your own scratch work, production, or work longer than one session. | Everything in Medium, and: wait for a yes on the plan before changing anything. Write the rollback first. Stage the change (dry run, flag or backup). Get an independent review. |
 
 If the work grows, stop, say so, and step up one size. Why: a small change that turns out to be a large one is the usual way a plan gets skipped.
 

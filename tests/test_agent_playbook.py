@@ -158,6 +158,14 @@ class TheCoreIsShortAndGivesReasons(unittest.TestCase):
         core = core_block(read())
         self.assertEqual([word for word in STACK_WORDS if word in core], [])
 
+    def test_the_section_that_introduces_it_counts_its_rules_correctly(self):
+        """v1 and the first draft of v2 each described their own size wrongly in the text that introduces it."""
+        said = re.search(r"\*\*Core\*\* \(section 1\)\. (\w+) rules", sections(read())["0"])
+        self.assertTrue(said, "section 0 no longer says how many rules the core has")
+        names = {word: number for number, word in enumerate(
+            "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen".split())}
+        self.assertEqual(names.get(said.group(1).lower()), len(re.findall(r"(?m)^\d+\. ", core_block(read()))))
+
     def test_the_numbers_in_it_are_the_tables(self):
         values = {int(v) for v in thresholds(read()).values()}
         for number in re.findall(r"\b(\d+)\s+(?:lines|files|seconds|percent|tool calls)\b", core_block(read())):
