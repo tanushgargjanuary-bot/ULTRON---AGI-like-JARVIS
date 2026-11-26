@@ -85,6 +85,11 @@ with a test), and a bound signal keeps a raw pointer, so a late call lands on fr
 thread a plain Python object and let the interface thread look at it (`_LIVE_MAILBOX` in `ui.py`). Incident: the Linux
 segmentation fault of 2026-11-25, run 45679604007.
 
+The same goes for `QTimer.singleShot` called from a worker: the thread has no event loop, so the callback is dropped
+(measured with PyQt 6.11: it never ran). A worker that has something to say puts it in its panel's `_inbox` and never holds
+the panel (`ProvidersOverlay._drain_inbox` in `ui.py`). Incident: the install button and Piper's voice download never
+reported back; found on 2026-11-26.
+
 ## Plugins
 
 A plugin is one file `plugins/<name>.py` (no leading underscore) with:
