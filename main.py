@@ -701,7 +701,6 @@ class JarvisLive:
         self._loop                     = None
         self._is_speaking         = False
         self._speaking_lock       = threading.Lock()
-        self._phone_active        = False   # True while phone mic is streaming; pauses PC mic
         self._pending_vision       = None    # (img_bytes, mime_type, question, angle) to inject after tool response
         self._vision_cam_active    = False   # True if camera was opened for vision → auto-close after response
         self._vision_close_pending = False   # True after vision injected; next turn_complete closes camera
@@ -749,7 +748,6 @@ class JarvisLive:
         self.ui.on_push_to_talk   = self.set_push_to_talk
         self.ui.ptt_hold          = self._on_ptt
         self.ui.on_text_command   = self._on_text_command
-        self.ui.on_remote_clicked = self._make_remote_key
         self.ui.on_interrupt      = self.interrupt
         self.ui.on_voice_change   = self._on_voice_change     # voice picker → rebuild session
         self.ui.on_audio_device_change = self._on_audio_device_change
@@ -783,7 +781,6 @@ class JarvisLive:
         # "yesterday we talked about…" line silently disappears.
         self._resume_handle: str | None = None
         self._turn_done_event: asyncio.Event | None = None
-        self._dashboard     = None
         self._briefing_sent    = False          # morning briefing fires once per process
         self._sys_monitor      = SystemMonitor()  # persistent cooldown state
         self._proactive        = ProactiveEngine()
@@ -1167,31 +1164,6 @@ class JarvisLive:
             + ("..." if keep else " (starting a fresh conversation)...")
         )
         raise _ReconnectSignal(keep_context=keep)
-
-    def _make_remote_key(self):
-        """Called from Qt main thread when user presses Remote Control."""
-        if self._dashboard is None:
-            self.ui.write_log(
-                "SYS: Dashboard unavailable. "
-                "Run: pip install fastapi \"uvicorn[standard]\" cryptography"
-            )
-            return None
-        # The firewall is fixed HERE, not at startup: this is the moment the
-        # user asked for the phone dashboard, so a Windows admin prompt now has
-        # an obvious reason. Once per run, and a no-op when nothing is blocked.
-        try:
-            from dashboard.server import PORT, SECURE_PORT, fix_network_access
-            threading.Thread(target=fix_network_access, args=(PORT, SECURE_PORT),
-                             daemon=True, name="dashboard-firewall").start()
-        except Exception as e:
-            print(f"[Dashboard] Firewall check skipped: {e}")
-        key    = self._dashboard.new_key()
-        url    = self._dashboard.get_url()
-        manual = self._dashboard.get_manual_url()
-        # The bind error travels with the URL because the UI has no reference to
-        # this object — it only ever sees what this callback returns.
-        return (url, key, f"{url}/auto-login?key={key}", manual,
-                getattr(self._dashboard, "_bind_error", "") or "")
 
     def _on_text_command(self, text: str):
         if not self._loop or not self.session:
@@ -2006,7 +1978,7 @@ class JarvisLive:
             if self._ptt_enabled and not self._ptt_held:
                 return
             
-            if not self.ui.muted and not self._phone_active:
+            if not self.ui.muted:
                 data = indata.tobytes()
                 loop.call_soon_threadsafe(
                     self.out_queue.put_nowait,
@@ -2190,12 +2162,6 @@ class JarvisLive:
                                 self.ui.write_log(f"You: {full_in}")
                                 self._session_log.append(f"User: {full_in}")
                                 self._insights.observe(full_in)
-                                if self._dashboard:
-                                    asyncio.create_task(self._dashboard.broadcast({
-                                        "type": "log", "speaker": "user",
-                                        "text": full_in,
-                                        "ts": datetime.now().isoformat(),
-                                    }))
                             in_buf = []
 
                             full_out = " ".join(out_buf).strip()
@@ -2209,12 +2175,6 @@ class JarvisLive:
                                 self._last_out_logged = full_out
                                 self.ui.write_log(f"{self._asst_name}: {full_out}")
                                 self._session_log.append(f"{self._asst_name}: {full_out}")
-                                if self._dashboard:
-                                    asyncio.create_task(self._dashboard.broadcast({
-                                        "type": "log", "speaker": "jarvis",
-                                        "text": full_out,
-                                        "ts": datetime.now().isoformat(),
-                                    }))
                             out_buf = []
 
                             if self._vision_close_pending:
@@ -2621,33 +2581,6 @@ class JarvisLive:
             except Exception as e:
                 print(f"[Proactive] ⚠️ {e}")
 
-    # ── Phone audio relay ────────────────────────────────────────────────────────
-
-    async def _relay_phone_audio(self) -> None:
-        """Forward phone mic PCM chunks from dashboard queue into the Gemini Live session."""
-        q = self._dashboard._phone_audio_queue
-        while True:
-            try:
-                chunk = await asyncio.wait_for(q.get(), timeout=1.0)
-            except asyncio.TimeoutError:
-                # No audio for 1 s → phone mic inactive, give PC mic back
-                self._phone_active = False
-                continue
-            self._phone_active = True   # phone is streaming — silence PC mic
-            with self._speaking_lock:
-                speaking = self._is_speaking
-            if not speaking and not self.ui.muted:
-                try:
-                    self.out_queue.put_nowait(chunk)
-                except asyncio.QueueFull:
-                    pass
-
-    def _on_phone_connected(self) -> None:
-        self.ui.write_log("SYS: Phone connected via Remote Dashboard.")
-        self.ui.notify_phone_connected()
-
-    # ── dashboard command relay ─────────────────────────────────────────────
-
     async def _digest_loop(self) -> None:
         """Put today's digest in the log once a day, at the configured hour.
 
@@ -2671,37 +2604,6 @@ class JarvisLive:
             except Exception as e:
                 print(f"[Digest] skipped this check: {e}")
             await asyncio.sleep(600)
-
-    async def _process_dashboard_commands(self) -> None:
-        while True:
-            try:
-                text = await asyncio.wait_for(
-                    self._dashboard._command_queue.get(), timeout=0.5
-                )
-                if not text:
-                    continue
-                # Wait up to 8s for session to become ready after a wake
-                for _ in range(80):
-                    if self.session:
-                        break
-                    await asyncio.sleep(0.1)
-                if self.session:
-                    # A remote command is deliberate control and the phone user
-                    # has no desktop WAKE button — so it wakes JARVIS if asleep.
-                    if self._wake_enabled and not self._awake:
-                        self.wake(reason="remote command")
-                    await self.session.send_client_content(
-                        turns={"role": "user", "parts": [{"text": text}]},
-                        turn_complete=True,
-                    )
-                    self.ui.write_log(f"[Web]: {text}")
-                else:
-                    print(f"[Dashboard] Dropped command (no session): {text}")
-            except asyncio.TimeoutError:
-                pass
-            except Exception as e:
-                print(f"[Dashboard] Command error: {e}")
-                await asyncio.sleep(0.5)
 
     # ── main loop ───────────────────────────────────────────────────────────
 
@@ -3115,24 +3017,9 @@ class JarvisLive:
         # for host-API enumeration on the Qt thread.
         audio_devices.prefetch()
 
-        # Start dashboard (optional — needs: pip install fastapi "uvicorn[standard]" cryptography)
-        try:
-            from dashboard.server import DashboardServer
-            self._dashboard = DashboardServer()
-            self._dashboard.set_connect_callback(self._on_phone_connected)
-            self._hold(asyncio.create_task(self._dashboard.serve()), "dashboard-serve")
-            # Runs for the whole lifetime, not just inside an active session
-            self._hold(asyncio.create_task(self._process_dashboard_commands()),
-                       "dashboard-commands")
-        except Exception as e:
-            print(f"[Dashboard] Disabled: {e}")
-            self._dashboard = None
-
-        # Neither of these has anything to do with the dashboard. They were started inside
-        # the `try` above, so a machine where the dashboard could not start (one missing
-        # package is enough) never got its daily digest or the watcher that says a
-        # background program has finished, and nothing said so but "[Dashboard] Disabled".
-        # The daily digest: a log line at the configured hour, nothing more.
+        # The daily digest (a log line at the configured hour, nothing more) and the watcher that says a
+        # background program has finished. Both are started here, outside any `try`, so that something
+        # unrelated that fails to start can never take them with it (tests/test_background_loops.py).
         self._hold(asyncio.create_task(self._digest_loop()), "digest")
         self._hold(asyncio.create_task(self._process_watch_loop()), "process-watch")
 
@@ -3178,9 +3065,6 @@ class JarvisLive:
                         and getattr(self, "_pipeline_error", "")
                         and not _has_gemini_key()):
                     self.ui.set_state("SLEEPING")
-                    if self._dashboard:
-                        await self._dashboard.broadcast(
-                            {"type": "status", "state": "offline"})
                     await asyncio.sleep(float(getattr(self, "_conn_backoff",
                                                       _RECONNECT_BASE)))
                     continue
@@ -3277,9 +3161,6 @@ class JarvisLive:
                         except Exception as _e:
                             print(f"[Platform] capability notes unavailable: {_e}")
 
-                    if self._dashboard:
-                        await self._dashboard.broadcast({"type": "status", "state": "active"})
-
                     self._reconnect_event.clear()  # ignore requests from before this session
                     tg.create_task(self._watch_reconnect())
                     tg.create_task(self._watch_stall())
@@ -3291,8 +3172,6 @@ class JarvisLive:
                     tg.create_task(self._run_background_monitor())
                     tg.create_task(self._run_proactive_mode())
                     tg.create_task(self._run_sleep_watch())
-                    if self._dashboard:
-                        tg.create_task(self._relay_phone_audio())
 
                     # Bring a local engine's speech model up before anybody
                     # speaks. Measured: without it the FIRST sentence waits 8.9
@@ -3518,9 +3397,6 @@ class JarvisLive:
 
             self.set_speaking(False)
             self.ui.set_state("SLEEPING")
-
-            if self._dashboard:
-                await self._dashboard.broadcast({"type": "status", "state": "sleeping"})
 
             delay = getattr(self, "_conn_backoff", 3)
             print(f"[JARVIS] Reconnecting in {delay}s...")

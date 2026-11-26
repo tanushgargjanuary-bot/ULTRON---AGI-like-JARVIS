@@ -122,7 +122,6 @@ Keep the current responsibility-based layout. Put work where it belongs:
 - `providers/`: model, speech, audio, and transport adapters.
 - `custom_jarvis/`: planning, decisions, skill packs, metacognition, and bounded agent services.
 - `memory/`, `config/`: managed settings and persistence. Secrets remain local.
-- `dashboard/`: a separate local surface. Do not merge its trust boundary with the app's. (The web client that stood beside it was removed on 2026-11-26: DECISIONS.md.)
 - `curriculum/`: sourced curriculum data.
 - `native/`, `sidecar/`: narrow native integrations and optional watcher.
 - `scripts/`, `tests/`: tools and evidence.

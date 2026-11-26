@@ -15,7 +15,6 @@ This guide explains where code and project records belong. The current package l
 ├── custom_jarvis/                 Planning, service, bounded skills, state logic
 ├── memory/                        User-approved memory and persistence helpers
 ├── config/                        Configuration templates and managed settings
-├── dashboard/                     Local dashboard server and static UI
 ├── curriculum/                    Syllabus data, not hard-coded course content
 ├── native/, sidecar/              Small native integrations and watcher
 ├── scripts/                       Verification, diagnostics, packaging, benchmarks
@@ -38,7 +37,7 @@ This guide explains where code and project records belong. The current package l
 | Shared safety, evidence, or runtime behavior | `core/` | Read `ARCHITECTURE.md` and `DECISIONS.md` first. The referee files listed in `WORKING-PHILOSOPHY.md` are protected. |
 | A model or audio integration | `providers/` | Keep provider-specific transport behind the provider interface. |
 | Planning, bounded skills, or assistant state logic | `custom_jarvis/` | Route actions through the existing registry and policy. |
-| UI or dashboard behavior | `ui.py` or `dashboard/` | Keep widget changes on the Qt thread; the dashboard has its own browser-facing static assets. |
+| UI behavior | `ui.py` | Keep widget changes on the Qt thread. |
 | Course facts and syllabus material | `curriculum/` | Store sourced facts as data; do not bury syllabus content in Python. |
 | Verification or development tooling | `scripts/` | A verifier should report what it cannot check; do not weaken a gate to make it green. |
 | A behavior guarantee | `tests/` | Add the closest regression/contract test and preserve existing assertions. |

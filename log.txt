@@ -1,3 +1,14 @@
+=== 2026-11-26 · build 1.2.38 · the phone and web remote is removed ===
+
+The owner: "Remove the dashboard for phone and web remote." The second of the two removals.
+
+DONE
+  - Removed dashboard/ (the server, its pages, CryptoJS), docs/REMOTE_DASHBOARD.md, the REMOTE CONTROL button and window in ui.py, and every hook in main.py.
+  - requirements.txt: fastapi, uvicorn[standard], python-multipart and qrcode[pil] out; pyyaml in by name (it came with uvicorn, and the code checks use it).
+  - 75 tests deleted with the folder and 6 more that pinned it; ThePhoneAndWebRemoteIsGone (7) added; E4 added to the exclusions; upstream's dashboard decided "rejected" in the ledger.
+RETRO: removing four packages removed seven others, one of which (PyYAML) the code checks use and skip silently without. Fix: compare the resolved set, and a test that ties the requirement to the import.
+NOT VERIFIED: the real window on Windows; that nothing listens on 8000 or 8001 (I removed the only code that did; I did not run the program); a fresh install by hand.
+
 === 2026-11-26 · build 1.2.38 · the web client is removed ===
 
 The owner: "I did meant the webapp. Remove the dashboard for phone and web remote." This is the first of the two removals.

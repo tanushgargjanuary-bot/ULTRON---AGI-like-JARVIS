@@ -88,6 +88,7 @@ stream of another file. A link in upstream is never followed.
 | E1 | News when Ultron opens | `tests/test_upstream_sync.py` reads every place the briefing is started and fails if one is not behind `get_brief_enabled()`; `tests/test_suite_assistant.py` (`BriefingOptInTests`) tests the default. |
 | E2 | A news watch on a 30-minute timer | A tripwire: a test fails if the word `news_watch` appears in Ultron's own code. |
 | E3 | Routines that run tools by themselves at launch | A tripwire on a routine of type `startup`. |
+| E4 | The phone and web remote dashboard (removed 2026-11-26) | A tripwire on the dashboard's names in Ultron's own code. Every `dashboard/` file from upstream is decided `rejected` in the ledger. |
 
 Every check also names the upstream files whose new or changed lines mention an exclusion, so a clash is seen before
 anyone ports. The tripwire reads the folders in `tripwire_scope`, including `gui/`, which does not exist yet: the day the

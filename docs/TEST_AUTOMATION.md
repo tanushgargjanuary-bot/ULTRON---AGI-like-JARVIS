@@ -74,7 +74,7 @@ Triggers: a push to **main** or a pull request that changes `requirements.txt`, 
 Why it exists: lanes 1 and 2 install a short list written into the workflow, never `requirements.txt`. A change to that file, or a dependency that shipped a bad release inside its allowed range, was never installed by anything, so a green run said nothing about whether a fresh clone installs. Dependabot's #34 showed it: on Python 3.11 its file could not be installed at all, and every check was green.
 
 - `install`: a clean Windows machine for each Python the launcher accepts (read from `MIN_PY` and `MAX_PY` in `scripts/bootstrap.py`, which a test keeps in step). It runs `scripts/bootstrap.py` exactly as `run.bat` does, then `scripts/check_install.py`, because the launcher lets an optional package fail to install and still exits 0. The job summary lists what a fresh install gets today.
-- `suite`: Linux with every package installed (`requirements.txt` and `requirements-dev.txt`), running the whole suite. The short list has no `fastapi`, so the phone dashboard's tests skip in lanes 1 and 2; here they run.
+- `suite`: Linux with every package installed (`requirements.txt` and `requirements-dev.txt`), running the whole suite. The short list installs only what the suite imports, so a problem that needs the other packages to show itself is looked for here.
 
 First run on GitHub, 2026-11-25 (run 45648162971): all four jobs passed. Neither job is a required check, on purpose: a slow or failing install must not block an unrelated merge. Read them on any pull request that touches a requirements file, and before merging one.
 

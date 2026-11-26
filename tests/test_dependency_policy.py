@@ -298,7 +298,8 @@ class TheFreshInstallCheck(unittest.TestCase):
     Two jobs. `install`: a clean Windows machine and each Python the launcher accepts, running the launcher's own
     scripts/bootstrap.py as run.bat does, then scripts/check_install.py, because the launcher lets an optional
     package fail and still exits 0. `suite`: Linux with every package installed, running the whole suite; the short
-    list in verify.yml leaves out fastapi, so the phone dashboard's tests skip everywhere else.
+    list in verify.yml installs only what the suite imports, so a problem that needs the other packages to show itself
+    is looked for here.
     """
 
     WATCHED = ("requirements.txt", "requirements-dev.txt", "setup.py", "scripts/bootstrap.py",

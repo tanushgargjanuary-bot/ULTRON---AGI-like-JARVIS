@@ -70,6 +70,8 @@ copy it is slower than Python.
 | `tests/` (61) | 15,066 | proof, not product | 0 |
 | `plugins/`, `dashboard/`, `scripts/` | 9,256 | extensions, web panel, tooling | 0 |
 
+(Measured before the dashboard was removed on 2026-11-26; its lines are in that last row.)
+
 84,541 lines of Python, and **the entire measured Python cost of an exchange is
 0.165 ms.** A line of policy is not a line of arithmetic: it is a decision that
 runs once and is read by a human. Rewriting it in a compiled language would make
