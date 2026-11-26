@@ -1327,3 +1327,19 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The rehearsal (scratch clone, the commands in `docs/AGENT_MAINTENANCE.md`); the merge checks (merged, parents, tree); the checks on `main`; Dependabot's behavior after the merge, read from GitHub.
 
 **Not checked.** A real reversal on the real repository. That the Linux crash is gone: four Linux jobs on four heads passed since the fix, and the one on the merge, which at the earlier rate is weak evidence.
+
+## 2026-11-26 (later still) — the text client names its Gemini API version
+
+**Asked for.** Nothing new. I merged #42 (the permission) under the permission it records, then read Dependabot's #41 before answering the one question that is still the owner's: take it or not.
+
+**What I did.** I read Google's notes for `google-genai` 3.0.0 against the code. The default API version moved from `v1beta` to `v1`, and the `-latest` model names, some `-preview` models and the Live API exist only on `v1beta`. The Live session (`main.py`) and the one-shot Live turn (`core/gemini.py`) name `v1beta` (or `v1alpha`) themselves. `core.gemini.client()`, the REST client, did not. I measured the real function in three scratch virtual environments: 2.8.0 (the lowest the requirements allow) and 2.34.0 give `v1beta`, 3.6.1 gives `v1`. I wrote two checks first and watched them fail on the old code (the one place that was missing was named by the scan: `core/gemini.py:421`), made the one-constant fix, and planted 15 mistakes.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *A ceiling with no reason next to it, and a reason I had only believed.* In #42 I gave the reason for holding `<3` as "the tests cannot show the live Gemini call". It was true and it told nobody anything. Cause: the pin was set in #38 as a ceiling, and no reason was written beside it (DECISIONS row 136 says a pin has a reason). Kind of fix: the check now carries the reason in executable form, and the constant's comment says it in words. The habit: before answering "take it or not" for a Dependabot pull request, read the vendor's list of breaking changes against our code, and measure the one line that matters.
+- *The one line I did not measure would have been a guess.* Google's note says the default moved. Whether our call was affected needed the real function run against both versions. It took two minutes, offline.
+
+**Assumptions.** (1) Passing `v1beta` explicitly changes nothing for the library installed today, because it already picks `v1beta` (measured on 2.34.0). (2) `HttpOptions` accepts `api_version` in every release the requirements allow (`>=2.8.0,<3`): measured at both ends (2.8.0 and 2.34.0) and on 3.6.1, not on the releases between. (3) This does not make #41 safe. It removes one known reason against it. The decision stays the owner's.
+
+**Evidence.** The measurement on three library versions; the checks red on the old code and green on the new; 62 Gemini tests; 15 planted mistakes (11 caught, 4 valid edits green).
+
+**Not checked.** That Google's live service answers on `v1beta` today, which needs his key. The other 3.x changes: the default HTTP client is now `httpx2` and `httpx` is no longer installed with the library; Ultron's requirements still ask for `httpx`.
