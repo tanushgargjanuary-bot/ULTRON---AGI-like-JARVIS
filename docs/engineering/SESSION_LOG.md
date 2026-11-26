@@ -1289,3 +1289,24 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** The 4 new tests are red on the old code and green on the new. The real sequence: 100 runs, no crash (old: 5 to 15 in 100). The late report: 20 of 20 survive, nothing raised (old: 20 of 20 crashed). 5 planted regressions caught, 2 valid changes green.
 
 **Not checked.** That the Linux check no longer crashes: only many GitHub runs can show it. A real Windows machine closing the program mid-download.
+
+## 2026-11-26 — a coding-agent playbook, rewritten and held to its own rules
+
+**Asked for.** "Improve this Playbook." The owner pasted a "Vibe Coding Agent Master Playbook". No question was left open: nothing here needs his approval, and the answer carries no request to merge.
+
+**What I read first.** The primary sources the playbook leans on, through the GitHub API, and a web search for which tool reads which file. New this time: `anthropics/skills` (the skill-creator guide), `coleam00/context-engineering-intro` (the PRP template), `agentsmd/agents.md`, and more of `obra/superpowers` (the claim, requires, not-sufficient table; the rationalization tables; "Size the Work"; the contributor guide for agents). Commits, licences and what was read are in `docs/UPSTREAM_RESEARCH.md`, 11.1 and 11.6.
+
+**What I found in v1.** It broke its own rules, in ways a program can find (the list is Appendix C of the playbook): two file-length limits, a "3-strike" rule that rolled back after two, `git checkout -- .` after "never run destructive git commands", placeholders after a ban on them, LaTeX, a nested code fence. Some advice was risky (`-y` and `-f` always; kill a silent process after 30 seconds). A statistic and several credits could not be checked, and I removed them rather than repeat them. It had gaps: outside text as instructions, who may approve what, tests that restate the code, and a skill format that would not load as a skill.
+
+**What changed.** `docs/reference/CODING_AGENT_PLAYBOOK.md` and `tests/test_agent_playbook.py` (new); one row in `docs/INDEX.md`; three sources and 11.6 in `docs/UPSTREAM_RESEARCH.md`; one sentence in `WORKING-PHILOSOPHY.md`, section 3, step 4 (the owner's file). It is a proposal. It does not change `AGENTS.md`.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *My new test skipped most of the file it was written to check.* Cause: I split the file into sections at every line that starts with `## `, and Template E, inside a code fence, has such lines. The split swallowed the template's closing fence, so everything after it counted as "inside a fence" and sections 6 to 8 were never scanned. It passed on the real file. Only the planted-mistake run showed it: a destructive command and a placeholder, planted in sections 6 and 7, were not caught. Kind of fix: the test (headings inside a fence are ignored) and a rule (a new check is not trusted until it has failed, step 4).
+- *Two of my first checks were too literal* (the words "use when" in every description, and a pattern that read "20,000 characters" as "000"). Both failed on the real file and were fixed there. Kind of fix: the test.
+- *The playbook gave numbers to quote that were not its own* (other tools' size limits). The test flagged them. They moved to the sources appendix, where they are marked as reported.
+
+**Assumptions.** (1) "Improve" means: find what is wrong, verify what can be verified, remove what cannot, and keep what was good (the loop, red then green, surgical edits, the templates, the pre-flight list). (2) The result goes in the repository as a reference document, because that is where this session's files persist, and it says at the top that it is not a rule file of this repository. (3) No part of it goes into `AGENTS.md` unasked: those are binding rules.
+
+**Evidence.** The 22 tests written first were red. Then 23 tests, green. 21 planted cases behave as required: 18 flaws caught (six of them v1's own) and 3 valid edits green.
+
+**Not checked.** That agents follow it better. The blog reports on which tool reads which file. The core block in a real tool. OCR was not run: no code file changed.

@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### A coding-agent playbook, rewritten and held to its own rules, 2026-11-26
+
+**Asked for.** "Improve this Playbook." The owner pasted a "Vibe Coding Agent Master Playbook".
+
+**What I found in it.**
+- It broke its own rules. The file-length limit was 300 in two places and 400 in three. A "3-strike" rule rolled back after two. It said never to run destructive git commands, and then said to run `git checkout -- .`, which throws away the user's other uncommitted work. It banned placeholders and was full of them. It had LaTeX in a file that agents read as text, and one code fence nested in another, which broke the page.
+- Some advice was risky: always pass `-y` and `-f`; kill any process silent for 30 seconds; create a feature branch whatever the repository's policy says; put PLAN.md, TASKS.md and STATE.md in the repository for every task; an adversarial pass on every file, which invites code for failures nobody has seen.
+- A statistic and several credits could not be checked: "4x more debugging turns", five YouTube creators as sources of specific rules, "Antigravity Swarm Architecture", three skill names. I found nothing to read behind them, so they are removed and listed.
+- It had no rule about outside text that carries instructions, none about who may approve what, none about tests that restate the code. Its "skills" had no description line, which is the part that makes an agent choose a skill (Anthropic's skill guide).
+
+**What changed.** Documents and one test file. No change to the app, and none to Ultron's own rules.
+- `docs/reference/CODING_AGENT_PLAYBOOK.md` (new, 505 lines): a short core to paste (13 rules, each with its reason), the loop by size of task, authority and safety, 11 skills in the real SKILL.md shape, five templates, a list to run before saying done, a rule for when a fix fails, how to keep the playbook small, sources marked verified or not verified, optional stack modules, and what changed from v1. It is a proposal: it says in its first lines that Ultron's rules win.
+- `tests/test_agent_playbook.py` (new, 23 tests): every number is defined once, in a table; the core is short, free of one stack's words, and gives a reason for every rule; a destructive command appears only as something not to run; no placeholder, no LaTeX, no broken fence, no unsourced statistic; every skill has the same four parts; every source is marked, and its commit matches the research log.
+- `docs/UPSTREAM_RESEARCH.md`: three sources added to 11.1, and 11.6. `docs/INDEX.md`: one row. `WORKING-PHILOSOPHY.md` (the owner's file, flagged): one sentence in section 3, step 4: a new check is not trusted until it has failed.
+
+**Evidence.** The 22 tests I wrote first were red, because the file did not exist. 21 planted cases behave as required: 18 flaws caught (six are v1's own) and 3 valid edits stay green. The planted cases also found a bug in my own test: it took `## ` lines inside a code fence for headings, which hid three sections from every check. Fixed, and the real file passes.
+
+**Not verified.** That agents follow it better: nothing is measured. The reports on which tool reads which file: they are blog posts. The core block in a real tool. OCR was not run: no code file changed.
+
 ### The Linux crash came back: the first fix was not enough, 2026-11-25
 
 **What happened.** The Linux check of this pull request died with a segmentation fault in the provider self-test (run 45679604007, on `855f6c6`, 18:54 UTC), at the same line as the crash that #37 had fixed: `providers/tts_piper.py` line 170. Windows passed on the same commit. #37 had been merged about three and a half hours earlier.

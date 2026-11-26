@@ -1,3 +1,19 @@
+=== 2026-11-26 · build 1.2.38 · a coding-agent playbook, rewritten and held to its own rules ===
+
+Asked for: "Improve this Playbook." (a pasted "Vibe Coding Agent Master Playbook").
+
+FOUND IN v1: it broke its own rules (file limit 300 and 400; a "3-strike" rule that rolled back after two; "never run destructive git commands" then `git checkout -- .`;
+  a ban on placeholders, full of them; LaTeX; a nested code fence). Risky advice (-y and -f always; kill after 30 s of silence). A statistic and several credits that nothing could be
+  found behind. No rule about outside text as instructions, about who may approve what, or about tests that restate the code. Its "skills" had no description line.
+DONE (documents and one test file; no change to the app or to Ultron's rules)
+  - docs/reference/CODING_AGENT_PLAYBOOK.md (505 lines): a short core of 13 rules, each with its reason; the loop by size; authority and safety; 11 skills in the SKILL.md shape;
+    five templates; sources marked verified or not; optional stack modules; what changed from v1. A proposal: Ultron's rules win.
+  - tests/test_agent_playbook.py: 23 tests. docs/UPSTREAM_RESEARCH.md 11.1 and 11.6 (three sources). docs/INDEX.md. WORKING-PHILOSOPHY.md (the owner's file): one sentence.
+TESTS: 22 red first (no file); 21 planted cases behave as required (18 caught, 6 of them v1's own flaws; 3 valid edits green).
+RETRO: my test took `## ` lines inside a code fence for headings and silently skipped sections 6 to 8; only a planted mistake that was NOT caught showed it. Fix: the test, and a rule
+  (WORKING-PHILOSOPHY section 3, step 4: a new check is not trusted until it has failed). Two checks of mine were too literal and failed on the real file: fixed.
+NOT VERIFIED: that agents follow it better; the third-party reports on which tool reads which file; the core block in a real tool. OCR not run: no code file changed.
+
 === 2026-11-25 · build 1.2.38 · the Linux crash came back: the first fix was not enough ===
 
 FOUND: the Linux check of PR #40 died with a segmentation fault in the provider self-test (run 45679604007, on 855f6c6, 18:54 UTC), at providers/tts_piper.py line 170, the line #37 had
