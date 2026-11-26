@@ -1,3 +1,19 @@
+=== 2026-11-26 · build 1.2.38 · the text client names its Gemini API version ===
+
+Found while reading Dependabot's #41 (google-genai 2 -> 3). No new request from the owner.
+
+DONE
+  - core/gemini.py: API_VERSION = "v1beta", passed by client() and _live_turn(). The text client used to leave the choice to the library:
+    2.34.0 picks v1beta, 3.6.1 picks v1 (measured on the real function, offline). Google says the -latest model names, some -preview
+    models and the Live API exist only on v1beta. No change with the library installed today.
+  - tests/test_gemini_api_version.py (3 tests, two red on the old code): the text client hands v1beta to the library and keeps its timeout;
+    no genai.Client( in the program's own code is built without an api_version. 15 planted mistakes: 11 caught, 4 valid edits green.
+RETRO: the "<3" ceiling had no reason written next to it, and I had called the reason "the tests cannot show the live call", a belief.
+  Reading the vendor's list of breaking changes against the code, and measuring the one line, gave a gap I could fix and a reason I can state.
+  Fix: the check carries the reason now; do that reading before answering "take it or not" for any Dependabot pull request.
+NOT DONE: the "<3" ceiling in requirements.txt (that is #41, his decision).
+NOT VERIFIED: that Google's live service answers on v1beta today (needs his key); the other 3.x changes (the default HTTP client is httpx2).
+
 === 2026-11-26 · build 1.2.38 · pull requests are merged without asking, and each can be reversed ===
 
 Asked for: "Always merge PR's. But they should be flexible to reverse."

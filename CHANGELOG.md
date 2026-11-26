@@ -10,6 +10,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The text client names its Gemini API version, 2026-11-26
+
+**Asked for.** Nothing new. A fix found while reading Dependabot's #41 (the owner's standing rule: fix without asking first). No test was replaced and no referee file was touched.
+
+**What I found.** #41 would let the Gemini library (`google-genai`) move from version 2 to version 3. I read Google's notes for 3.0.0 against the code. One breaking change reaches us. When a client does not say which version of Google's API it wants, the library picks one, and 3.x picks a different one (`v1`, not `v1beta`). The two Live clients (`main.py`, and `_live_turn` in `core/gemini.py`) already named their version. The third, `core.gemini.client()`, did not, and every ordinary text call goes through it. I ran the real function with each library version, offline, with no request sent:
+
+| | google-genai 2.34.0 (what CI installs today) | google-genai 3.6.1 (what #41 allows) |
+|---|---|---|
+| `core.gemini.client()` before | `v1beta` | **`v1`** |
+| `core.gemini.client()` after | `v1beta` | `v1beta` |
+
+On the lowest version the requirements allow (2.8.0) the old code and the new both give `v1beta`, so the pin is a no-op anywhere in the range allowed today. Google's notes say the `-latest` model names (the last rung of each text ladder in `core/gemini.py`), some `-preview` models and the Live API exist only on `v1beta`.
+
+**What changed.**
+- `core/gemini.py`: one constant, `API_VERSION = "v1beta"`, passed by `client()` and by `_live_turn()`. With the library installed today nothing changes, because it already picks `v1beta`.
+- `tests/test_gemini_api_version.py` (new, 3 tests). The text client hands `v1beta` to the library. It keeps its timeout. No `genai.Client(` in the program's own code is built without naming an `api_version`. Two of the three were red on the old code; the timeout test guards the argument the fix touches.
+
+**Evidence.** The table above. The new tests and the three existing Gemini test files (62 tests) pass. 15 planted mistakes: 11 caught, 4 valid edits stayed green. The planted ones include the old code, a wrong version, `None`, a client with no version in each of the three files, an alias (`genai as g`), a variable or `**options` for `http_options`, and a scan that has gone blind.
+
+**Not done, and why.** The ceiling `<3` in `requirements.txt` is unchanged. Raising it is #41, and the choice is the owner's (DECISIONS row 136). This change removes one reason against it. It does not make the update safe. Not verified: that Google's live service answers on `v1beta` today (that call needs the owner's key); how the other 3.x changes behave. The library's default HTTP client is now `httpx2`, and `httpx` is no longer installed with it. Ultron's requirements still ask for `httpx`, so it stays.
+
+**Rollback.** `git revert -m 1 <the merge commit of this pull request>`. Nothing depends on it. There is no setting to switch off, because it changes no behavior with the library installed today.
+
 ### Pull requests are merged without asking, and each can be reversed, 2026-11-26
 
 **Asked for.** "Always merge PR's. But they should be flexible to reverse."

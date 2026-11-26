@@ -234,6 +234,15 @@ _ONE_SHOT_SYSTEM = (
 DEFAULT_TIMEOUT_MS = 10_000
 MIN_TIMEOUT_MS = 10_000
 
+# Which version of the Gemini Developer API every client in this module asks for.
+# Said out loud because the library's own pick is not ours to rely on: with the
+# same call, google-genai 2.34.0 picks v1beta and 3.6.1 picks v1 (measured,
+# tests/test_gemini_api_version.py). Google's notes for 3.0.0 say the `-latest`
+# model names (the last rungs of the ladders above), some `-preview` models and
+# the Live API exist only on v1beta. main.py names its own version for the Live
+# session, for the same reason.
+API_VERSION = "v1beta"
+
 _key_lock = threading.Lock()
 _cached_key: str | None = None
 _key_sig: tuple | None = None
@@ -420,7 +429,8 @@ def client(timeout_ms: int = DEFAULT_TIMEOUT_MS, key: str = ""):
         raise RuntimeError("no Gemini API key is configured")
     return genai.Client(
         api_key=key,
-        http_options=gtypes.HttpOptions(timeout=max(MIN_TIMEOUT_MS, int(timeout_ms))),
+        http_options=gtypes.HttpOptions(timeout=max(MIN_TIMEOUT_MS, int(timeout_ms)),
+                                        api_version=API_VERSION),
     )
 
 
@@ -519,7 +529,7 @@ async def _live_turn(parts: list, system: str, key: str, timeout_s: float) -> st
     from google import genai
     from google.genai import types as gtypes
 
-    cl = genai.Client(api_key=key, http_options={"api_version": "v1beta"})
+    cl = genai.Client(api_key=key, http_options={"api_version": API_VERSION})
     # Silence the persona, or it answers instead of complying.
     #
     # These are conversational models and they behave like it: asked "Reply with
