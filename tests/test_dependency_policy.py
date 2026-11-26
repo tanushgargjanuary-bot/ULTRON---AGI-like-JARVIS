@@ -8,7 +8,7 @@ at all. The same pass fixed the neighbours of that fault:
   has fixed since; `file_processor` now prefers pypdf, and stops reading pages once it has the
   characters it will use (it parsed a 4,000-page PDF whole to keep the first 50,000);
 * the web app had no lock file and CI ran `npm install`, so one commit could build green on
-  one day and red the next;
+  one day and red the next (the web app was removed on 2026-11-26, and its three tests with it);
 * CI linted with `ruff>=0.14,<1` while the development pin is `ruff==0.17.3`;
 * every action was referenced by a movable tag, and the reviewdog binary by `latest`.
 
@@ -21,7 +21,6 @@ file; Dependabot is told to edit a requirement only when its range is too narrow
 
 from __future__ import annotations
 
-import json
 import re
 import sys
 import tempfile
@@ -197,32 +196,6 @@ class PdfFallbackReader(unittest.TestCase):
         self.assertEqual(len(pages), 3)
 
 
-class WebAppIsReproducible(unittest.TestCase):
-    def test_a_lock_file_agrees_with_package_json(self):
-        package = json.loads((ROOT / "webapp" / "package.json").read_text(encoding="utf-8"))
-        lock = json.loads((ROOT / "webapp" / "package-lock.json").read_text(encoding="utf-8"))
-        root = lock["packages"][""]
-        self.assertEqual(root.get("dependencies"), package.get("dependencies"))
-        self.assertEqual(root.get("devDependencies"), package.get("devDependencies"),
-                         "`npm ci` refuses to run when these differ")
-        for path, entry in lock["packages"].items():
-            if path and not entry.get("link"):
-                with self.subTest(package=path):
-                    self.assertIn("integrity", entry)
-
-    def test_ci_installs_from_the_lock_file(self):
-        workflow = (WORKFLOWS / "webapp.yml").read_text(encoding="utf-8")
-        self.assertRegex(workflow, r"run:\s*npm ci\b")
-        self.assertNotRegex(workflow, r"run:\s*npm install\b")
-        self.assertIn("cache-dependency-path: webapp/package-lock.json", workflow)
-
-    def test_the_tsconfig_lists_what_the_build_would_add(self):
-        # `next build` rewrote tsconfig.json when this was missing, leaving every CI run
-        # and every local build with a modified tracked file.
-        tsconfig = (ROOT / "webapp" / "tsconfig.json").read_text(encoding="utf-8")
-        self.assertIn(".next/dev/types/**/*.ts", tsconfig)
-
-
 class WorkflowsAreNotMovable(unittest.TestCase):
     def workflow_texts(self):
         return {path.name: path.read_text(encoding="utf-8") for path in sorted(WORKFLOWS.glob("*.yml"))}
@@ -263,12 +236,21 @@ class WorkflowsAreNotMovable(unittest.TestCase):
 
     def test_dependabot_keeps_the_pins_moving(self):
         text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
-        for ecosystem in ("github-actions", "pip", "npm"):
+        for ecosystem in ("github-actions", "pip"):
             with self.subTest(ecosystem=ecosystem):
                 self.assertIn(f'package-ecosystem: "{ecosystem}"', text)
-        self.assertIn('directory: "/webapp"', text)
-        self.assertEqual(len(re.findall(r"open-pull-requests-limit:\s*\d", text)), 3,
+        self.assertEqual(len(re.findall(r"open-pull-requests-limit:\s*\d", text)), 2,
                          "an unbounded stream of update PRs is its own problem")
+
+    def test_dependabot_only_watches_places_that_exist(self):
+        # The web client went with its npm entry. An entry left behind makes Dependabot report an error on every
+        # run, and nothing else in this suite would notice.
+        text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        found = re.findall(r'(?m)^    directory:\s*"([^"]+)"', text)
+        self.assertTrue(found, "no directory was read: the pattern no longer matches the file")
+        for directory in found:
+            with self.subTest(directory=directory):
+                self.assertTrue((ROOT / directory.lstrip("/")).is_dir())
 
     def test_dependabot_opens_one_grouped_pull_request_per_ecosystem(self):
         """Its first run opened ten pull requests at once, a branch each, and none was read.
@@ -280,7 +262,9 @@ class WorkflowsAreNotMovable(unittest.TestCase):
         """
         text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
         entries = re.split(r"(?m)^  - package-ecosystem:", text)[1:]
-        self.assertGreaterEqual(len(entries), 3, "github-actions, pip and npm at least")
+        ecosystems = sorted(entry.splitlines()[0].strip().strip('"') for entry in entries)
+        self.assertEqual(ecosystems, ["github-actions", "pip"],
+                         "an ecosystem is added or dropped on purpose, and this list says so")
         for entry in entries:
             ecosystem = entry.splitlines()[0].strip()
             with self.subTest(ecosystem=ecosystem):

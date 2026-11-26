@@ -44,5 +44,4 @@ scripts/**      linguist-vendored=true
 curriculum/**   linguist-data=true
 docs/**         linguist-documentation=true
 sidecar/**      linguist-vendored=true
-webapp/**       linguist-vendored=true
 

@@ -85,21 +85,9 @@ Review display/DPI, microphone, speaker, camera, browser, GPU, installed applica
 
 ## 3. Owner-gated product work
 
-### 3.1 ULTRON Web preview
+### 3.1 ULTRON Web preview: removed
 
-**Status: NOT STARTED — OWNER AUTHORIZATION REQUIRED**
-
-The web application remains an authentication/workspace shell. It does not execute the Python agent, persist chat messages, provide cross-device memory, or enable the composer.
-
-Before deployment:
-1. Obtain explicit authorization for Vercel team access.
-2. Inspect existing projects before creating anything.
-3. Confirm the `webapp` root and current build scripts.
-4. Configure Supabase and Google OAuth using only required Preview/Development variables.
-5. Verify sign-in, callback, workspace, and sign-out.
-6. Do not enable chat until a separate Python worker, server-side session verification, per-user policies, and retention/export/deletion controls exist.
-
-Do not deploy, create a project, or add secrets without owner authorization.
+The owner removed the web client (the folder called webapp) on 2026-11-26: "I did meant the webapp." It was never deployed, and this section had said NOT STARTED. Nothing in it is open. The merge that removed it, and the one command that brings it back, are in `DECISIONS.md` (the row of that date).
 
 ## 4. Review and automation status
 

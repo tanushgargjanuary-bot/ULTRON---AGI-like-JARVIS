@@ -112,6 +112,8 @@ Do not advertise automatic multi-provider failover as complete until PR #20 is m
 
 ### ULTRON Web
 
+*Removed on 2026-11-26 at the owner's request (`DECISIONS.md`). This section stays as the record of what it was.*
+
 The current web client is an authentication and workspace shell. It does not yet execute the ULTRON Python agent, store chat messages, or provide cross-device memory. Its composer remains disabled.
 
 Before enabling chat:

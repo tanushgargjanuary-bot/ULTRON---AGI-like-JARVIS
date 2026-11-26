@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The web client is removed, 2026-11-26
+
+**Asked for.** The owner, after I named five things that look like overkill and said I took "browser Ultron" to mean the web client: "I did meant the webapp. Remove the dashboard for phone and web remote." This is the first of two removals. The second is its own pull request.
+
+**What I did.** Removed `webapp/` (19 files: a Next.js sign-in page with Google sign-in through Supabase; its chat box was switched off, and nothing in the Python program used it), its workflow, its npm entry in `.github/dependabot.yml`, its line in `.gitattributes`, and the five tests that pinned it (`tests/test_dependency_policy.py`: three deleted, two rewritten to name the two ecosystems that remain, in a stricter form: an exact list, not "at least three"). Added `tests/test_removed_features.py`, which fails if the folder, its workflow, its Dependabot entry or its attributes line come back, and one check that Dependabot only watches directories that exist. Corrected the documents that described it: `docs/specifications/SYSTEM_OVERVIEW.md`, `docs/AGENT_MAINTENANCE.md`, `docs/NEXT_CHECKPOINTS.md`, a note in `docs/MAYBE_COMPLETE.md`, and two rows of `DECISIONS.md` (one corrected, one new).
+
+**Effect.** None on the desktop app. No required check ran the web client, so no required check changed.
+
+**To get it back.** Revert the merge of #46. This is the newest merge, so it is one command: `git revert -m 1 <that merge>`.
+
+**Not verified.** That nothing outside the repository was set up from it (a Vercel or Supabase project). `docs/NEXT_CHECKPOINTS.md` said nothing was deployed; I cannot see either service. Whether the 13-minute Windows check gets shorter: I said it would not, from reading the workflow files, and the first run after the merge is the measurement.
+
 ### Reversing an older merge: what to expect, measured, 2026-11-26
 
 **Asked for.** Nothing new. A correction of my own claim. The permission's row in `DECISIONS.md` and section 9 of `docs/AGENT_MAINTENANCE.md` said that one command, `git revert -m 1 <merge commit>`, undoes a merge. That is true for the newest merge only.

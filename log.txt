@@ -1,3 +1,14 @@
+=== 2026-11-26 · build 1.2.38 · the web client is removed ===
+
+The owner: "I did meant the webapp. Remove the dashboard for phone and web remote." This is the first of the two removals.
+
+DONE
+  - Removed webapp/ (19 files), its workflow, its npm entry in .github/dependabot.yml, its line in .gitattributes and the five tests that pinned it.
+  - tests/test_removed_features.py: four tests, red on the old tree. One check that Dependabot only watches directories that exist.
+  - SYSTEM_OVERVIEW, AGENT_MAINTENANCE, NEXT_CHECKPOINTS, MAYBE_COMPLETE (a note) and two rows of DECISIONS.md corrected.
+RETRO: my search for the folder's name read a table row's prose and missed its last column; the document test caught it. Fix: run the document test after a removal.
+NOT VERIFIED: anything outside the repository (Vercel, Supabase); whether the Windows check gets shorter.
+
 === 2026-11-26 · build 1.2.38 · reversing an older merge: what to expect, measured ===
 
 A correction of my own claim. No new request from the owner.
