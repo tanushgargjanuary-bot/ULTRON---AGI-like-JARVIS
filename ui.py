@@ -5202,7 +5202,10 @@ class MainWindow(QMainWindow):
         self._update_autostart_btn(self._check_autostart())
         from memory.config_manager import get_brief_enabled as _gbe
         self._update_brief_btn(_gbe())
+        from memory.config_manager import get_native_watch_enabled as _gnwe
+        self._update_watch_btn(_gnwe())
 
+        self._pulse_at = time.monotonic()
         self._clock_tmr = QTimer(self)
         self._clock_tmr.timeout.connect(self._tick_clock)
         self._clock_tmr.start(1000)
@@ -6196,6 +6199,8 @@ class MainWindow(QMainWindow):
             self.on_voice_change()
 
     def _tick_clock(self):
+        # The pulse the freeze watch reads (`JarvisUI.window_silence`): this runs only while the Qt thread does.
+        self._pulse_at = time.monotonic()
         self._clock_lbl.setText(time.strftime("%H:%M:%S"))
         self._date_lbl.setText(time.strftime("%a %d %b %Y"))
 
@@ -6502,6 +6507,9 @@ class MainWindow(QMainWindow):
 
         self._brief_btn = _row(QPushButton())
         self._brief_btn.clicked.connect(self._toggle_brief)
+
+        self._watch_btn = _row(QPushButton())
+        self._watch_btn.clicked.connect(self._toggle_watch)
 
         self._wake_btn = _row(QPushButton())
         self._wake_btn.clicked.connect(self._toggle_wake_word)
@@ -7377,6 +7385,26 @@ class MainWindow(QMainWindow):
         save_brief_enabled(new_val)
         self._update_brief_btn(new_val)
 
+    def _toggle_watch(self):
+        """The freeze watch switch (`docs/FREEZE_WATCH.md`). It takes effect the next time Ultron starts, and the
+        line says so; a save that fails leaves the switch where it was and says that too."""
+        from core import native_core
+        from memory.config_manager import get_native_watch_enabled, save_native_watch_enabled
+        new_val = not get_native_watch_enabled()
+        try:
+            save_native_watch_enabled(new_val)
+        except Exception as error:  # noqa: BLE001 — a setting that did not save must be said, not raised into Qt
+            self._log_sig.emit(f"ERR: Could not save the freeze watch setting: {error}")
+            return
+        self._update_watch_btn(new_val)
+        if not new_val:
+            self._log_sig.emit("SYS: Freeze watch is off. It stops the next time Ultron starts.")
+        elif native_core.binary_path() is None:
+            self._log_sig.emit(f"SYS: Freeze watch is on, but {native_core.why_missing()}")
+        else:
+            self._log_sig.emit("SYS: Freeze watch is on. It starts the next time Ultron starts, and what it "
+                               f"notes goes to logs/{native_core.log_path().name}.")
+
     # ── Wake word settings ───────────────────────────────────────────────────
 
     def _wake_state(self) -> dict:
@@ -7594,6 +7622,30 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
         self._refresh_wake_btns()
+
+    def _update_watch_btn(self, enabled: bool):
+        if not hasattr(self, '_watch_btn'):
+            return
+        if enabled:
+            self._watch_btn.setText("◈  FREEZE WATCH: ON")
+            self._watch_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #001a08; color: {C.GREEN};
+                    border: 1px solid {C.GREEN_D}; border-radius: 3px;
+                    text-align: left; padding: 0 8px;
+                }}
+                QPushButton:hover {{ background: #002010; }}
+            """)
+        else:
+            self._watch_btn.setText("◈  FREEZE WATCH: OFF")
+            self._watch_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: transparent; color: {C.TEXT_DIM};
+                    border: 1px solid {C.BORDER}; border-radius: 3px;
+                    text-align: left; padding: 0 8px;
+                }}
+                QPushButton:hover {{ color: {C.TEXT}; border: 1px solid {C.BORDER_B}; }}
+            """)
 
     def _update_brief_btn(self, enabled: bool):
         if not hasattr(self, '_brief_btn'):
@@ -8156,6 +8208,12 @@ class JarvisUI:
         self._win = MainWindow(face_path)
         self.root = _RootShim(self._app)
         self._win.show()
+
+    def window_silence(self) -> float:
+        """Seconds since the window last ran its one-second timer, which is how long the Qt thread has been
+        unresponsive. Safe from any thread: it reads one number and touches no Qt object. The freeze watch's
+        heartbeat is held back while this is long (`core/native_core.py`, `window_gate`)."""
+        return max(0.0, time.monotonic() - self._win._pulse_at)
 
     @property
     def muted(self) -> bool:

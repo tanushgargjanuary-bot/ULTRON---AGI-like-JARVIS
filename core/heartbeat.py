@@ -3,15 +3,16 @@ core/heartbeat.py — Client-side heartbeat emitter for ULTRON.
 Emits periodic pings to the ultron-core supervisor over Named Pipe IPC (channel 0x06).
 
 What this does and does not do, checked against `native/ultron-core/src/ipc/server.rs`:
-the supervisor echoes each frame back. It does not yet act on a missing heartbeat
-(`HEARTBEAT_TIMEOUT` is declared in `watchdog/boot_guard.rs` and used nowhere), so a
-silent emitter costs nothing today. Nothing in the app starts this emitter yet.
+the supervisor echoes each frame back, and notes (in its log, `docs/FREEZE_WATCH.md`) when the
+beats stop for 30 seconds. It restarts nothing and ends nothing, so a silent emitter costs a line
+in a log. The app starts this emitter only when the owner has switched the freeze watch on
+(`core/native_core.py`), and then a beat is sent only while the window answers too: see `gate`.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
+from typing import Callable, Optional
 
 from core import failures
 from core.ipc_client import UltronIPCClient
@@ -23,9 +24,15 @@ class HeartbeatEmitter:
     """Sends periodic heartbeat pings to the Rust supervisor."""
 
     def __init__(self, client: Optional[UltronIPCClient] = None,
-                 interval: float = DEFAULT_INTERVAL_S):
+                 interval: float = DEFAULT_INTERVAL_S,
+                 gate: Optional[Callable[[], Optional[str]]] = None):
+        """`gate` is asked before every beat. None means "go ahead"; a sentence means "hold this one back,
+        and here is why". It is how a beat comes to mean that the window answers as well as this loop:
+        a loop that is running proves only itself. A gate that raises holds the beat back too: a check
+        that cannot be made is not a pass, and the silence it causes is noted by the supervisor."""
         self.client = client or UltronIPCClient()
         self.interval = interval
+        self.gate = gate
         self._running = False
         self._task: Optional[asyncio.Task] = None
         self._seq = 0
@@ -63,6 +70,10 @@ class HeartbeatEmitter:
     async def _beat(self) -> bool:
         """One heartbeat. True when the pipe took it. Reconnects once if it dropped."""
         try:
+            held_back = self.gate() if self.gate is not None else None
+            if held_back:
+                self._last_error = held_back
+                return False
             if not self.client.is_connected and not await self.client.connect(retries=1):
                 self._last_error = "not connected, and a reconnect failed"
                 return False

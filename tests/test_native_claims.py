@@ -3,7 +3,8 @@
 `docs/specifications/AUTONOMOUS_EVOLUTION_SPEC.md` describes a Rust supervisor with a
 watchdog, a boot-loop guard, git rollback, blue/green swaps, a job-object sandbox and a
 "hardware" referee seal. `native/ultron-core/src/main.rs` starts the audio ring and the IPC
-server and nothing else; the rest is library code nobody calls. The document now says so
+server and nothing else. Of the rest, only the stall watch (`watchdog/stall.rs`, used by the server) is called;
+the other modules are library code nobody calls. The document now says so
 under "Status of this document", and these tests keep that statement true in both
 directions. The native build check compiles and tests the crate and starts it, but it cannot say which modules
 `main.rs` starts, so that is still checked on the source.
@@ -77,12 +78,20 @@ class TheStatusParagraphMatchesMain(unittest.TestCase):
             with self.subTest(module=relative):
                 self.assertTrue((CRATE / "src" / relative).is_file())
 
-    def test_the_server_keeps_no_clock_so_it_cannot_end_a_stalled_worker(self):
+    def test_the_server_notes_a_silence_and_ends_nothing(self):
+        # It used to keep no clock at all. It keeps one now (the freeze watch), and the spec says it only notes. This
+        # holds the two files that carry the clock to that: they may write a line, and may not start or end a process.
         server = read(CRATE / "src" / "ipc" / "server.rs")
-        for word in ("Instant", "timeout", "HEARTBEAT_TIMEOUT", "sleep"):
-            self.assertNotIn(word, server,
-                             f"server.rs now uses {word}; if it tracks heartbeats, the spec's "
-                             "'nothing terminates a stalled worker' sentence needs revisiting")
+        stall = read(CRATE / "src" / "watchdog" / "stall.rs")
+        self.assertIn("StallWatch", server, "the server no longer uses the clock: the spec's sentence is stale")
+        for name, source in (("server.rs", server), ("stall.rs", stall)):
+            for word in ("TerminateProcess", ".kill(", "Command::new", "process::exit", "OpenProcess", "ExitProcess"):
+                self.assertNotIn(word, source,
+                                 f"{name} now uses {word}: it can end or start a process, and the spec says "
+                                 "the helper only notes a silence")
+
+    def test_the_spec_says_the_helper_only_notes(self):
+        self.assertIn("only notes", squash(read(SPEC)))
 
 
 class TheSealerIsNotDescribedAsMoreThanItIs(unittest.TestCase):

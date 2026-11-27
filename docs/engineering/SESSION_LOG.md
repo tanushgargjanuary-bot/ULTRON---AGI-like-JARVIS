@@ -1428,3 +1428,21 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** Runs 46031967963 and 46033070836 (Windows, Rust 1.100.0): build 1 min 34 s, 9 unit tests, the end-to-end test ran and did not skip; the planted mistakes (`mutate_native.py`: 24 caught, 2 valid edits green); the layout test red on the old header (128 != 64); the whole chain on the committed tree (numbers in the pull request).
 
 **Not checked.** That Ultron can use the program: nothing starts it, and the end-to-end test reaches only the ring and the pipe. The watchdog, rollback, blue/green swap, job-object limits and sealer are compiled and not run. A build on any other Windows version or on the owner's machine.
+
+## 2026-11-27 — the Rust helper notes when Ultron freezes
+
+**Asked for.** The owner's "(a)": the helper's first job is to watch Ultron and note when it freezes, with no restarts.
+
+**What I did.** Read `server.rs`, the Python client, the heartbeat emitter and how `main.py` starts its loops. Decided three things before writing anything: it only notes (no kill call anywhere); it is off until the owner switches it on; and a heartbeat comes from the whole of Ultron, not from one thread. The last matters because a beat from the assistant's loop alone cannot see the window hang, which is the freeze he sees. Wrote the Rust clock as a pure type that is given the time, then its tests, then the server. Wrote `tests/test_native_watch.py` before `core/native_core.py`. The first CI run showed whether the Rust compiled, since this machine cannot build it.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3).
+- *A check that looked at the wrong place.* My test that Python and Rust agree on the options looked for `"--once"` in `server.rs`, and the unit tests in the same file spell it too, so the check passed after the real code had stopped reading the option. The planted mistake found it. Kind of fix: the check now looks for the exact form in the code that reads it, and I plant a mistake for every new check, including ones that read text.
+- *Planted mistakes that were too weak.* Four faults removed one of two occurrences of a sentence the guide says twice, so the guide test stayed green, rightly. Kind of fix: a fault on prose removes every occurrence, and the harness has a `replace_all`.
+- *A test with a number in it.* The gate test spelled "11 s", which is the grace plus one; a valid edit that moved the grace turned it red. Fixed to compute the number. A test that restates a constant breaks when the constant is allowed to move.
+- *A sentence I had to drop.* I had written that the failure trail "is shown only in a crash report". It is also read by `core/self_change.py`. The guide now says the window does not show it and a crash report includes it.
+
+**Assumptions.** (1) "Freeze" means any of: the window stops answering, the assistant's loop stops, or the whole program stops. (2) Ten seconds is a hiccup and thirty is a freeze; both are guesses, and both are written in one place each, with a test that ties them to the guide and to the Rust default. (3) Telling the owner at the next start, in one line, is enough: nothing can warn him while the program is frozen.
+
+**Evidence.** Red on the old tree (the new module fails to import; the changed tests fail); green on the new one; 35 of 35 planted mistakes caught (`mutate_watch.py`); the whole chain on the committed tree (numbers in the pull request); the Rust build and the three end-to-end tests on Windows (the `native build` run on the pull request).
+
+**Not checked.** A real frozen window on a real PC. Sleep and wake. An unsigned program on a machine with SmartScreen on.

@@ -142,6 +142,17 @@ The company and model that supply Ultron's thinking and voice. Gemini is one pro
 **Key**:
 A secret code that lets Ultron use a provider. It stays on the owner's computer.
 
+### The helper program
+
+**Helper**:
+A second small program that Ultron can start and run beside it. It is written in Rust. It is built separately and is not part of the install.
+
+**Heartbeat**:
+A small message that Ultron sends to the helper every five seconds. It means that Ultron is still answering.
+
+**Freeze watch**:
+A setting that is off until you switch it on. When it is on, Ultron starts the helper. The helper writes a line in its log when the heartbeats stop. It never restarts anything.
+
 ### Libraries and updates
 
 **Library**:
@@ -160,6 +171,7 @@ The newest version of a library that we allow. It stops a new and untested relea
 - A pull request needs every required check green before a merge.
 - The proof gate gives each claim one verdict: PROVEN, PARTIAL, SKIPPED, FAILED or NOT PRESENT.
 - The follow-up watch reads Mark and reports. A change stays held until someone gives it a decision word.
+- The freeze watch starts the helper. The helper only notes. It never restarts Ultron.
 - A referee file is changed only by a person or an outside coding agent. The coding agent built into Ultron never changes it.
 
 ## Flagged ambiguities

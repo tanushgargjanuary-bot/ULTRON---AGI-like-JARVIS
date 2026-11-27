@@ -695,6 +695,7 @@ class JarvisLive:
         self.ui             = ui
         self._asst_name     = identity.NAME   # updated each session from config
         self._background_tasks    = set()   # strong references; see _hold
+        self._freeze_watch = None    # core.native_core.FreezeWatch, when the owner switched it on
         self.session              = None
         self.audio_in_queue       = None
         self.out_queue            = None
@@ -1303,6 +1304,13 @@ class JarvisLive:
             except Exception:
                 pass
         self.ui.write_log("SYS: Interrupted — listening...")
+
+    async def _start_freeze_watch(self) -> None:
+        """The freeze watch (`docs/FREEZE_WATCH.md`): off unless the owner switched it on, and the helper
+        program it starts only notes. `native_core.begin` does the work, says what happened in the activity
+        log, and never raises; the handle is kept here because a task nobody refers to can be collected."""
+        from core import native_core
+        self._freeze_watch = await native_core.begin(self.ui.write_log, self.ui.window_silence)
 
     async def _process_watch_loop(self) -> None:
         """Tell the owner when a background program finishes, without cutting in.
@@ -3022,6 +3030,7 @@ class JarvisLive:
         # unrelated that fails to start can never take them with it (tests/test_background_loops.py).
         self._hold(asyncio.create_task(self._digest_loop()), "digest")
         self._hold(asyncio.create_task(self._process_watch_loop()), "process-watch")
+        self._hold(asyncio.create_task(self._start_freeze_watch()), "freeze-watch")
 
         while True:
             try:

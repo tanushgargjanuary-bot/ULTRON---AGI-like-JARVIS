@@ -27,6 +27,73 @@ from core.ipc_client import (
 
 
 class TestHybridIPCE2E(unittest.TestCase):
+    CORE = os.path.join(os.path.dirname(__file__), "..", "native", "ultron-core", "target", "release", "ultron-core.exe")
+
+    def start_core(self, *options: str):
+        """The program with these command-line options, its output in a file, ended when the test is over."""
+        if not os.path.exists(self.CORE):
+            self.skipTest("ultron-core.exe binary not found")
+        output = tempfile.TemporaryFile()
+        self.addCleanup(output.close)
+        proc = subprocess.Popen([self.CORE, *options], stdout=output, stderr=subprocess.STDOUT)
+        self.addCleanup(self.end_core, proc)
+        return proc, output
+
+    @staticmethod
+    def end_core(proc) -> None:
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5.0)
+
+    @staticmethod
+    def said(output) -> str:
+        output.seek(0)
+        return output.read().decode("utf-8", errors="replace")
+
+    def test_a_silent_client_is_noted_not_killed_and_the_helper_ends_with_the_session(self):
+        # The freeze watch, end to end: Ultron goes quiet for longer than the limit while its pipe stays open. The helper
+        # says so once, says when the heartbeats are back, ends nothing, and ends itself when the one session does.
+        proc, output = self.start_core("--once", "--stall-seconds=2", "--wait-seconds=30")
+        time.sleep(1.0)
+
+        async def scenario():
+            client = UltronIPCClient(PIPE_PATH)
+            self.assertTrue(await client.connect(retries=10, delay=0.5))
+            self.assertTrue(await client.send_heartbeat(seq=41))
+            await asyncio.sleep(3.5)                    # silent for longer than the 2-second limit
+            self.assertIsNone(proc.poll(), "the helper ended during the silence")
+            self.assertTrue(client.is_connected, "the helper hung up on a silent client")
+            self.assertTrue(await client.send_heartbeat(seq=42))
+            await asyncio.sleep(0.5)
+            await client.close()                        # an ordinary end of the session
+
+        asyncio.run(scenario())
+        self.assertEqual(proc.wait(timeout=10.0), 0, "with --once the helper ends when its one session does")
+        said = self.said(output)
+        stall, recovered = said.find("STALL"), said.find("RECOVERED")
+        self.assertGreaterEqual(stall, 0, f"no STALL line:\n{said}")
+        self.assertGreater(recovered, stall, f"no RECOVERED line after it:\n{said}")
+        self.assertIn("the last one was number 41", said)
+        self.assertIn("Nothing is restarted", said)
+        self.assertEqual(said.count("STALL"), 1, "a silence is noted once, not once per look at the clock")
+
+    def test_a_helper_nobody_connects_to_ends_by_itself(self):
+        # Ultron can die before it connects. A helper that waited for ever would be left behind.
+        proc, output = self.start_core("--once", "--wait-seconds=2")
+        self.assertEqual(proc.wait(timeout=20.0), 0)
+        self.assertIn("Nobody connected", self.said(output))
+
+    def test_an_option_it_does_not_know_is_refused_with_a_reason(self):
+        proc, output = self.start_core("--restart")
+        self.assertNotEqual(proc.wait(timeout=20.0), 0)
+        said = self.said(output)
+        self.assertIn("unknown argument", said)
+        self.assertIn("--stall-seconds", said)
+
     def test_ipc_named_pipe_and_shared_memory(self):
         core_exe = os.path.join(
             os.path.dirname(__file__), "..", "native", "ultron-core", "target", "release", "ultron-core.exe"
@@ -416,6 +483,46 @@ class HeartbeatEmitterTests(unittest.TestCase):
                          "20 failed ticks must make ONE note, not twenty")
         self.assertEqual(wheres.count("heartbeat.restored"), 1)
         self.assertGreater(stub.connect_calls, 20, "it must keep trying to reconnect")
+
+    def test_a_gate_that_gives_a_reason_holds_the_beat_back_and_says_why_once(self):
+        async def scenario():
+            stub = StubClient()
+            reasons = ["the window has not answered for 12 s"]
+            emitter = HeartbeatEmitter(stub, interval=0.005, gate=lambda: reasons[0])
+            self.assertTrue(await emitter.start())
+            await asyncio.sleep(0.15)                       # about 30 ticks, every one held back
+            held = list(stub.beats)
+            reasons[0] = None                               # the window answers again
+            await wait_until(lambda: len(stub.beats) >= 2)
+            await emitter.stop()
+            return held, stub.beats
+
+        held, beats = asyncio.run(scenario())
+        self.assertEqual(held, [], "a held-back beat must not reach the pipe")
+        self.assertGreaterEqual(len(beats), 2, "the beats resume as soon as the gate lets them")
+        wheres = [n["where"] for n in failures.recent()]
+        self.assertEqual(wheres.count("heartbeat.lost"), 1, "thirty held ticks make ONE note")
+        self.assertEqual(wheres.count("heartbeat.restored"), 1)
+        lost = next(n for n in failures.recent() if n["where"] == "heartbeat.lost")
+        self.assertIn("the window has not answered", lost["error"])
+
+    def test_a_gate_that_raises_holds_the_beat_back_and_the_error_is_noted(self):
+        # A check that cannot be made is not a pass: the beats stop, and the supervisor notes the silence.
+        def broken():
+            raise RuntimeError("gate exploded")
+
+        async def scenario():
+            stub = StubClient()
+            emitter = HeartbeatEmitter(stub, interval=0.005, gate=broken)
+            await emitter.start()
+            await wait_until(lambda: any(n["where"] == "heartbeat.lost" for n in failures.recent()))
+            await emitter.stop()
+            return stub.beats
+
+        self.assertEqual(asyncio.run(scenario()), [])
+        lost = [n for n in failures.recent() if n["where"] == "heartbeat.lost"]
+        self.assertEqual(len(lost), 1)
+        self.assertIn("gate exploded", lost[0]["error"])
 
     def test_an_exception_from_the_client_is_noted_not_swallowed(self):
         async def scenario():

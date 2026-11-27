@@ -8,9 +8,12 @@ present but not running:
 
 - `native/ultron-core/src/main.rs` starts two things: the shared audio ring and the named-pipe
   IPC server (`\\.\pipe\ultron-core`). That is all it starts.
-- The IPC server echoes heartbeat frames (channel `0x06`) and keeps no clock, so **nothing in
-  the Rust core terminates a stalled worker today**, and nothing counts crashes.
-- `watchdog::boot_guard`, `git::recovery`, `orchestrator::blue_green`, `process::supervisor`
+- The IPC server echoes heartbeat frames (channel `0x06`) and, since 2026-11-27, keeps a clock
+  (`watchdog::stall`): when Ultron has been silent for 30 seconds it writes one line to its log
+  (`STALL`), and one when the heartbeats return (`RECOVERED`). It **only notes**: nothing in the
+  Rust core terminates a stalled worker, and nothing counts crashes. Ultron starts the helper
+  only when the owner has switched the freeze watch on (`docs/FREEZE_WATCH.md`).
+- `watchdog::boot_guard` (the rest of `watchdog` apart from `stall`), `git::recovery`, `orchestrator::blue_green`, `process::supervisor`
   (the Job Object sandbox), `vision::capture` and `integrity::referee_sealer` are library
   modules that `main.rs` does not start. This document says they are **NOT started by
   `main.rs`**; `tests/test_native_claims.py` fails when that stops being true, so whoever wires
@@ -21,10 +24,13 @@ present but not running:
 - `git::recovery` runs `git reset --hard` in the repository, which discards uncommitted work,
   and falls back to the current `HEAD` when no verified tag is recorded; keep it unwired until
   it refuses to run on a dirty tree.
-- Nothing in CI builds or tests the Rust crate or the Go sidecar (`sidecar/watchd`). The Rust
-  crate targets Windows only (`tokio::net::windows::named_pipe`, the `windows` crate).
+- `.github/workflows/native-build.yml` builds and tests the Rust crate on Windows (since
+  2026-11-27) and runs the end-to-end test against the program it built. Nothing in CI builds or
+  tests the Go sidecar (`sidecar/watchd`). The Rust crate targets Windows only
+  (`tokio::net::windows::named_pipe`, the `windows` crate).
 - What does run, in Python: `core/ast_guardian.py`, `core/policy.py`, `core/self_change.py`
-  (five stages, two confirmations), `core/heartbeat.py` and `core/ipc_client.py`.
+  (five stages, two confirmations), and, only when the freeze watch is on, `core/native_core.py`,
+  `core/heartbeat.py` and `core/ipc_client.py`.
 
 ## Master System Diagram
 
@@ -441,8 +447,8 @@ The background evolutionary loop operates on a 4-hour cycle:
 
 ### 3.1 Dead Man's Switch / Boot Loop Guard
 
-- The Rust supervisor receives heartbeats every 5 seconds over the `\\.\pipe\ultron-core` Named Pipe (design; today the server only echoes them, see "Status of this document").
-- If no heartbeat is received within 30 seconds, the supervisor terminates the stalled worker.
+- The Rust supervisor receives heartbeats every 5 seconds over the `\\.\pipe\ultron-core` Named Pipe (today the server echoes each one and keeps a clock that notes a silence; see "Status of this document").
+- If no heartbeat is received within 30 seconds, the supervisor terminates the stalled worker (design; today the helper only notes the silence).
 - **Boot Loop Detection**: If 3 crashes occur within a 90-second rolling window:
   1. Identifies the last verified release tag (`config/last_verified_release.txt`).
   2. Executes `git reset --hard <verified_tag>`.

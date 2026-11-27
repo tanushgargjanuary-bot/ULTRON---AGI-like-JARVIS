@@ -1,6 +1,7 @@
 """The check that builds `native/ultron-core`, and what it is allowed to claim.
 
-`native/ultron-core` is a Rust program that nothing in Ultron starts. Until 2026-11-26 nothing built it either: the
+`native/ultron-core` is a Rust program that Ultron starts only when the owner has switched the freeze watch on
+(`docs/FREEZE_WATCH.md`). Until 2026-11-26 nothing built it: the
 notes beside it said "NOT COMPILED, NOT RUN", and a test file said that nothing proved the code compiles. The owner
 kept it ("I think it may be needed") and then wrote: "Please build it. add a build check too."
 
@@ -35,7 +36,10 @@ def job_text(workflow: str, job: str) -> str:
 
 
 class TheNativeBuildCheck(unittest.TestCase):
-    WATCHED = ("native/**", ".github/workflows/native-build.yml")
+    # `native/**` and the workflow, and since the freeze watch the Python end of the pipe: the end-to-end test lives in
+    # `tests/test_hybrid_ipc.py`, and a change to the client that breaks it must start the build that runs it.
+    WATCHED = ("native/**", ".github/workflows/native-build.yml", "core/ipc_client.py", "core/heartbeat.py",
+               "core/native_core.py", "tests/test_hybrid_ipc.py")
     REQUIRED_CHECKS = ("fast offline gate", "linux \u2014 suite and instruments",
                        "windows \u2014 the machine the claims are about")
 
@@ -81,12 +85,19 @@ class TheNativeBuildCheck(unittest.TestCase):
         self.assertRegex(self.build, r"(?m)^\s+if-no-files-found:\s*error\s*$")
         self.assertRegex(self.build, r"(?m)^\s+retention-days:\s*\d+\s*$")
 
-    def test_it_runs_when_native_or_the_workflow_changes(self):
+    def test_it_runs_when_native_the_workflow_or_the_python_end_of_the_pipe_changes(self):
         listed = {event: re.findall(r'(?m)^\s+-\s+"([^"]+)"\s*$', self.event_block(event))
                   for event in ("pull_request", "push")}
         for event, paths in listed.items():
             with self.subTest(event=event):
                 self.assertEqual(sorted(paths), sorted(self.WATCHED), f"the paths that start a {event} run")
+
+    def test_every_file_it_watches_exists(self):
+        # A path filter that names a file which is not there never fires, and nothing says so.
+        for path in self.WATCHED:
+            if "*" not in path:
+                with self.subTest(path=path):
+                    self.assertTrue((ROOT / path).is_file(), f"{path} is watched and does not exist")
 
     def test_it_also_runs_every_month_and_by_hand(self):
         # The compiler on the runner moves even when the code does not.

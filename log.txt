@@ -1,3 +1,15 @@
+=== 2026-11-27 · build 1.2.38 · the Rust helper notes when Ultron freezes ===
+
+The owner chose (a) for the helper's first job: watch Ultron and note when it freezes, no restarts.
+
+DONE
+  - Rust: a clock (watchdog/stall.rs) and options --once, --wait-seconds, --stall-seconds in ipc/server.rs. After 30 s without a heartbeat it writes one STALL line, and one RECOVERED line when they return. It ends nothing.
+  - Python: core/native_core.py starts it, only when the owner switches it on (button in CONTROLS, or native_watch_enabled in config/api_keys.json). A heartbeat is sent only while the window answers too (a one-second pulse in ui.py). The next start with the watch on says in the activity log if the last run it watched had a freeze.
+  - Tests: tests/test_native_watch.py (57), three end-to-end tests that start the real program, two gate tests; 35 planted mistakes caught.
+  - Tests that said "keeps no clock" now say "only notes"; the spec's stale "nothing in CI builds the crate" is corrected. docs/FREEZE_WATCH.md is the guide.
+RETRO: a check for "the options agree" found the word in the unit tests of the same file and passed after the code stopped reading it; a planted mistake found it. Fix: look for the exact form in the code that reads it.
+NOT VERIFIED: that the Rust compiles (the pull request's native build is the first proof); a real frozen window on a real PC; false alarms after sleep; the program is not in the repository (download from the native build check, or cargo build --release).
+
 === 2026-11-27 · build 1.2.38 · the Rust helper is built, and a check keeps it building ===
 
 The owner kept the Rust helper ("I think it may be needed") and asked: "Please build it. add a build check too."
