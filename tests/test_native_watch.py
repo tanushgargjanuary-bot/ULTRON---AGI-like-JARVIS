@@ -158,7 +158,7 @@ class StartingAndStoppingTheHelper(unittest.TestCase):
     def test_stopping_asks_the_helper_to_end_and_waits_for_it(self):
         process = mock.Mock()
         process.poll.return_value = None
-        native_core.NativeCore(process=process, started_at=0.0).stop()
+        native_core.NativeCore(process=process).stop()
         process.terminate.assert_called_once()
         process.wait.assert_called_once()
         process.kill.assert_not_called()
@@ -167,13 +167,13 @@ class StartingAndStoppingTheHelper(unittest.TestCase):
         process = mock.Mock()
         process.poll.return_value = None
         process.wait.side_effect = [native_core.subprocess.TimeoutExpired("ultron-core", 5), None]
-        native_core.NativeCore(process=process, started_at=0.0).stop()
+        native_core.NativeCore(process=process).stop()
         process.kill.assert_called_once()
 
     def test_stopping_a_helper_that_has_already_ended_does_nothing(self):
         process = mock.Mock()
         process.poll.return_value = 0
-        native_core.NativeCore(process=process, started_at=0.0).stop()
+        native_core.NativeCore(process=process).stop()
         process.terminate.assert_not_called()
 
     def test_a_stop_that_fails_is_noted_and_not_raised(self):
@@ -181,7 +181,7 @@ class StartingAndStoppingTheHelper(unittest.TestCase):
         process = mock.Mock()
         process.poll.return_value = None
         process.terminate.side_effect = PermissionError("access denied")
-        native_core.NativeCore(process=process, started_at=0.0).stop()
+        native_core.NativeCore(process=process).stop()
         self.assertIn("native_core.stop", [note["where"] for note in failures.recent()])
 
 
@@ -227,6 +227,7 @@ class WhatTheHelperNotedLastTime(unittest.TestCase):
     def test_the_sentence_counts_correctly_in_the_singular_and_the_plural(self):
         one = native_core.report_for({"stalls": 1, "longest": 0, "unfinished": False})
         self.assertIn("answering 1 time.", one)
+        self.assertIn("in the last run it watched", one, "a run with the watch off writes nothing, so \"last time\" would be untrue")
         self.assertNotIn("1 times", one)
         two = native_core.report_for({"stalls": 2, "longest": 47, "unfinished": True})
         self.assertIn("2 times", two)
@@ -327,20 +328,17 @@ class TheWindowGate(unittest.TestCase):
 
 
 class FakeEmitter:
-    """Stands in for `HeartbeatEmitter`: what `begin` hands it, and whether it was started and stopped."""
+    """Stands in for `HeartbeatEmitter`: what `begin` hands it, and whether it starts."""
 
     made: list = []
     will_start = True
 
     def __init__(self, client=None, interval=5.0, gate=None):
-        self.gate, self.stopped = gate, False
+        self.gate = gate
         FakeEmitter.made.append(self)
 
     async def start(self):
         return FakeEmitter.will_start
-
-    async def stop(self):
-        self.stopped = True
 
 
 class BeginStartsItBehindTheSwitch(WithATemporaryConfig):
@@ -436,12 +434,6 @@ class BeginStartsItBehindTheSwitch(WithATemporaryConfig):
         self.assertIn("native_core.begin", [note["where"] for note in failures.recent()])
         self.assertEqual(self.said, ["ERR: Freeze watch could not start: boom"])
 
-    def test_stopping_the_watch_stops_the_beats_and_then_the_helper(self):
-        cm.save_native_watch_enabled(True)
-        watch = self.begin()
-        asyncio.run(watch.stop())
-        self.assertTrue(watch.emitter.stopped)
-        self.helper.stop.assert_called_once()
 
 
 class TheStartInMain(unittest.TestCase):

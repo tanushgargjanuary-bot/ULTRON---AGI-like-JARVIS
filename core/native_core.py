@@ -28,7 +28,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -107,11 +106,6 @@ class NativeCore:
     """The running helper."""
 
     process: subprocess.Popen
-    started_at: float = 0.0
-
-    @property
-    def alive(self) -> bool:
-        return self.process.poll() is None
 
     def stop(self) -> None:
         """End the helper: ask, wait five seconds, then insist. Safe to call twice and after it has ended."""
@@ -149,7 +143,7 @@ def start(stall_seconds: float = STALL_SECONDS, wait_seconds: float = WAIT_SECON
     finally:
         if output is not None:
             output.close()          # the child keeps its own copy of the handle
-    return NativeCore(process=process, started_at=time.monotonic())
+    return NativeCore(process=process)
 
 
 # ── what the helper noted last time ─────────────────────────────────────────────────────────────────────
@@ -158,11 +152,12 @@ _RECOVERED_AFTER = re.compile(r"back after (\d+) s of silence")
 
 
 def previous_run(path: Optional[Path] = None) -> dict:
-    """What the helper wrote in the run BEFORE this one: how many freezes, the longest that ended, and
+    """What the helper wrote in the last run it watched: how many freezes, the longest that ended, and
     whether the last one was still going when the log stopped.
 
-    Read before `start()` adds the next header, so "after the last header" is the previous run. A missing
-    log, or one with no freeze in it, is an empty dict.
+    Read before `start()` adds the next header, so "after the last header" is the previous run that had
+    the helper. A run with the freeze watch off writes no header, so it is skipped, and the report says
+    "the last run it watched" for that reason. A missing log, or one with no freeze in it, is an empty dict.
     """
     path = path or log_path()
     try:
@@ -185,11 +180,11 @@ def previous_run(path: Optional[Path] = None) -> dict:
 
 
 def report_for(run: dict) -> Optional[str]:
-    """The one line Ultron says at start when the last run had a freeze. None when it had none."""
+    """The one line Ultron says at start when the last run it watched had a freeze. None when it had none."""
     stalls = run.get("stalls", 0)
     if not stalls:
         return None
-    parts = [f"last time, Ultron stopped answering {stalls} time{'s' if stalls != 1 else ''}"]
+    parts = [f"in the last run it watched, Ultron stopped answering {stalls} time{'s' if stalls != 1 else ''}"]
     if run.get("longest"):
         parts.append(f"the longest one that ended lasted {run['longest']} s")
     if run.get("unfinished"):
@@ -211,14 +206,11 @@ def window_gate(window_silence: Callable[[], float]) -> Callable[[], Optional[st
 
 @dataclass
 class FreezeWatch:
-    """What `begin` hands back. It keeps the emitter alive: a task nobody refers to can be collected."""
+    """What `begin` hands back. It keeps the emitter alive: a task nobody refers to can be collected. Nothing
+    stops either part before Ultron ends: the helper ends with the pipe (`--once`) and with `atexit`."""
 
     helper: NativeCore
     emitter: HeartbeatEmitter
-
-    async def stop(self) -> None:
-        await self.emitter.stop()
-        self.helper.stop()
 
 
 async def begin(say: Callable[[str], None], window_silence: Callable[[], float]) -> Optional[FreezeWatch]:

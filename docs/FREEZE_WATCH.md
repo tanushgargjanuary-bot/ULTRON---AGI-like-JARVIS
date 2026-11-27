@@ -13,9 +13,10 @@ Added 2026-11-27. You chose it ("watch Ultron and note when it freezes, no resta
 2. Every 5 seconds Ultron sends the helper a small message, a **heartbeat**.
 3. A heartbeat is sent only while two things answer: the assistant's own loop, and the window. The window counts as silent
    when it has not run its one-second timer for more than 10 seconds.
-4. If no heartbeat arrives for 30 seconds, the helper writes a line that starts with `[Watch] STALL`. When heartbeats come
+4. If no heartbeat arrives for 30 seconds, the helper writes a line that contains `[Watch] STALL`. When heartbeats come
    back, it writes `[Watch] RECOVERED` and says how long the silence lasted.
-5. The next time Ultron starts, it reads that log. If the last run had a freeze, one line in the activity log tells you.
+5. The next time Ultron starts with the watch on, it reads that log. If the last run it watched had a freeze, one line in
+   the activity log tells you. A run with the watch off is not in the log and is skipped.
 6. When Ultron closes, the helper ends too. If Ultron never connects, the helper ends by itself after 120 seconds.
 
 Example, as it appears in `logs/child-ultron-core.log`:
