@@ -695,7 +695,7 @@ class JarvisLive:
         self.ui             = ui
         self._asst_name     = identity.NAME   # updated each session from config
         self._background_tasks    = set()   # strong references; see _hold
-        self._freeze_watch        = None    # core.native_core.FreezeWatch, when the owner switched it on
+        self._freeze_watch = None    # core.native_core.FreezeWatch, when the owner switched it on
         self.session              = None
         self.audio_in_queue       = None
         self.out_queue            = None
