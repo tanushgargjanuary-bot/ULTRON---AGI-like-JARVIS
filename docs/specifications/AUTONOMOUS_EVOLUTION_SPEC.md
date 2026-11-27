@@ -447,7 +447,7 @@ The background evolutionary loop operates on a 4-hour cycle:
 
 ### 3.1 Dead Man's Switch / Boot Loop Guard
 
-- The Rust supervisor receives heartbeats every 5 seconds over the `\\.\pipe\ultron-core` Named Pipe (design; today the server only echoes them, see "Status of this document").
+- The Rust supervisor receives heartbeats every 5 seconds over the `\\.\pipe\ultron-core` Named Pipe (today the server echoes each one and keeps a clock that notes a silence; see "Status of this document").
 - If no heartbeat is received within 30 seconds, the supervisor terminates the stalled worker (design; today the helper only notes the silence).
 - **Boot Loop Detection**: If 3 crashes occur within a 90-second rolling window:
   1. Identifies the last verified release tag (`config/last_verified_release.txt`).

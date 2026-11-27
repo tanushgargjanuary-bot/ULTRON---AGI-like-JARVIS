@@ -484,6 +484,46 @@ class HeartbeatEmitterTests(unittest.TestCase):
         self.assertEqual(wheres.count("heartbeat.restored"), 1)
         self.assertGreater(stub.connect_calls, 20, "it must keep trying to reconnect")
 
+    def test_a_gate_that_gives_a_reason_holds_the_beat_back_and_says_why_once(self):
+        async def scenario():
+            stub = StubClient()
+            reasons = ["the window has not answered for 12 s"]
+            emitter = HeartbeatEmitter(stub, interval=0.005, gate=lambda: reasons[0])
+            self.assertTrue(await emitter.start())
+            await asyncio.sleep(0.15)                       # about 30 ticks, every one held back
+            held = list(stub.beats)
+            reasons[0] = None                               # the window answers again
+            await wait_until(lambda: len(stub.beats) >= 2)
+            await emitter.stop()
+            return held, stub.beats
+
+        held, beats = asyncio.run(scenario())
+        self.assertEqual(held, [], "a held-back beat must not reach the pipe")
+        self.assertGreaterEqual(len(beats), 2, "the beats resume as soon as the gate lets them")
+        wheres = [n["where"] for n in failures.recent()]
+        self.assertEqual(wheres.count("heartbeat.lost"), 1, "thirty held ticks make ONE note")
+        self.assertEqual(wheres.count("heartbeat.restored"), 1)
+        lost = next(n for n in failures.recent() if n["where"] == "heartbeat.lost")
+        self.assertIn("the window has not answered", lost["error"])
+
+    def test_a_gate_that_raises_holds_the_beat_back_and_the_error_is_noted(self):
+        # A check that cannot be made is not a pass: the beats stop, and the supervisor notes the silence.
+        def broken():
+            raise RuntimeError("gate exploded")
+
+        async def scenario():
+            stub = StubClient()
+            emitter = HeartbeatEmitter(stub, interval=0.005, gate=broken)
+            await emitter.start()
+            await wait_until(lambda: any(n["where"] == "heartbeat.lost" for n in failures.recent()))
+            await emitter.stop()
+            return stub.beats
+
+        self.assertEqual(asyncio.run(scenario()), [])
+        lost = [n for n in failures.recent() if n["where"] == "heartbeat.lost"]
+        self.assertEqual(len(lost), 1)
+        self.assertIn("gate exploded", lost[0]["error"])
+
     def test_an_exception_from_the_client_is_noted_not_swallowed(self):
         async def scenario():
             stub = StubClient()

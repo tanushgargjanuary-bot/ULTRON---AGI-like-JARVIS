@@ -1,21 +1,26 @@
 name: native build
 
-# `native/ultron-core` is a Rust program that nothing in Ultron starts. Until this file existed nothing built it either:
+# `native/ultron-core` is a Rust program. Ultron starts it only when the owner has switched the freeze watch on
+# (docs/FREEZE_WATCH.md). Until this file existed nothing built it:
 # the notes beside it said "NOT COMPILED, NOT RUN", and a test file said that nothing proved the code compiles. The owner
 # kept it on 2026-11-26 ("I think it may be needed") and wrote: "Please build it. add a build check too."
 #
 # One job, on Windows, because the crate uses Win32 (named pipes, shared memory, job objects) and builds nowhere else.
 # It is not a required check, so a slow or failing build never blocks an unrelated merge. It runs when anything under
-# native/ or this file changes, once a month (the compiler on the runner moves even when the code does not), and by hand.
+# native/ or this file changes, or the Python end of the pipe does (the client, the heartbeat, the start, the test),
+# once a month (the compiler on the runner moves even when the code does not), and by hand.
 #
 #   build  The crate, from the versions in Cargo.lock (`--locked`: a manifest that the lock does not match fails here),
-#          then the crate's own unit tests, then the program it built is started and the end-to-end test written for it
-#          is run against it: it opens the shared-memory ring and the named pipe, sends a heartbeat and ends the session.
-#          That test skips when it finds no binary, and a skip fails this job. Last, the program is kept as a download.
+#          then the crate's own unit tests, then the program it built is started and the end-to-end tests written for it
+#          are run against it: it opens the shared-memory ring and the named pipe, sends a heartbeat and ends the session;
+#          a client that goes silent is noted (one STALL line, one RECOVERED line) and not disconnected; a helper that
+#          nobody connects to ends by itself; an option it does not know is refused.
+#          Those tests skip when they find no binary, and a skip fails this job. Last, the program is kept as a download.
 #
-# What this does not show: that the program works as a part of Ultron. Nothing starts it, and the end-to-end test reaches
-# only what main.rs starts (the ring and the pipe). The watchdog, the rollback, the blue/green swap, the job-object limits
-# and the sealer are compiled, and are not run.
+# What this does not show: that the freeze watch works on a real PC. The tests start the program and drive it with a
+# Python client; they do not start Ultron, and no window is frozen. They reach what main.rs starts (the ring, the pipe
+# and the stall note). The rollback, the blue/green swap, the job-object limits and the sealer are compiled, and are
+# not run.
 #
 # tests/test_native_build_check.py holds this file to what it says.
 
@@ -25,11 +30,19 @@ on:
     paths:
       - "native/**"
       - ".github/workflows/native-build.yml"
+      - "core/ipc_client.py"
+      - "core/heartbeat.py"
+      - "core/native_core.py"
+      - "tests/test_hybrid_ipc.py"
   pull_request:
     branches: [main]
     paths:
       - "native/**"
       - ".github/workflows/native-build.yml"
+      - "core/ipc_client.py"
+      - "core/heartbeat.py"
+      - "core/native_core.py"
+      - "tests/test_hybrid_ipc.py"
   schedule:
     # The 17th at 05:41 UTC: away from the fresh-install check (the 15th), Dependabot's run at the start of the month and
     # the upstream watch (days 1, 4, 7, 10, 13, 16, 19, 22 and 25).

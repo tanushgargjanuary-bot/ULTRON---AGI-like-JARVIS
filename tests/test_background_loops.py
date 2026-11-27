@@ -50,11 +50,13 @@ class TheDigestAndTheWatcherAlwaysStart(unittest.TestCase):
             inside = set(called_names(node))
             self.assertNotIn("_digest_loop", inside, f"started inside the try at line {node.lineno}")
             self.assertNotIn("_process_watch_loop", inside, f"started inside the try at line {node.lineno}")
+            self.assertNotIn("_start_freeze_watch", inside, f"started inside the try at line {node.lineno}")
 
     def test_they_are_started_at_all(self):
         started = set(called_names(method("run")))
         self.assertIn("_digest_loop", started)
         self.assertIn("_process_watch_loop", started)
+        self.assertIn("_start_freeze_watch", started)       # off unless the owner switched it on, but always asked
 
     def test_each_long_lived_loop_is_created_inside_a_hold_call(self):
         # `asyncio.create_task(x)` as a bare statement drops the only strong reference to the
@@ -64,7 +66,7 @@ class TheDigestAndTheWatcherAlwaysStart(unittest.TestCase):
             if (isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "_hold"
                     and node.args):
                 held.update(called_names(node.args[0]))
-        for loop in ("_digest_loop", "_process_watch_loop"):
+        for loop in ("_digest_loop", "_process_watch_loop", "_start_freeze_watch"):
             with self.subTest(loop=loop):
                 self.assertIn(loop, held, f"{loop} is started without being held")
 

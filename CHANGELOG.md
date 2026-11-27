@@ -10,6 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The Rust helper notes when Ultron freezes (freeze watch), 2026-11-27
+
+**Asked for.** The owner, asked what the Rust helper should do first, chose "(a)": watch Ultron and note when it freezes, no restarts. "Switched off until he switches it on" was my guess and he did not change it.
+
+**What it does.** When the owner switches it on (a button in the CONTROLS drawer, or `native_watch_enabled: true` in `config/api_keys.json`), Ultron starts the helper program with `--once`, so it ends with Ultron. Every 5 seconds Ultron sends it a heartbeat. When none has come for 30 seconds the helper writes one line, `[Watch] STALL`, to `logs/child-ultron-core.log`, and `[Watch] RECOVERED` (with the length of the silence) when they return. The next time Ultron starts, it reads that log and says in the activity log if the last run had a freeze. It restarts nothing and ends nothing. `docs/FREEZE_WATCH.md` is the guide.
+
+**What a heartbeat means.** One is sent only while the window answers too: the window's one-second timer stamps the time (`ui.py`, `_tick_clock`), and a stamp older than 10 seconds holds the beat back (`core/native_core.py`, `window_gate`; the gate is a new argument of `HeartbeatEmitter`). So the beats stop when the window thread hangs, when the assistant's loop hangs, and when the whole program hangs. Without this a hung window and a working loop would have looked healthy. The log line cannot say which of the three it was; the failure trail says "the window has not answered" when it was the window.
+
+**What changed.**
+- Rust: `watchdog/stall.rs` (a clock that is given the time, so seven unit tests run a minute of silence in no time); `ipc/server.rs` (a clock and a ticker per session; options `--once`, `--wait-seconds=N`, `--stall-seconds=N`, with four unit tests); `main.rs` reads the options and writes its log without colour codes. `HEARTBEAT_TIMEOUT`, which was declared and used nowhere, is now the default limit.
+- Python: `core/native_core.py` (new: where the program is, start, stop, what the last run noted, the start `main.py` calls); `core/heartbeat.py` (the gate); `memory/config_manager.py` (the setting: only a saved `true` counts); `main.py` (one task, held, outside any `try`); `ui.py` (the button, the pulse, `JarvisUI.window_silence`).
+- Tests: `tests/test_native_watch.py` (new, 58 tests); three end-to-end tests that start the real program (`tests/test_hybrid_ipc.py`; they run in `native-build.yml`); two gate tests for the emitter; `tests/test_background_loops.py` now also holds the new task.
+- Words and workflow: `docs/FREEZE_WATCH.md`, three glossary terms (helper, heartbeat, freeze watch), `native-build.yml` also starts on a change to the Python end of the pipe (`core/ipc_client.py`, `core/heartbeat.py`, `core/native_core.py`, `tests/test_hybrid_ipc.py`).
+
+**Tests that said the old thing, changed on purpose.** `tests/test_native_claims.py` asserted that `server.rs` has no `Instant`, `timeout`, `HEARTBEAT_TIMEOUT` or `sleep`. It now asserts the server uses the clock and that `server.rs` and `stall.rs` contain nothing that can start or end a process (stronger on the point that matters). `tests/test_native_build_check.py` listed two paths that start the build; it lists six, and a new test checks that each exists. The spec's "Status of this document" now says what runs, and its stale line "Nothing in CI builds the Rust crate" (untrue since #48) is corrected.
+
+**Effect.** None until the owner switches it on, and then only if he has put the program in place. The program is not in the repository: it is the `ultron-core-windows-x64` download of the `native build` check (kept 14 days) or `cargo build --release`. Without it, the button says where it should be and nothing else happens. No new library, no download and no network call.
+
+**Planted mistakes.** 35 faults, all caught by a test (`mutate_watch.py`); two valid edits stay green; an edit that changes the window grace without the guide is red, on purpose. The first run missed 5: one was a loose check (the unit tests of `server.rs` spell `"--once"` too, so a look for the string passed after the real code stopped reading it; now the exact form), and four were faults too weak to count (I removed one of two occurrences of a sentence the guide says twice).
+
+**Not verified.**
+- The Rust compiles and its tests pass on Windows: the first proof is the `native build` run on this pull request.
+- A real frozen window on a real PC. The pieces are proven one by one; the chain has not been seen on the owner's machine.
+- A false alarm after the PC wakes from sleep (the helper's clock may count the sleep).
+- That Windows lets an unsigned program run without a prompt.
+
+**To get it back to how it was.** Switch it off (the same button, or `native_watch_enabled: false`): the helper then does not start. To remove the feature, revert the merge of this pull request, which is one command while it is the newest merge.
+
 ### The Rust helper is built, and a check keeps it building, 2026-11-27
 
 **Asked for.** The owner, after I explained what the Rust helper is and he said "I think it may be needed": "Please build it. add a build check too."

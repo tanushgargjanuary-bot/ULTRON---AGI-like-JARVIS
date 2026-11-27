@@ -422,6 +422,19 @@ def save_brief_enabled(enabled: bool) -> None:
     _save_flag("morning_brief_enabled", enabled)
 
 
+def get_native_watch_enabled() -> bool:
+    """The freeze watch (`docs/FREEZE_WATCH.md`): off on a new install, and only a saved `true` turns it on.
+
+    It starts a second program, so a value that is merely truthy ("yes", 1) is not consent.
+    """
+    value = load_api_keys().get("native_watch_enabled", False)
+    return value if isinstance(value, bool) else False
+
+
+def save_native_watch_enabled(enabled: bool) -> None:
+    _save_flag("native_watch_enabled", enabled)
+
+
 # ── Audio devices ────────────────────────────────────────────────────────────
 # Stored as device NAMES, not sounddevice indices. Indices shift every time a
 # USB device is plugged in or removed, so a saved index silently starts pointing
