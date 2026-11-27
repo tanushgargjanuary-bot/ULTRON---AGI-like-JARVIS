@@ -5,7 +5,8 @@ watchdog, a boot-loop guard, git rollback, blue/green swaps, a job-object sandbo
 "hardware" referee seal. `native/ultron-core/src/main.rs` starts the audio ring and the IPC
 server and nothing else; the rest is library code nobody calls. The document now says so
 under "Status of this document", and these tests keep that statement true in both
-directions. No Rust toolchain runs in this repository's CI, so the check is on the source.
+directions. The native build check compiles and tests the crate and starts it, but it cannot say which modules
+`main.rs` starts, so that is still checked on the source.
 """
 
 from __future__ import annotations

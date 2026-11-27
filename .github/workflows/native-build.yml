@@ -1,0 +1,109 @@
+name: native build
+
+# `native/ultron-core` is a Rust program that nothing in Ultron starts. Until this file existed nothing built it either:
+# the notes beside it said "NOT COMPILED, NOT RUN", and a test file said that nothing proved the code compiles. The owner
+# kept it on 2026-11-26 ("I think it may be needed") and wrote: "Please build it. add a build check too."
+#
+# One job, on Windows, because the crate uses Win32 (named pipes, shared memory, job objects) and builds nowhere else.
+# It is not a required check, so a slow or failing build never blocks an unrelated merge. It runs when anything under
+# native/ or this file changes, once a month (the compiler on the runner moves even when the code does not), and by hand.
+#
+#   build  The crate, from the versions in Cargo.lock (`--locked`: a manifest that the lock does not match fails here),
+#          then the crate's own unit tests, then the program it built is started and the end-to-end test written for it
+#          is run against it: it opens the shared-memory ring and the named pipe, sends a heartbeat and ends the session.
+#          That test skips when it finds no binary, and a skip fails this job. Last, the program is kept as a download.
+#
+# What this does not show: that the program works as a part of Ultron. Nothing starts it, and the end-to-end test reaches
+# only what main.rs starts (the ring and the pipe). The watchdog, the rollback, the blue/green swap, the job-object limits
+# and the sealer are compiled, and are not run.
+#
+# tests/test_native_build_check.py holds this file to what it says.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "native/**"
+      - ".github/workflows/native-build.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native/**"
+      - ".github/workflows/native-build.yml"
+  schedule:
+    # The 17th at 05:41 UTC: away from the fresh-install check (the 15th), Dependabot's run at the start of the month and
+    # the upstream watch (days 1, 4, 7, 10, 13, 16, 19, 22 and 25).
+    - cron: "41 5 17 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A branch or a pull request: a newer push replaces the run in progress. `main`: every commit keeps its own run.
+  group: native-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  CARGO_TERM_COLOR: never
+
+jobs:
+  build:
+    name: Rust helper builds — Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        # `shell: bash` on every step, as in verify.yml: GitHub runs a step in PowerShell otherwise.
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # The runner image carries Rust (Cargo, Rustc, Rustup). No cache anywhere in this file, on purpose: the point is what
+      # a fresh machine does with the code today.
+      - name: Which compiler this machine has
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Build the program, from the versions in Cargo.lock
+        run: cargo build --locked --release --manifest-path native/ultron-core/Cargo.toml
+
+      - name: The crate's own unit tests
+        run: cargo test --locked --manifest-path native/ultron-core/Cargo.toml
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: What the end-to-end test imports
+        run: python -m pip install "numpy>=1.24,<3"
+
+      # The test looks for native/ultron-core/target/release/ultron-core.exe, which the build above leaves there.
+      - name: Start the program and talk to it
+        run: |
+          python -m unittest -v tests.test_hybrid_ipc.TestHybridIPCE2E > e2e.log 2>&1 || { cat e2e.log; exit 1; }
+          cat e2e.log
+          if grep -q "skipped" e2e.log; then
+            echo "the end-to-end test skipped: the program was not where it looks for it"
+            exit 1
+          fi
+
+      - name: What was built
+        if: ${{ always() && hashFiles('native/ultron-core/target/release/ultron-core.exe') != '' }}
+        run: |
+          {
+            echo "### Rust helper, Windows"
+            echo '```'
+            rustc --version
+            ls -l native/ultron-core/target/release/ultron-core.exe
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the program
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ultron-core-windows-x64
+          path: native/ultron-core/target/release/ultron-core.exe
+          if-no-files-found: error
+          retention-days: 14

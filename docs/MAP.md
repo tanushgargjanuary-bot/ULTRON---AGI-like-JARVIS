@@ -16,7 +16,7 @@ edit the module docstring instead and run it again.
 | `atomic_file.py` | 32 | core/atomic_file.py — the one retry for "another program has this file open". | test_atomic_file, test_config_safety, test_memory_safety |
 | `audio_devices.py` | 694 | core/audio_devices.py — pick which microphone and which speakers JARVIS uses. | test_crash |
 | `audio_features.py` | 238 | core/audio_features.py — is that speech, and have they finished? | test_audio_features |
-| `audio_ring.py` | 66 | Shared memory circular audio ring buffer reader for ULTRON. | test_hybrid_ipc |
+| `audio_ring.py` | 66 | Shared memory circular audio ring buffer reader for ULTRON. | test_hybrid_ipc, test_native_build_check |
 | `avatar.py` | 791 | Holographic AI head for the HUD centre — the thing that used to be a ring stack | test_expression, test_hud_fixes |
 | `avatar_mesh.py` | 351 | Human head mesh for the HUD avatar. | — |
 | `background_tasks.py` | 40 | core/background_tasks.py — keep a loop that lives as long as the process, and say how it ended. | test_background_loops |
@@ -39,7 +39,7 @@ edit the module docstring instead and run it again.
 | `failures.py` | 130 | Where a failure goes when nothing can be done about it. | test_background_loops, test_child_output, test_computer_capability, test_config_safety, test_crash, test_dispatch_smoke, test_file_controller_hardening, test_gemini_resilience, test_health_center, test_hybrid_ipc, test_installer, test_leaf_generations, test_memory_safety, test_providers_panel_reports, test_self_change, test_suite_assistant, test_tool_contract, test_triggers, test_tts_fallback, test_video_player, test_wake_word |
 | `fuzzy.py` | 488 | core/fuzzy.py — matching what somebody said to what is actually installed. | test_fuzzy |
 | `gemini.py` | 989 | One place where the assistant's one-shot Gemini calls are made. | test_gemini_api_version, test_gemini_local_auto_fallback, test_gemini_resilience, test_local_fallback, test_suite_assistant, test_suite_providers |
-| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_lint_ratchet, test_readme, test_removed_features, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
+| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_hybrid_ipc, test_lint_ratchet, test_native_build_check, test_readme, test_removed_features, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_supervisor_source, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
 | `heartbeat.py` | 93 | core/heartbeat.py — Client-side heartbeat emitter for ULTRON. | test_dispatch_smoke, test_hybrid_ipc |
 | `hotkey.py` | 174 | Push-to-talk — hold a key, speak, release. | test_ui_ladder |
 | `identity.py` | 74 | core/identity.py — who this assistant is. | test_app_resolver, test_autonomy_upgrades, test_capability_guide, test_collect_install, test_file_controller_hardening, test_launchers, test_mcp_client, test_memory_safety, test_metacog_service, test_migrate_legacy, test_persona_switch_settings, test_process_watch, test_runtime_files_ignored, test_schedule_packs, test_session_memory_search, test_shipping, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_ui_settings_writes, test_wallpaper_url |
@@ -56,7 +56,7 @@ edit the module docstring instead and run it again.
 | `memory_consent.py` | 96 | core/memory_consent.py — remembering is a decision the user makes, not a side effect. | test_memory_safety, test_suite_safety |
 | `numerics.py` | 154 | core/numerics.py — the small amount of numerical mathematics this project needs. | test_suite_algorithms |
 | `outcome.py` | 274 | core/outcome.py — what a tool tells the model when it is done. | test_action_audit, test_autonomy_upgrades, test_boot_guard, test_bugfix_pass, test_hybrid_ipc, test_memory_safety, test_metacog, test_metacog_service, test_upstream_sync |
-| `paths.py` | 26 | core/paths.py — where Ultron keeps its own state, decided in one place. | test_applescript_quoting, test_ast_guardian_bypasses, test_bugfix_pass, test_crash, test_edge_cases, test_file_processor_safety, test_removed_features, test_upstream_sync, test_wallpaper_url |
+| `paths.py` | 26 | core/paths.py — where Ultron keeps its own state, decided in one place. | test_applescript_quoting, test_ast_guardian_bypasses, test_bugfix_pass, test_crash, test_edge_cases, test_file_processor_safety, test_native_build_check, test_removed_features, test_upstream_sync, test_wallpaper_url |
 | `personas.py` | 92 | Assistant personas: behavior and face animation, independent of appearance. | test_personas |
 | `philosophy.py` | 399 | core/philosophy.py — the minds Ultron thinks with. | test_philosophy |
 | `platform_support.py` | 175 | core/platform_support.py — what this particular machine can actually let the | — |
@@ -192,7 +192,7 @@ edit the module docstring instead and run it again.
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
-| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_evolution_rubrics, test_health_center, test_live_config, test_mute_state, test_native_claims, test_piper_download, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
+| `audio.py` | 188 | Sample rates, formats and the conversions between them. | test_background_loops, test_evolution_rubrics, test_health_center, test_live_config, test_mute_state, test_native_build_check, test_native_claims, test_piper_download, test_source_hygiene, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_wake_word |
 | `base.py` | 341 | The contract every provider signs — and the only thing the rest of the app is | test_autonomy_upgrades, test_collect_install, test_crash, test_decision_layers, test_lint_ratchet, test_live_config, test_live_transport, test_local_detector, test_mark_integration, test_metacog_service, test_migrate_legacy, test_repair_judgment, test_routing_runtime, test_shipping, test_suite_algorithms, test_suite_assistant, test_upstream_sync |
 | `connections.py` | 197 | providers/connections.py — one connection, reused, instead of one per call. | test_suite_providers, test_upstream_sync |
 | `engine_pipeline.py` | 1,311 | The second way to hold the conversation: speech in, a model, speech out. | test_audio_features, test_live_config, test_live_transport, test_routing_runtime, test_suite_assistant |
@@ -252,7 +252,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 130 modules, 35,058 lines
+## `tests/` — 131 modules, 35,303 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -307,7 +307,7 @@ edit the module docstring instead and run it again.
 | `test_glossary.py` | 150 | GLOSSARY.md: the words the owner reads, defined once, in plain words. | — |
 | `test_health_center.py` | 181 | Persistent issue notices and non-applying background repair jobs. | — |
 | `test_hud_fixes.py` | 347 | tests/test_hud_fixes.py — the three things the owner could see were wrong. | test_bugfix_pass, test_hud_fixes |
-| `test_hybrid_ipc.py` | 427 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | — |
+| `test_hybrid_ipc.py` | 437 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | test_native_build_check |
 | `test_installer.py` | 212 | The installer, checked from a machine that cannot run it. | — |
 | `test_launch_guard.py` | 120 | The startup refusal must be a sentence a person can act on. | — |
 | `test_launchers.py` | 176 | tests/test_launchers.py — the PowerShell entry points. | test_launchers |
@@ -330,7 +330,8 @@ edit the module docstring instead and run it again.
 | `test_metacog_service.py` | 252 | tests/test_metacog_service.py — the metacognitive tools and skills, in the app. | test_metacog_service |
 | `test_migrate_legacy.py` | 178 | Offline tests for scripts/migrate_legacy.py. | — |
 | `test_mute_state.py` | 324 | `actions/computer_settings.py`: "mute" means muted, "unmute" means not muted, and the answer says what was read back. | — |
-| `test_native_claims.py` | 131 | What the documents say about the native core must match what the native core does. | — |
+| `test_native_build_check.py` | 230 | The check that builds `native/ultron-core`, and what it is allowed to claim. | — |
+| `test_native_claims.py` | 132 | What the documents say about the native core must match what the native core does. | — |
 | `test_persona_switch_settings.py` | 186 | Switching persona or theme: what is saved, what is kept, and what the window says. | test_persona_switch_settings |
 | `test_personas.py` | 43 | Tests for persona names, labels, and prompts. | — |
 | `test_philosophy.py` | 286 | The minds Ultron thinks with, and the three things that make them safe. | test_philosophy |
@@ -365,7 +366,7 @@ edit the module docstring instead and run it again.
 | `test_suite_assistant.py` | 1,378 | test_suite_assistant.py — one suite file for 8 areas. | test_suite_assistant, test_triggers, test_upstream_sync |
 | `test_suite_providers.py` | 986 | test_suite_providers.py — one suite file for 5 areas. | test_suite_providers |
 | `test_suite_safety.py` | 638 | test_suite_safety.py — one suite file for 6 areas. | test_suite_safety |
-| `test_supervisor_source.py` | 167 | The Job Object supervisor, checked by reading its source. It is not checked by running it. | — |
+| `test_supervisor_source.py` | 171 | The Job Object supervisor, checked by reading its source. It is not checked by running it. | — |
 | `test_themes.py` | 25 | Named HUD theme presets remain deterministic and separate from custom colours. | — |
 | `test_tool_contract.py` | 333 | tests/test_tool_contract.py — what the model is told against what the code does. | test_tool_contract |
 | `test_tool_usage_loop.py` | 432 | `tool_usage.note` no longer stops the event loop for the length of a disk write. | test_tool_usage_loop |

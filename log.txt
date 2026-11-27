@@ -1,3 +1,16 @@
+=== 2026-11-27 · build 1.2.38 · the Rust helper is built, and a check keeps it building ===
+
+The owner kept the Rust helper ("I think it may be needed") and asked: "Please build it. add a build check too."
+
+DONE
+  - .github/workflows/native-build.yml: builds native/ultron-core on Windows from Cargo.lock, runs its 9 unit tests, starts it and runs the end-to-end test that had always skipped (a skip now fails the job), keeps the program for 14 days. Not a required check.
+  - First build (run 46031967963, Rust 1.100.0): compiled with no warning in 1 min 34 s; 9 tests passed; the end-to-end test ran. Second run: the heartbeat echo is checked too.
+  - Found by reading it first: the ring header was 128 bytes, the Python reader assumes 64. Fixed, with two const assertions and a test that works the layout out.
+  - "NOT COMPILED" brought up to date in four places; tests/test_native_build_check.py (24 planted mistakes caught).
+  - The web-client changelog entry said "newest merge": corrected (it conflicts in 8 files under #47).
+RETRO: I skipped the ceilings test for the first commit and a duplicated test shape would have turned the suite red; and my first "kept from the right path" test could not fail. Fix: run the ceilings test whenever a test file is added; plant a mistake for every new check.
+NOT VERIFIED: that Ultron uses the program (nothing starts it); the watchdog, rollback, blue/green, job-object limits and sealer are compiled and not run.
+
 === 2026-11-26 · build 1.2.38 · the phone and web remote is removed ===
 
 The owner: "Remove the dashboard for phone and web remote." The second of the two removals.

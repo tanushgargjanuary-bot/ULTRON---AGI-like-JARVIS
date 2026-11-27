@@ -29,4 +29,4 @@ For a frequent small function, prefer a narrow Python extension (for example, Py
 
 ## Current status
 
-This is a staged migration policy, not a claim that Rust code has been added. The current sandbox has no `rustc` or `cargo`, so Rust builds and cross-platform measurements were not performed. The next practical step is to profile representative Ultron turns and choose one isolated leaf only if the result justifies the additional toolchain and maintenance cost.
+This is a staged migration policy. Rust code does exist: `native/ultron-core`, which nothing in Ultron starts. `.github/workflows/native-build.yml` has built it on a Windows machine since 2026-11-27, runs its unit tests, and starts it for an end-to-end test (the shared audio ring and the pipe). No Rust measurement has been taken: the sandbox this policy was written in has no `rustc` or `cargo`, and the build check measures nothing. The next practical step is to profile representative Ultron turns and choose one isolated leaf only if the result justifies the additional toolchain and maintenance cost.
