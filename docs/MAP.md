@@ -252,7 +252,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 131 modules, 35,303 lines
+## `tests/` — 131 modules, 35,379 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -307,7 +307,7 @@ edit the module docstring instead and run it again.
 | `test_glossary.py` | 150 | GLOSSARY.md: the words the owner reads, defined once, in plain words. | — |
 | `test_health_center.py` | 181 | Persistent issue notices and non-applying background repair jobs. | — |
 | `test_hud_fixes.py` | 347 | tests/test_hud_fixes.py — the three things the owner could see were wrong. | test_bugfix_pass, test_hud_fixes |
-| `test_hybrid_ipc.py` | 437 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | test_native_build_check |
+| `test_hybrid_ipc.py` | 504 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | test_native_build_check |
 | `test_installer.py` | 212 | The installer, checked from a machine that cannot run it. | — |
 | `test_launch_guard.py` | 120 | The startup refusal must be a sentence a person can act on. | — |
 | `test_launchers.py` | 176 | tests/test_launchers.py — the PowerShell entry points. | test_launchers |
@@ -331,7 +331,7 @@ edit the module docstring instead and run it again.
 | `test_migrate_legacy.py` | 178 | Offline tests for scripts/migrate_legacy.py. | — |
 | `test_mute_state.py` | 324 | `actions/computer_settings.py`: "mute" means muted, "unmute" means not muted, and the answer says what was read back. | — |
 | `test_native_build_check.py` | 230 | The check that builds `native/ultron-core`, and what it is allowed to claim. | — |
-| `test_native_claims.py` | 132 | What the documents say about the native core must match what the native core does. | — |
+| `test_native_claims.py` | 141 | What the documents say about the native core must match what the native core does. | — |
 | `test_persona_switch_settings.py` | 186 | Switching persona or theme: what is saved, what is kept, and what the window says. | test_persona_switch_settings |
 | `test_personas.py` | 43 | Tests for persona names, labels, and prompts. | — |
 | `test_philosophy.py` | 286 | The minds Ultron thinks with, and the three things that make them safe. | test_philosophy |
