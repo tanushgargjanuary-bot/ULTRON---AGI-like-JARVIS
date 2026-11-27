@@ -82,11 +82,11 @@ class TheNativeBuildCheck(unittest.TestCase):
         self.assertRegex(self.build, r"(?m)^\s+retention-days:\s*\d+\s*$")
 
     def test_it_runs_when_native_or_the_workflow_changes(self):
-        for event in ("pull_request", "push"):
-            block = self.event_block(event)
-            for path in self.WATCHED:
-                with self.subTest(event=event, path=path):
-                    self.assertRegex(block, rf'(?m)^\s+-\s+"?{re.escape(path)}"?\s*$')
+        listed = {event: re.findall(r'(?m)^\s+-\s+"([^"]+)"\s*$', self.event_block(event))
+                  for event in ("pull_request", "push")}
+        for event, paths in listed.items():
+            with self.subTest(event=event):
+                self.assertEqual(sorted(paths), sorted(self.WATCHED), f"the paths that start a {event} run")
 
     def test_it_also_runs_every_month_and_by_hand(self):
         # The compiler on the runner moves even when the code does not.
@@ -165,6 +165,65 @@ class TheLockFileAgreesWithTheManifest(unittest.TestCase):
         name = re.search(r'(?m)^name\s*=\s*"([^"]+)"', self.manifest).group(1)
         version = re.search(r'(?m)^version\s*=\s*"([^"]+)"', self.manifest).group(1)
         self.assertIn(version, self.locked().get(name, []))
+
+
+class TheRingHeaderMatchesThePythonReader(unittest.TestCase):
+    """`core/audio_ring.py` reads the write cursor at byte 0 and the frames from byte `HEADER_BYTES`.
+
+    The Rust header has to be exactly that long. It was 128 bytes, with 46 bytes of padding where 40 fit, and nothing
+    noticed, because nothing had ever built it. Found on 2026-11-27 while reading the code before its first build.
+    The layout is worked out here from the struct as written (Rust's `repr(C)` rules), so the fast gate catches a drift in
+    seconds; the build check makes the compiler say the same, through a `const` assertion in the source.
+    """
+
+    SIZES = {"AtomicU64": (8, 8), "u64": (8, 8), "u32": (4, 4), "u16": (2, 2), "u8": (1, 1)}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rust = text_of(CRATE / "src" / "audio" / "shared_ring.rs")
+        cls.python = text_of(ROOT / "core" / "audio_ring.py")
+
+    def layout(self) -> tuple[dict[str, int], int]:
+        found = re.search(r"#\[repr\(C, align\((\d+)\)\)\]\s*pub struct RingHeader \{(.*?)\n\}", self.rust, re.S)
+        self.assertTrue(found, "shared_ring.rs no longer declares RingHeader as repr(C, align(N))")
+        alignment, body = int(found.group(1)), found.group(2)
+        offset, offsets = 0, {}
+        for name, kind in re.findall(r"(?m)^\s*(?:pub\s+)?(\w+):\s*([^,]+),", body):
+            kind = kind.strip()
+            padding = re.fullmatch(r"\[u8;\s*(\d+)\]", kind)
+            size, align = (int(padding.group(1)), 1) if padding else self.SIZES[kind]
+            offset = -(-offset // align) * align
+            offsets[name] = offset
+            offset += size
+        return offsets, -(-offset // alignment) * alignment
+
+    def python_constant(self, name: str) -> int:
+        found = re.search(rf"(?m)^{name}\s*=\s*(\d+)\s*$", self.python)
+        self.assertTrue(found, f"core/audio_ring.py no longer says {name} = <number>")
+        return int(found.group(1))
+
+    def rust_constant(self, name: str) -> int:
+        found = re.search(rf"pub const {name}: usize = (\d+);", self.rust)
+        self.assertTrue(found, f"shared_ring.rs no longer says pub const {name}: usize = <number>")
+        return int(found.group(1))
+
+    def test_the_header_is_exactly_as_long_as_the_python_reader_assumes(self):
+        offsets, size = self.layout()
+        self.assertEqual(size, self.python_constant("HEADER_BYTES"),
+                         "the Rust header and core/audio_ring.py disagree about where the frames start")
+        self.assertEqual(offsets["write_cursor"], 0, "the Python reader takes the write cursor from byte 0")
+
+    def test_the_source_makes_the_compiler_say_the_same(self):
+        self.assertRegex(self.rust, rf"const _: \(\) = assert!\(std::mem::size_of::<RingHeader>\(\) == {self.python_constant('HEADER_BYTES')}\);")
+        self.assertRegex(self.rust, r"const _: \(\) = assert!\(std::mem::offset_of!\(RingHeader, write_cursor\) == 0\);")
+
+    def test_the_two_ends_agree_on_the_frame_size_the_count_and_the_name(self):
+        self.assertEqual(self.rust_constant("FRAME_SAMPLES"), self.python_constant("FRAME_SAMPLES"))
+        self.assertEqual(self.rust_constant("CAPACITY_FRAMES"), self.python_constant("CAPACITY_FRAMES"))
+        rust_name = re.search(r'pub const RING_NAME: &str = "([^"]+)";', self.rust)
+        python_name = re.search(r'(?m)^RING_NAME = "([^"]+)"', self.python)
+        self.assertTrue(rust_name and python_name)
+        self.assertEqual(rust_name.group(1), python_name.group(1))
 
 
 if __name__ == "__main__":

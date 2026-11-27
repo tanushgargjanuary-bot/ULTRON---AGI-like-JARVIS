@@ -1,7 +1,7 @@
-// NOT COMPILED, NOT RUN. This file was last changed by reading the Win32 documentation, on a
-// machine with no Rust toolchain and no Windows, and CI does not build this crate. Nothing in
-// `main.rs` calls it. Run `cargo check` on Windows, then start a process under it and read the
-// limits back with `QueryInformationJobObject` before trusting any of them.
+// COMPILED, NOT RUN. This file was written and last changed by reading the Win32 documentation, on a
+// machine with no Rust toolchain and no Windows. `.github/workflows/native-build.yml` compiles it on a
+// Windows machine, so it builds; that is all that shows. Nothing in `main.rs` calls it. Start a
+// process under it and read the limits back with `QueryInformationJobObject` before trusting any of them.
 
 use windows::Win32::System::JobObjects::*;
 use windows::Win32::Foundation::*;

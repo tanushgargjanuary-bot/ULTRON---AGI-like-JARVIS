@@ -1,6 +1,8 @@
 """Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`.
 
 The end-to-end test needs the Windows binary `ultron-core.exe` and skips without it.
+`.github/workflows/native-build.yml` builds the binary on a Windows machine and runs that test against it; a skip
+fails that job.
 The other classes run everywhere: they speak the same 6-byte frame protocol over a
 local TCP socket, with a stand-in for `native/ultron-core/src/ipc/server.rs`
 (check the magic, echo channel 0x06, end the session on 0xFF), so the client's
@@ -52,13 +54,21 @@ class TestHybridIPCE2E(unittest.TestCase):
             # 2. Verify Named Pipe Client
             async def run_client():
                 client = UltronIPCClient(PIPE_PATH)
+                echoed = []
+                client.on(CHANNEL_HEARTBEAT)(echoed.append)
                 connected = await client.connect(retries=5, delay=0.5)
                 self.assertTrue(connected)
                 self.assertTrue(client.is_connected)
 
-                # Send heartbeat
-                await client.send_heartbeat(seq=1)
-                await asyncio.sleep(0.2)
+                # Send heartbeat; the server sends a channel-0x06 frame back unchanged
+                self.assertTrue(await client.send_heartbeat(seq=1))
+                for _ in range(30):
+                    if echoed:
+                        break
+                    await asyncio.sleep(0.1)
+                self.assertEqual(len(echoed), 1, "the server did not send the heartbeat back")
+                self.assertEqual(len(echoed[0]), 12, "a heartbeat is a u64 time and a u32 sequence number")
+                self.assertEqual(struct.unpack("<QI", echoed[0])[1], 1, "the sequence number came back changed")
 
                 # Clean shutdown
                 await client.close()
@@ -290,8 +300,8 @@ class IpcClientFraming(unittest.TestCase):
         self.assertIsNone(writer_after, "and close() lets go of it")
 
     def test_the_rust_server_has_the_same_cap(self):
-        # No Rust toolchain runs in CI here, so the contract is checked on the source:
-        # the two ends must agree, and the check must be before the allocation.
+        # Only the native build check builds and runs the Rust program, on Windows. This suite checks the
+        # contract on the source: the two ends must agree, and the check must be before the allocation.
         import re
         from pathlib import Path
         source = (Path(__file__).resolve().parents[1] / "native" / "ultron-core" / "src"

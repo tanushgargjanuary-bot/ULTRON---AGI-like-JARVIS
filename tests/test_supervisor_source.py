@@ -1,9 +1,9 @@
 """The Job Object supervisor, checked by reading its source. It is not checked by running it.
 
-`native/ultron-core/src/process/supervisor.rs` is Windows-only Rust. There is no Rust toolchain
-in this repository's CI and none where it was written, so NOTHING HERE PROVES THE CODE COMPILES OR
-THAT THE LIMITS WORK. These tests pin the properties that were found wrong by reading the Win32
-documentation, so that an edit cannot bring them back unseen:
+`native/ultron-core/src/process/supervisor.rs` is Windows-only Rust. It was written where there was no Rust
+toolchain; `.github/workflows/native-build.yml` has compiled it since 2026-11-27, so it builds. NOTHING HERE
+PROVES THAT THE LIMITS WORK: nothing runs the file. These tests pin the properties that were found wrong by
+reading the Win32 documentation, so that an edit cannot bring them back unseen:
 
 * The limits were set by two calls. `LimitFlags` is the list of limits in force, so the second call,
   which named only the memory limit, asked for the CPU and process-count limits to be off. The first
@@ -17,9 +17,9 @@ documentation, so that an edit cannot bring them back unseen:
   `PROCESS_SET_QUOTA` and `PROCESS_TERMINATE`.
 * No `unsafe` block said why it was sound.
 
-What would really settle it: `cargo check` on Windows, then start a process under the job and read
-the limits back with `QueryInformationJobObject`. Until that is done the file says so in its header,
-and one test below keeps that sentence from being deleted without anyone noticing.
+What would really settle it: start a process under the job and read the limits back with
+`QueryInformationJobObject`. Until that is done the file says so in its header, and one test below
+keeps that sentence from being deleted without anyone noticing.
 """
 
 from __future__ import annotations
@@ -135,10 +135,14 @@ def header() -> str:
 
 
 class TheFileIsHonestAboutWhatItIs(unittest.TestCase):
-    def test_the_header_says_it_was_not_compiled_or_run(self):
-        self.assertIn("NOT COMPILED, NOT RUN", header())
-        self.assertIn("cargo check", header())
+    def test_the_header_says_it_was_compiled_and_not_run(self):
+        self.assertTrue(header().startswith("COMPILED, NOT RUN."), "the first words of the file say what it is")
+        self.assertNotIn("NOT COMPILED", header())
+        self.assertIn("native-build.yml", header())
         self.assertIn("QueryInformationJobObject", header())
+        # The header says a check compiles this file, so that check has to build the crate.
+        workflow = (ROOT / ".github" / "workflows" / "native-build.yml").read_text(encoding="utf-8")
+        self.assertIn("cargo build --locked --release --manifest-path native/ultron-core/Cargo.toml", workflow)
 
     def test_the_header_says_nothing_calls_it_and_that_is_true(self):
         self.assertIn("Nothing in `main.rs` calls it", header())

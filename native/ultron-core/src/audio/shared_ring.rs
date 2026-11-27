@@ -15,8 +15,14 @@ pub struct RingHeader {
     pub sample_rate: u32,
     pub channels: u8,
     pub frame_samples: u16,
-    _pad: [u8; 46],
+    _pad: [u8; 40],
 }
+
+// `core/audio_ring.py` reads the write cursor at byte 0 and starts the frames at byte 64 (`HEADER_BYTES`). These two
+// lines make the build fail if the header ever stops being exactly that. It was 128 bytes: 46 bytes of padding where
+// 40 fit, found on 2026-11-27 by working out the layout before the first build.
+const _: () = assert!(std::mem::size_of::<RingHeader>() == 64);
+const _: () = assert!(std::mem::offset_of!(RingHeader, write_cursor) == 0);
 
 pub struct SharedAudioRing {
     handle: HANDLE,
