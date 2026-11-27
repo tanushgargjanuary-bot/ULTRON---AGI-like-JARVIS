@@ -39,7 +39,7 @@ edit the module docstring instead and run it again.
 | `failures.py` | 130 | Where a failure goes when nothing can be done about it. | test_background_loops, test_child_output, test_computer_capability, test_config_safety, test_crash, test_dispatch_smoke, test_file_controller_hardening, test_gemini_resilience, test_health_center, test_hybrid_ipc, test_installer, test_leaf_generations, test_memory_safety, test_providers_panel_reports, test_self_change, test_suite_assistant, test_tool_contract, test_triggers, test_tts_fallback, test_video_player, test_wake_word |
 | `fuzzy.py` | 488 | core/fuzzy.py — matching what somebody said to what is actually installed. | test_fuzzy |
 | `gemini.py` | 989 | One place where the assistant's one-shot Gemini calls are made. | test_gemini_api_version, test_gemini_local_auto_fallback, test_gemini_resilience, test_local_fallback, test_suite_assistant, test_suite_providers |
-| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_lint_ratchet, test_readme, test_removed_features, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
+| `github.py` | 186 | core/github.py — GitHub, natively, with the token kept where tokens belong. | test_boot_guard, test_dependency_policy, test_file_controller_hardening, test_lint_ratchet, test_native_build_check, test_readme, test_removed_features, test_schedule_packs, test_self_change, test_suite_algorithms, test_suite_safety, test_upstream_sync, test_web_platforms, test_workflow_hygiene |
 | `heartbeat.py` | 93 | core/heartbeat.py — Client-side heartbeat emitter for ULTRON. | test_dispatch_smoke, test_hybrid_ipc |
 | `hotkey.py` | 174 | Push-to-talk — hold a key, speak, release. | test_ui_ladder |
 | `identity.py` | 74 | core/identity.py — who this assistant is. | test_app_resolver, test_autonomy_upgrades, test_capability_guide, test_collect_install, test_file_controller_hardening, test_launchers, test_mcp_client, test_memory_safety, test_metacog_service, test_migrate_legacy, test_persona_switch_settings, test_process_watch, test_runtime_files_ignored, test_schedule_packs, test_session_memory_search, test_shipping, test_suite_algorithms, test_suite_assistant, test_suite_providers, test_ui_settings_writes, test_wallpaper_url |
@@ -252,7 +252,7 @@ edit the module docstring instead and run it again.
 | `verify_display.py` | 157 | Does the window actually draw? Render it and look at the pixels. | test_suite_algorithms |
 | `verify_windows.py` | 379 | What only real Windows can answer, asked on real Windows. | test_suite_algorithms, test_ui_bridge |
 
-## `tests/` — 130 modules, 35,058 lines
+## `tests/` — 131 modules, 35,229 lines
 
 | Module | Lines | What it is | Test |
 |---|---|---|---|
@@ -307,7 +307,7 @@ edit the module docstring instead and run it again.
 | `test_glossary.py` | 150 | GLOSSARY.md: the words the owner reads, defined once, in plain words. | — |
 | `test_health_center.py` | 181 | Persistent issue notices and non-applying background repair jobs. | — |
 | `test_hud_fixes.py` | 347 | tests/test_hud_fixes.py — the three things the owner could see were wrong. | test_bugfix_pass, test_hud_fixes |
-| `test_hybrid_ipc.py` | 427 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | — |
+| `test_hybrid_ipc.py` | 427 | Tests for the hybrid Rust/Python IPC layer: `core/ipc_client.py` and `core/heartbeat.py`. | test_native_build_check |
 | `test_installer.py` | 212 | The installer, checked from a machine that cannot run it. | — |
 | `test_launch_guard.py` | 120 | The startup refusal must be a sentence a person can act on. | — |
 | `test_launchers.py` | 176 | tests/test_launchers.py — the PowerShell entry points. | test_launchers |
@@ -330,6 +330,7 @@ edit the module docstring instead and run it again.
 | `test_metacog_service.py` | 252 | tests/test_metacog_service.py — the metacognitive tools and skills, in the app. | test_metacog_service |
 | `test_migrate_legacy.py` | 178 | Offline tests for scripts/migrate_legacy.py. | — |
 | `test_mute_state.py` | 324 | `actions/computer_settings.py`: "mute" means muted, "unmute" means not muted, and the answer says what was read back. | — |
+| `test_native_build_check.py` | 171 | The check that builds `native/ultron-core`, and what it is allowed to claim. | — |
 | `test_native_claims.py` | 131 | What the documents say about the native core must match what the native core does. | — |
 | `test_persona_switch_settings.py` | 186 | Switching persona or theme: what is saved, what is kept, and what the window says. | test_persona_switch_settings |
 | `test_personas.py` | 43 | Tests for persona names, labels, and prompts. | — |
