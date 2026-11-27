@@ -78,6 +78,19 @@ Why it exists: lanes 1 and 2 install a short list written into the workflow, nev
 
 First run on GitHub, 2026-11-25 (run 45648162971): all four jobs passed. Neither job is a required check, on purpose: a slow or failing install must not block an unrelated merge. Read them on any pull request that touches a requirements file, and before merging one.
 
+## Lane 4 — the Rust helper builds (not a required check)
+
+Workflow: **.github/workflows/native-build.yml**
+Triggers: a push to **main** or a pull request that changes anything under `native/` or the workflow itself; the 17th of every month; manual dispatch.
+
+Why it exists: `native/ultron-core` is a Rust program that nothing in Ultron starts, and from its first commit on 2026-11-15 nothing built it either (the notes beside it said "NOT COMPILED, NOT RUN"). The owner kept it on 2026-11-27 ("I think it may be needed") and asked for it to be built and for a check that keeps it building.
+
+- `build` (Windows, because the crate uses Win32): `cargo build --locked --release` from the versions in `Cargo.lock`; the crate's own unit tests (`cargo test --locked`); then the program it built is started and `TestHybridIPCE2E` in `tests/test_hybrid_ipc.py` runs against it. That test opens the shared audio ring from Python, connects to the named pipe, sends a heartbeat, checks that the heartbeat comes back, and ends the session. It skips without a binary, and a skip fails the job. The program is kept as a download for 14 days (`ultron-core-windows-x64`).
+
+First run on GitHub, 2026-11-27 (run 46031967963): green. Rust 1.100.0 on the `windows-2025-vs2026` image; the release build took 1 min 34 s with no warning, 9 unit tests passed, the end-to-end test ran in about a second and did not skip. The whole job took under 3 minutes. It is not a required check, on purpose. What it does not show: that the program works as a part of Ultron, because nothing starts it; and anything about the watchdog, rollback, blue/green swap, job-object limits and sealer, which are compiled and not run.
+
+`tests/test_native_build_check.py` holds the workflow to what it says, and holds the lock file and the ring header to the manifest and to the Python reader, so that a drift fails the fast gate in seconds and not after a Windows build.
+
 ## Local use
 
 Run the quick preflight before committing or pushing:

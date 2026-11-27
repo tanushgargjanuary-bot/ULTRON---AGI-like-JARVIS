@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### The Rust helper is built, and a check keeps it building, 2026-11-27
+
+**Asked for.** The owner, after I explained what the Rust helper is and he said "I think it may be needed": "Please build it. add a build check too."
+
+**What I did.** I could not build it here: this machine has no Rust tools and cannot reach the hosts that serve them. GitHub's Windows machine can, so the check is the build. `.github/workflows/native-build.yml` builds `native/ultron-core` from the versions in `Cargo.lock` (`--locked`), runs the crate's 9 unit tests, starts the program it built and runs the end-to-end test that was written for it and had always skipped for want of a binary (a skip now fails the job), and keeps the program as a 14-day download. It is not a required check. It runs when `native/` or the workflow changes, on the 17th of each month, and by hand. No new action and no new dependency: the runner carries Rust, and the three actions are the ones the other workflows already use, pinned to the same commits.
+
+**What the first build showed** (run 46031967963, Rust 1.100.0). It compiled on the first try, with no warning, in 1 min 34 s. The 9 unit tests passed. The end-to-end test ran and did not skip: the Python reader opened the shared audio ring, the Python client connected to the named pipe and sent a heartbeat, and the session ended cleanly. A second run (46033070836), with a stronger test, also checked that the heartbeat comes back unchanged: green.
+
+**Found by reading it before the first build.** `RingHeader` in `native/ultron-core/src/audio/shared_ring.rs` was 128 bytes (46 bytes of padding where 40 fit), while `core/audio_ring.py` starts the frames at byte 64. It compiled, and nothing could have noticed. `_pad` is now 40 bytes and two `const` assertions make the compiler check the size and the cursor's place. A test works the layout out from the source, so the fast gate catches a drift in seconds.
+
+**What changed.** The workflow; `tests/test_native_build_check.py` (the workflow held to what it says, the lock file held to the manifest, the ring header held to the Python reader; 24 planted mistakes, all caught); one assertion added to `TestHybridIPCE2E` (stronger, not weaker); the header of `native/ultron-core/src/process/supervisor.rs` now says COMPILED, NOT RUN instead of NOT COMPILED, NOT RUN, and the test that pinned the old words pins the new ones and the workflow they name; three stale sentences in tests and in `docs/RUST_MIGRATION.md`; `docs/TEST_AUTOMATION.md` (a fourth lane), `docs/specifications/SYSTEM_OVERVIEW.md`, and a row in `DECISIONS.md`.
+
+**Effect.** None on Ultron: nothing starts the Rust program. The repository now says truthfully that it builds.
+
+**What this does not show.** That Ultron uses it, or anything about the watchdog, the rollback, the blue/green swap, the job-object limits and the sealer: they are compiled and not run. `core/boot_guard.py` (a referee file, not touched) still says the Rust boot guard "is not part of what runs", and that is still true.
+
+**Not done.** Dependabot does not watch the Rust libraries (`Cargo.lock` is pinned and nothing moves it): a policy change in `.github/dependabot.yml`, which is the owner's. Nothing was measured: the build check proves nothing about speed.
+
+**To get it back to how it was.** Revert the merge of this pull request (#48): one command while it is the newest merge. To stop keeping it, delete `native/`, the workflow and the tests that name them.
+
 ### The phone and web remote is removed, 2026-11-26
 
 **Asked for.** The owner, in the same message as the web client: "Remove the dashboard for phone and web remote." This is its own pull request, after the web client's.
@@ -34,7 +54,7 @@ Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section i
 
 **Effect.** None on the desktop app. No required check ran the web client, so no required check changed.
 
-**To get it back.** Revert the merge of #46. This is the newest merge, so it is one command: `git revert -m 1 <that merge>`.
+**To get it back.** Revert the merge of #46: `git revert -m 1 <that merge>`. That was one clean command while #46 was the newest merge. With #47 on top it conflicts in 8 files, the shared notes and `tests/test_removed_features.py` (tried in a scratch clone, 2026-11-27); `docs/AGENT_MAINTENANCE.md` section 9 has the steps. (This sentence said "newest merge" until 2026-11-27, when #47 had made it untrue.)
 
 **Not verified.** That nothing outside the repository was set up from it (a Vercel or Supabase project). `docs/NEXT_CHECKPOINTS.md` said nothing was deployed; I cannot see either service. Whether the 13-minute Windows check gets shorter: I said it would not, from reading the workflow files, and the first run after the merge is the measurement.
 
