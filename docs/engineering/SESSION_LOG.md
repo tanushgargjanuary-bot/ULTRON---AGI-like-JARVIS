@@ -1446,3 +1446,13 @@ The fix is in `ui.py`: `_LiveRelay` and `_live_relay()`, one object that outlive
 **Evidence.** Red on the old tree (the new module fails to import; the changed tests fail); green on the new one; 35 of 35 planted mistakes caught (`mutate_watch.py`); the whole chain on the committed tree (numbers in the pull request); the Rust build and the three end-to-end tests on Windows (the `native build` run on the pull request).
 
 **Not checked.** A real frozen window on a real PC. Sleep and wake. An unsigned program on a machine with SmartScreen on.
+
+## 2026-11-28 — replies for a ten-year-old
+
+**Asked for.** The owner asked for a summary "like im 10" and wrote a standing rule: ask in the simplest words, the fewest words; it is the top priority in a reply. Code stays as it was, with the best habits.
+
+**What I did.** Wrote his words into `WORKING-PHILOSOPHY.md` section 2 as the first rule, added a `DECISIONS.md` row, and checked that the Core rules of the playbook already hold the code habits, so I added nothing for code.
+
+**Retro** (step 9 of `WORKING-PHILOSOPHY.md`, section 3). He has now asked for plain words four times. The old rule sat in a long document, and my replies still carried file names, run numbers and counts he never asked for. A rule that says "plain" does not say what to leave out. Kind of fix: the rule now names what to leave out, quotes him, and ranks first. A program cannot check it, so it is not verified: his reading is the check.
+
+**Not checked.** Whether the next replies are simple enough. Only he can say.

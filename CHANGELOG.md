@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Builds 1.2.37 and 1.2.38 (`packaging/version.txt` says 1.2.38) have no section in this file. What changed in them is recorded in `docs/engineering/SESSION_LOG.md` (entries 1.2.37 and 1.2.38) and in `log.txt`.
 
+### Replies are written for a ten-year-old (the owner's rule), 2026-11-28
+
+**Asked for.** The owner wrote: "Summarise like im 10, and always ask question in very simple language in minimal words possible. It should be the topmost priority when writing a response to me." He also said code can be written as before, with the best habits of elite coders.
+
+**What changed.** `WORKING-PHILOSOPHY.md`, section 2, has a new first rule that beats the others there: short words, a small story, no file names or numbers unless he asks, one question in the fewest words with a guess. `DECISIONS.md` has a row with his words. For code nothing is added: the Core rules of `docs/reference/CODING_AGENT_PLAYBOOK.md` already hold the habits.
+
+**Effect.** None on the program. Only the words an agent uses with him change.
+
+**Not verified.** No program can read a reply, so no test checks the rule. His reading is the check.
+
+**To get it back.** Revert the merge of this pull request.
+
 ### The Rust helper notes when Ultron freezes (freeze watch), 2026-11-27
 
 **Asked for.** The owner, asked what the Rust helper should do first, chose "(a)": watch Ultron and note when it freezes, no restarts. "Switched off until he switches it on" was my guess and he did not change it.
