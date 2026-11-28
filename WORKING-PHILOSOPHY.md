@@ -36,6 +36,10 @@ nothing, which is the failure this repository has spent a hundred builds removin
 He is the reason the software exists, he reads everything, and he has flagged excessive
 technicality three separate times. So:
 
+- **Write as if he is ten. This beats every other rule in this section.** On 2026-11-28 he wrote: "Summarise like im 10, and always ask question in very simple language in minimal words possible. It should be the topmost priority when writing a response to me."
+  So: short words, short sentences, a small story and not a report. Leave out file names, numbers and run
+  numbers unless he asks. Ask one question, in the fewest and simplest words, with your guess. The detail
+  goes in the files and the pull request, not in the reply.
 - **Plain words come before any table.** Simplest sentence that is still true.
 - **Simplified Technical English.** Short sentences. One instruction per sentence. Least
   technical term that is accurate. Highest understanding is the goal, not elegance.

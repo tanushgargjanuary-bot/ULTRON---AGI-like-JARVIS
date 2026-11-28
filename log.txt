@@ -1,3 +1,13 @@
+=== 2026-11-28 · build 1.2.38 · replies for a ten-year-old ===
+
+The owner asked for a summary "like im 10" and made a standing rule: ask in the simplest words, the fewest words, top priority in a reply.
+
+DONE
+  - WORKING-PHILOSOPHY.md section 2: a new first rule, with his words. It names what to leave out (file names, numbers, run numbers).
+  - DECISIONS.md: a row with his words. Code: no new rule; the playbook's Core rules already hold the habits.
+RETRO: "plain words" was already a rule, and replies still had numbers he did not ask for. The rule now says what to leave out.
+NOT VERIFIED: that replies are simple enough now. No program can check it; his reading is the check.
+
 === 2026-11-27 · build 1.2.38 · the Rust helper notes when Ultron freezes ===
 
 The owner chose (a) for the helper's first job: watch Ultron and note when it freezes, no restarts.
